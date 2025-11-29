@@ -5,7 +5,7 @@ import '../../core/theme/app_theme.dart';
 enum EmptyStateType {
   noVenues,
   noBands,
-  noReviews,
+  noCheckins,
   noBadges,
   noSearchResults,
   general,
@@ -106,24 +106,24 @@ class EmptyStateWidget extends StatelessWidget {
           actionLabel: 'Refresh',
           actionIcon: Icons.refresh,
         );
-      case EmptyStateType.noReviews:
+      case EmptyStateType.noCheckins:
         return _EmptyStateConfig(
-          icon: Icons.rate_review_outlined,
-          color: AppTheme.secondary,
-          title: 'No Reviews Yet',
+          icon: Icons.music_note_outlined,
+          color: AppTheme.electricPurple,
+          title: 'No Check-ins Yet',
           message:
-              'Be the first to share your experience! Your review helps others discover great shows.',
-          actionLabel: 'Write a Review',
+              'Be the first to check in! Share your concert experience with the community.',
+          actionLabel: 'Check In',
           actionIcon: Icons.add,
         );
       case EmptyStateType.noBadges:
         return _EmptyStateConfig(
           icon: Icons.emoji_events_outlined,
-          color: AppTheme.warning,
+          color: AppTheme.toastGold,
           title: 'No Badges Earned Yet',
           message:
-              'Start reviewing venues and bands to earn badges! Complete challenges to unlock achievements.',
-          actionLabel: 'Explore',
+              'Start checking in to concerts and shows to earn badges! Complete challenges to unlock achievements.',
+          actionLabel: 'Discover',
           actionIcon: Icons.explore,
         );
       case EmptyStateType.noSearchResults:

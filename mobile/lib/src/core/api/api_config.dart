@@ -45,7 +45,6 @@ class ApiConfig {
   static const String auth = '/users';
   static const String venues = '/venues';
   static const String bands = '/bands';
-  static const String reviews = '/reviews';
   static const String badges = '/badges';
   static const String checkins = '/checkins';
   static const String toasts = '/toasts';
