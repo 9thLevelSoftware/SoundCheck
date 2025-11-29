@@ -31,6 +31,7 @@ export class CheckinController {
         bandRating,
         reviewText,
         imageUrls,
+        vibeTagIds,
       } = req.body;
 
       if (!venueId || !bandId || !eventDate) {
@@ -51,6 +52,7 @@ export class CheckinController {
         bandRating,
         reviewText,
         imageUrls,
+        vibeTagIds,
       });
 
       const response: ApiResponse = {
@@ -335,6 +337,133 @@ export class CheckinController {
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to delete check-in',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get check-ins with filters
+   * GET /api/checkins?venueId=&bandId=&userId=&page=1&limit=20
+   */
+  getCheckins = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { venueId, bandId, userId, page, limit } = req.query;
+
+      const checkins = await this.checkinService.getCheckins({
+        venueId: venueId as string,
+        bandId: bandId as string,
+        userId: userId as string,
+        page: page ? parseInt(page as string) : 1,
+        limit: limit ? parseInt(limit as string) : 20,
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: checkins,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get check-ins error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch check-ins',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get vibe tags
+   * GET /api/checkins/vibe-tags
+   */
+  getVibeTags = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const vibeTags = await this.checkinService.getVibeTags();
+
+      const response: ApiResponse = {
+        success: true,
+        data: vibeTags,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get vibe tags error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch vibe tags',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get toasts for a check-in
+   * GET /api/checkins/:id/toasts
+   */
+  getToasts = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { id } = req.params;
+
+      const toasts = await this.checkinService.getToasts(id);
+
+      const response: ApiResponse = {
+        success: true,
+        data: toasts,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get toasts error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch toasts',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Delete a comment
+   * DELETE /api/checkins/:id/comments/:commentId
+   */
+  deleteComment = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Authentication required',
+        };
+        res.status(401).json(response);
+        return;
+      }
+
+      const { id, commentId } = req.params;
+
+      await this.checkinService.deleteComment(userId, id, commentId);
+
+      const response: ApiResponse = {
+        success: true,
+        message: 'Comment deleted successfully',
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Delete comment error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to delete comment',
       };
 
       res.status(500).json(response);
