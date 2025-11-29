@@ -38,6 +38,15 @@ class AppTheme {
   static const Color ratingActive = electricPurple;
   static const Color ratingInactive = Color(0xFF404040);
 
+  // Rating Color Scale
+  static const Color ratingExcellent = Color(0xFF00E676); // 4.5+
+  static const Color ratingGood = Color(0xFF8BC34A); // 4.0+
+  static const Color ratingAverage = Color(0xFFFFAB00); // 3.0+
+  static const Color ratingPoor = Color(0xFFFF5252); // Below 3.0
+
+  // Primary alias for convenience
+  static const Color primary = electricPurple;
+
   // Gradients
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
@@ -300,7 +309,7 @@ class AppTheme {
     ),
 
     // Tab Bar Theme
-    tabBarTheme: const TabBarTheme(
+    tabBarTheme: const TabBarThemeData(
       labelColor: electricPurple,
       unselectedLabelColor: textTertiary,
       indicatorColor: electricPurple,
@@ -621,7 +630,7 @@ class AppTheme {
       ),
     ),
 
-    tabBarTheme: const TabBarTheme(
+    tabBarTheme: const TabBarThemeData(
       labelColor: electricPurple,
       unselectedLabelColor: Color(0xFF808080),
       indicatorColor: electricPurple,
