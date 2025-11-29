@@ -42,13 +42,5 @@ export declare class UserService {
         followerCount: number;
         followingCount: number;
     }>;
-    /**
-     * Map database user row to User type
-     */
-    private mapDbUserToUser;
-    /**
-     * Convert camelCase to snake_case
-     */
-    private camelToSnakeCase;
 }
 //# sourceMappingURL=UserService.d.ts.map

@@ -52,6 +52,20 @@ class ThemeSetting extends _$ThemeSetting {
     await _saveTheme(AppThemeMode.system);
   }
 
+  Future<void> setTheme(AppThemeMode mode) async {
+    switch (mode) {
+      case AppThemeMode.light:
+        await setLightTheme();
+        break;
+      case AppThemeMode.dark:
+        await setDarkTheme();
+        break;
+      case AppThemeMode.system:
+        await setSystemTheme();
+        break;
+    }
+  }
+
   Future<void> toggleTheme() async {
     if (state == AppThemeMode.light) {
       await setDarkTheme();

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'settings_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart' as theme_provider;
 import '../../../core/providers/providers.dart';
@@ -19,185 +20,177 @@ class SettingsScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final themeMode = ref.watch(theme_provider.themeSettingProvider);
+    final notificationSettings = ref.watch(notificationSettingsProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Settings'),
+        elevation: 0,
+        backgroundColor: Theme.of(context).cardColor,
       ),
-      body: ListView(
-        children: [
-          // Appearance Section
-          const _SectionHeader(title: 'Appearance'),
-          _SettingsTile(
-            title: 'Theme',
-            subtitle: _getThemeModeLabel(themeMode),
-            leading: const Icon(Icons.palette),
-            trailing: DropdownButton<theme_provider.AppThemeMode>(
-              value: themeMode,
-              underline: const SizedBox(),
-              items: const [
-                DropdownMenuItem(
-                  value: theme_provider.AppThemeMode.system,
-                  child: Text('System'),
-                ),
-                DropdownMenuItem(
-                  value: theme_provider.AppThemeMode.light,
-                  child: Text('Light'),
-                ),
-                DropdownMenuItem(
-                  value: theme_provider.AppThemeMode.dark,
-                  child: Text('Dark'),
-                ),
-              ],
-              onChanged: (theme_provider.AppThemeMode? mode) {
-                if (mode != null) {
-                  switch (mode) {
-                    case theme_provider.AppThemeMode.light:
-                      ref.read(theme_provider.themeSettingProvider.notifier).setLightTheme();
-                      break;
-                    case theme_provider.AppThemeMode.dark:
-                      ref.read(theme_provider.themeSettingProvider.notifier).setDarkTheme();
-                      break;
-                    case theme_provider.AppThemeMode.system:
-                      ref.read(theme_provider.themeSettingProvider.notifier).setSystemTheme();
-                      break;
-                  }
-                }
-              },
-            ),
-          ),
-          const Divider(),
+      body: notificationSettings.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Error: $err')),
+        data: (settings) {
+          final pushEnabled = settings.$1;
+          final emailEnabled = settings.$2;
 
-          // Notifications Section
-          const _SectionHeader(title: 'Notifications'),
-          _SettingsTile(
-            title: 'Push Notifications',
-            subtitle: 'Get notified about new reviews and badges',
-            leading: const Icon(Icons.notifications),
-            trailing: Switch(
-              value: true,
-              onChanged: (value) {
-                // TODO: Implement notification preferences
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Notification preferences coming soon'),
-                  ),
-                );
-              },
-            ),
-          ),
-          _SettingsTile(
-            title: 'Email Notifications',
-            subtitle: 'Receive email updates',
-            leading: const Icon(Icons.email),
-            trailing: Switch(
-              value: false,
-              onChanged: (value) {
-                // TODO: Implement email notification preferences
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Email notification preferences coming soon'),
-                  ),
-                );
-              },
-            ),
-          ),
-          const Divider(),
-
-          // Privacy Section
-          const _SectionHeader(title: 'Privacy & Legal'),
-          _SettingsTile(
-            title: 'Privacy Policy',
-            leading: const Icon(Icons.privacy_tip),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              _launchUrl('https://pitpulse.app/privacy');
-            },
-          ),
-          _SettingsTile(
-            title: 'Terms of Service',
-            leading: const Icon(Icons.description),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              _launchUrl('https://pitpulse.app/terms');
-            },
-          ),
-          const Divider(),
-
-          // About Section
-          const _SectionHeader(title: 'About'),
-          _SettingsTile(
-            title: 'About PitPulse',
-            subtitle: 'Version 1.0.0',
-            leading: const Icon(Icons.info),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              showAboutDialog(
-                context: context,
-                applicationName: 'PitPulse',
-                applicationVersion: '1.0.0',
-                applicationIcon: const Icon(
-                  Icons.music_note,
-                  size: 48,
-                  color: AppTheme.primary,
-                ),
-                children: [
-                  const Text(
-                    'Discover and review concert venues and bands. '
-                    'Share your experiences with the music community.',
-                  ),
-                ],
-              );
-            },
-          ),
-          _SettingsTile(
-            title: 'Contact Support',
-            leading: const Icon(Icons.support_agent),
-            trailing: const Icon(Icons.chevron_right),
-            onTap: () {
-              _launchUrl('mailto:support@pitpulse.app');
-            },
-          ),
-          const Divider(),
-
-          // Account Section
-          const _SectionHeader(title: 'Account'),
-          _SettingsTile(
-            title: 'Logout',
-            leading: const Icon(Icons.logout, color: Colors.red),
-            textColor: Colors.red,
-            onTap: () async {
-              final shouldLogout = await showDialog<bool>(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Logout'),
-                  content: const Text('Are you sure you want to logout?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(false),
-                      child: const Text('Cancel'),
+          return ListView(
+            children: [
+              // Appearance Section
+              const _SectionHeader(title: 'Appearance'),
+              _SettingsTile(
+                title: 'Theme',
+                subtitle: _getThemeModeLabel(themeMode),
+                leading: const Icon(Icons.palette_outlined),
+                trailing: DropdownButton<theme_provider.AppThemeMode>(
+                  value: themeMode,
+                  underline: const SizedBox(),
+                  items: const [
+                    DropdownMenuItem(
+                      value: theme_provider.AppThemeMode.system,
+                      child: Text('System'),
                     ),
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(true),
-                      child: const Text(
-                        'Logout',
-                        style: TextStyle(color: Colors.red),
-                      ),
+                    DropdownMenuItem(
+                      value: theme_provider.AppThemeMode.light,
+                      child: Text('Light'),
+                    ),
+                    DropdownMenuItem(
+                      value: theme_provider.AppThemeMode.dark,
+                      child: Text('Dark'),
                     ),
                   ],
+                  onChanged: (theme_provider.AppThemeMode? mode) {
+                    if (mode != null) {
+                      ref.read(theme_provider.themeSettingProvider.notifier).setTheme(mode);
+                    }
+                  },
                 ),
-              );
+              ),
+              const Divider(),
 
-              if (shouldLogout == true && context.mounted) {
-                await ref.read(authStateProvider.notifier).logout();
-                if (context.mounted) {
-                  context.go('/login');
-                }
-              }
-            },
-          ),
-          const SizedBox(height: AppTheme.spacing32),
-        ],
+              // Notifications Section
+              const _SectionHeader(title: 'Notifications'),
+              _SettingsTile(
+                title: 'Push Notifications',
+                subtitle: 'New reviews, badges, and followers',
+                leading: const Icon(Icons.notifications_outlined),
+                trailing: Switch(
+                  value: pushEnabled,
+                  onChanged: (value) {
+                    ref.read(notificationSettingsProvider.notifier).setPushNotifications(value);
+                  },
+                ),
+              ),
+              _SettingsTile(
+                title: 'Email Notifications',
+                subtitle: 'Receive occasional updates',
+                leading: const Icon(Icons.email_outlined),
+                trailing: Switch(
+                  value: emailEnabled,
+                  onChanged: (value) {
+                    ref.read(notificationSettingsProvider.notifier).setEmailNotifications(value);
+                  },
+                ),
+              ),
+              const Divider(),
+
+              // Privacy Section
+              const _SectionHeader(title: 'Privacy & Legal'),
+              _SettingsTile(
+                title: 'Privacy Policy',
+                leading: const Icon(Icons.privacy_tip_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  _launchUrl('https://pitpulse.app/privacy');
+                },
+              ),
+              _SettingsTile(
+                title: 'Terms of Service',
+                leading: const Icon(Icons.description_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  _launchUrl('https://pitpulse.app/terms');
+                },
+              ),
+              const Divider(),
+
+              // About Section
+              const _SectionHeader(title: 'About'),
+              _SettingsTile(
+                title: 'About PitPulse',
+                subtitle: 'Version 1.0.0', // TODO: Get from pubspec
+                leading: const Icon(Icons.info_outline),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  showAboutDialog(
+                    context: context,
+                    applicationName: 'PitPulse',
+                    applicationVersion: '1.0.0',
+                    applicationIcon: const Icon(
+                      Icons.music_note,
+                      size: 48,
+                      color: AppTheme.primary,
+                    ),
+                    children: [
+                      const Text(
+                        'Discover and review concert venues and bands. '
+                        'Share your experiences with the music community.',
+                      ),
+                    ],
+                  );
+                },
+              ),
+               _SettingsTile(
+                title: 'Contact Support',
+                leading: const Icon(Icons.support_agent_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () {
+                  _launchUrl('mailto:support@pitpulse.app');
+                },
+              ),
+              const Divider(),
+
+              // Account Section
+              const _SectionHeader(title: 'Account'),
+              _SettingsTile(
+                title: 'Logout',
+                leading: const Icon(Icons.logout, color: Colors.red),
+                textColor: Colors.red,
+                onTap: () async {
+                  final shouldLogout = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Logout'),
+                      content: const Text('Are you sure you want to logout?'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(false),
+                          child: const Text('Cancel'),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.of(context).pop(true),
+                          child: const Text(
+                            'Logout',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+
+                  if (shouldLogout == true && context.mounted) {
+                    await ref.read(authStateProvider.notifier).logout();
+                    if (context.mounted) {
+                      context.go('/login');
+                    }
+                  }
+                },
+              ),
+              const SizedBox(height: AppTheme.spacing32),
+            ],
+          );
+        },
       ),
     );
   }
@@ -205,11 +198,11 @@ class SettingsScreen extends ConsumerWidget {
   String _getThemeModeLabel(theme_provider.AppThemeMode mode) {
     switch (mode) {
       case theme_provider.AppThemeMode.light:
-        return 'Light mode';
+        return 'Light';
       case theme_provider.AppThemeMode.dark:
-        return 'Dark mode';
+        return 'Dark';
       case theme_provider.AppThemeMode.system:
-        return 'System default';
+        return 'System';
     }
   }
 }
@@ -229,10 +222,11 @@ class _SectionHeader extends StatelessWidget {
         AppTheme.spacing8,
       ),
       child: Text(
-        title,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(
               color: AppTheme.primary,
               fontWeight: FontWeight.bold,
+              letterSpacing: 1.2,
             ),
       ),
     );
@@ -249,7 +243,8 @@ class _SettingsTile extends StatelessWidget {
 
   const _SettingsTile({
     required this.title,
-    required this.leading, this.subtitle,
+    required this.leading,
+    this.subtitle,
     this.trailing,
     this.onTap,
     this.textColor,
@@ -261,9 +256,9 @@ class _SettingsTile extends StatelessWidget {
       leading: leading,
       title: Text(
         title,
-        style: TextStyle(color: textColor),
+        style: TextStyle(color: textColor, fontWeight: FontWeight.w500),
       ),
-      subtitle: subtitle != null ? Text(subtitle!) : null,
+      subtitle: subtitle != null ? Text(subtitle!, style: Theme.of(context).textTheme.bodySmall) : null,
       trailing: trailing,
       onTap: onTap,
     );

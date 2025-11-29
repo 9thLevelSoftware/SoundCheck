@@ -89,10 +89,9 @@ class UserBadgeInfo with _$UserBadgeInfo {
   const factory UserBadgeInfo({
     required String id,
     required String name,
-    String? description,
+    required String earnedAt, String? description,
     String? iconUrl,
     String? color,
-    required String earnedAt,
   }) = _UserBadgeInfo;
 
   factory UserBadgeInfo.fromJson(Map<String, dynamic> json) =>

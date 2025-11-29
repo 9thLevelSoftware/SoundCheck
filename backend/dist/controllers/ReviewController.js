@@ -29,10 +29,28 @@ class ReviewController {
                     res.status(400).json(response);
                     return;
                 }
+                // Validate rating range
+                if (typeof reviewData.rating !== 'number' || reviewData.rating < 1 || reviewData.rating > 5) {
+                    const response = {
+                        success: false,
+                        error: 'Rating must be a number between 1 and 5',
+                    };
+                    res.status(400).json(response);
+                    return;
+                }
                 if (!reviewData.venueId && !reviewData.bandId) {
                     const response = {
                         success: false,
                         error: 'Review must be for either a venue or a band',
+                    };
+                    res.status(400).json(response);
+                    return;
+                }
+                // Prevent reviewing both venue and band in the same review
+                if (reviewData.venueId && reviewData.bandId) {
+                    const response = {
+                        success: false,
+                        error: 'Review must be for either a venue or a band, not both',
                     };
                     res.status(400).json(response);
                     return;

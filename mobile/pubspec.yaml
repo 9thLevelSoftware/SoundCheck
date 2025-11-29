@@ -48,6 +48,8 @@ dependencies:
 
   # Haptic Feedback
   vibration: ^1.9.0
+  local_auth: ^3.0.0
+  google_fonts: ^6.3.2
 
 dev_dependencies:
   flutter_test:

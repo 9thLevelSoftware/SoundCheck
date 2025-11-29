@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserService = void 0;
 const database_1 = __importDefault(require("../config/database"));
 const auth_1 = require("../utils/auth");
+const dbMappers_1 = require("../utils/dbMappers");
 class UserService {
     constructor() {
         this.db = database_1.default.getInstance();
@@ -15,18 +16,8 @@ class UserService {
      */
     async createUser(userData) {
         const { email, password, username, firstName, lastName } = userData;
-        // Validate input
-        if (!auth_1.AuthUtils.validateEmail(email)) {
-            throw new Error('Invalid email format');
-        }
-        const usernameValidation = auth_1.AuthUtils.validateUsername(username);
-        if (!usernameValidation.isValid) {
-            throw new Error(usernameValidation.errors.join(', '));
-        }
-        const passwordValidation = auth_1.AuthUtils.validatePassword(password);
-        if (!passwordValidation.isValid) {
-            throw new Error(passwordValidation.errors.join(', '));
-        }
+        // Note: Basic validation is handled by middleware now, 
+        // but business logic validation (duplicates) remains here.
         // Check if email already exists
         const emailExists = await this.findByEmail(email);
         if (emailExists) {
@@ -48,7 +39,7 @@ class UserService {
     `;
         const values = [email, passwordHash, username, firstName || null, lastName || null];
         const result = await this.db.query(query, values);
-        return this.mapDbUserToUser(result.rows[0]);
+        return (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
     }
     /**
      * Authenticate user login
@@ -95,7 +86,7 @@ class UserService {
         if (result.rows.length === 0) {
             return null;
         }
-        return this.mapDbUserToUser(result.rows[0]);
+        return (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
     }
     /**
      * Find user by email
@@ -111,7 +102,7 @@ class UserService {
         if (result.rows.length === 0) {
             return null;
         }
-        return this.mapDbUserToUser(result.rows[0]);
+        return (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
     }
     /**
      * Find user by email including password hash (for authentication)
@@ -130,7 +121,7 @@ class UserService {
         }
         const row = result.rows[0];
         return {
-            ...this.mapDbUserToUser(row),
+            ...(0, dbMappers_1.mapDbUserToUser)(row),
             passwordHash: row.password_hash,
         };
     }
@@ -148,7 +139,7 @@ class UserService {
         if (result.rows.length === 0) {
             return null;
         }
-        return this.mapDbUserToUser(result.rows[0]);
+        return (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
     }
     /**
      * Update user profile
@@ -160,7 +151,7 @@ class UserService {
         let paramCount = 1;
         for (const [key, value] of Object.entries(updateData)) {
             if (allowedFields.includes(key) && value !== undefined) {
-                const dbField = this.camelToSnakeCase(key);
+                const dbField = (0, dbMappers_1.camelToSnakeCase)(key);
                 updates.push(`${dbField} = $${paramCount}`);
                 values.push(value);
                 paramCount++;
@@ -181,7 +172,7 @@ class UserService {
         if (result.rows.length === 0) {
             throw new Error('User not found or inactive');
         }
-        return this.mapDbUserToUser(result.rows[0]);
+        return (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
     }
     /**
      * Deactivate user account
@@ -213,32 +204,6 @@ class UserService {
             followerCount: parseInt(stats.follower_count),
             followingCount: parseInt(stats.following_count),
         };
-    }
-    /**
-     * Map database user row to User type
-     */
-    mapDbUserToUser(row) {
-        return {
-            id: row.id,
-            email: row.email,
-            username: row.username,
-            firstName: row.first_name,
-            lastName: row.last_name,
-            bio: row.bio,
-            profileImageUrl: row.profile_image_url,
-            location: row.location,
-            dateOfBirth: row.date_of_birth,
-            isVerified: row.is_verified,
-            isActive: row.is_active,
-            createdAt: row.created_at,
-            updatedAt: row.updated_at,
-        };
-    }
-    /**
-     * Convert camelCase to snake_case
-     */
-    camelToSnakeCase(str) {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
     }
 }
 exports.UserService = UserService;

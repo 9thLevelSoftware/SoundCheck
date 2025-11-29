@@ -1,6 +1,8 @@
 import { Request, Response } from 'express';
+import { UserService } from '../services/UserService';
 export declare class UserController {
     private userService;
+    constructor(userService?: UserService);
     /**
      * Register a new user
      * POST /api/users/register

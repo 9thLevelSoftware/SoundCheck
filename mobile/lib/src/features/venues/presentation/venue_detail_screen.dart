@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
@@ -253,7 +252,7 @@ class _MapStrip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _openInMaps(),
+      onTap: _openInMaps,
       child: Container(
         height: 80,
         margin: const EdgeInsets.all(16),
@@ -266,9 +265,9 @@ class _MapStrip extends StatelessWidget {
             // Map placeholder
             Container(
               width: 100,
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: AppTheme.surfaceVariantDark,
-                borderRadius: const BorderRadius.horizontal(
+                borderRadius: BorderRadius.horizontal(
                   left: Radius.circular(12),
                 ),
               ),
@@ -686,10 +685,10 @@ class _VenueInsightsSection extends StatelessWidget {
                 color: AppTheme.cardDark,
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Column(
+              child: const Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Row(
+                  Row(
                     children: [
                       Icon(Icons.trending_up, color: AppTheme.neonPink, size: 16),
                       SizedBox(width: 6),
@@ -703,8 +702,8 @@ class _VenueInsightsSection extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
-                  const Text(
+                  SizedBox(height: 8),
+                  Text(
                     'Metallica, Ghost, Gojira',
                     style: TextStyle(
                       color: AppTheme.textPrimary,

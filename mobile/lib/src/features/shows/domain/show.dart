@@ -14,7 +14,7 @@ class Show with _$Show {
     required String venueId,
     required String bandId,
     required String showDate,
-    String? doorsTime,
+    required String createdAt, required String updatedAt, String? doorsTime,
     String? startTime,
     String? endTime,
     String? ticketUrl,
@@ -23,8 +23,6 @@ class Show with _$Show {
     @Default(false) bool isSoldOut,
     @Default(false) bool isCancelled,
     String? description,
-    required String createdAt,
-    required String updatedAt,
     // Populated fields
     Band? band,
     Venue? venue,
@@ -60,8 +58,7 @@ class WishlistItem with _$WishlistItem {
     required String id,
     required String userId,
     required String bandId,
-    @Default(true) bool notifyWhenNearby,
-    required String createdAt,
+    required String createdAt, @Default(true) bool notifyWhenNearby,
     // Populated fields
     Band? band,
   }) = _WishlistItem;

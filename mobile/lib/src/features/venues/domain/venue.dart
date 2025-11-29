@@ -103,8 +103,7 @@ class LoyalPatron with _$LoyalPatron {
   const factory LoyalPatron({
     required String id,
     required String username,
-    String? profileImageUrl,
-    required int checkinCount,
+    required int checkinCount, String? profileImageUrl,
   }) = _LoyalPatron;
 
   factory LoyalPatron.fromJson(Map<String, dynamic> json) =>
@@ -117,8 +116,7 @@ class TrendingBand with _$TrendingBand {
   const factory TrendingBand({
     required String id,
     required String name,
-    String? imageUrl,
-    required int checkinCount,
+    required int checkinCount, String? imageUrl,
   }) = _TrendingBand;
 
   factory TrendingBand.fromJson(Map<String, dynamic> json) =>

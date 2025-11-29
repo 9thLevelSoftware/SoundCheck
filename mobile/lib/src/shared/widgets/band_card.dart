@@ -10,7 +10,8 @@ class BandCard extends StatelessWidget {
   final VoidCallback? onTap;
 
   const BandCard({
-    required this.band, super.key,
+    required this.band,
+    super.key,
     this.onTap,
   });
 
@@ -19,90 +20,139 @@ class BandCard extends StatelessWidget {
     return Semantics(
       button: true,
       enabled: onTap != null,
-      label: 'Band: ${band.name}${band.genre != null ? ', genre: ${band.genre}' : ''}, ${band.averageRating.toStringAsFixed(1)} star rating with ${band.totalReviews} reviews',
+      label: 'Band: ${band.name}${band.genre != null ? ', genre: ${band.genre}' : ''}, ${band.averageRating.toStringAsFixed(1)} star rating',
       child: Card(
+        elevation: 4,
+        shadowColor: Colors.black.withOpacity(0.2),
         clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: InkWell(
-          onTap: onTap != null ? () async {
-            await HapticFeedbackUtil.lightImpact();
-            onTap!();
-          } : null,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          onTap: onTap != null
+              ? () async {
+                  await HapticFeedbackUtil.lightImpact();
+                  onTap!();
+                }
+              : null,
+          child: Stack(
             children: [
-              // Image
-              ExcludeSemantics(
-                child: band.imageUrl != null
-                    ? CachedNetworkImage(
-                        imageUrl: band.imageUrl!,
-                        height: 120,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        placeholder: (context, url) => Container(
-                          height: 120,
-                          width: double.infinity,
-                          color: AppTheme.background,
-                          child: const Center(
-                            child: SizedBox(
-                              width: 24,
-                              height: 24,
-                              child: CircularProgressIndicator(strokeWidth: 2),
+              // Background Image
+              Hero(
+                tag: 'band_image_${band.id}',
+                child: SizedBox(
+                  height: 200,
+                  width: double.infinity,
+                  child: band.imageUrl != null
+                      ? CachedNetworkImage(
+                          imageUrl: band.imageUrl!,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: AppTheme.background,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
                             ),
                           ),
-                        ),
-                        errorWidget: (context, url, error) => _buildPlaceholder(),
-                      )
-                    : _buildPlaceholder(),
+                          errorWidget: (context, url, error) => _buildPlaceholder(),
+                        )
+                      : _buildPlaceholder(),
+                ),
               ),
 
-              // Content
-              ExcludeSemantics(
-                child: Padding(
-                  padding: const EdgeInsets.all(AppTheme.spacing12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        band.name,
-                        style: Theme.of(context).textTheme.titleLarge,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                      if (band.genre != null)
-                        Padding(
-                          padding: const EdgeInsets.only(top: AppTheme.spacing4),
-                          child: Row(
-                            children: [
-                              const Icon(
-                                Icons.music_note,
-                                size: 16,
-                                color: AppTheme.textSecondary,
-                              ),
-                              const SizedBox(width: AppTheme.spacing4),
-                              Expanded(
-                                child: Text(
-                                  band.genre!,
-                                  style: Theme.of(context).textTheme.bodySmall,
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      const SizedBox(height: AppTheme.spacing8),
-                      Row(
-                        children: [
-                          StarRating(rating: band.averageRating),
-                          const SizedBox(width: AppTheme.spacing8),
-                          Text(
-                            '(${band.totalReviews})',
-                            style: Theme.of(context).textTheme.bodySmall,
+              // Gradient Scrim
+              Positioned.fill(
+                child: DecoratedBox(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.2),
+                        Colors.black.withOpacity(0.8),
+                      ],
+                      stops: const [0.4, 0.6, 1.0],
+                    ),
+                  ),
+                ),
+              ),
+
+              // Content Overlay
+              Positioned(
+                bottom: 16,
+                left: 16,
+                right: 16,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      band.name,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 22,
+                        fontWeight: FontWeight.bold,
+                        shadows: [
+                          Shadow(
+                            offset: Offset(0, 1),
+                            blurRadius: 4,
+                            color: Colors.black45,
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    if (band.genre != null)
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.music_note,
+                            color: AppTheme.accentTeal,
+                            size: 14,
+                          ),
+                          const SizedBox(width: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.3),
+                                width: 0.5,
+                              ),
+                            ),
+                            child: Text(
+                              band.genre!,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        StarRating(
+                          rating: band.averageRating,
+                          size: 16,
+                          color: AppTheme.accentOrange,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '(${band.totalReviews})',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -114,13 +164,13 @@ class BandCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      height: 120,
-      width: double.infinity,
-      color: AppTheme.background,
-      child: const Icon(
-        Icons.music_video,
-        size: 48,
-        color: AppTheme.textSecondary,
+      color: AppTheme.surfaceVariant,
+      child: const Center(
+        child: Icon(
+          Icons.music_video,
+          size: 48,
+          color: AppTheme.textSecondary,
+        ),
       ),
     );
   }

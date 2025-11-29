@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../checkins/domain/checkin.dart';
 
 /// Social Activity Feed - The Home Screen
 /// Shows a vertical scroll of check-in cards from friends and global activity
@@ -186,7 +184,7 @@ class _CheckInCard extends StatelessWidget {
                 Container(
                   width: 40,
                   height: 40,
-                  decoration: BoxDecoration(
+                  decoration: const BoxDecoration(
                     shape: BoxShape.circle,
                     gradient: AppTheme.primaryGradient,
                   ),
@@ -349,16 +347,16 @@ class _CheckInCard extends StatelessWidget {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _VibeChip(label: 'Great Sound', icon: Icons.volume_up),
-                    if (index % 2 == 0) _VibeChip(label: 'Mosh Pit', icon: Icons.local_fire_department),
-                    if (index % 3 == 0) _VibeChip(label: 'Epic Lighting', icon: Icons.lightbulb),
+                    const _VibeChip(label: 'Great Sound', icon: Icons.volume_up),
+                    if (index % 2 == 0) const _VibeChip(label: 'Mosh Pit', icon: Icons.local_fire_department),
+                    if (index % 3 == 0) const _VibeChip(label: 'Epic Lighting', icon: Icons.lightbulb),
                   ],
                 ),
 
                 // Comment
                 if (index % 2 == 0) ...[
                   const SizedBox(height: 12),
-                  Text(
+                  const Text(
                     'Incredible show! The energy was unreal tonight.',
                     style: TextStyle(
                       color: AppTheme.textSecondary,
@@ -373,7 +371,7 @@ class _CheckInCard extends StatelessWidget {
           // Footer Actions
           Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               border: Border(
                 top: BorderSide(
                   color: AppTheme.surfaceVariantDark,

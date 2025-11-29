@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 
 /// Discover & Search Screen
@@ -139,7 +138,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       padding: const EdgeInsets.all(16),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
-          _SectionHeader(title: 'Search Results'),
+          const _SectionHeader(title: 'Search Results'),
           const SizedBox(height: 12),
           // Placeholder results
           _SearchResultItem(
@@ -171,7 +170,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       sliver: SliverList(
         delegate: SliverChildListDelegate([
           // Trending Locally
-          _SectionHeader(
+          const _SectionHeader(
             title: 'Trending Locally',
             subtitle: 'Bands being checked into right now',
           ),
@@ -192,7 +191,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           const SizedBox(height: 24),
 
           // Top Rated Venues
-          _SectionHeader(
+          const _SectionHeader(
             title: 'Top Rated Venues',
             subtitle: 'Highest average check-in ratings',
           ),
@@ -213,7 +212,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           const SizedBox(height: 24),
 
           // Popular This Week
-          _SectionHeader(
+          const _SectionHeader(
             title: 'Popular This Week',
             subtitle: 'Bands on tour with high activity',
           ),

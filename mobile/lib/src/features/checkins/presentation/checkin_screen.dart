@@ -200,16 +200,16 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 24),
 
           // Venue Selector
-          _SectionTitle(title: 'Where are you?'),
+          const _SectionTitle(title: 'Where are you?'),
           const SizedBox(height: 12),
           _VenueSelector(
             selectedVenueName: _selectedVenueName,
-            onTap: () => _showVenueSearch(),
+            onTap: _showVenueSearch,
           ),
           const SizedBox(height: 24),
 
           // Rating
-          _SectionTitle(title: 'How is it?'),
+          const _SectionTitle(title: 'How is it?'),
           const SizedBox(height: 12),
           _RatingSelector(
             rating: _rating,
@@ -218,7 +218,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 24),
 
           // Photo
-          _SectionTitle(title: 'Add a photo (optional)'),
+          const _SectionTitle(title: 'Add a photo (optional)'),
           const SizedBox(height: 12),
           _PhotoSelector(
             onTap: () {
@@ -234,7 +234,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 24),
 
           // Vibes
-          _SectionTitle(title: 'Tag the vibes'),
+          const _SectionTitle(title: 'Tag the vibes'),
           const SizedBox(height: 12),
           _VibeSelector(
             vibes: _vibeOptions,
@@ -244,7 +244,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 24),
 
           // Comment
-          _SectionTitle(title: "What's the vibe? (optional)"),
+          const _SectionTitle(title: "What's the vibe? (optional)"),
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(

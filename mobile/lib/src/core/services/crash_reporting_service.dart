@@ -1,25 +1,24 @@
-/**
- * Crash Reporting Service using Sentry
- *
- * SETUP INSTRUCTIONS:
- * 1. Create account at sentry.io
- * 2. Create new Flutter project
- * 3. Copy DSN from project settings
- * 4. Add to pubspec.yaml: sentry_flutter: ^7.18.0
- * 5. Set DSN in .env or use --dart-define=SENTRY_DSN=your_dsn
- * 6. Uncomment implementation code below
- *
- * USAGE:
- * import 'package:pitpulse_flutter/src/core/services/crash_reporting_service.dart';
- *
- * // In main.dart
- * await CrashReportingService.init();
- * CrashReportingService.runApp(() => runApp(MyApp()));
- *
- * // To report errors
- * CrashReportingService.captureException(error, stackTrace);
- * CrashReportingService.captureMessage('Something went wrong');
- */
+/// Crash Reporting Service using Sentry
+///
+/// SETUP INSTRUCTIONS:
+/// 1. Create account at sentry.io
+/// 2. Create new Flutter project
+/// 3. Copy DSN from project settings
+/// 4. Add to pubspec.yaml: sentry_flutter: ^7.18.0
+/// 5. Set DSN in .env or use --dart-define=SENTRY_DSN=your_dsn
+/// 6. Uncomment implementation code below
+///
+/// USAGE:
+/// import 'package:pitpulse_flutter/src/core/services/crash_reporting_service.dart';
+///
+/// // In main.dart
+/// await CrashReportingService.init();
+/// CrashReportingService.runApp(() => runApp(MyApp()));
+///
+/// // To report errors
+/// CrashReportingService.captureException(error, stackTrace);
+/// CrashReportingService.captureMessage('Something went wrong');
+library;
 
 import 'package:flutter/foundation.dart';
 // NOTE: Uncomment when sentry_flutter is added to pubspec.yaml

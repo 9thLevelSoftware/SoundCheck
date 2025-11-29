@@ -3,10 +3,16 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
+const dotenv_1 = __importDefault(require("dotenv"));
+// Load environment variables from .env file (development only)
+// In production (Railway, etc.), environment variables are injected directly
+// IMPORTANT: This must be done BEFORE any other imports that use env vars
+if (process.env.NODE_ENV !== 'production') {
+    dotenv_1.default.config();
+}
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
-const dotenv_1 = __importDefault(require("dotenv"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const venueRoutes_1 = __importDefault(require("./routes/venueRoutes"));
 const bandRoutes_1 = __importDefault(require("./routes/bandRoutes"));
@@ -16,15 +22,7 @@ const discoveryRoutes_1 = __importDefault(require("./routes/discoveryRoutes"));
 const eventRoutes_1 = __importDefault(require("./routes/eventRoutes"));
 const checkinRoutes_1 = __importDefault(require("./routes/checkinRoutes"));
 const database_1 = __importDefault(require("./config/database"));
-// Load environment variables from .env file (development only)
-// In production (Railway, etc.), environment variables are injected directly
-if (process.env.NODE_ENV !== 'production') {
-    dotenv_1.default.config();
-    console.log('📄 Loaded .env file for development');
-}
-else {
-    console.log('🚀 Using production environment variables');
-}
+const logger_1 = require("./utils/logger");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Security middleware
@@ -55,13 +53,11 @@ app.use((0, cors_1.default)(corsOptions));
 // Body parsing middleware
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
-// Request logging middleware (development only)
-if (process.env.NODE_ENV === 'development') {
-    app.use((req, res, next) => {
-        console.log(`${new Date().toISOString()} - ${req.method} ${req.path}`);
-        next();
-    });
-}
+// Request logging middleware
+app.use((req, res, next) => {
+    (0, logger_1.logHttp)(`${req.method} ${req.path}`);
+    next();
+});
 // Health check endpoint
 app.get('/health', async (req, res) => {
     try {
@@ -115,64 +111,83 @@ app.use('*', (req, res) => {
     };
     res.status(404).json(response);
 });
-// Global error handler
+// Global error handler - catches ALL errors including async
 app.use((error, req, res, next) => {
-    console.error('Unhandled error:', error);
+    // Determine status code
+    const statusCode = error.statusCode || error.status || 500;
+    // Log error with context
+    (0, logger_1.logError)(`${error.message} | Path: ${req.path} | Method: ${req.method} | Status: ${statusCode}`, {
+        error: error.message,
+        stack: error.stack,
+        path: req.path,
+        method: req.method,
+        statusCode,
+        userId: req.user?.id,
+    });
+    // Build response
     const response = {
         success: false,
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error',
+        error: process.env.NODE_ENV === 'development'
+            ? error.message
+            : statusCode >= 500
+                ? 'Internal server error'
+                : error.message || 'Request failed',
     };
-    res.status(500).json(response);
+    // Include stack trace only in development
+    if (process.env.NODE_ENV === 'development' && error.stack) {
+        response.stack = error.stack;
+    }
+    res.status(statusCode).json(response);
 });
 // Start server
 const startServer = async () => {
     try {
         // Log environment info (without exposing sensitive data)
-        console.log('🌍 Environment:', process.env.NODE_ENV || 'development');
-        console.log('🔌 DATABASE_URL present:', !!process.env.DATABASE_URL);
-        console.log('🔌 DB_HOST present:', !!process.env.DB_HOST);
+        (0, logger_1.logInfo)(`Environment: ${process.env.NODE_ENV || 'development'}`);
+        (0, logger_1.logInfo)(`DATABASE_URL present: ${!!process.env.DATABASE_URL}`);
+        (0, logger_1.logInfo)(`DB_HOST present: ${!!process.env.DB_HOST}`);
         // Test database connection
         const db = database_1.default.getInstance();
         const isDbHealthy = await db.healthCheck();
         if (!isDbHealthy) {
-            console.error('Database connection failed. Please check your database configuration.');
+            (0, logger_1.logError)('Database connection failed. Please check your database configuration.');
             process.exit(1);
         }
-        console.log('✅ Database connection established');
+        (0, logger_1.logInfo)('Database connection established');
         app.listen(PORT, () => {
-            console.log(`🚀 PitPulse API Server running on port ${PORT}`);
-            console.log(`📊 Health check: http://localhost:${PORT}/health`);
-            console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+            (0, logger_1.logInfo)(`PitPulse API Server running on port ${PORT}`);
+            (0, logger_1.logInfo)(`Health check: http://localhost:${PORT}/health`);
+            (0, logger_1.logInfo)(`Environment: ${process.env.NODE_ENV || 'development'}`);
             if (process.env.NODE_ENV === 'development') {
-                console.log(`📖 API Documentation: http://localhost:${PORT}/`);
+                (0, logger_1.logInfo)(`API Documentation: http://localhost:${PORT}/`);
             }
         });
     }
     catch (error) {
-        console.error('Failed to start server:', error);
+        (0, logger_1.logError)('Failed to start server', { error });
         process.exit(1);
     }
 };
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
-    console.log('SIGTERM received, shutting down gracefully');
+    (0, logger_1.logInfo)('SIGTERM received, shutting down gracefully');
     const db = database_1.default.getInstance();
     await db.close();
     process.exit(0);
 });
 process.on('SIGINT', async () => {
-    console.log('SIGINT received, shutting down gracefully');
+    (0, logger_1.logInfo)('SIGINT received, shutting down gracefully');
     const db = database_1.default.getInstance();
     await db.close();
     process.exit(0);
 });
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
-    console.error('Uncaught Exception:', error);
+    (0, logger_1.logError)('Uncaught Exception', { error });
     process.exit(1);
 });
 process.on('unhandledRejection', (reason, promise) => {
-    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    (0, logger_1.logError)('Unhandled Rejection', { reason, promise });
     process.exit(1);
 });
 startServer();

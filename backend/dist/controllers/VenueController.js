@@ -2,11 +2,11 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VenueController = void 0;
 const VenueService_1 = require("../services/VenueService");
-const FoursquareService_1 = require("../services/FoursquareService");
+const SetlistFmService_1 = require("../services/SetlistFmService");
 class VenueController {
     constructor() {
         this.venueService = new VenueService_1.VenueService();
-        this.foursquareService = new FoursquareService_1.FoursquareService();
+        this.setlistFmService = new SetlistFmService_1.SetlistFmService();
         /**
          * Create a new venue
          * POST /api/venues
@@ -217,22 +217,22 @@ class VenueController {
             }
         };
         /**
-         * Import venue from Foursquare
+         * Import venue from setlist.fm
          * POST /api/venues/import
-         * Body: { foursquare_place_id: string }
+         * Body: { setlistfm_venue_id: string }
          */
         this.importVenue = async (req, res) => {
             try {
-                const { foursquare_place_id } = req.body;
-                if (!foursquare_place_id) {
+                const { setlistfm_venue_id } = req.body;
+                if (!setlistfm_venue_id) {
                     const response = {
                         success: false,
-                        error: 'Foursquare place ID is required',
+                        error: 'setlist.fm venue ID is required',
                     };
                     res.status(400).json(response);
                     return;
                 }
-                const venue = await this.foursquareService.importVenue(foursquare_place_id);
+                const venue = await this.setlistFmService.importVenue(setlistfm_venue_id);
                 const response = {
                     success: true,
                     data: venue,

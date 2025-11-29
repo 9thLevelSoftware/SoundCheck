@@ -3,8 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const UserService_1 = require("../services/UserService");
 class UserController {
-    constructor() {
-        this.userService = new UserService_1.UserService();
+    constructor(userService) {
         /**
          * Register a new user
          * POST /api/users/register
@@ -12,15 +11,6 @@ class UserController {
         this.register = async (req, res) => {
             try {
                 const userData = req.body;
-                // Validate required fields
-                if (!userData.email || !userData.password || !userData.username) {
-                    const response = {
-                        success: false,
-                        error: 'Email, password, and username are required',
-                    };
-                    res.status(400).json(response);
-                    return;
-                }
                 const user = await this.userService.createUser(userData);
                 const response = {
                     success: true,
@@ -45,15 +35,6 @@ class UserController {
         this.login = async (req, res) => {
             try {
                 const loginData = req.body;
-                // Validate required fields
-                if (!loginData.email || !loginData.password) {
-                    const response = {
-                        success: false,
-                        error: 'Email and password are required',
-                    };
-                    res.status(400).json(response);
-                    return;
-                }
                 const authResponse = await this.userService.authenticateUser(loginData);
                 const response = {
                     success: true,
@@ -256,14 +237,6 @@ class UserController {
         this.checkEmail = async (req, res) => {
             try {
                 const { email } = req.query;
-                if (!email || typeof email !== 'string') {
-                    const response = {
-                        success: false,
-                        error: 'Email parameter is required',
-                    };
-                    res.status(400).json(response);
-                    return;
-                }
                 const existingUser = await this.userService.findByEmail(email);
                 const isAvailable = !existingUser;
                 const response = {
@@ -284,6 +257,7 @@ class UserController {
                 res.status(500).json(response);
             }
         };
+        this.userService = userService ?? new UserService_1.UserService();
     }
 }
 exports.UserController = UserController;

@@ -1,5 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../error/failures.dart';
+import '../services/log_service.dart';
 import 'api_config.dart';
 
 /// DioClient provides a configured Dio instance with interceptors
@@ -48,14 +50,14 @@ class DioClient {
       ),
     );
 
-    // Add logging interceptor ONLY in development mode
+    // Add logging interceptor
     if (ApiConfig.isDev) {
       _dio.interceptors.add(
         LogInterceptor(
           requestBody: true,
           responseBody: true,
           error: true,
-          logPrint: print,
+          logPrint: (object) => LogService.d(object.toString()),
         ),
       );
     }
@@ -154,48 +156,55 @@ class DioClient {
     }
   }
 
-  /// Handle DioException and convert to user-friendly messages
-  Exception _handleDioError(DioException error) {
+  /// Handle DioException and convert to Domain Failures
+  Failure _handleDioError(DioException error) {
+    LogService.e('API Error: ${error.message}', error, error.stackTrace);
+
     switch (error.type) {
       case DioExceptionType.connectionTimeout:
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
-        return Exception('Connection timeout. Please check your internet connection and try again.');
+        return const NetworkFailure('Connection timeout. Please check your internet connection.');
 
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
-        final message = error.response?.data?['error'] ?? 'Request failed';
+        final data = error.response?.data;
+        String message = 'Request failed';
+        
+        if (data is Map<String, dynamic> && data.containsKey('error')) {
+            message = data['error'];
+        }
 
         if (statusCode == 400) {
-          return Exception('Invalid request: $message');
+          return ValidationFailure(message);
         } else if (statusCode == 401) {
-          return Exception('Authentication required. Please log in again.');
+          return const AuthFailure('Authentication required. Please log in again.');
         } else if (statusCode == 403) {
-          return Exception('Access denied: $message');
+          return AuthFailure('Access denied: $message');
         } else if (statusCode == 404) {
-          return Exception('Resource not found: $message');
+          return ServerFailure('Resource not found: $message');
         } else if (statusCode == 422) {
-          return Exception('Validation error: $message');
+          return ValidationFailure(message);
         } else if (statusCode != null && statusCode >= 500) {
-          return Exception('Server error. Please try again later.');
+          return const ServerFailure('Server error. Please try again later.');
         }
-        return Exception(message);
+        return ServerFailure(message);
 
       case DioExceptionType.cancel:
-        return Exception('Request was cancelled');
+        return const UnknownFailure('Request was cancelled');
 
       case DioExceptionType.connectionError:
-        return Exception('No internet connection. Please check your network settings.');
+        return const NetworkFailure('No internet connection. Please check your network settings.');
 
       case DioExceptionType.badCertificate:
-        return Exception('Security certificate error. Please check your connection.');
+        return const NetworkFailure('Security certificate error.');
 
       case DioExceptionType.unknown:
       default:
         if (error.message?.contains('SocketException') ?? false) {
-          return Exception('No internet connection. Please check your network settings.');
+          return const NetworkFailure('No internet connection.');
         }
-        return Exception('An unexpected error occurred. Please try again.');
+        return const UnknownFailure('An unexpected error occurred.');
     }
   }
 }

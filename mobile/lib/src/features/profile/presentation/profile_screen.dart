@@ -109,7 +109,7 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 16),
-              Text('Error loading profile', style: TextStyle(color: AppTheme.textSecondary)),
+              const Text('Error loading profile', style: TextStyle(color: AppTheme.textSecondary)),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(authStateProvider),
@@ -420,7 +420,7 @@ class _LevelProgress extends StatelessWidget {
     const currentLevel = 12;
     const currentXP = 2350;
     const nextLevelXP = 3000;
-    final progress = currentXP / nextLevelXP;
+    const progress = currentXP / nextLevelXP;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -443,9 +443,9 @@ class _LevelProgress extends StatelessWidget {
                       gradient: AppTheme.primaryGradient,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Text(
+                    child: const Text(
                       'LVL $currentLevel',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
@@ -463,9 +463,9 @@ class _LevelProgress extends StatelessWidget {
                   ),
                 ],
               ),
-              Text(
+              const Text(
                 '$currentXP / $nextLevelXP XP',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   color: AppTheme.textTertiary,
                 ),
@@ -476,17 +476,17 @@ class _LevelProgress extends StatelessWidget {
           // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
+            child: const LinearProgressIndicator(
               value: progress,
               minHeight: 6,
               backgroundColor: AppTheme.surfaceDark,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.electricPurple),
+              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.electricPurple),
             ),
           ),
           const SizedBox(height: 8),
-          Text(
+          const Text(
             '${nextLevelXP - currentXP} XP until Level ${currentLevel + 1}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 11,
               color: AppTheme.textTertiary,
             ),

@@ -3,6 +3,8 @@ import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
+import '../../core/services/log_service.dart';
+
 /// Image compression utility for optimizing image uploads
 class ImageCompression {
   /// Compress an image file for upload
@@ -44,7 +46,7 @@ class ImageCompression {
 
       return File(compressedFile.path);
     } catch (e) {
-      print('Error compressing image: $e');
+      LogService.e('Error compressing image', e);
       return null;
     }
   }

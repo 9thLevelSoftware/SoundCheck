@@ -1,8 +1,8 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/dio_client.dart';
+import '../services/biometric_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/domain/user.dart';
 import '../../features/venues/data/venue_repository.dart';
@@ -11,6 +11,11 @@ import '../../features/badges/data/badge_repository.dart';
 import '../../features/checkins/data/checkin_repository.dart';
 
 part 'providers.g.dart';
+
+@Riverpod(keepAlive: true)
+BiometricService biometricService(BiometricServiceRef ref) {
+  return BiometricService();
+}
 
 @Riverpod(keepAlive: true)
 FlutterSecureStorage secureStorage(SecureStorageRef ref) {

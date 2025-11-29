@@ -1,5 +1,5 @@
 import 'package:geolocator/geolocator.dart';
-import 'package:permission_handler/permission_handler.dart';
+import '../../core/services/log_service.dart';
 
 /// Location service for handling GPS and location permissions
 class LocationService {
@@ -54,7 +54,7 @@ class LocationService {
         timeLimit: const Duration(seconds: 10),
       );
     } catch (e) {
-      print('Error getting location: $e');
+      LogService.e('Error getting location', e);
       return null;
     }
   }

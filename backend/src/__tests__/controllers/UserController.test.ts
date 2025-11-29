@@ -6,19 +6,21 @@ import { UserService } from '../../services/UserService';
 // Mock the UserService
 jest.mock('../../services/UserService');
 
-const app = express();
-app.use(express.json());
-
-const userController = new UserController();
-app.post('/register', userController.register);
-app.post('/login', userController.login);
-app.get('/me', userController.getProfile);
-
-const mockUserService = UserService as jest.MockedClass<typeof UserService>;
-
 describe('UserController', () => {
+  let app: express.Express;
+  let mockUserService: jest.Mocked<UserService>;
+
   beforeEach(() => {
     jest.clearAllMocks();
+
+    app = express();
+    app.use(express.json());
+
+    mockUserService = new UserService() as jest.Mocked<UserService>;
+    const userController = new UserController(mockUserService);
+    app.post('/register', userController.register);
+    app.post('/login', userController.login);
+    app.get('/me', userController.getProfile);
   });
 
   describe('POST /register', () => {
@@ -43,8 +45,7 @@ describe('UserController', () => {
         updatedAt: '2024-01-01T00:00:00Z',
       };
 
-      const mockCreateUser = jest.fn().mockResolvedValue(mockUser);
-      mockUserService.prototype.createUser = mockCreateUser;
+      mockUserService.createUser.mockResolvedValue(mockUser as any);
 
       const response = await request(app)
         .post('/register')
@@ -54,7 +55,7 @@ describe('UserController', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(mockUser);
       expect(response.body.message).toBe('User registered successfully');
-      expect(mockCreateUser).toHaveBeenCalledWith(userData);
+      expect(mockUserService.createUser).toHaveBeenCalledWith(userData);
     });
 
     it('should return error for missing required fields', async () => {
@@ -80,8 +81,7 @@ describe('UserController', () => {
         firstName: 'Test',
       };
 
-      const mockCreateUser = jest.fn().mockRejectedValue(new Error('Email already registered'));
-      mockUserService.prototype.createUser = mockCreateUser;
+      mockUserService.createUser.mockRejectedValue(new Error('Email already registered'));
 
       const response = await request(app)
         .post('/register')
@@ -105,12 +105,17 @@ describe('UserController', () => {
           id: 'user-123',
           email: loginData.email,
           username: 'testuser',
+          firstName: 'Test',
+          lastName: 'User',
+          isVerified: false,
+          isActive: true,
+          createdAt: '2024-01-01T00:00:00Z',
+          updatedAt: '2024-01-01T00:00:00Z',
         },
         token: 'jwt-token-123',
       };
 
-      const mockAuthenticateUser = jest.fn().mockResolvedValue(mockAuthResponse);
-      mockUserService.prototype.authenticateUser = mockAuthenticateUser;
+      mockUserService.authenticateUser.mockResolvedValue(mockAuthResponse);
 
       const response = await request(app)
         .post('/login')
@@ -120,7 +125,7 @@ describe('UserController', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual(mockAuthResponse);
       expect(response.body.message).toBe('Login successful');
-      expect(mockAuthenticateUser).toHaveBeenCalledWith(loginData);
+      expect(mockUserService.authenticateUser).toHaveBeenCalledWith(loginData);
     });
 
     it('should return error for missing credentials', async () => {
@@ -144,8 +149,7 @@ describe('UserController', () => {
         password: 'WrongPassword',
       };
 
-      const mockAuthenticateUser = jest.fn().mockRejectedValue(new Error('Invalid email or password'));
-      mockUserService.prototype.authenticateUser = mockAuthenticateUser;
+      mockUserService.authenticateUser.mockRejectedValue(new Error('Invalid email or password'));
 
       const response = await request(app)
         .post('/login')

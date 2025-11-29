@@ -33,10 +33,7 @@ void main() async {
         ),
       );
     },
-    (error, stackTrace) {
-      // Send to crash reporting service
-      CrashReportingService.captureException(error, stackTrace);
-    },
+    CrashReportingService.captureException,
   );
 }
 

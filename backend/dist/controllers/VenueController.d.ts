@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 export declare class VenueController {
     private venueService;
-    private foursquareService;
+    private setlistFmService;
     /**
      * Create a new venue
      * POST /api/venues
@@ -38,9 +38,9 @@ export declare class VenueController {
      */
     getVenuesNear: (req: Request, res: Response) => Promise<void>;
     /**
-     * Import venue from Foursquare
+     * Import venue from setlist.fm
      * POST /api/venues/import
-     * Body: { foursquare_place_id: string }
+     * Body: { setlistfm_venue_id: string }
      */
     importVenue: (req: Request, res: Response) => Promise<void>;
 }

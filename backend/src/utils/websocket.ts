@@ -28,6 +28,7 @@
  */
 
 import { Server } from 'http';
+import { AuthUtils } from './auth';
 // NOTE: Uncomment when ws is installed
 // import WebSocket from 'ws';
 
@@ -126,7 +127,14 @@ class WebSocketServer {
   }
 
   private authenticateClient(clientId: string, userId: string, token: string): void {
-    // TODO: Validate JWT token
+    const decoded = AuthUtils.verifyToken(token);
+    
+    if (!decoded || decoded.userId !== userId) {
+      console.warn(`❌ Client ${clientId} failed authentication: Invalid token or user mismatch`);
+      this.send(clientId, 'error', { message: 'Authentication failed' });
+      return;
+    }
+
     const client = this.clients.get(clientId);
     if (client) {
       client.userId = userId;

@@ -1,30 +1,29 @@
-/**
- * Analytics Service for tracking user events and behavior
- *
- * Supports multiple analytics providers:
- * - Mixpanel (recommended for user analytics)
- * - Amplitude (good for product analytics)
- * - Google Analytics (good for web conversion tracking)
- * - Firebase Analytics (good for mobile app analytics)
- *
- * SETUP INSTRUCTIONS:
- * 1. Choose analytics provider (Mixpanel recommended)
- * 2. Create project and get API key
- * 3. Add to pubspec.yaml: mixpanel_flutter: ^2.2.0 (or your choice)
- * 4. Set API_KEY via --dart-define=MIXPANEL_TOKEN=your_token
- * 5. Uncomment implementation code below
- *
- * USAGE:
- * import 'package:pitpulse_flutter/src/core/services/analytics_service.dart';
- *
- * // In main.dart
- * await AnalyticsService.init();
- *
- * // Track events
- * AnalyticsService.trackEvent('venue_viewed', {'venue_id': '123'});
- * AnalyticsService.trackScreen('VenueDetailScreen');
- * AnalyticsService.setUserProperties({'plan': 'premium'});
- */
+/// Analytics Service for tracking user events and behavior
+///
+/// Supports multiple analytics providers:
+/// - Mixpanel (recommended for user analytics)
+/// - Amplitude (good for product analytics)
+/// - Google Analytics (good for web conversion tracking)
+/// - Firebase Analytics (good for mobile app analytics)
+///
+/// SETUP INSTRUCTIONS:
+/// 1. Choose analytics provider (Mixpanel recommended)
+/// 2. Create project and get API key
+/// 3. Add to pubspec.yaml: mixpanel_flutter: ^2.2.0 (or your choice)
+/// 4. Set API_KEY via --dart-define=MIXPANEL_TOKEN=your_token
+/// 5. Uncomment implementation code below
+///
+/// USAGE:
+/// import 'package:pitpulse_flutter/src/core/services/analytics_service.dart';
+///
+/// // In main.dart
+/// await AnalyticsService.init();
+///
+/// // Track events
+/// AnalyticsService.trackEvent('venue_viewed', {'venue_id': '123'});
+/// AnalyticsService.trackScreen('VenueDetailScreen');
+/// AnalyticsService.setUserProperties({'plan': 'premium'});
+library;
 
 import 'package:flutter/foundation.dart';
 // NOTE: Uncomment when mixpanel_flutter is added to pubspec.yaml

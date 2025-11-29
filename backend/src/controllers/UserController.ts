@@ -3,7 +3,11 @@ import { UserService } from '../services/UserService';
 import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
 
 export class UserController {
-  private userService = new UserService();
+  private userService: UserService;
+
+  constructor(userService?: UserService) {
+    this.userService = userService ?? new UserService();
+  }
 
   /**
    * Register a new user
@@ -12,16 +16,6 @@ export class UserController {
   register = async (req: Request, res: Response): Promise<void> => {
     try {
       const userData: CreateUserRequest = req.body;
-
-      // Validate required fields
-      if (!userData.email || !userData.password || !userData.username) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Email, password, and username are required',
-        };
-        res.status(400).json(response);
-        return;
-      }
 
       const user = await this.userService.createUser(userData);
 
@@ -51,16 +45,6 @@ export class UserController {
   login = async (req: Request, res: Response): Promise<void> => {
     try {
       const loginData: LoginRequest = req.body;
-
-      // Validate required fields
-      if (!loginData.email || !loginData.password) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Email and password are required',
-        };
-        res.status(400).json(response);
-        return;
-      }
 
       const authResponse = await this.userService.authenticateUser(loginData);
 
@@ -299,16 +283,7 @@ export class UserController {
     try {
       const { email } = req.query;
 
-      if (!email || typeof email !== 'string') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Email parameter is required',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const existingUser = await this.userService.findByEmail(email);
+      const existingUser = await this.userService.findByEmail(email as string);
       const isAvailable = !existingUser;
 
       const response: ApiResponse = {
