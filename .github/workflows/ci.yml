@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  backend-lint-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./backend
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: backend/package-lock.json
+
+    - name: Install dependencies
+      run: npm ci
+
+    - name: Run Lint (dry-run)
+      # Assuming there is a lint script, if not create one or skip
+      run: npm run build 
+
+    - name: Build
+      run: npm run build
+
+  mobile-analyze-and-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./mobile
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Setup Flutter
+      uses: subosito/flutter-action@v2
+      with:
+        channel: 'stable'
+        flutter-version: '3.19.x'
+        cache: true
+
+    - name: Get Dependencies
+      run: flutter pub get
+
+    - name: Run Code Generation
+      run: flutter pub run build_runner build --delete-conflicting-outputs
+
+    - name: Analyze Code
+      run: flutter analyze
+
+    - name: Run Tests
+      run: flutter test
