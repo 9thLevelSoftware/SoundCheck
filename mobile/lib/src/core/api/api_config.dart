@@ -47,6 +47,11 @@ class ApiConfig {
   static const String bands = '/bands';
   static const String reviews = '/reviews';
   static const String badges = '/badges';
+  static const String checkins = '/checkins';
+  static const String toasts = '/toasts';
+  static const String shows = '/shows';
+  static const String notifications = '/notifications';
+  static const String feed = '/feed';
 
   // Storage Keys
   static const String tokenKey = 'auth_token';
