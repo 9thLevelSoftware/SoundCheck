@@ -9,12 +9,25 @@ class User with _$User {
     required String id,
     required String email,
     required String username,
-    required bool isVerified, required bool isActive, required String createdAt, required String updatedAt, String? firstName,
+    required bool isVerified,
+    required bool isActive,
+    required String createdAt,
+    required String updatedAt,
+    String? firstName,
     String? lastName,
     String? bio,
     String? profileImageUrl,
     String? location,
     String? dateOfBirth,
+    // Gamification stats (denormalized for performance)
+    @Default(0) int totalCheckins,
+    @Default(0) int uniqueBands,
+    @Default(0) int uniqueVenues,
+    // Follower counts
+    @Default(0) int followersCount,
+    @Default(0) int followingCount,
+    // Badge count
+    @Default(0) int badgesCount,
   }) = _User;
 
   factory User.fromJson(Map<String, dynamic> json) => _$UserFromJson(json);
@@ -54,4 +67,34 @@ class RegisterRequest with _$RegisterRequest {
 
   factory RegisterRequest.fromJson(Map<String, dynamic> json) =>
       _$RegisterRequestFromJson(json);
+}
+
+/// User profile with full stats and badges
+@freezed
+class UserProfile with _$UserProfile {
+  const factory UserProfile({
+    required User user,
+    required List<UserBadgeInfo> badges,
+    @Default(false) bool isFollowing,
+    @Default(false) bool isFollowedBy,
+  }) = _UserProfile;
+
+  factory UserProfile.fromJson(Map<String, dynamic> json) =>
+      _$UserProfileFromJson(json);
+}
+
+/// Badge info for user profile
+@freezed
+class UserBadgeInfo with _$UserBadgeInfo {
+  const factory UserBadgeInfo({
+    required String id,
+    required String name,
+    String? description,
+    String? iconUrl,
+    String? color,
+    required String earnedAt,
+  }) = _UserBadgeInfo;
+
+  factory UserBadgeInfo.fromJson(Map<String, dynamic> json) =>
+      _$UserBadgeInfoFromJson(json);
 }
