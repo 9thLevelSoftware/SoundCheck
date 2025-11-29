@@ -6,18 +6,15 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../providers/providers.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
-import '../../features/home/presentation/home_screen.dart';
-import '../../features/venues/presentation/venues_screen.dart';
-import '../../features/venues/presentation/venue_detail_screen.dart';
-import '../../features/bands/presentation/bands_screen.dart';
-import '../../features/bands/presentation/band_detail_screen.dart';
+import '../../features/feed/presentation/feed_screen.dart';
+import '../../features/discover/presentation/discover_screen.dart';
+import '../../features/checkins/presentation/checkin_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
-import '../../features/profile/presentation/my_reviews_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
-import '../../features/reviews/presentation/add_review_screen.dart';
-import '../../features/reviews/presentation/reviews_list_screen.dart';
-import '../../features/search/presentation/search_screen.dart';
+import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/venues/presentation/venue_detail_screen.dart';
+import '../../features/bands/presentation/band_detail_screen.dart';
 import '../../shared/widgets/scaffold_with_nav_bar.dart';
 
 part 'app_router.g.dart';
@@ -55,11 +52,11 @@ GoRouter goRouter(Ref ref) {
       }
 
       if (isAuthenticated && isOnAuthPage) {
-        return '/home';
+        return '/feed';
       }
 
       if (state.matchedLocation == '/splash') {
-        return isAuthenticated ? '/home' : '/login';
+        return isAuthenticated ? '/feed' : '/login';
       }
 
       return null;
@@ -109,98 +106,39 @@ GoRouter goRouter(Ref ref) {
         ),
       ),
 
-      // Main App Routes with Shell Navigation
+      // Main App Routes with Shell Navigation (4 branches)
+      // Feed, Discover, Profile, Notifications
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNavBar(navigationShell: navigationShell);
         },
         branches: [
-          // Home Branch
+          // Feed Branch (Home)
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/home',
-                name: 'home',
+                path: '/feed',
+                name: 'feed',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: HomeScreen(),
+                  child: FeedScreen(),
                 ),
               ),
             ],
           ),
-          // Venues Branch
+
+          // Discover Branch
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/venues',
-                name: 'venues',
+                path: '/discover',
+                name: 'discover',
                 pageBuilder: (context, state) => const NoTransitionPage(
-                  child: VenuesScreen(),
+                  child: DiscoverScreen(),
                 ),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    name: 'venue-detail',
-                    pageBuilder: (context, state) {
-                      final venueId = state.pathParameters['id']!;
-                      return CustomTransitionPage(
-                        key: state.pageKey,
-                        child: VenueDetailScreen(venueId: venueId),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          const begin = Offset(1.0, 0.0);
-                          const end = Offset.zero;
-                          const curve = Curves.easeInOut;
-                          final tween = Tween(begin: begin, end: end).chain(
-                            CurveTween(curve: curve),
-                          );
-                          return SlideTransition(
-                            position: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
               ),
             ],
           ),
-          // Bands Branch
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/bands',
-                name: 'bands',
-                pageBuilder: (context, state) => const NoTransitionPage(
-                  child: BandsScreen(),
-                ),
-                routes: [
-                  GoRoute(
-                    path: ':id',
-                    name: 'band-detail',
-                    pageBuilder: (context, state) {
-                      final bandId = state.pathParameters['id']!;
-                      return CustomTransitionPage(
-                        key: state.pageKey,
-                        child: BandDetailScreen(bandId: bandId),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          const begin = Offset(1.0, 0.0);
-                          const end = Offset.zero;
-                          const curve = Curves.easeInOut;
-                          final tween = Tween(begin: begin, end: end).chain(
-                            CurveTween(curve: curve),
-                          );
-                          return SlideTransition(
-                            position: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
-          ),
+
           // Profile Branch
           StatefulShellBranch(
             routes: [
@@ -218,28 +156,6 @@ GoRouter goRouter(Ref ref) {
                       return CustomTransitionPage(
                         key: state.pageKey,
                         child: const EditProfileScreen(),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          const begin = Offset(1.0, 0.0);
-                          const end = Offset.zero;
-                          const curve = Curves.easeInOut;
-                          final tween = Tween(begin: begin, end: end).chain(
-                            CurveTween(curve: curve),
-                          );
-                          return SlideTransition(
-                            position: animation.drive(tween),
-                            child: child,
-                          );
-                        },
-                      );
-                    },
-                  ),
-                  GoRoute(
-                    path: 'my-reviews',
-                    name: 'my-reviews',
-                    pageBuilder: (context, state) {
-                      return CustomTransitionPage(
-                        key: state.pageKey,
-                        child: const MyReviewsScreen(),
                         transitionsBuilder: (context, animation, secondaryAnimation, child) {
                           const begin = Offset(1.0, 0.0);
                           const end = Offset.zero;
@@ -281,22 +197,30 @@ GoRouter goRouter(Ref ref) {
               ),
             ],
           ),
+
+          // Notifications Branch
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/notifications',
+                name: 'notifications',
+                pageBuilder: (context, state) => const NoTransitionPage(
+                  child: NotificationsScreen(),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
 
-      // Review Routes
+      // Check-in Route (Modal/Full Screen)
       GoRoute(
-        path: '/add-review',
-        name: 'add-review',
+        path: '/checkin',
+        name: 'checkin',
         pageBuilder: (context, state) {
-          final venueId = state.uri.queryParameters['venueId'];
-          final bandId = state.uri.queryParameters['bandId'];
           return CustomTransitionPage(
             key: state.pageKey,
-            child: AddReviewScreen(
-              venueId: venueId,
-              bandId: bandId,
-            ),
+            child: const CheckInScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(0.0, 1.0);
               const end = Offset.zero;
@@ -313,39 +237,68 @@ GoRouter goRouter(Ref ref) {
         },
       ),
 
-      // Search Route
+      // Band Detail Route
       GoRoute(
-        path: '/search',
-        name: 'search',
-        pageBuilder: (context, state) => CustomTransitionPage(
-          key: state.pageKey,
-          child: const SearchScreen(),
-          transitionsBuilder: (context, animation, secondaryAnimation, child) {
-            const begin = Offset(0.0, 1.0);
-            const end = Offset.zero;
-            const curve = Curves.easeInOut;
-            final tween = Tween(begin: begin, end: end).chain(
-              CurveTween(curve: curve),
-            );
-            return SlideTransition(
-              position: animation.drive(tween),
-              child: child,
-            );
-          },
-        ),
+        path: '/bands/:id',
+        name: 'band-detail',
+        pageBuilder: (context, state) {
+          final bandId = state.pathParameters['id']!;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: BandDetailScreen(bandId: bandId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
       ),
 
-      // Reviews List Routes
+      // Venue Detail Route
       GoRoute(
-        path: '/reviews/venue/:id',
-        name: 'venue-reviews',
+        path: '/venues/:id',
+        name: 'venue-detail',
         pageBuilder: (context, state) {
           final venueId = state.pathParameters['id']!;
           return CustomTransitionPage(
             key: state.pageKey,
-            child: ReviewsListScreen(
-              venueId: venueId,
-              title: 'Venue Reviews',
+            child: VenueDetailScreen(venueId: venueId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // User Profile Route (for viewing other users)
+      GoRoute(
+        path: '/users/:id',
+        name: 'user-profile',
+        pageBuilder: (context, state) {
+          final userId = state.pathParameters['id']!;
+          // TODO: Create UserProfileScreen for viewing other users
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: Scaffold(
+              appBar: AppBar(title: Text('User $userId')),
+              body: const Center(child: Text('User profile coming soon')),
             ),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
@@ -362,16 +315,19 @@ GoRouter goRouter(Ref ref) {
           );
         },
       ),
+
+      // Check-in Detail Route (for viewing a specific check-in)
       GoRoute(
-        path: '/reviews/band/:id',
-        name: 'band-reviews',
+        path: '/checkins/:id',
+        name: 'checkin-detail',
         pageBuilder: (context, state) {
-          final bandId = state.pathParameters['id']!;
+          final checkinId = state.pathParameters['id']!;
+          // TODO: Create CheckInDetailScreen
           return CustomTransitionPage(
             key: state.pageKey,
-            child: ReviewsListScreen(
-              bandId: bandId,
-              title: 'Band Reviews',
+            child: Scaffold(
+              appBar: AppBar(title: const Text('Check-in')),
+              body: Center(child: Text('Check-in $checkinId')),
             ),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);

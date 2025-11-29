@@ -9,6 +9,7 @@ import '../../features/venues/data/venue_repository.dart';
 import '../../features/bands/data/band_repository.dart';
 import '../../features/reviews/data/review_repository.dart';
 import '../../features/badges/data/badge_repository.dart';
+import '../../features/checkins/data/checkin_repository.dart';
 
 part 'providers.g.dart';
 
@@ -55,6 +56,12 @@ ReviewRepository reviewRepository(ReviewRepositoryRef ref) {
 BadgeRepository badgeRepository(BadgeRepositoryRef ref) {
   final dioClient = ref.watch(dioClientProvider);
   return BadgeRepository(dioClient: dioClient);
+}
+
+@Riverpod(keepAlive: true)
+CheckInRepository checkInRepository(CheckInRepositoryRef ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return CheckInRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)

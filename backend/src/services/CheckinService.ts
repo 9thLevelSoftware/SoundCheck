@@ -12,6 +12,22 @@ interface CreateCheckinRequest {
   bandRating?: number;
   reviewText?: string;
   imageUrls?: string[];
+  vibeTagIds?: string[];
+}
+
+interface VibeTag {
+  id: string;
+  name: string;
+  emoji: string;
+  category: string;
+}
+
+interface Toast {
+  id: string;
+  checkinId: string;
+  userId: string;
+  createdAt: Date;
+  user?: any;
 }
 
 interface Checkin {
@@ -29,6 +45,15 @@ interface Checkin {
   toastCount?: number;
   commentCount?: number;
   hasUserToasted?: boolean;
+  vibeTags?: VibeTag[];
+}
+
+interface GetCheckinsOptions {
+  venueId?: string;
+  bandId?: string;
+  userId?: string;
+  page?: number;
+  limit?: number;
 }
 
 interface Comment {
@@ -61,6 +86,7 @@ export class CheckinService {
         bandRating,
         reviewText,
         imageUrls,
+        vibeTagIds,
       } = data;
 
       // Create or get event
@@ -100,6 +126,13 @@ export class CheckinService {
         imageUrls || null,
       ]);
 
+      const checkinId = result.rows[0].id;
+
+      // Add vibe tags if provided
+      if (vibeTagIds && vibeTagIds.length > 0) {
+        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
+      }
+
       // Update venue and band ratings asynchronously
       if (venueRating) {
         this.venueService.updateVenueRating(venueId).catch(err =>
@@ -113,7 +146,7 @@ export class CheckinService {
       }
 
       // Return full check-in with details
-      return this.getCheckinById(result.rows[0].id, userId);
+      return this.getCheckinById(checkinId, userId);
     } catch (error) {
       console.error('Create check-in error:', error);
       throw error;
@@ -361,6 +394,205 @@ export class CheckinService {
       await this.db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
     } catch (error) {
       console.error('Delete check-in error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get check-ins with filters
+   */
+  async getCheckins(options: GetCheckinsOptions = {}): Promise<Checkin[]> {
+    try {
+      const { venueId, bandId, userId, page = 1, limit = 20 } = options;
+      const offset = (page - 1) * limit;
+      const params: any[] = [];
+      let paramIndex = 1;
+
+      let whereClause = 'WHERE 1=1';
+
+      if (venueId) {
+        whereClause += ` AND e.venue_id = $${paramIndex++}`;
+        params.push(venueId);
+      }
+
+      if (bandId) {
+        whereClause += ` AND e.band_id = $${paramIndex++}`;
+        params.push(bandId);
+      }
+
+      if (userId) {
+        whereClause += ` AND c.user_id = $${paramIndex++}`;
+        params.push(userId);
+      }
+
+      const query = `
+        SELECT
+          c.*,
+          u.id as user_id, u.username, u.profile_image_url,
+          e.id as event_id, e.event_date, e.event_name,
+          v.id as venue_id, v.name as venue_name, v.city as venue_city,
+          v.state as venue_state, v.image_url as venue_image,
+          b.id as band_id, b.name as band_name, b.genre as band_genre,
+          b.image_url as band_image,
+          COUNT(DISTINCT t.id) as toast_count,
+          COUNT(DISTINCT cm.id) as comment_count
+        FROM checkins c
+        LEFT JOIN users u ON c.user_id = u.id
+        LEFT JOIN events e ON c.event_id = e.id
+        LEFT JOIN venues v ON e.venue_id = v.id
+        LEFT JOIN bands b ON e.band_id = b.id
+        LEFT JOIN checkin_toasts t ON c.id = t.checkin_id
+        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
+        ${whereClause}
+        GROUP BY c.id, u.id, e.id, v.id, b.id
+        ORDER BY c.created_at DESC
+        LIMIT $${paramIndex++} OFFSET $${paramIndex++}
+      `;
+
+      params.push(limit, offset);
+      const result = await this.db.query(query, params);
+
+      return result.rows.map((row: any) => this.mapDbCheckinToCheckin(row));
+    } catch (error) {
+      console.error('Get check-ins error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get all vibe tags
+   */
+  async getVibeTags(): Promise<VibeTag[]> {
+    try {
+      const query = `
+        SELECT id, name, emoji, category
+        FROM vibe_tags
+        ORDER BY category, name
+      `;
+
+      const result = await this.db.query(query, []);
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        emoji: row.emoji,
+        category: row.category,
+      }));
+    } catch (error) {
+      console.error('Get vibe tags error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get toasts for a check-in
+   */
+  async getToasts(checkinId: string): Promise<Toast[]> {
+    try {
+      const query = `
+        SELECT
+          t.*,
+          u.id as user_id, u.username, u.profile_image_url
+        FROM checkin_toasts t
+        LEFT JOIN users u ON t.user_id = u.id
+        WHERE t.checkin_id = $1
+        ORDER BY t.created_at DESC
+      `;
+
+      const result = await this.db.query(query, [checkinId]);
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        checkinId: row.checkin_id,
+        userId: row.user_id,
+        createdAt: row.created_at,
+        user: {
+          id: row.user_id,
+          username: row.username,
+          profileImageUrl: row.profile_image_url,
+        },
+      }));
+    } catch (error) {
+      console.error('Get toasts error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Delete a comment
+   */
+  async deleteComment(userId: string, checkinId: string, commentId: string): Promise<void> {
+    try {
+      // Verify user owns the comment or the check-in
+      const comment = await this.db.query(
+        'SELECT user_id FROM checkin_comments WHERE id = $1 AND checkin_id = $2',
+        [commentId, checkinId]
+      );
+
+      if (comment.rows.length === 0) {
+        throw new Error('Comment not found');
+      }
+
+      const checkin = await this.db.query(
+        'SELECT user_id FROM checkins WHERE id = $1',
+        [checkinId]
+      );
+
+      // Allow delete if user is comment author or check-in owner
+      if (comment.rows[0].user_id !== userId && checkin.rows[0]?.user_id !== userId) {
+        throw new Error('Unauthorized to delete this comment');
+      }
+
+      await this.db.query('DELETE FROM checkin_comments WHERE id = $1', [commentId]);
+    } catch (error) {
+      console.error('Delete comment error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add vibe tags to a check-in
+   */
+  async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[]): Promise<void> {
+    try {
+      if (!vibeTagIds || vibeTagIds.length === 0) return;
+
+      const values = vibeTagIds.map((_, i) => `($1, $${i + 2})`).join(', ');
+      const params = [checkinId, ...vibeTagIds];
+
+      await this.db.query(
+        `INSERT INTO checkin_vibes (checkin_id, vibe_tag_id) VALUES ${values}
+         ON CONFLICT (checkin_id, vibe_tag_id) DO NOTHING`,
+        params
+      );
+    } catch (error) {
+      console.error('Add vibe tags error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get vibe tags for a check-in
+   */
+  async getCheckinVibeTags(checkinId: string): Promise<VibeTag[]> {
+    try {
+      const query = `
+        SELECT vt.id, vt.name, vt.emoji, vt.category
+        FROM vibe_tags vt
+        INNER JOIN checkin_vibes cv ON vt.id = cv.vibe_tag_id
+        WHERE cv.checkin_id = $1
+      `;
+
+      const result = await this.db.query(query, [checkinId]);
+
+      return result.rows.map((row: any) => ({
+        id: row.id,
+        name: row.name,
+        emoji: row.emoji,
+        category: row.category,
+      }));
+    } catch (error) {
+      console.error('Get check-in vibe tags error:', error);
       throw error;
     }
   }
