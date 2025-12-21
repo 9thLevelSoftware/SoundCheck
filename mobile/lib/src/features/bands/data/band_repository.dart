@@ -26,7 +26,7 @@ class BandRepository {
       if (search != null) queryParams['q'] = search;
       if (genre != null) queryParams['genre'] = genre;
       if (hometown != null) queryParams['hometown'] = hometown;
-      if (minRating != null) queryParams['minRating'] = minRating;
+      if (minRating != null) queryParams['rating'] = minRating;
       if (sortBy != null) queryParams['sort'] = sortBy;
 
       final response = await _dioClient.get(
@@ -34,8 +34,10 @@ class BandRepository {
         queryParameters: queryParams,
       );
 
-      final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data.map((json) => Band.fromJson(json)).toList();
+      // Backend returns paginated object: { bands: [...], total, page, totalPages }
+      final responseData = response.data['data'] as Map<String, dynamic>;
+      final List<dynamic> bands = responseData['bands'] as List<dynamic>;
+      return bands.map((json) => Band.fromJson(json)).toList();
     } catch (e) {
       rethrow;
     }
