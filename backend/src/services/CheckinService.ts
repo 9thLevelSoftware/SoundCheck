@@ -205,7 +205,7 @@ export class CheckinService {
   async getActivityFeed(
     userId: string,
     filter: 'friends' | 'nearby' | 'global' = 'friends',
-    options: { limit?: number; offset?: number } = {}
+    options: { limit?: number; offset?: number; latitude?: number; longitude?: number } = {}
   ): Promise<Checkin[]> {
     try {
       const { limit = 50, offset = 0 } = options;
@@ -222,11 +222,23 @@ export class CheckinService {
         `;
       } else if (filter === 'nearby') {
         // Get check-ins from venues within 40 miles of user's location
-        // NOTE: This requires user location to be passed as parameters
-        // For now, returning all check-ins when user location is not available
-        // Future enhancement: Add lat/lng parameters and use PostGIS for geospatial queries:
-        // WHERE ST_DWithin(v.location::geography, ST_MakePoint($2, $3)::geography, 64374)
-        whereClause = 'WHERE 1=1';
+        const { latitude, longitude } = options;
+        if (latitude !== undefined && longitude !== undefined) {
+          // Use Haversine formula for ~40 mile radius (64.4 km)
+          whereClause = `
+            WHERE (
+              6371 * acos(
+                cos(radians($2)) * cos(radians(v.latitude)) *
+                cos(radians(v.longitude) - radians($3)) +
+                sin(radians($2)) * sin(radians(v.latitude))
+              )
+            ) <= 64.4
+          `;
+          params.push(latitude, longitude);
+        } else {
+          // Fallback to global if no location provided
+          whereClause = 'WHERE 1=1';
+        }
       } else {
         // Global feed - all check-ins
         whereClause = 'WHERE 1=1';

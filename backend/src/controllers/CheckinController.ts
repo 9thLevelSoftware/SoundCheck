@@ -105,7 +105,7 @@ export class CheckinController {
 
   /**
    * Get activity feed
-   * GET /api/checkins/feed?filter=friends|nearby|global&limit=50&offset=0
+   * GET /api/checkins/feed?filter=friends|nearby|global&limit=50&offset=0&lat=&lng=
    */
   getActivityFeed = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -123,10 +123,14 @@ export class CheckinController {
       const filter = (req.query.filter as 'friends' | 'nearby' | 'global') || 'friends';
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
       const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+      const latitude = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+      const longitude = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
 
       const checkins = await this.checkinService.getActivityFeed(userId, filter, {
         limit,
         offset,
+        latitude,
+        longitude,
       });
 
       const response: ApiResponse = {
