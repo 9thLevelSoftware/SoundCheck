@@ -2,7 +2,16 @@ import jwt, { SignOptions } from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { JWTPayload } from '../types';
 
-const JWT_SECRET: string = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const JWT_SECRET: string = (() => {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    throw new Error('FATAL: JWT_SECRET environment variable is required');
+  }
+  if (secret.length < 32) {
+    throw new Error('FATAL: JWT_SECRET must be at least 32 characters');
+  }
+  return secret;
+})();
 const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
 
 export class AuthUtils {
