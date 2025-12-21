@@ -12,7 +12,8 @@ import 'band_filters_notifier.dart';
 import 'band_filters_state.dart';
 import 'widgets/band_filters_sheet.dart';
 
-final filteredBandsProvider = FutureProvider.autoDispose<List<Band>>((ref) async {
+final filteredBandsProvider =
+    FutureProvider.autoDispose<List<Band>>((ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   final filters = ref.watch(bandFiltersProvider);
 
@@ -60,7 +61,7 @@ final filteredBandsProvider = FutureProvider.autoDispose<List<Band>>((ref) async
       filtered.sort((a, b) => a.averageRating.compareTo(b.averageRating));
       break;
     case BandSortBy.reviewCountDesc:
-      filtered.sort((a, b) => b.totalReviews.compareTo(a.totalReviews));
+      filtered.sort((a, b) => b.totalCheckins.compareTo(a.totalCheckins));
       break;
     case BandSortBy.formedYearDesc:
       filtered.sort((a, b) {
@@ -150,38 +151,49 @@ class BandsScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     if (filters.genres.isNotEmpty)
-                      ...filters.genres.map((genre) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Chip(
-                              label: Text(genre),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () {
-                                ref.read(bandFiltersProvider.notifier).toggleGenre(genre);
-                              },
-                            ),
-                          ),),
+                      ...filters.genres.map(
+                        (genre) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Chip(
+                            label: Text(genre),
+                            deleteIcon: const Icon(Icons.close, size: 16),
+                            onDeleted: () {
+                              ref
+                                  .read(bandFiltersProvider.notifier)
+                                  .toggleGenre(genre);
+                            },
+                          ),
+                        ),
+                      ),
                     if (filters.minRating != null)
                       Padding(
                         padding: const EdgeInsets.only(right: 8),
                         child: Chip(
-                          label: Text('${filters.minRating!.toStringAsFixed(1)}+ stars'),
+                          label: Text(
+                              '${filters.minRating!.toStringAsFixed(1)}+ stars'),
                           deleteIcon: const Icon(Icons.close, size: 16),
                           onDeleted: () {
-                            ref.read(bandFiltersProvider.notifier).setMinRating(null);
+                            ref
+                                .read(bandFiltersProvider.notifier)
+                                .setMinRating(null);
                           },
                         ),
                       ),
                     if (filters.hometowns.isNotEmpty)
-                      ...filters.hometowns.map((hometown) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: Chip(
-                              label: Text(hometown),
-                              deleteIcon: const Icon(Icons.close, size: 16),
-                              onDeleted: () {
-                                ref.read(bandFiltersProvider.notifier).toggleHometown(hometown);
-                              },
-                            ),
-                          ),),
+                      ...filters.hometowns.map(
+                        (hometown) => Padding(
+                          padding: const EdgeInsets.only(right: 8),
+                          child: Chip(
+                            label: Text(hometown),
+                            deleteIcon: const Icon(Icons.close, size: 16),
+                            onDeleted: () {
+                              ref
+                                  .read(bandFiltersProvider.notifier)
+                                  .toggleHometown(hometown);
+                            },
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),
@@ -197,13 +209,17 @@ class BandsScreen extends ConsumerWidget {
                         ? EmptyStateWidget(
                             type: EmptyStateType.noSearchResults,
                             customTitle: 'No Bands Found',
-                            customMessage: 'No bands match your current filters. Try adjusting your filter criteria.',
+                            customMessage:
+                                'No bands match your current filters. Try adjusting your filter criteria.',
                             actionLabel: 'Clear Filters',
-                            onAction: () => ref.read(bandFiltersProvider.notifier).clearAll(),
+                            onAction: () => ref
+                                .read(bandFiltersProvider.notifier)
+                                .clearAll(),
                           )
                         : EmptyStateWidget(
                             type: EmptyStateType.noBands,
-                            onAction: () => ref.invalidate(filteredBandsProvider),
+                            onAction: () =>
+                                ref.invalidate(filteredBandsProvider),
                           )
                     : ListView.builder(
                         padding: const EdgeInsets.all(AppTheme.spacing16),
@@ -211,7 +227,8 @@ class BandsScreen extends ConsumerWidget {
                         itemBuilder: (context, index) {
                           return BandCard(
                             band: bands[index],
-                            onTap: () => context.push('/bands/${bands[index].id}'),
+                            onTap: () =>
+                                context.push('/bands/${bands[index].id}'),
                           );
                         },
                       ),
