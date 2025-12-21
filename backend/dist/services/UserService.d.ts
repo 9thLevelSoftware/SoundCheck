@@ -4,7 +4,7 @@ export declare class UserService {
     /**
      * Create a new user
      */
-    createUser(userData: CreateUserRequest): Promise<User>;
+    createUser(userData: CreateUserRequest): Promise<AuthResponse>;
     /**
      * Authenticate user login
      */

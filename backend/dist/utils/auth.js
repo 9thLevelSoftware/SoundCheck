@@ -6,7 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthUtils = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key';
+const JWT_SECRET = (() => {
+    const secret = process.env.JWT_SECRET;
+    if (!secret) {
+        throw new Error('FATAL: JWT_SECRET environment variable is required');
+    }
+    if (secret.length < 32) {
+        throw new Error('FATAL: JWT_SECRET must be at least 32 characters');
+    }
+    return secret;
+})();
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 class AuthUtils {
     /**

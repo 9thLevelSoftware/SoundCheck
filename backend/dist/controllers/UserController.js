@@ -11,10 +11,10 @@ class UserController {
         this.register = async (req, res) => {
             try {
                 const userData = req.body;
-                const user = await this.userService.createUser(userData);
+                const authResponse = await this.userService.createUser(userData);
                 const response = {
                     success: true,
-                    data: user,
+                    data: authResponse,
                     message: 'User registered successfully',
                 };
                 res.status(201).json(response);

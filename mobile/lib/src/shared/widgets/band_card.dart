@@ -144,7 +144,7 @@ class BandCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '(${band.totalReviews})',
+                          '(${band.totalCheckins})',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,

@@ -16,7 +16,7 @@ class UserService {
      */
     async createUser(userData) {
         const { email, password, username, firstName, lastName } = userData;
-        // Note: Basic validation is handled by middleware now, 
+        // Note: Basic validation is handled by middleware now,
         // but business logic validation (duplicates) remains here.
         // Check if email already exists
         const emailExists = await this.findByEmail(email);
@@ -34,12 +34,22 @@ class UserService {
         const query = `
       INSERT INTO users (email, password_hash, username, first_name, last_name)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, email, username, first_name, last_name, bio, profile_image_url, 
+      RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
                 location, date_of_birth, is_verified, is_active, created_at, updated_at
     `;
         const values = [email, passwordHash, username, firstName || null, lastName || null];
         const result = await this.db.query(query, values);
-        return (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
+        const user = (0, dbMappers_1.mapDbUserToUser)(result.rows[0]);
+        // Generate JWT token for new user
+        const token = auth_1.AuthUtils.generateToken({
+            userId: user.id,
+            email: user.email,
+            username: user.username,
+        });
+        return {
+            user,
+            token,
+        };
     }
     /**
      * Authenticate user login

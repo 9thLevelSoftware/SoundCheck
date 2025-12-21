@@ -21,6 +21,7 @@ const badgeRoutes_1 = __importDefault(require("./routes/badgeRoutes"));
 const discoveryRoutes_1 = __importDefault(require("./routes/discoveryRoutes"));
 const eventRoutes_1 = __importDefault(require("./routes/eventRoutes"));
 const checkinRoutes_1 = __importDefault(require("./routes/checkinRoutes"));
+const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
 const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
 const app = (0, express_1.default)();
@@ -37,17 +38,24 @@ const corsOptions = {
         if (process.env.NODE_ENV === 'development') {
             return callback(null, true);
         }
-        // In production, allow mobile apps (no origin) and whitelisted domains
-        const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(o => o.trim());
-        if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+        // In production, require explicit CORS_ORIGIN configuration
+        const corsOrigin = process.env.CORS_ORIGIN;
+        if (!corsOrigin || corsOrigin === '*') {
+            // Log warning but allow - mobile apps have no origin
+            (0, logger_1.logWarn)('CORS: No CORS_ORIGIN set, allowing request from:', { origin });
             return callback(null, true);
         }
-        // Allow for mobile apps which don't send origin
-        callback(null, true);
+        const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
+        if (allowedOrigins.includes(origin)) {
+            return callback(null, true);
+        }
+        // Reject unknown origins in production
+        (0, logger_1.logWarn)('CORS: Rejected origin:', { origin });
+        callback(new Error('Not allowed by CORS'), false);
     },
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: false, // Set to false for mobile apps
+    credentials: false,
 };
 app.use((0, cors_1.default)(corsOptions));
 // Body parsing middleware
@@ -91,6 +99,7 @@ app.use('/api/badges', badgeRoutes_1.default);
 app.use('/api/discover', discoveryRoutes_1.default);
 app.use('/api/events', eventRoutes_1.default);
 app.use('/api/checkins', checkinRoutes_1.default);
+app.use('/api/feed', feedRoutes_1.default);
 // Root endpoint
 app.get('/', (req, res) => {
     const response = {
@@ -154,6 +163,10 @@ const startServer = async () => {
             process.exit(1);
         }
         (0, logger_1.logInfo)('Database connection established');
+        // Warn about CORS configuration in production
+        if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+            (0, logger_1.logWarn)('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
+        }
         app.listen(PORT, () => {
             (0, logger_1.logInfo)(`PitPulse API Server running on port ${PORT}`);
             (0, logger_1.logInfo)(`Health check: http://localhost:${PORT}/health`);

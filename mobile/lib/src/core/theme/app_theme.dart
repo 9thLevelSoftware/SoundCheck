@@ -16,6 +16,14 @@ class AppTheme {
   static const Color liveGreen = Color(0xFF00E676); // "Live Now" indicator
   static const Color toastGold = Color(0xFFFFD700); // Toast/fist bump color
 
+  // Accent color aliases for convenience
+  static const Color accentTeal = liveGreen;
+  static const Color accentOrange = toastGold;
+
+  // Background/surface aliases
+  static const Color background = backgroundDark;
+  static const Color surfaceVariant = surfaceVariantDark;
+
   // Background Colors - Dark Mode Native
   static const Color backgroundDark = Color(0xFF1A1A1A); // Deep charcoal
   static const Color surfaceDark = Color(0xFF242424);
