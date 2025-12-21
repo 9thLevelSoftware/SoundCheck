@@ -9,26 +9,32 @@ import '../domain/vibe_tag.dart';
 class CreateCheckInRequest {
   final String bandId;
   final String venueId;
-  final double rating;
-  final String? comment;
-  final String? photoUrl;
+  final String eventDate;
+  final double? venueRating;
+  final double? bandRating;
+  final String? reviewText;
+  final List<String>? imageUrls;
   final List<String>? vibeTagIds;
 
   CreateCheckInRequest({
     required this.bandId,
     required this.venueId,
-    required this.rating,
-    this.comment,
-    this.photoUrl,
+    required this.eventDate,
+    this.venueRating,
+    this.bandRating,
+    this.reviewText,
+    this.imageUrls,
     this.vibeTagIds,
   });
 
   Map<String, dynamic> toJson() => {
         'bandId': bandId,
         'venueId': venueId,
-        'rating': rating,
-        if (comment != null) 'comment': comment,
-        if (photoUrl != null) 'photoUrl': photoUrl,
+        'eventDate': eventDate,
+        if (venueRating != null) 'venueRating': venueRating,
+        if (bandRating != null) 'bandRating': bandRating,
+        if (reviewText != null) 'reviewText': reviewText,
+        if (imageUrls != null) 'imageUrls': imageUrls,
         if (vibeTagIds != null) 'vibeTagIds': vibeTagIds,
       };
 }
@@ -41,15 +47,17 @@ class CheckInRepository {
 
   /// Get social feed (friends' check-ins)
   Future<List<CheckIn>> getFeed({
-    int page = 1,
-    int limit = 20,
+    String filter = 'friends',
+    int limit = 50,
+    int offset = 0,
   }) async {
     try {
       final response = await _dioClient.get(
         ApiConfig.feed,
         queryParameters: {
-          'page': page,
+          'filter': filter,
           'limit': limit,
+          'offset': offset,
         },
       );
 
@@ -179,7 +187,7 @@ class CheckInRepository {
     try {
       final response = await _dioClient.post(
         '${ApiConfig.checkins}/$checkInId/comments',
-        data: {'comment': comment},
+        data: {'commentText': comment},
       );
       final commentData = response.data['data'] as Map<String, dynamic>;
       return CheckInComment.fromJson(commentData);

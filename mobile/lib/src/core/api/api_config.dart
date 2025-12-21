@@ -50,7 +50,7 @@ class ApiConfig {
   static const String toasts = '/toasts';
   static const String shows = '/shows';
   static const String notifications = '/notifications';
-  static const String feed = '/feed';
+  static const String feed = '/checkins/feed';
 
   // Storage Keys
   static const String tokenKey = 'auth_token';
