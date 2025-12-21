@@ -17,18 +17,18 @@ export class UserController {
     try {
       const userData: CreateUserRequest = req.body;
 
-      const user = await this.userService.createUser(userData);
+      const authResponse = await this.userService.createUser(userData);
 
       const response: ApiResponse = {
         success: true,
-        data: user,
+        data: authResponse,
         message: 'User registered successfully',
       };
 
       res.status(201).json(response);
     } catch (error) {
       console.error('Registration error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Registration failed',
