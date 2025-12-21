@@ -1,6 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/providers/providers.dart';
+import '../../bands/domain/band.dart';
+import '../../venues/domain/venue.dart';
+
+part 'discover_screen.g.dart';
+
+/// Provider for trending bands (locally active)
+@riverpod
+Future<List<Band>> trendingBands(TrendingBandsRef ref) async {
+  final repository = ref.watch(bandRepositoryProvider);
+  return repository.getTrendingBands(limit: 10);
+}
+
+/// Provider for top rated venues
+@riverpod
+Future<List<Venue>> topRatedVenues(TopRatedVenuesRef ref) async {
+  final repository = ref.watch(venueRepositoryProvider);
+  return repository.getPopularVenues(limit: 10);
+}
+
+/// Provider for popular bands
+@riverpod
+Future<List<Band>> popularBands(PopularBandsRef ref) async {
+  final repository = ref.watch(bandRepositoryProvider);
+  return repository.getPopularBands(limit: 10);
+}
 
 /// Discover & Search Screen
 /// Search for Bands, Venues, or Users
@@ -165,6 +192,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 
   Widget _buildTrendingContent() {
+    final trendingBandsAsync = ref.watch(trendingBandsProvider);
+    final topVenuesAsync = ref.watch(topRatedVenuesProvider);
+    final popularBandsAsync = ref.watch(popularBandsProvider);
+
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 100),
       sliver: SliverList(
@@ -176,16 +207,44 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           ),
           SizedBox(
             height: 160,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 5,
-              itemBuilder: (context, index) {
-                return _TrendingBandCard(
-                  index: index,
-                  onTap: () {},
-                );
-              },
+            child: trendingBandsAsync.when(
+              data: (bands) => bands.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No trending bands yet',
+                        style: TextStyle(color: AppTheme.textTertiary),
+                      ),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: bands.length,
+                      itemBuilder: (context, index) {
+                        return _TrendingBandCard(
+                          band: bands[index],
+                          onTap: () {
+                            // TODO: Navigate to band detail screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('View ${bands[index].name}'),
+                                backgroundColor: AppTheme.electricPurple,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.electricPurple,
+                ),
+              ),
+              error: (err, stack) => Center(
+                child: Text(
+                  'Error loading trending bands',
+                  style: const TextStyle(color: AppTheme.textTertiary),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -197,16 +256,44 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           ),
           SizedBox(
             height: 160,
-            child: ListView.builder(
-              scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 5,
-              itemBuilder: (context, index) {
-                return _TrendingVenueCard(
-                  index: index,
-                  onTap: () {},
-                );
-              },
+            child: topVenuesAsync.when(
+              data: (venues) => venues.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'No venues yet',
+                        style: TextStyle(color: AppTheme.textTertiary),
+                      ),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: venues.length,
+                      itemBuilder: (context, index) {
+                        return _TrendingVenueCard(
+                          venue: venues[index],
+                          onTap: () {
+                            // TODO: Navigate to venue detail screen
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('View ${venues[index].name}'),
+                                backgroundColor: AppTheme.neonPink,
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
+              loading: () => const Center(
+                child: CircularProgressIndicator(
+                  color: AppTheme.neonPink,
+                ),
+              ),
+              error: (err, stack) => Center(
+                child: Text(
+                  'Error loading venues',
+                  style: const TextStyle(color: AppTheme.textTertiary),
+                ),
+              ),
             ),
           ),
           const SizedBox(height: 24),
@@ -217,12 +304,53 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             subtitle: 'Bands on tour with high activity',
           ),
           const SizedBox(height: 12),
-          ...List.generate(5, (index) {
-            return _PopularBandListItem(
-              index: index,
-              onTap: () {},
-            );
-          }),
+          popularBandsAsync.when(
+            data: (bands) => bands.isEmpty
+                ? const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(
+                      child: Text(
+                        'No popular bands yet',
+                        style: TextStyle(color: AppTheme.textTertiary),
+                      ),
+                    ),
+                  )
+                : Column(
+                    children: bands.map((band) {
+                      final index = bands.indexOf(band);
+                      return _PopularBandListItem(
+                        band: band,
+                        rank: index + 1,
+                        onTap: () {
+                          // TODO: Navigate to band detail screen
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('View ${band.name}'),
+                              backgroundColor: AppTheme.electricPurple,
+                            ),
+                          );
+                        },
+                      );
+                    }).toList(),
+                  ),
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: CircularProgressIndicator(
+                  color: AppTheme.electricPurple,
+                ),
+              ),
+            ),
+            error: (err, stack) => Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: Text(
+                  'Error loading popular bands',
+                  style: const TextStyle(color: AppTheme.textTertiary),
+                ),
+              ),
+            ),
+          ),
         ]),
       ),
     );
@@ -340,19 +468,15 @@ class _SearchResultItem extends StatelessWidget {
 
 class _TrendingBandCard extends StatelessWidget {
   const _TrendingBandCard({
-    required this.index,
+    required this.band,
     required this.onTap,
   });
 
-  final int index;
+  final Band band;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final bands = ['Metallica', 'Gojira', 'Ghost', 'Mastodon', 'Slipknot'];
-    final genres = ['Thrash Metal', 'Death Metal', 'Heavy Metal', 'Sludge Metal', 'Nu Metal'];
-    final checkins = [42, 38, 35, 31, 28];
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -379,13 +503,30 @@ class _TrendingBandCard extends StatelessWidget {
                   top: Radius.circular(16),
                 ),
               ),
-              child: Center(
-                child: Icon(
-                  Icons.music_note,
-                  size: 36,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
+              child: band.imageUrl != null
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                      child: Image.network(
+                        band.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            Icons.music_note,
+                            size: 36,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.music_note,
+                        size: 36,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                    ),
             ),
             // Info
             Padding(
@@ -394,7 +535,7 @@ class _TrendingBandCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    bands[index],
+                    band.name,
                     style: const TextStyle(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold,
@@ -413,7 +554,7 @@ class _TrendingBandCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${checkins[index]} now',
+                        '${band.totalCheckins} check-ins',
                         style: const TextStyle(
                           color: AppTheme.textTertiary,
                           fontSize: 12,
@@ -433,19 +574,15 @@ class _TrendingBandCard extends StatelessWidget {
 
 class _TrendingVenueCard extends StatelessWidget {
   const _TrendingVenueCard({
-    required this.index,
+    required this.venue,
     required this.onTap,
   });
 
-  final int index;
+  final Venue venue;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final venues = ['Red Rocks', 'The Forum', 'MSG', 'Wembley', 'The Fillmore'];
-    final locations = ['Morrison, CO', 'Los Angeles, CA', 'New York, NY', 'London, UK', 'San Francisco, CA'];
-    final ratings = [4.9, 4.8, 4.7, 4.7, 4.6];
-
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -472,13 +609,30 @@ class _TrendingVenueCard extends StatelessWidget {
                   top: Radius.circular(16),
                 ),
               ),
-              child: Center(
-                child: Icon(
-                  Icons.location_city,
-                  size: 36,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
+              child: venue.imageUrl != null
+                  ? ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                      child: Image.network(
+                        venue.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) => Center(
+                          child: Icon(
+                            Icons.location_city,
+                            size: 36,
+                            color: Colors.white.withOpacity(0.7),
+                          ),
+                        ),
+                      ),
+                    )
+                  : Center(
+                      child: Icon(
+                        Icons.location_city,
+                        size: 36,
+                        color: Colors.white.withOpacity(0.7),
+                      ),
+                    ),
             ),
             // Info
             Padding(
@@ -487,7 +641,7 @@ class _TrendingVenueCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    venues[index],
+                    venue.name,
                     style: const TextStyle(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold,
@@ -506,7 +660,7 @@ class _TrendingVenueCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '${ratings[index]}',
+                        venue.averageRating.toStringAsFixed(1),
                         style: const TextStyle(
                           color: AppTheme.textTertiary,
                           fontSize: 12,
@@ -526,19 +680,17 @@ class _TrendingVenueCard extends StatelessWidget {
 
 class _PopularBandListItem extends StatelessWidget {
   const _PopularBandListItem({
-    required this.index,
+    required this.band,
+    required this.rank,
     required this.onTap,
   });
 
-  final int index;
+  final Band band;
+  final int rank;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final bands = ['Tool', 'Deftones', 'System of a Down', 'A Perfect Circle', 'Puscifer'];
-    final checkins = [1250, 980, 875, 720, 650];
-    final trends = ['+45%', '+32%', '+28%', '+22%', '+18%'];
-
     return ListTile(
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -551,7 +703,7 @@ class _PopularBandListItem extends StatelessWidget {
         ),
         child: Center(
           child: Text(
-            '${index + 1}',
+            '$rank',
             style: const TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.bold,
@@ -561,30 +713,34 @@ class _PopularBandListItem extends StatelessWidget {
         ),
       ),
       title: Text(
-        bands[index],
+        band.name,
         style: const TextStyle(
           color: AppTheme.textPrimary,
           fontWeight: FontWeight.w600,
         ),
       ),
       subtitle: Text(
-        '${checkins[index]} check-ins this week',
+        '${band.totalCheckins} check-ins • ${band.genre ?? "Various"}',
         style: const TextStyle(color: AppTheme.textTertiary, fontSize: 12),
       ),
-      trailing: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-        decoration: BoxDecoration(
-          color: AppTheme.liveGreen.withOpacity(0.2),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Text(
-          trends[index],
-          style: const TextStyle(
-            color: AppTheme.liveGreen,
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.star,
+            size: 16,
+            color: AppTheme.toastGold,
           ),
-        ),
+          const SizedBox(width: 4),
+          Text(
+            band.averageRating.toStringAsFixed(1),
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+            ),
+          ),
+        ],
       ),
     );
   }
