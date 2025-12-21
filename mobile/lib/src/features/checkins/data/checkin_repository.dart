@@ -5,40 +5,6 @@ import '../domain/toast.dart';
 import '../domain/checkin_comment.dart';
 import '../domain/vibe_tag.dart';
 
-/// Request model for creating a check-in
-class CreateCheckInRequest {
-  final String bandId;
-  final String venueId;
-  final String eventDate;
-  final double? venueRating;
-  final double? bandRating;
-  final String? reviewText;
-  final List<String>? imageUrls;
-  final List<String>? vibeTagIds;
-
-  CreateCheckInRequest({
-    required this.bandId,
-    required this.venueId,
-    required this.eventDate,
-    this.venueRating,
-    this.bandRating,
-    this.reviewText,
-    this.imageUrls,
-    this.vibeTagIds,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'bandId': bandId,
-        'venueId': venueId,
-        'eventDate': eventDate,
-        if (venueRating != null) 'venueRating': venueRating,
-        if (bandRating != null) 'bandRating': bandRating,
-        if (reviewText != null) 'reviewText': reviewText,
-        if (imageUrls != null) 'imageUrls': imageUrls,
-        if (vibeTagIds != null) 'vibeTagIds': vibeTagIds,
-      };
-}
-
 /// Repository for Check-in operations
 class CheckInRepository {
   final DioClient _dioClient;

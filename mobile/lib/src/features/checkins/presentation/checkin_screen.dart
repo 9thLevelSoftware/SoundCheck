@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import 'providers/checkin_providers.dart';
 
 /// Check-in Screen - The Core Feature
 /// Step 1: Search for a band
@@ -74,25 +75,47 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     });
   }
 
-  void _submitCheckIn() {
-    if (_selectedBandId == null || _selectedVenueId == null || _rating == 0) {
+  Future<void> _submitCheckIn() async {
+    if (_selectedBandId == null || _selectedVenueId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please select a band, venue, and rating'),
+          content: Text('Please select a band and venue'),
           backgroundColor: AppTheme.error,
         ),
       );
       return;
     }
 
-    // TODO: Submit check-in via API
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Check-in successful!'),
-        backgroundColor: AppTheme.liveGreen,
-      ),
+    // Submit check-in via API with new fields
+    final createCheckInNotifier = ref.read(createCheckInProvider.notifier);
+    final checkIn = await createCheckInNotifier.submit(
+      bandId: _selectedBandId!,
+      venueId: _selectedVenueId!,
+      eventDate: DateTime.now().toIso8601String(),
+      venueRating: _rating > 0 ? _rating : null,
+      bandRating: _rating > 0 ? _rating : null,
+      reviewText: _commentController.text.isNotEmpty ? _commentController.text : null,
+      vibeTagIds: _selectedVibes.isNotEmpty ? _selectedVibes.toList() : null,
     );
-    context.pop();
+
+    if (!mounted) return;
+
+    if (checkIn != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Check-in successful!'),
+          backgroundColor: AppTheme.liveGreen,
+        ),
+      );
+      context.pop();
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to create check-in. Please try again.'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    }
   }
 
   @override

@@ -47,12 +47,11 @@ class CreateCheckInRequest with _$CreateCheckInRequest {
   const factory CreateCheckInRequest({
     required String bandId,
     required String venueId,
-    required double rating,
-    String? comment,
-    String? photoUrl,
-    double? checkinLatitude,
-    double? checkinLongitude,
-    String? eventDate,
+    required String eventDate,
+    double? venueRating,
+    double? bandRating,
+    String? reviewText,
+    List<String>? imageUrls,
     List<String>? vibeTagIds,
   }) = _CreateCheckInRequest;
 

@@ -75,9 +75,11 @@ class CreateCheckIn extends _$CreateCheckIn {
   Future<CheckIn?> submit({
     required String bandId,
     required String venueId,
-    required double rating,
-    String? comment,
-    String? photoUrl,
+    required String eventDate,
+    double? venueRating,
+    double? bandRating,
+    String? reviewText,
+    List<String>? imageUrls,
     List<String>? vibeTagIds,
   }) async {
     state = const AsyncValue.loading();
@@ -89,9 +91,11 @@ class CreateCheckIn extends _$CreateCheckIn {
         CreateCheckInRequest(
           bandId: bandId,
           venueId: venueId,
-          rating: rating,
-          comment: comment,
-          photoUrl: photoUrl,
+          eventDate: eventDate,
+          venueRating: venueRating,
+          bandRating: bandRating,
+          reviewText: reviewText,
+          imageUrls: imageUrls,
           vibeTagIds: vibeTagIds,
         ),
       );
