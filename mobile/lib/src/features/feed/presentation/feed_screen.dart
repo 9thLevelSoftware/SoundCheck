@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../checkins/presentation/providers/checkin_providers.dart';
+import '../../checkins/domain/checkin.dart';
 
 /// Social Activity Feed - The Home Screen
 /// Shows a vertical scroll of check-in cards from friends and global activity
@@ -14,6 +16,7 @@ class FeedScreen extends ConsumerStatefulWidget {
 
 class _FeedScreenState extends ConsumerState<FeedScreen> {
   final ScrollController _scrollController = ScrollController();
+  String _selectedFilter = 'friends';
 
   @override
   void dispose() {
@@ -21,8 +24,20 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
     super.dispose();
   }
 
+  void _changeFilter(String filter) {
+    if (_selectedFilter != filter) {
+      setState(() {
+        _selectedFilter = filter;
+      });
+      // Invalidate and refetch the feed
+      ref.invalidate(socialFeedProvider);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    final feedAsync = ref.watch(socialFeedProvider);
+
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
       body: CustomScrollView(
@@ -71,35 +86,138 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 children: [
                   _FeedTab(
                     label: 'Friends',
-                    isSelected: true,
-                    onTap: () {},
+                    isSelected: _selectedFilter == 'friends',
+                    onTap: () => _changeFilter('friends'),
                   ),
                   const SizedBox(width: 12),
                   _FeedTab(
                     label: 'Global',
-                    isSelected: false,
-                    onTap: () {},
+                    isSelected: _selectedFilter == 'global',
+                    onTap: () => _changeFilter('global'),
                   ),
                 ],
               ),
             ),
           ),
 
-          // Check-in Cards
-          SliverPadding(
-            padding: const EdgeInsets.only(bottom: 100), // Space for nav bar
-            sliver: SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) {
-                  // Placeholder check-in cards
-                  return _CheckInCard(
-                    index: index,
-                    onTap: () {},
-                  );
-                },
-                childCount: 10, // Placeholder count
+          // Check-in Cards - Using real data
+          feedAsync.when(
+            loading: () => const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.all(32.0),
+                child: Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.electricPurple,
+                  ),
+                ),
               ),
             ),
+            error: (error, stack) => SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(32.0),
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(
+                        Icons.error_outline,
+                        color: AppTheme.neonPink,
+                        size: 48,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Failed to load feed',
+                        style: const TextStyle(
+                          color: AppTheme.textPrimary,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        error.toString(),
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => ref.invalidate(socialFeedProvider),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.electricPurple,
+                        ),
+                        child: const Text('Retry'),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            data: (checkIns) {
+              if (checkIns.isEmpty) {
+                return const SliverToBoxAdapter(
+                  child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.music_off,
+                            color: AppTheme.textTertiary,
+                            size: 64,
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            'No check-ins yet',
+                            style: TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          SizedBox(height: 8),
+                          Text(
+                            'Start checking in to shows to see activity here!',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 14,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+
+              return SliverPadding(
+                padding: const EdgeInsets.only(bottom: 100), // Space for nav bar
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) {
+                      final checkIn = checkIns[index];
+                      return _CheckInCard(
+                        checkIn: checkIn,
+                        onTap: () {
+                          // Navigate to check-in detail
+                          context.push('/checkins/${checkIn.id}');
+                        },
+                        onToast: () async {
+                          await ref
+                              .read(toastCheckInProvider.notifier)
+                              .toggle(checkIn.id, checkIn.hasToasted);
+                        },
+                      );
+                    },
+                    childCount: checkIns.length,
+                  ),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -144,27 +262,62 @@ class _FeedTab extends StatelessWidget {
 /// Check-in Card - The main feed item
 class _CheckInCard extends StatelessWidget {
   const _CheckInCard({
-    required this.index,
+    required this.checkIn,
     required this.onTap,
+    this.onToast,
   });
 
-  final int index;
+  final CheckIn checkIn;
   final VoidCallback onTap;
+  final VoidCallback? onToast;
+
+  String _getTimeAgo(String createdAt) {
+    try {
+      final dateTime = DateTime.parse(createdAt);
+      final now = DateTime.now();
+      final difference = now.difference(dateTime);
+
+      if (difference.inMinutes < 1) {
+        return 'just now';
+      } else if (difference.inMinutes < 60) {
+        return '${difference.inMinutes}m ago';
+      } else if (difference.inHours < 24) {
+        return '${difference.inHours}h ago';
+      } else if (difference.inDays < 7) {
+        return '${difference.inDays}d ago';
+      } else {
+        return '${difference.inDays ~/ 7}w ago';
+      }
+    } catch (e) {
+      return '';
+    }
+  }
+
+  IconData _getVibeIcon(String vibeName) {
+    final lowerName = vibeName.toLowerCase();
+    if (lowerName.contains('sound') || lowerName.contains('audio')) {
+      return Icons.volume_up;
+    } else if (lowerName.contains('mosh') || lowerName.contains('pit') ||
+        lowerName.contains('energy')) {
+      return Icons.local_fire_department;
+    } else if (lowerName.contains('light') || lowerName.contains('visual')) {
+      return Icons.lightbulb;
+    } else if (lowerName.contains('crowd') || lowerName.contains('audience')) {
+      return Icons.people;
+    } else if (lowerName.contains('stage')) {
+      return Icons.theater_comedy;
+    } else {
+      return Icons.music_note;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Placeholder data
-    final userNames = ['Sarah M.', 'Mike T.', 'Alex R.', 'Jordan L.', 'Casey B.'];
-    final bandNames = ['Metallica', 'Iron Maiden', 'Ghost', 'Gojira', 'Mastodon'];
-    final venueNames = ['The Forum', 'Madison Square Garden', 'Red Rocks', 'Wembley Arena', 'The Fillmore'];
-    final ratings = [4.5, 5.0, 4.0, 4.5, 3.5];
-    final times = ['15m ago', '1h ago', '2h ago', '3h ago', '5h ago'];
-
-    final userName = userNames[index % userNames.length];
-    final bandName = bandNames[index % bandNames.length];
-    final venueName = venueNames[index % venueNames.length];
-    final rating = ratings[index % ratings.length];
-    final time = times[index % times.length];
+    final userName = checkIn.user?.username ?? 'Unknown';
+    final bandName = checkIn.band?.name ?? 'Unknown Band';
+    final venueName = checkIn.venue?.name ?? 'Unknown Venue';
+    final rating = checkIn.rating;
+    final time = _getTimeAgo(checkIn.createdAt);
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -308,7 +461,8 @@ class _CheckInCard extends StatelessWidget {
                     }),
                     const Spacer(),
                     // Badge indicator
-                    if (index % 3 == 0)
+                    if (checkIn.earnedBadges != null &&
+                        checkIn.earnedBadges!.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 8,
@@ -318,18 +472,18 @@ class _CheckInCard extends StatelessWidget {
                           color: AppTheme.toastGold.withOpacity(0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
-                        child: const Row(
+                        child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.emoji_events,
                               size: 14,
                               color: AppTheme.toastGold,
                             ),
-                            SizedBox(width: 4),
+                            const SizedBox(width: 4),
                             Text(
-                              'Badge Earned!',
-                              style: TextStyle(
+                              '${checkIn.earnedBadges!.length} Badge${checkIn.earnedBadges!.length > 1 ? 's' : ''} Earned!',
+                              style: const TextStyle(
                                 color: AppTheme.toastGold,
                                 fontSize: 12,
                                 fontWeight: FontWeight.w600,
@@ -343,22 +497,24 @@ class _CheckInCard extends StatelessWidget {
                 const SizedBox(height: 8),
 
                 // Vibe Tags
-                Wrap(
-                  spacing: 8,
-                  runSpacing: 8,
-                  children: [
-                    const _VibeChip(label: 'Great Sound', icon: Icons.volume_up),
-                    if (index % 2 == 0) const _VibeChip(label: 'Mosh Pit', icon: Icons.local_fire_department),
-                    if (index % 3 == 0) const _VibeChip(label: 'Epic Lighting', icon: Icons.lightbulb),
-                  ],
-                ),
+                if (checkIn.vibes != null && checkIn.vibes!.isNotEmpty)
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: checkIn.vibes!.map((vibe) {
+                      return _VibeChip(
+                        label: vibe.displayName,
+                        icon: _getVibeIcon(vibe.displayName),
+                      );
+                    }).toList(),
+                  ),
 
                 // Comment
-                if (index % 2 == 0) ...[
+                if (checkIn.comment != null && checkIn.comment!.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  const Text(
-                    'Incredible show! The energy was unreal tonight.',
-                    style: TextStyle(
+                  Text(
+                    checkIn.comment!,
+                    style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
                     ),
@@ -384,18 +540,18 @@ class _CheckInCard extends StatelessWidget {
                 // Toast Button
                 _ActionButton(
                   icon: Icons.sports_bar,
-                  label: '${12 + index}',
-                  isActive: index % 2 == 0,
+                  label: '${checkIn.toastCount}',
+                  isActive: checkIn.hasToasted,
                   activeColor: AppTheme.toastGold,
-                  onTap: () {},
+                  onTap: onToast ?? () {},
                 ),
                 const SizedBox(width: 24),
                 // Comment Button
                 _ActionButton(
                   icon: Icons.chat_bubble_outline,
-                  label: '${3 + (index % 5)}',
+                  label: '${checkIn.commentCount}',
                   isActive: false,
-                  onTap: () {},
+                  onTap: onTap,
                 ),
                 const Spacer(),
                 // Timestamp
