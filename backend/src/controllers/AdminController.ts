@@ -21,21 +21,21 @@ export class AdminController {
       const db = Database.getInstance();
 
       // Get database stats
-      const [userCount] = await db.query('SELECT COUNT(*) as count FROM users');
-      const [venueCount] = await db.query('SELECT COUNT(*) as count FROM venues');
-      const [bandCount] = await db.query('SELECT COUNT(*) as count FROM bands');
-      const [reviewCount] = await db.query('SELECT COUNT(*) as count FROM reviews');
-      const [checkinCount] = await db.query('SELECT COUNT(*) as count FROM checkins');
+      const userCountResult = await db.query('SELECT COUNT(*) as count FROM users');
+      const venueCountResult = await db.query('SELECT COUNT(*) as count FROM venues');
+      const bandCountResult = await db.query('SELECT COUNT(*) as count FROM bands');
+      const reviewCountResult = await db.query('SELECT COUNT(*) as count FROM reviews');
+      const checkinCountResult = await db.query('SELECT COUNT(*) as count FROM checkins');
 
       // Get recent activity (last 24 hours)
-      const [recentUsers] = await db.query(
-        'SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL 24 HOUR'
+      const recentUsersResult = await db.query(
+        'SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL \'24 hours\''
       );
-      const [recentReviews] = await db.query(
-        'SELECT COUNT(*) as count FROM reviews WHERE created_at > NOW() - INTERVAL 24 HOUR'
+      const recentReviewsResult = await db.query(
+        'SELECT COUNT(*) as count FROM reviews WHERE created_at > NOW() - INTERVAL \'24 hours\''
       );
-      const [recentCheckins] = await db.query(
-        'SELECT COUNT(*) as count FROM checkins WHERE created_at > NOW() - INTERVAL 24 HOUR'
+      const recentCheckinsResult = await db.query(
+        'SELECT COUNT(*) as count FROM checkins WHERE created_at > NOW() - INTERVAL \'24 hours\''
       );
 
       // Get cache stats
@@ -48,16 +48,16 @@ export class AdminController {
         success: true,
         data: {
           counts: {
-            users: userCount[0].count,
-            venues: venueCount[0].count,
-            bands: bandCount[0].count,
-            reviews: reviewCount[0].count,
-            checkins: checkinCount[0].count,
+            users: userCountResult.rows[0].count,
+            venues: venueCountResult.rows[0].count,
+            bands: bandCountResult.rows[0].count,
+            reviews: reviewCountResult.rows[0].count,
+            checkins: checkinCountResult.rows[0].count,
           },
           recent24h: {
-            newUsers: recentUsers[0].count,
-            newReviews: recentReviews[0].count,
-            newCheckins: recentCheckins[0].count,
+            newUsers: recentUsersResult.rows[0].count,
+            newReviews: recentReviewsResult.rows[0].count,
+            newCheckins: recentCheckinsResult.rows[0].count,
           },
           cache: cacheStats,
           websocket: wsStats,
@@ -88,7 +88,7 @@ export class AdminController {
       const limit = parseInt(req.query.limit as string) || 10;
       const db = Database.getInstance();
 
-      const [venues] = await db.query(
+      const venuesResult = await db.query(
         `
         SELECT
           v.id,
@@ -103,14 +103,14 @@ export class AdminController {
         GROUP BY v.id
         HAVING review_count > 0
         ORDER BY average_rating DESC, review_count DESC
-        LIMIT ?
+        LIMIT $1
         `,
         [limit]
       );
 
       const response: ApiResponse = {
         success: true,
-        data: venues,
+        data: venuesResult.rows,
       };
 
       res.status(200).json(response);
@@ -146,9 +146,9 @@ export class AdminController {
       const db = Database.getInstance();
 
       // Get user info
-      const [users] = await db.query('SELECT id, username, email, created_at FROM users WHERE id = ?', [userId]);
+      const usersResult = await db.query('SELECT id, username, email, created_at FROM users WHERE id = $1', [userId]);
 
-      if (!users || users.length === 0) {
+      if (!usersResult.rows || usersResult.rows.length === 0) {
         const response: ApiResponse = {
           success: false,
           error: 'User not found',
@@ -158,19 +158,19 @@ export class AdminController {
       }
 
       // Get user's activity counts
-      const [reviewCount] = await db.query('SELECT COUNT(*) as count FROM reviews WHERE user_id = ?', [userId]);
-      const [checkinCount] = await db.query('SELECT COUNT(*) as count FROM checkins WHERE user_id = ?', [userId]);
-      const [followerCount] = await db.query('SELECT COUNT(*) as count FROM user_followers WHERE following_id = ?', [userId]);
-      const [followingCount] = await db.query('SELECT COUNT(*) as count FROM user_followers WHERE follower_id = ?', [userId]);
+      const reviewCountResult = await db.query('SELECT COUNT(*) as count FROM reviews WHERE user_id = $1', [userId]);
+      const checkinCountResult = await db.query('SELECT COUNT(*) as count FROM checkins WHERE user_id = $1', [userId]);
+      const followerCountResult = await db.query('SELECT COUNT(*) as count FROM user_followers WHERE following_id = $1', [userId]);
+      const followingCountResult = await db.query('SELECT COUNT(*) as count FROM user_followers WHERE follower_id = $1', [userId]);
 
       // Get recent reviews
-      const [recentReviews] = await db.query(
+      const recentReviewsResult = await db.query(
         `
         SELECT r.*, v.name as venue_name, b.name as band_name
         FROM reviews r
         LEFT JOIN venues v ON r.venue_id = v.id
         LEFT JOIN bands b ON r.band_id = b.id
-        WHERE r.user_id = ?
+        WHERE r.user_id = $1
         ORDER BY r.created_at DESC
         LIMIT 10
         `,
@@ -180,14 +180,14 @@ export class AdminController {
       const response: ApiResponse = {
         success: true,
         data: {
-          user: users[0],
+          user: usersResult.rows[0],
           activity: {
-            reviewCount: reviewCount[0].count,
-            checkinCount: checkinCount[0].count,
-            followerCount: followerCount[0].count,
-            followingCount: followingCount[0].count,
+            reviewCount: reviewCountResult.rows[0].count,
+            checkinCount: checkinCountResult.rows[0].count,
+            followerCount: followerCountResult.rows[0].count,
+            followingCount: followingCountResult.rows[0].count,
           },
-          recentReviews,
+          recentReviews: recentReviewsResult.rows,
         },
       };
 
@@ -291,17 +291,17 @@ export class AdminController {
 
       switch (action) {
         case 'delete_review':
-          await db.query('DELETE FROM reviews WHERE id = ?', [targetId]);
+          await db.query('DELETE FROM reviews WHERE id = $1', [targetId]);
           logWarn(`Admin deleted review: ${targetId}. Reason: ${reason || 'Not specified'}`);
           break;
 
         case 'ban_user':
-          await db.query('UPDATE users SET is_active = false WHERE id = ?', [targetId]);
+          await db.query('UPDATE users SET is_active = false WHERE id = $1', [targetId]);
           logWarn(`Admin banned user: ${targetId}. Reason: ${reason || 'Not specified'}`);
           break;
 
         case 'delete_venue':
-          await db.query('UPDATE venues SET is_active = false WHERE id = ?', [targetId]);
+          await db.query('UPDATE venues SET is_active = false WHERE id = $1', [targetId]);
           logWarn(`Admin deleted venue: ${targetId}. Reason: ${reason || 'Not specified'}`);
           break;
 
