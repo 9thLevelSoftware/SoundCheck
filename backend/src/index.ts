@@ -20,7 +20,7 @@ import eventRoutes from './routes/eventRoutes';
 import checkinRoutes from './routes/checkinRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
-import logger, { logHttp, logInfo, logError } from './utils/logger';
+import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -33,24 +33,32 @@ const corsOptions = {
   origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
-    
+
     // In development, allow all origins
     if (process.env.NODE_ENV === 'development') {
       return callback(null, true);
     }
-    
-    // In production, allow mobile apps (no origin) and whitelisted domains
-    const allowedOrigins = (process.env.CORS_ORIGIN || '*').split(',').map(o => o.trim());
-    if (allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
+
+    // In production, require explicit CORS_ORIGIN configuration
+    const corsOrigin = process.env.CORS_ORIGIN;
+    if (!corsOrigin || corsOrigin === '*') {
+      // Log warning but allow - mobile apps have no origin
+      logWarn('CORS: No CORS_ORIGIN set, allowing request from:', { origin });
       return callback(null, true);
     }
-    
-    // Allow for mobile apps which don't send origin
-    callback(null, true);
+
+    const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Reject unknown origins in production
+    logWarn('CORS: Rejected origin:', { origin });
+    callback(new Error('Not allowed by CORS'), false);
   },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
-  credentials: false, // Set to false for mobile apps
+  credentials: false,
 };
 app.use(cors(corsOptions));
 
@@ -173,6 +181,11 @@ const startServer = async () => {
     }
 
     logInfo('Database connection established');
+
+    // Warn about CORS configuration in production
+    if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
+      logWarn('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
+    }
 
     app.listen(PORT, () => {
       logInfo(`PitPulse API Server running on port ${PORT}`);
