@@ -106,7 +106,9 @@ class AuthRepository {
   Future<User> getMe() async {
     try {
       final response = await _dioClient.get('${ApiConfig.auth}/me');
-      return User.fromJson(response.data);
+      // Extract data from API wrapper: {success, data, message}
+      final data = response.data['data'] as Map<String, dynamic>;
+      return User.fromJson(data);
     } catch (e) {
       rethrow;
     }
@@ -120,8 +122,10 @@ class AuthRepository {
         data: updates,
       );
 
-      final user = User.fromJson(response.data);
-      
+      // Extract data from API wrapper: {success, data, message}
+      final data = response.data['data'] as Map<String, dynamic>;
+      final user = User.fromJson(data);
+
       // Update stored user data
       await _secureStorage.write(
         key: ApiConfig.userKey,
