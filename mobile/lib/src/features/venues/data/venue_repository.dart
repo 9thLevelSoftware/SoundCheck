@@ -28,7 +28,7 @@ class VenueRepository {
       if (search != null) queryParams['q'] = search;
       if (city != null) queryParams['city'] = city;
       if (venueType != null) queryParams['venueType'] = venueType;
-      if (minRating != null) queryParams['minRating'] = minRating;
+      if (minRating != null) queryParams['rating'] = minRating;
       if (minCapacity != null) queryParams['minCapacity'] = minCapacity;
       if (maxCapacity != null) queryParams['maxCapacity'] = maxCapacity;
       if (sortBy != null) queryParams['sort'] = sortBy;
@@ -86,8 +86,8 @@ class VenueRepository {
       final response = await _dioClient.get(
         '${ApiConfig.venues}/near',
         queryParameters: {
-          'latitude': latitude,
-          'longitude': longitude,
+          'lat': latitude,
+          'lng': longitude,
           'radius': radius,
           'limit': limit,
         },
