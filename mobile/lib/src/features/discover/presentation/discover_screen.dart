@@ -239,10 +239,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   color: AppTheme.electricPurple,
                 ),
               ),
-              error: (err, stack) => Center(
+              error: (err, stack) => const Center(
                 child: Text(
                   'Error loading trending bands',
-                  style: const TextStyle(color: AppTheme.textTertiary),
+                  style: TextStyle(color: AppTheme.textTertiary),
                 ),
               ),
             ),
@@ -288,10 +288,10 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   color: AppTheme.neonPink,
                 ),
               ),
-              error: (err, stack) => Center(
+              error: (err, stack) => const Center(
                 child: Text(
                   'Error loading venues',
-                  style: const TextStyle(color: AppTheme.textTertiary),
+                  style: TextStyle(color: AppTheme.textTertiary),
                 ),
               ),
             ),
@@ -341,12 +341,12 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             ),
-            error: (err, stack) => Padding(
-              padding: const EdgeInsets.all(16),
+            error: (err, stack) => const Padding(
+              padding: EdgeInsets.all(16),
               child: Center(
                 child: Text(
                   'Error loading popular bands',
-                  style: const TextStyle(color: AppTheme.textTertiary),
+                  style: TextStyle(color: AppTheme.textTertiary),
                 ),
               ),
             ),

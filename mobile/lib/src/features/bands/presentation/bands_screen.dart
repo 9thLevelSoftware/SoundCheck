@@ -170,7 +170,7 @@ class BandsScreen extends ConsumerWidget {
                         padding: const EdgeInsets.only(right: 8),
                         child: Chip(
                           label: Text(
-                              '${filters.minRating!.toStringAsFixed(1)}+ stars'),
+                              '${filters.minRating!.toStringAsFixed(1)}+ stars',),
                           deleteIcon: const Icon(Icons.close, size: 16),
                           onDeleted: () {
                             ref

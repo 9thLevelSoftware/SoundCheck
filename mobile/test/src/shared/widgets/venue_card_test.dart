@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pitpulse_flutter/src/shared/widgets/venue_card.dart';
 import 'package:pitpulse_flutter/src/features/venues/domain/venue.dart';
 
 void main() {
+  // Mock the haptic feedback platform channel
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (MethodCall methodCall) async {
+      return null;
+    });
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
   group('VenueCard Widget', () {
     const testVenue = Venue(
       id: '1',
@@ -12,7 +26,7 @@ void main() {
       city: 'San Francisco',
       state: 'CA',
       averageRating: 4.5,
-      totalReviews: 100,
+      totalCheckins: 100,
       isActive: true,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
@@ -63,7 +77,7 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.location_on_outlined), findsOneWidget);
+      expect(find.byIcon(Icons.location_on), findsOneWidget);
     });
 
     testWidgets('displays placeholder when no image URL', (WidgetTester tester) async {
@@ -92,8 +106,11 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byType(InkWell));
-      await tester.pumpAndSettle();
+      // Use runAsync to handle the async haptic feedback in the onTap callback
+      await tester.runAsync(() async {
+        await tester.tap(find.byType(InkWell));
+        await tester.pumpAndSettle();
+      });
 
       expect(tapped, true);
     });
@@ -103,7 +120,7 @@ void main() {
         id: '1',
         name: 'Test Venue',
         averageRating: 4.5,
-        totalReviews: 100,
+        totalCheckins: 100,
         isActive: true,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
@@ -117,7 +134,7 @@ void main() {
         ),
       );
 
-      expect(find.byIcon(Icons.location_on_outlined), findsNothing);
+      expect(find.byIcon(Icons.location_on), findsNothing);
     });
   });
 }

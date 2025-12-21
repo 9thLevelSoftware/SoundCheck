@@ -125,9 +125,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                         size: 48,
                       ),
                       const SizedBox(height: 16),
-                      Text(
+                      const Text(
                         'Failed to load feed',
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppTheme.textPrimary,
                           fontSize: 16,
                           fontWeight: FontWeight.w600,

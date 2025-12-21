@@ -70,25 +70,25 @@ class NotificationsScreen extends ConsumerWidget {
               const SizedBox(height: 32),
 
               // Feature Preview List
-              _FeaturePreviewItem(
+              const _FeaturePreviewItem(
                 icon: Icons.sports_bar,
                 color: AppTheme.toastGold,
                 label: 'Toasts on your check-ins',
               ),
               const SizedBox(height: 12),
-              _FeaturePreviewItem(
+              const _FeaturePreviewItem(
                 icon: Icons.chat_bubble_outline,
                 color: AppTheme.electricPurple,
                 label: 'Comments and replies',
               ),
               const SizedBox(height: 12),
-              _FeaturePreviewItem(
+              const _FeaturePreviewItem(
                 icon: Icons.emoji_events_outlined,
                 color: AppTheme.neonPink,
                 label: 'Badges and achievements',
               ),
               const SizedBox(height: 12),
-              _FeaturePreviewItem(
+              const _FeaturePreviewItem(
                 icon: Icons.music_note,
                 color: AppTheme.liveGreen,
                 label: 'Friend check-ins',

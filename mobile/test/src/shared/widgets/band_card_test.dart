@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:pitpulse_flutter/src/shared/widgets/band_card.dart';
 import 'package:pitpulse_flutter/src/features/bands/domain/band.dart';
 
 void main() {
+  // Mock the haptic feedback platform channel
+  setUp(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, (MethodCall methodCall) async {
+      return null;
+    });
+  });
+
+  tearDown(() {
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(SystemChannels.platform, null);
+  });
+
   group('BandCard Widget', () {
     const testBand = Band(
       id: '1',
@@ -11,7 +25,7 @@ void main() {
       description: 'A great band',
       genre: 'Rock',
       averageRating: 4.5,
-      totalReviews: 150,
+      totalCheckins: 150,
       isActive: true,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
@@ -91,8 +105,11 @@ void main() {
         ),
       );
 
-      await tester.tap(find.byType(InkWell));
-      await tester.pumpAndSettle();
+      // Use runAsync to handle the async haptic feedback in the onTap callback
+      await tester.runAsync(() async {
+        await tester.tap(find.byType(InkWell));
+        await tester.pumpAndSettle();
+      });
 
       expect(tapped, true);
     });
@@ -102,7 +119,7 @@ void main() {
         id: '1',
         name: 'Test Band',
         averageRating: 4.5,
-        totalReviews: 150,
+        totalCheckins: 150,
         isActive: true,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',

@@ -1,8 +1,6 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers/providers.dart';
-import '../../data/checkin_repository.dart';
 import '../../domain/checkin.dart';
 import '../../domain/vibe_tag.dart';
 import '../../domain/toast.dart';
