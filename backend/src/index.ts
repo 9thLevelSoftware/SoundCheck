@@ -18,6 +18,7 @@ import badgeRoutes from './routes/badgeRoutes';
 import discoveryRoutes from './routes/discoveryRoutes';
 import eventRoutes from './routes/eventRoutes';
 import checkinRoutes from './routes/checkinRoutes';
+import feedRoutes from './routes/feedRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -107,6 +108,7 @@ app.use('/api/badges', badgeRoutes);
 app.use('/api/discover', discoveryRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/checkins', checkinRoutes);
+app.use('/api/feed', feedRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
