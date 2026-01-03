@@ -12,6 +12,7 @@ import '../../features/checkins/presentation/checkin_screen.dart';
 import '../../features/profile/presentation/profile_screen.dart';
 import '../../features/profile/presentation/edit_profile_screen.dart';
 import '../../features/profile/presentation/settings_screen.dart';
+import '../../features/profile/presentation/user_profile_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/venues/presentation/venue_detail_screen.dart';
 import '../../features/bands/presentation/band_detail_screen.dart';
@@ -293,13 +294,9 @@ GoRouter goRouter(Ref ref) {
         name: 'user-profile',
         pageBuilder: (context, state) {
           final userId = state.pathParameters['id']!;
-          // TODO: Create UserProfileScreen for viewing other users
           return CustomTransitionPage(
             key: state.pageKey,
-            child: Scaffold(
-              appBar: AppBar(title: Text('User $userId')),
-              body: const Center(child: Text('User profile coming soon')),
-            ),
+            child: UserProfileScreen(userId: userId),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;
