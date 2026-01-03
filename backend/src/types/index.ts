@@ -92,7 +92,7 @@ export interface Band {
   imageUrl?: string;
   hometown?: string;
   averageRating: number;
-  totalReviews: number;
+  totalCheckins: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
