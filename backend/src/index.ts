@@ -23,6 +23,15 @@ import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 
+// Validate required environment variables
+const requiredEnvVars = ['DB_PASSWORD', 'JWT_SECRET'];
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`FATAL: Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 

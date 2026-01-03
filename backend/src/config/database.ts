@@ -24,7 +24,7 @@ class Database {
         port: parseInt(process.env.DB_PORT || '5432'),
         database: process.env.DB_NAME || 'pitpulse',
         user: process.env.DB_USER || 'postgres',
-        password: process.env.DB_PASSWORD || 'password',
+        password: process.env.DB_PASSWORD!, // Required - validated at startup
       };
 
       this.pool = new Pool({
