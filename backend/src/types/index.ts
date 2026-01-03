@@ -59,6 +59,7 @@ export interface Venue {
   capacity?: number;
   venueType?: VenueType;
   imageUrl?: string;
+  coverImageUrl?: string;
   averageRating: number;
   totalCheckins: number;
   isActive: boolean;

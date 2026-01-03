@@ -325,6 +325,7 @@ export class VenueService {
       capacity: row.capacity,
       venueType: row.venue_type,
       imageUrl: row.image_url,
+      coverImageUrl: row.cover_image_url || null,
       averageRating: parseFloat(row.average_rating || 0),
       totalCheckins: parseInt(row.total_reviews || 0),
       isActive: row.is_active,
