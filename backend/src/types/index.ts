@@ -53,7 +53,7 @@ export interface Venue {
   venueType?: VenueType;
   imageUrl?: string;
   averageRating: number;
-  totalReviews: number;
+  totalCheckins: number;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;
