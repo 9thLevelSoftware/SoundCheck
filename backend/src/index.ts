@@ -24,12 +24,19 @@ import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 
 // Validate required environment variables
-const requiredEnvVars = ['DB_PASSWORD', 'JWT_SECRET'];
+// DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
+const requiredEnvVars = ['JWT_SECRET'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
     console.error(`FATAL: Missing required environment variable: ${envVar}`);
     process.exit(1);
   }
+}
+
+// Validate database configuration - need either DATABASE_URL or DB_PASSWORD
+if (!process.env.DATABASE_URL && !process.env.DB_PASSWORD) {
+  console.error('FATAL: Missing database configuration. Set either DATABASE_URL or DB_PASSWORD');
+  process.exit(1);
 }
 
 const app = express();
