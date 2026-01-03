@@ -267,13 +267,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         return _TrendingVenueCard(
                           venue: venues[index],
                           onTap: () {
-                            // TODO: Navigate to venue detail screen
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('View ${venues[index].name}'),
-                                backgroundColor: AppTheme.neonPink,
-                              ),
-                            );
+                            context.push('/venues/${venues[index].id}');
                           },
                         );
                       },
