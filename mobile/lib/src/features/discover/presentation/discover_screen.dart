@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
@@ -223,13 +224,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         return _TrendingBandCard(
                           band: bands[index],
                           onTap: () {
-                            // TODO: Navigate to band detail screen
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('View ${bands[index].name}'),
-                                backgroundColor: AppTheme.electricPurple,
-                              ),
-                            );
+                            context.push('/bands/${bands[index].id}');
                           },
                         );
                       },
@@ -322,13 +317,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         band: band,
                         rank: index + 1,
                         onTap: () {
-                          // TODO: Navigate to band detail screen
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text('View ${band.name}'),
-                              backgroundColor: AppTheme.electricPurple,
-                            ),
-                          );
+                          context.push('/bands/${band.id}');
                         },
                       );
                     }).toList(),
