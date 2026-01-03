@@ -2,6 +2,8 @@ import request from 'supertest';
 import express from 'express';
 import { UserController } from '../../controllers/UserController';
 import { UserService } from '../../services/UserService';
+import { validate } from '../../middleware/validate';
+import { createUserSchema, loginUserSchema } from '../../utils/validationSchemas';
 
 // Mock the UserService
 jest.mock('../../services/UserService');
@@ -18,8 +20,8 @@ describe('UserController', () => {
 
     mockUserService = new UserService() as jest.Mocked<UserService>;
     const userController = new UserController(mockUserService);
-    app.post('/register', userController.register);
-    app.post('/login', userController.login);
+    app.post('/register', validate(createUserSchema), userController.register);
+    app.post('/login', validate(loginUserSchema), userController.login);
     app.get('/me', userController.getProfile);
   });
 
@@ -70,7 +72,8 @@ describe('UserController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Email, password, and username are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.data.details).toBeDefined();
     });
 
     it('should return error for duplicate email', async () => {
@@ -140,7 +143,8 @@ describe('UserController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Email and password are required');
+      expect(response.body.error).toBe('Validation failed');
+      expect(response.body.data.details).toBeDefined();
     });
 
     it('should return error for invalid credentials', async () => {
