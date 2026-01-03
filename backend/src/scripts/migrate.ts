@@ -19,7 +19,7 @@ async function runMigration() {
     console.log('🔗 Connecting using DATABASE_URL');
     pool = new Pool({
       connectionString: process.env.DATABASE_URL,
-      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+      ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
     });
   } else {
     console.log('🔗 Connecting using individual DB_* environment variables');
