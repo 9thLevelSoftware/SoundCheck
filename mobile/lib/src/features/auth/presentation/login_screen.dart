@@ -267,15 +267,30 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         children: [
                           _SocialLoginButton(
                             icon: Icons.apple,
-                            onTap: () {},
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Apple Sign-In coming soon')),
+                              );
+                              // TODO: Implement Apple Sign-In with sign_in_with_apple package
+                            },
                           ),
                           _SocialLoginButton(
                             icon: Icons.g_mobiledata, // Google icon
-                            onTap: () {},
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Google Sign-In coming soon')),
+                              );
+                              // TODO: Implement Google Sign-In with google_sign_in package
+                            },
                           ),
                           _SocialLoginButton(
                             icon: Icons.facebook,
-                            onTap: () {},
+                            onTap: () {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Facebook Sign-In coming soon')),
+                              );
+                              // TODO: Implement Facebook Sign-In with flutter_facebook_auth package
+                            },
                           ),
                         ],
                       ),
