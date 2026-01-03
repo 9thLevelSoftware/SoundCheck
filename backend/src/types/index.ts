@@ -15,6 +15,13 @@ export interface User {
   isAdmin?: boolean;
   createdAt: string;
   updatedAt: string;
+  // Statistics (populated on profile requests)
+  totalCheckins?: number;
+  uniqueBands?: number;
+  uniqueVenues?: number;
+  followersCount?: number;
+  followingCount?: number;
+  badgesCount?: number;
 }
 
 export interface CreateUserRequest {
