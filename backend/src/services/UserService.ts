@@ -250,6 +250,15 @@ export class UserService {
     `;
 
     const result = await this.db.query(statsQuery, [userId]);
+
+    if (!result.rows.length) {
+      return {
+        totalCheckins: 0,
+        badgesEarned: 0,
+        followersCount: 0,
+        followingCount: 0,
+      };
+    }
     const stats = result.rows[0];
 
     return {
