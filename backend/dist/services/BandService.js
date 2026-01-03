@@ -266,7 +266,7 @@ class BandService {
             imageUrl: row.image_url,
             hometown: row.hometown,
             averageRating: parseFloat(row.average_rating || 0),
-            totalCheckins: parseInt(row.total_checkins || 0),
+            totalCheckins: parseInt(row.total_reviews || 0),
             isActive: row.is_active,
             createdAt: row.created_at,
             updatedAt: row.updated_at,

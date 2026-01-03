@@ -15,6 +15,10 @@ export declare const optionalAuth: (req: Request, res: Response, next: NextFunct
  * Middleware to check if user owns a resource
  */
 export declare const requireOwnership: (resourceUserIdField?: string) => (req: Request, res: Response, next: NextFunction) => void;
+/**
+ * Middleware to require admin privileges
+ */
+export declare const requireAdmin: () => (req: Request, res: Response, next: NextFunction) => void;
 export declare const rateLimit: (windowMs?: number, maxRequests?: number) => (req: Request, res: Response, next: NextFunction) => void;
 /**
  * Clean up expired rate limit entries (should be called periodically)

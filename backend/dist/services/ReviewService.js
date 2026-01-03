@@ -127,7 +127,7 @@ class ReviewService {
             // Add venue info
             if (row.venue_name) {
                 review.venue = {
-                    id: review.venueId,
+                    id: review.venueId ?? '',
                     name: row.venue_name,
                     city: row.venue_city,
                     imageUrl: row.venue_image,
@@ -136,7 +136,7 @@ class ReviewService {
             // Add band info
             if (row.band_name) {
                 review.band = {
-                    id: review.bandId,
+                    id: review.bandId ?? '',
                     name: row.band_name,
                     genre: row.band_genre,
                     imageUrl: row.band_image,
@@ -238,7 +238,7 @@ class ReviewService {
             }
             if (row.venue_name) {
                 review.venue = {
-                    id: review.venueId,
+                    id: review.venueId ?? '',
                     name: row.venue_name,
                     city: row.venue_city,
                     imageUrl: row.venue_image,
@@ -246,7 +246,7 @@ class ReviewService {
             }
             if (row.band_name) {
                 review.band = {
-                    id: review.bandId,
+                    id: review.bandId ?? '',
                     name: row.band_name,
                     genre: row.band_genre,
                     imageUrl: row.band_image,

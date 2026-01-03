@@ -13,6 +13,12 @@ export interface User {
     isAdmin?: boolean;
     createdAt: string;
     updatedAt: string;
+    totalCheckins?: number;
+    uniqueBands?: number;
+    uniqueVenues?: number;
+    followersCount?: number;
+    followingCount?: number;
+    badgesCount?: number;
 }
 export interface CreateUserRequest {
     email: string;
@@ -46,8 +52,9 @@ export interface Venue {
     capacity?: number;
     venueType?: VenueType;
     imageUrl?: string;
+    coverImageUrl?: string;
     averageRating: number;
-    totalReviews: number;
+    totalCheckins: number;
     isActive: boolean;
     createdAt: string;
     updatedAt: string;

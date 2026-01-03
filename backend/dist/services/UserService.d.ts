@@ -37,9 +37,9 @@ export declare class UserService {
      * Get user statistics
      */
     getUserStats(userId: string): Promise<{
-        reviewCount: number;
-        badgeCount: number;
-        followerCount: number;
+        totalCheckins: number;
+        badgesEarned: number;
+        followersCount: number;
         followingCount: number;
     }>;
 }

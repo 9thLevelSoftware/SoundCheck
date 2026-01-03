@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupRateLimit = exports.rateLimit = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
+exports.cleanupRateLimit = exports.rateLimit = exports.requireAdmin = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../utils/auth");
 const UserService_1 = require("../services/UserService");
 /**
@@ -105,6 +105,30 @@ const requireOwnership = (resourceUserIdField = 'userId') => {
     };
 };
 exports.requireOwnership = requireOwnership;
+/**
+ * Middleware to require admin privileges
+ */
+const requireAdmin = () => {
+    return (req, res, next) => {
+        const user = req.user;
+        if (!user) {
+            res.status(401).json({
+                success: false,
+                error: 'Authentication required',
+            });
+            return;
+        }
+        if (!user.isAdmin) {
+            res.status(403).json({
+                success: false,
+                error: 'Admin privileges required',
+            });
+            return;
+        }
+        next();
+    };
+};
+exports.requireAdmin = requireAdmin;
 /**
  * Rate limiting middleware (simple in-memory implementation)
  */

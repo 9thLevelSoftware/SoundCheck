@@ -2,6 +2,7 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReviewController = void 0;
 const ReviewService_1 = require("../services/ReviewService");
+const errors_1 = require("../utils/errors");
 class ReviewController {
     constructor() {
         this.reviewService = new ReviewService_1.ReviewService();
@@ -167,9 +168,9 @@ class ReviewController {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to update review',
                 };
-                const statusCode = error instanceof Error &&
-                    (error.message.includes('not found') || error.message.includes('only update your own'))
-                    ? 403 : 400;
+                const statusCode = error instanceof errors_1.NotFoundError ? 404
+                    : error instanceof errors_1.ForbiddenError ? 403
+                        : 400;
                 res.status(statusCode).json(response);
             }
         };
@@ -201,9 +202,9 @@ class ReviewController {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to delete review',
                 };
-                const statusCode = error instanceof Error &&
-                    (error.message.includes('not found') || error.message.includes('only delete your own'))
-                    ? 403 : 500;
+                const statusCode = error instanceof errors_1.NotFoundError ? 404
+                    : error instanceof errors_1.ForbiddenError ? 403
+                        : 500;
                 res.status(statusCode).json(response);
             }
         };

@@ -24,10 +24,40 @@ const checkinRoutes_1 = __importDefault(require("./routes/checkinRoutes"));
 const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
 const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
+// Validate required environment variables
+const requiredEnvVars = ['DB_PASSWORD', 'JWT_SECRET'];
+for (const envVar of requiredEnvVars) {
+    if (!process.env[envVar]) {
+        console.error(`FATAL: Missing required environment variable: ${envVar}`);
+        process.exit(1);
+    }
+}
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 3000;
 // Security middleware
-app.use((0, helmet_1.default)());
+app.use((0, helmet_1.default)({
+    contentSecurityPolicy: {
+        directives: {
+            defaultSrc: ["'self'"],
+            styleSrc: ["'self'", "'unsafe-inline'"],
+            imgSrc: ["'self'", "data:", "https:"],
+            scriptSrc: ["'self'"],
+        },
+    },
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: true,
+    crossOriginResourcePolicy: { policy: "same-site" },
+    dnsPrefetchControl: true,
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    hsts: true,
+    ieNoOpen: true,
+    noSniff: true,
+    originAgentCluster: true,
+    permittedCrossDomainPolicies: false,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    xssFilter: true,
+}));
 // CORS configuration - Allow mobile apps and web clients
 const corsOptions = {
     origin: function (origin, callback) {
@@ -40,9 +70,15 @@ const corsOptions = {
         }
         // In production, require explicit CORS_ORIGIN configuration
         const corsOrigin = process.env.CORS_ORIGIN;
-        if (!corsOrigin || corsOrigin === '*') {
-            // Log warning but allow - mobile apps have no origin
-            (0, logger_1.logWarn)('CORS: No CORS_ORIGIN set, allowing request from:', { origin });
+        if (!corsOrigin) {
+            (0, logger_1.logError)('CORS: CORS_ORIGIN not configured, rejecting request from:', { origin });
+            return callback(new Error('CORS not configured'), false);
+        }
+        if (corsOrigin === '*') {
+            if (process.env.NODE_ENV === 'production') {
+                (0, logger_1.logError)('CORS: Wildcard origin not allowed in production');
+                return callback(new Error('Wildcard CORS not allowed in production'), false);
+            }
             return callback(null, true);
         }
         const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
