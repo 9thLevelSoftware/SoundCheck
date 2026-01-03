@@ -9,9 +9,23 @@ class Database {
     // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
     if (process.env.DATABASE_URL) {
       console.log('🔗 Using DATABASE_URL for database connection');
+
+      // Railway internal connections don't need SSL verification
+      // Use DB_SSL env var to control: 'false' = no SSL, 'no-verify' = SSL without cert check
+      const sslMode = process.env.DB_SSL || 'no-verify';
+      let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
+      if (sslMode === 'no-verify') {
+        sslConfig = { rejectUnauthorized: false };
+      } else if (sslMode === 'true') {
+        sslConfig = { rejectUnauthorized: true };
+      }
+      // sslMode === 'false' keeps sslConfig = false (no SSL)
+
+      console.log(`🔒 SSL mode: ${sslMode}`);
+
       this.pool = new Pool({
         connectionString: process.env.DATABASE_URL,
-        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
+        ssl: sslConfig,
         max: 20,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 2000,
