@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { ReviewService } from '../services/ReviewService';
 import { CreateReviewRequest, SearchQuery, ApiResponse } from '../types';
+import { NotFoundError, ForbiddenError } from '../utils/errors';
 
 export class ReviewController {
   private reviewService = new ReviewService();
@@ -193,15 +194,15 @@ export class ReviewController {
       res.status(200).json(response);
     } catch (error) {
       console.error('Update review error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update review',
       };
 
-      const statusCode = error instanceof Error && 
-        (error.message.includes('not found') || error.message.includes('only update your own')) 
-        ? 403 : 400;
+      const statusCode = error instanceof NotFoundError ? 404
+        : error instanceof ForbiddenError ? 403
+        : 400;
 
       res.status(statusCode).json(response);
     }
@@ -234,15 +235,15 @@ export class ReviewController {
       res.status(200).json(response);
     } catch (error) {
       console.error('Delete review error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to delete review',
       };
 
-      const statusCode = error instanceof Error && 
-        (error.message.includes('not found') || error.message.includes('only delete your own')) 
-        ? 403 : 500;
+      const statusCode = error instanceof NotFoundError ? 404
+        : error instanceof ForbiddenError ? 403
+        : 500;
 
       res.status(statusCode).json(response);
     }
