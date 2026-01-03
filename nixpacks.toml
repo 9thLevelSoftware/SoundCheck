@@ -10,7 +10,7 @@ nixPkgs = ["nodejs_20"]
 cmds = ["(cd backend && npm ci --production=false)"]
 
 [phases.build]
-cmds = ["(cd backend && npm run build)"]
+cmds = ["(cd backend && rm -rf dist && npm run build)"]
 
 [start]
 cmd = "cd backend && node dist/index.js"

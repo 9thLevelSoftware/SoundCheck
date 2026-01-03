@@ -6,9 +6,34 @@ class Database {
         // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
         if (process.env.DATABASE_URL) {
             console.log('🔗 Using DATABASE_URL for database connection');
+            console.log('📦 Database config version: 2025-01-03-v2');
+            // Modify DATABASE_URL to control SSL mode
+            // Railway's URL may have sslmode=require which overrides Pool options
+            let connectionString = process.env.DATABASE_URL;
+            const sslMode = process.env.DB_SSL || 'no-verify';
+            // Remove any existing sslmode from URL
+            connectionString = connectionString.replace(/[?&]sslmode=[^&]*/gi, '');
+            // Add appropriate sslmode based on DB_SSL setting
+            const separator = connectionString.includes('?') ? '&' : '?';
+            if (sslMode === 'false') {
+                connectionString = `${connectionString}${separator}sslmode=disable`;
+            }
+            else if (sslMode === 'no-verify') {
+                connectionString = `${connectionString}${separator}sslmode=no-verify`;
+            }
+            // sslMode === 'true' uses default (require with verification)
+            console.log(`🔒 SSL mode: ${sslMode}`);
+            // SSL config for Pool (belt and suspenders with URL param)
+            let sslConfig = false;
+            if (sslMode === 'no-verify') {
+                sslConfig = { rejectUnauthorized: false };
+            }
+            else if (sslMode === 'true') {
+                sslConfig = { rejectUnauthorized: true };
+            }
             this.pool = new pg_1.Pool({
-                connectionString: process.env.DATABASE_URL,
-                ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false,
+                connectionString,
+                ssl: sslConfig,
                 max: 20,
                 idleTimeoutMillis: 30000,
                 connectionTimeoutMillis: 2000,
