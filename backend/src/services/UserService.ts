@@ -236,13 +236,13 @@ export class UserService {
    * Get user statistics
    */
   async getUserStats(userId: string): Promise<{
-    reviewCount: number;
-    badgeCount: number;
-    followerCount: number;
+    totalCheckins: number;
+    badgesEarned: number;
+    followersCount: number;
     followingCount: number;
   }> {
     const statsQuery = `
-      SELECT 
+      SELECT
         (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
         (SELECT COUNT(*) FROM user_badges WHERE user_id = $1) as badge_count,
         (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as follower_count,
@@ -253,10 +253,10 @@ export class UserService {
     const stats = result.rows[0];
 
     return {
-      reviewCount: parseInt(stats.review_count),
-      badgeCount: parseInt(stats.badge_count),
-      followerCount: parseInt(stats.follower_count),
-      followingCount: parseInt(stats.following_count),
+      totalCheckins: parseInt(stats.review_count) || 0,
+      badgesEarned: parseInt(stats.badge_count) || 0,
+      followersCount: parseInt(stats.follower_count) || 0,
+      followingCount: parseInt(stats.following_count) || 0,
     };
   }
 }
