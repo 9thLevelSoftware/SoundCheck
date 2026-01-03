@@ -550,8 +550,12 @@ export class CheckinService {
         [checkinId]
       );
 
+      if (!checkin.rows.length) {
+        throw new Error('Checkin not found');
+      }
+
       // Allow delete if user is comment author or check-in owner
-      if (comment.rows[0].user_id !== userId && checkin.rows[0]?.user_id !== userId) {
+      if (comment.rows[0].user_id !== userId && checkin.rows[0].user_id !== userId) {
         throw new Error('Unauthorized to delete this comment');
       }
 
