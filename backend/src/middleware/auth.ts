@@ -128,6 +128,33 @@ export const requireOwnership = (resourceUserIdField: string = 'userId') => {
 };
 
 /**
+ * Middleware to require admin privileges
+ */
+export const requireAdmin = () => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+      return;
+    }
+
+    if (!user.isAdmin) {
+      res.status(403).json({
+        success: false,
+        error: 'Admin privileges required',
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+/**
  * Rate limiting middleware (simple in-memory implementation)
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();

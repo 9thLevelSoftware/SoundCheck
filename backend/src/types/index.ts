@@ -12,6 +12,7 @@ export interface User {
   dateOfBirth?: string;
   isVerified: boolean;
   isActive: boolean;
+  isAdmin?: boolean;
   createdAt: string;
   updatedAt: string;
 }
