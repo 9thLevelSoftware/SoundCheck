@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
@@ -199,8 +200,8 @@ class _VenueContent extends StatelessWidget {
         ),
 
         // Upcoming Shows Section ("On Stage")
-        const SliverToBoxAdapter(
-          child: _UpcomingShowsSection(),
+        SliverToBoxAdapter(
+          child: _UpcomingShowsSection(venueId: venueId),
         ),
 
         // Loyal Patrons & Trending Bands
@@ -468,7 +469,9 @@ class _StatDivider extends StatelessWidget {
 }
 
 class _UpcomingShowsSection extends StatelessWidget {
-  const _UpcomingShowsSection();
+  final String venueId;
+
+  const _UpcomingShowsSection({required this.venueId});
 
   @override
   Widget build(BuildContext context) {
@@ -499,7 +502,9 @@ class _UpcomingShowsSection extends StatelessWidget {
                 ],
               ),
               TextButton(
-                onPressed: () {},
+                onPressed: () {
+                  context.push('/venues/$venueId/shows');
+                },
                 child: const Text(
                   'See All',
                   style: TextStyle(color: AppTheme.electricPurple),

@@ -503,11 +503,13 @@ class _SectionHeader extends StatelessWidget {
     required this.title,
     this.subtitle,
     this.trailing,
+    this.onTrailingTap,
   });
 
   final String title;
   final String? subtitle;
   final String? trailing;
+  final VoidCallback? onTrailingTap;
 
   @override
   Widget build(BuildContext context) {
@@ -539,7 +541,9 @@ class _SectionHeader extends StatelessWidget {
           ),
           if (trailing != null)
             TextButton(
-              onPressed: () {},
+              onPressed: onTrailingTap ?? () {
+                debugPrint('$title - $trailing tapped');
+              },
               child: Text(
                 trailing!,
                 style: const TextStyle(
@@ -884,7 +888,12 @@ class _WishlistPreview extends StatelessWidget {
                   Icons.bookmark,
                   color: AppTheme.electricPurple,
                 ),
-                onTap: () {},
+                onTap: () {
+                  HapticFeedbackUtil.selectionClick();
+                  debugPrint('Wishlist item tapped: ${item['band']}');
+                  // TODO: Navigate to band detail screen when route is available
+                  // context.push('/bands/${bandId}');
+                },
               ),
               if (index < wishlist.length - 1)
                 Divider(
