@@ -6,6 +6,7 @@ import 'settings_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart' as theme_provider;
 import '../../../core/providers/providers.dart';
+import '../../../core/utils/app_info.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -119,14 +120,14 @@ class SettingsScreen extends ConsumerWidget {
               const _SectionHeader(title: 'About'),
               _SettingsTile(
                 title: 'About PitPulse',
-                subtitle: 'Version 1.0.0', // TODO: Get from pubspec
+                subtitle: 'Version ${AppInfo.version}',
                 leading: const Icon(Icons.info_outline),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   showAboutDialog(
                     context: context,
                     applicationName: 'PitPulse',
-                    applicationVersion: '1.0.0',
+                    applicationVersion: AppInfo.version,
                     applicationIcon: const Icon(
                       Icons.music_note,
                       size: 48,

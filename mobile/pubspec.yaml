@@ -51,6 +51,9 @@ dependencies:
   local_auth: ^3.0.0
   google_fonts: ^6.3.2
 
+  # App Info
+  package_info_plus: ^8.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
