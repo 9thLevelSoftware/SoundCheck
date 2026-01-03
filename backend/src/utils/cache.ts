@@ -1,5 +1,16 @@
 /**
- * Caching utility with in-memory and Redis support
+ * Caching Layer
+ *
+ * STATUS: In-memory only (Redis disabled)
+ *
+ * Current implementation uses in-memory Map cache which:
+ * - Doesn't persist across restarts
+ * - Doesn't scale across multiple instances
+ *
+ * To enable Redis:
+ * 1. npm install ioredis
+ * 2. Set REDIS_URL environment variable
+ * 3. Uncomment Redis initialization and methods
  *
  * FEATURES:
  * - In-memory caching (default, works immediately)
@@ -7,12 +18,6 @@
  * - TTL support
  * - Automatic cleanup
  * - Type-safe cache keys
- *
- * REDIS SETUP (Optional):
- * 1. Provision Redis instance
- * 2. Set REDIS_URL environment variable
- * 3. Install: npm install redis
- * 4. Uncomment Redis implementation
  *
  * USAGE:
  * import { cache } from './utils/cache';
