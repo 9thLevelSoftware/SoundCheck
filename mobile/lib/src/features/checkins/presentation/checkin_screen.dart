@@ -245,12 +245,14 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 12),
           _PhotoSelector(
             onTap: () {
-              // TODO: Open image picker
+              // TODO: Implement image picker using image_picker package
+              // Steps:
+              // 1. Add image_picker to pubspec.yaml
+              // 2. Add platform-specific permissions (iOS Info.plist, Android manifest)
+              // 3. Use ImagePicker().pickImage(source: ImageSource.gallery)
+              // 4. Upload to backend and attach to checkin
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Photo picker coming soon!'),
-                  backgroundColor: AppTheme.electricPurple,
-                ),
+                const SnackBar(content: Text('Photo picker coming soon!')),
               );
             },
           ),
