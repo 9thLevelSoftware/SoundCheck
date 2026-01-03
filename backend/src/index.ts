@@ -51,9 +51,15 @@ const corsOptions = {
 
     // In production, require explicit CORS_ORIGIN configuration
     const corsOrigin = process.env.CORS_ORIGIN;
-    if (!corsOrigin || corsOrigin === '*') {
-      // Log warning but allow - mobile apps have no origin
-      logWarn('CORS: No CORS_ORIGIN set, allowing request from:', { origin });
+    if (!corsOrigin) {
+      logError('CORS: CORS_ORIGIN not configured, rejecting request from:', { origin });
+      return callback(new Error('CORS not configured'), false);
+    }
+    if (corsOrigin === '*') {
+      if (process.env.NODE_ENV === 'production') {
+        logError('CORS: Wildcard origin not allowed in production');
+        return callback(new Error('Wildcard CORS not allowed in production'), false);
+      }
       return callback(null, true);
     }
 
