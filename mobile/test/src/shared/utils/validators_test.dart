@@ -25,9 +25,10 @@ void main() {
 
     group('password', () {
       test('returns null for valid password', () {
-        expect(Validators.password('password123'), null);
-        expect(Validators.password('123456'), null);
-        expect(Validators.password('verylongpassword'), null);
+        // Backend requires: 8+ chars, uppercase, lowercase, number, special char
+        expect(Validators.password('Password1!'), null);
+        expect(Validators.password('SecureP@ss1'), null);
+        expect(Validators.password('MyPass123!'), null);
       });
 
       test('returns error for empty password', () {
@@ -35,9 +36,37 @@ void main() {
         expect(Validators.password(null), 'Password is required');
       });
 
-      test('returns error for password less than 6 characters', () {
-        expect(Validators.password('12345'), 'Password must be at least 6 characters');
-        expect(Validators.password('abc'), 'Password must be at least 6 characters');
+      test('returns error for password less than 8 characters', () {
+        expect(Validators.password('Pass1!'), 'Password must be at least 8 characters');
+        expect(Validators.password('Aa1!xyz'), 'Password must be at least 8 characters');
+      });
+
+      test('returns error for password without lowercase', () {
+        expect(
+          Validators.password('PASSWORD1!'),
+          'Password must contain at least one lowercase letter',
+        );
+      });
+
+      test('returns error for password without uppercase', () {
+        expect(
+          Validators.password('password1!'),
+          'Password must contain at least one uppercase letter',
+        );
+      });
+
+      test('returns error for password without number', () {
+        expect(
+          Validators.password('Password!!'),
+          'Password must contain at least one number',
+        );
+      });
+
+      test('returns error for password without special character', () {
+        expect(
+          Validators.password('Password123'),
+          contains('special character'),
+        );
       });
     });
 
@@ -46,6 +75,8 @@ void main() {
         expect(Validators.username('user123'), null);
         expect(Validators.username('test_user'), null);
         expect(Validators.username('validName'), null);
+        expect(Validators.username('user.name'), null); // dots allowed
+        expect(Validators.username('user-name'), null); // hyphens allowed
       });
 
       test('returns error for empty username', () {
@@ -57,25 +88,25 @@ void main() {
         expect(Validators.username('ab'), 'Username must be at least 3 characters');
       });
 
-      test('returns error for username more than 20 characters', () {
+      test('returns error for username more than 30 characters', () {
         expect(
-          Validators.username('a' * 21),
-          'Username must be less than 20 characters',
+          Validators.username('a' * 31),
+          'Username must be no more than 30 characters',
         );
       });
 
       test('returns error for invalid characters in username', () {
         expect(
-          Validators.username('user-name'),
-          'Username can only contain letters, numbers, and underscores',
-        );
-        expect(
           Validators.username('user name'),
-          'Username can only contain letters, numbers, and underscores',
+          'Username can only contain letters, numbers, dots, hyphens, and underscores',
         );
         expect(
           Validators.username('user@name'),
-          'Username can only contain letters, numbers, and underscores',
+          'Username can only contain letters, numbers, dots, hyphens, and underscores',
+        );
+        expect(
+          Validators.username('user!name'),
+          'Username can only contain letters, numbers, dots, hyphens, and underscores',
         );
       });
     });

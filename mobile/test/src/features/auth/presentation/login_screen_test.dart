@@ -196,15 +196,15 @@ void main() {
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
-        '12345',
+        'Pass1!', // Too short (only 6 chars, need 8)
       );
-      
+
       // Tap login button
       await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
       await tester.pumpAndSettle();
 
       // Should show password validation error
-      expect(find.text('Password must be at least 6 characters'), findsOneWidget);
+      expect(find.text('Password must be at least 8 characters'), findsOneWidget);
     });
 
     testWidgets('accepts valid email and password', (WidgetTester tester) async {
@@ -216,14 +216,14 @@ void main() {
         ),
       );
 
-      // Enter valid credentials
+      // Enter valid credentials (must meet all backend requirements)
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Email'),
         'test@example.com',
       );
       await tester.enterText(
         find.widgetWithText(TextFormField, 'Password'),
-        'password123',
+        'Password1!', // Valid: 8+ chars, upper, lower, number, special
       );
       await tester.pump();
 
@@ -233,7 +233,7 @@ void main() {
       expect(find.text('Email is required'), findsNothing);
       expect(find.text('Please enter a valid email'), findsNothing);
       expect(find.text('Password is required'), findsNothing);
-      expect(find.text('Password must be at least 6 characters'), findsNothing);
+      expect(find.text('Password must be at least 8 characters'), findsNothing);
 
       // Verify the login button is enabled and visible
       final loginButton = find.widgetWithText(ElevatedButton, 'Login');

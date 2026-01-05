@@ -20,37 +20,55 @@ class Validators {
   }
 
   /// Validate password strength
+  /// Backend requires: 8+ chars, uppercase, lowercase, number, special char
   static String? password(String? value) {
     if (value == null || value.isEmpty) {
       return 'Password is required';
     }
-    
-    if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+
+    if (value.length < 8) {
+      return 'Password must be at least 8 characters';
     }
-    
+
+    if (!RegExp(r'[a-z]').hasMatch(value)) {
+      return 'Password must contain at least one lowercase letter';
+    }
+
+    if (!RegExp(r'[A-Z]').hasMatch(value)) {
+      return 'Password must contain at least one uppercase letter';
+    }
+
+    if (!RegExp(r'\d').hasMatch(value)) {
+      return 'Password must contain at least one number';
+    }
+
+    if (!RegExp(r'[@$!%*?&]').hasMatch(value)) {
+      return 'Password must contain a special character (@\$!%*?&)';
+    }
+
     return null;
   }
 
   /// Validate username
+  /// Backend allows: letters, numbers, dots, hyphens, underscores (3-30 chars)
   static String? username(String? value) {
     if (value == null || value.isEmpty) {
       return 'Username is required';
     }
-    
+
     if (value.length < 3) {
       return 'Username must be at least 3 characters';
     }
-    
-    if (value.length > 20) {
-      return 'Username must be less than 20 characters';
+
+    if (value.length > 30) {
+      return 'Username must be no more than 30 characters';
     }
-    
-    final usernameRegex = RegExp(r'^[a-zA-Z0-9_]+$');
+
+    final usernameRegex = RegExp(r'^[a-zA-Z0-9._-]+$');
     if (!usernameRegex.hasMatch(value)) {
-      return 'Username can only contain letters, numbers, and underscores';
+      return 'Username can only contain letters, numbers, dots, hyphens, and underscores';
     }
-    
+
     return null;
   }
 

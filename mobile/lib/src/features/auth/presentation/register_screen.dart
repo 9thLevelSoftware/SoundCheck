@@ -40,33 +40,63 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
-    try {
-      await ref.read(authStateProvider.notifier).register(
-            email: _emailController.text.trim(),
-            password: _passwordController.text,
-            username: _usernameController.text.trim(),
-            firstName: _firstNameController.text.trim().isEmpty
-                ? null
-                : _firstNameController.text.trim(),
-            lastName: _lastNameController.text.trim().isEmpty
-                ? null
-                : _lastNameController.text.trim(),
-          );
-      // Navigation handled by router redirect
-    } catch (e) {
-      if (mounted) {
+    await ref.read(authStateProvider.notifier).register(
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
+          username: _usernameController.text.trim(),
+          firstName: _firstNameController.text.trim().isEmpty
+              ? null
+              : _firstNameController.text.trim(),
+          lastName: _lastNameController.text.trim().isEmpty
+              ? null
+              : _lastNameController.text.trim(),
+        );
+
+    if (!mounted) return;
+
+    // Check the state for errors (AsyncValue.guard stores errors in state)
+    final authState = ref.read(authStateProvider);
+    authState.whenOrNull(
+      error: (error, stackTrace) {
+        // Extract error message from DioException if possible
+        String errorMessage = 'Registration failed';
+        final errorString = error.toString();
+        if (errorString.contains('Email already exists') ||
+            errorString.contains('email already')) {
+          errorMessage = 'An account with this email already exists';
+        } else if (errorString.contains('Username already exists') ||
+            errorString.contains('username already')) {
+          errorMessage = 'This username is already taken';
+        } else if (errorString.contains('400')) {
+          errorMessage = 'Invalid registration data. Please check your inputs.';
+        } else if (errorString.contains('network') ||
+            errorString.contains('connection')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else {
+          errorMessage = 'Registration failed: $errorString';
+        }
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Registration failed: ${e.toString()}'),
+            content: Text(errorMessage),
             backgroundColor: AppTheme.error,
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+      },
+      data: (user) {
+        if (user != null) {
+          // Success - show message (router will handle navigation)
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Account created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+        }
+      },
+    );
+
+    setState(() => _isLoading = false);
   }
 
   @override

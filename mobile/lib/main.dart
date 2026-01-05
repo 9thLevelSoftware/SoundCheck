@@ -6,27 +6,28 @@ import 'src/core/theme/theme_provider.dart';
 import 'src/core/router/app_router.dart';
 import 'src/core/services/crash_reporting_service.dart';
 
-void main() async {
-  // Ensure Flutter binding is initialized
-  WidgetsFlutterBinding.ensureInitialized();
-
-  // Initialize crash reporting (Sentry)
-  await CrashReportingService.init();
-
-  // Capture Flutter framework errors
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-
-    // Send to crash reporting service
-    CrashReportingService.captureException(
-      details.exception,
-      details.stack,
-    );
-  };
-
+void main() {
   // Capture async errors not caught by Flutter
+  // NOTE: All initialization must happen inside the same zone as runApp
   runZonedGuarded(
-    () {
+    () async {
+      // Ensure Flutter binding is initialized (inside zone)
+      WidgetsFlutterBinding.ensureInitialized();
+
+      // Initialize crash reporting (Sentry)
+      await CrashReportingService.init();
+
+      // Capture Flutter framework errors
+      FlutterError.onError = (FlutterErrorDetails details) {
+        FlutterError.presentError(details);
+
+        // Send to crash reporting service
+        CrashReportingService.captureException(
+          details.exception,
+          details.stack,
+        );
+      };
+
       runApp(
         const ProviderScope(
           child: PitPulseApp(),

@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
-import '../../../core/error/failures.dart';
 import '../../../shared/utils/validators.dart';
 import '../../../shared/utils/haptic_feedback.dart';
 
@@ -50,21 +49,31 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     await HapticFeedbackUtil.mediumImpact();
     setState(() => _isLoading = true);
 
-    try {
-      await ref.read(authStateProvider.notifier).login(
-            _emailController.text.trim(),
-            _passwordController.text,
-          );
-      await HapticFeedbackUtil.successVibration();
-      // Navigation is handled by the router redirecting based on auth state
-    } catch (e) {
-      await HapticFeedbackUtil.errorVibration();
-      if (mounted) {
+    await ref.read(authStateProvider.notifier).login(
+          _emailController.text.trim(),
+          _passwordController.text,
+        );
+
+    if (!mounted) return;
+
+    // Check the state for errors (AsyncValue.guard stores errors in state)
+    final authState = ref.read(authStateProvider);
+    authState.whenOrNull(
+      error: (error, stackTrace) async {
+        await HapticFeedbackUtil.errorVibration();
+
+        // Extract user-friendly error message
         String errorMessage = 'Login failed';
-        if (e is Failure) {
-          errorMessage = e.message;
-        } else {
-          errorMessage = e.toString().replaceAll('Exception: ', '');
+        final errorString = error.toString();
+        if (errorString.contains('401') ||
+            errorString.contains('Invalid') ||
+            errorString.contains('invalid')) {
+          errorMessage = 'Invalid email or password';
+        } else if (errorString.contains('network') ||
+            errorString.contains('connection')) {
+          errorMessage = 'Network error. Please check your connection.';
+        } else if (errorString.contains('timeout')) {
+          errorMessage = 'Request timed out. Please try again.';
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
@@ -76,12 +85,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoading = false);
-      }
-    }
+      },
+      data: (user) async {
+        if (user != null) {
+          await HapticFeedbackUtil.successVibration();
+          // Navigation is handled by the router redirecting based on auth state
+        }
+      },
+    );
+
+    setState(() => _isLoading = false);
   }
 
   @override
