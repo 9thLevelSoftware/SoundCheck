@@ -27,7 +27,7 @@ class VenueCard extends StatelessWidget {
       label: 'Venue: ${venue.name}${location.isNotEmpty ? ', located in $location' : ''}, ${venue.averageRating.toStringAsFixed(1)} star rating',
       child: Card(
         elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.2),
+        shadowColor: Colors.black.withValues(alpha:0.2),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: InkWell(
@@ -70,8 +70,8 @@ class VenueCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.2),
-                        Colors.black.withOpacity(0.8),
+                        Colors.black.withValues(alpha:0.2),
+                        Colors.black.withValues(alpha:0.8),
                       ],
                       stops: const [0.4, 0.6, 1.0],
                     ),

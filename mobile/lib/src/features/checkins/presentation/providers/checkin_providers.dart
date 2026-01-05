@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers/providers.dart';
@@ -10,56 +11,56 @@ part 'checkin_providers.g.dart';
 
 /// Provider for the social feed
 @riverpod
-Future<List<CheckIn>> socialFeed(SocialFeedRef ref) async {
+Future<List<CheckIn>> socialFeed(Ref ref) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getFeed();
 }
 
 /// Provider for vibe tags
 @riverpod
-Future<List<VibeTag>> vibeTags(VibeTagsRef ref) async {
+Future<List<VibeTag>> vibeTags(Ref ref) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getVibeTags();
 }
 
 /// Provider for band check-ins
 @riverpod
-Future<List<CheckIn>> bandCheckIns(BandCheckInsRef ref, String bandId) async {
+Future<List<CheckIn>> bandCheckIns(Ref ref, String bandId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getCheckIns(bandId: bandId);
 }
 
 /// Provider for venue check-ins
 @riverpod
-Future<List<CheckIn>> venueCheckIns(VenueCheckInsRef ref, String venueId) async {
+Future<List<CheckIn>> venueCheckIns(Ref ref, String venueId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getCheckIns(venueId: venueId);
 }
 
 /// Provider for user's check-ins
 @riverpod
-Future<List<CheckIn>> userCheckIns(UserCheckInsRef ref, String userId) async {
+Future<List<CheckIn>> userCheckIns(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getCheckIns(userId: userId);
 }
 
 /// Provider for a single check-in detail
 @riverpod
-Future<CheckIn> checkInDetail(CheckInDetailRef ref, String checkInId) async {
+Future<CheckIn> checkInDetail(Ref ref, String checkInId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getCheckInById(checkInId);
 }
 
 /// Provider for check-in toasts
 @riverpod
-Future<List<Toast>> checkInToasts(CheckInToastsRef ref, String checkInId) async {
+Future<List<Toast>> checkInToasts(Ref ref, String checkInId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getCheckInToasts(checkInId);
 }
 
 /// Provider for check-in comments
 @riverpod
-Future<List<CheckInComment>> checkInComments(CheckInCommentsRef ref, String checkInId) async {
+Future<List<CheckInComment>> checkInComments(Ref ref, String checkInId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getCheckInComments(checkInId);
 }
@@ -199,7 +200,7 @@ class DeleteComment extends _$DeleteComment {
 
 /// Provider for user check-in stats
 @riverpod
-Future<Map<String, dynamic>> userCheckInStats(UserCheckInStatsRef ref, String userId) async {
+Future<Map<String, dynamic>> userCheckInStats(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getUserStats(userId);
 }

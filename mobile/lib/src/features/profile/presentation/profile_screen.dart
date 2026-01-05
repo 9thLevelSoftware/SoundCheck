@@ -143,8 +143,8 @@ class _ProfileHeader extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 AppTheme.electricPurple,
-                AppTheme.electricPurple.withOpacity(0.6),
-                AppTheme.neonPink.withOpacity(0.4),
+                AppTheme.electricPurple.withValues(alpha:0.6),
+                AppTheme.neonPink.withValues(alpha:0.4),
               ],
             ),
           ),
@@ -226,7 +226,7 @@ class _ProfileHeader extends StatelessWidget {
                     label: const Text('Edit'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textPrimary,
-                      side: BorderSide(color: AppTheme.textTertiary.withOpacity(0.3)),
+                      side: BorderSide(color: AppTheme.textTertiary.withValues(alpha:0.3)),
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     ),
                   ),
@@ -319,7 +319,7 @@ class _MainStatsRow extends StatelessWidget {
         color: AppTheme.cardDark,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.electricPurple.withOpacity(0.2),
+          color: AppTheme.electricPurple.withValues(alpha:0.2),
         ),
       ),
       child: Row(
@@ -405,7 +405,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       height: 40,
       width: 1,
-      color: AppTheme.textTertiary.withOpacity(0.2),
+      color: AppTheme.textTertiary.withValues(alpha:0.2),
     );
   }
 }
@@ -682,7 +682,7 @@ class _CheckinCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: _getRatingColor(rating).withOpacity(0.15),
+                  color: _getRatingColor(rating).withValues(alpha:0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Row(
@@ -803,16 +803,16 @@ class _BadgesShowcase extends StatelessWidget {
                   height: 60,
                   decoration: BoxDecoration(
                     color: isEarned
-                        ? (badge['color'] as Color).withOpacity(0.15)
+                        ? (badge['color'] as Color).withValues(alpha:0.15)
                         : AppTheme.surfaceDark,
                     shape: BoxShape.circle,
                     border: isEarned
                         ? Border.all(color: badge['color'] as Color, width: 2)
-                        : Border.all(color: AppTheme.textTertiary.withOpacity(0.3)),
+                        : Border.all(color: AppTheme.textTertiary.withValues(alpha:0.3)),
                   ),
                   child: Icon(
                     badge['icon'] as IconData,
-                    color: isEarned ? badge['color'] as Color : AppTheme.textTertiary.withOpacity(0.5),
+                    color: isEarned ? badge['color'] as Color : AppTheme.textTertiary.withValues(alpha:0.5),
                     size: 28,
                   ),
                 ),
@@ -821,7 +821,7 @@ class _BadgesShowcase extends StatelessWidget {
                   badge['name'] as String,
                   style: TextStyle(
                     fontSize: 10,
-                    color: isEarned ? AppTheme.textSecondary : AppTheme.textTertiary.withOpacity(0.5),
+                    color: isEarned ? AppTheme.textSecondary : AppTheme.textTertiary.withValues(alpha:0.5),
                   ),
                   textAlign: TextAlign.center,
                   maxLines: 2,
@@ -899,7 +899,7 @@ class _WishlistPreview extends StatelessWidget {
                 Divider(
                   height: 1,
                   indent: 70,
-                  color: AppTheme.textTertiary.withOpacity(0.1),
+                  color: AppTheme.textTertiary.withValues(alpha:0.1),
                 ),
             ],
           );

@@ -399,8 +399,8 @@ class _CheckInCard extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
                 colors: [
-                  AppTheme.electricPurple.withOpacity(0.3),
-                  AppTheme.neonPink.withOpacity(0.3),
+                  AppTheme.electricPurple.withValues(alpha:0.3),
+                  AppTheme.neonPink.withValues(alpha:0.3),
                 ],
               ),
             ),
@@ -411,7 +411,7 @@ class _CheckInCard extends StatelessWidget {
                   child: Icon(
                     Icons.music_note,
                     size: 64,
-                    color: Colors.white.withOpacity(0.3),
+                    color: Colors.white.withValues(alpha:0.3),
                   ),
                 ),
                 // Gradient overlay at bottom
@@ -427,7 +427,7 @@ class _CheckInCard extends StatelessWidget {
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          Colors.black.withOpacity(0.7),
+                          Colors.black.withValues(alpha:0.7),
                         ],
                       ),
                     ),
@@ -469,7 +469,7 @@ class _CheckInCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.toastGold.withOpacity(0.2),
+                          color: AppTheme.toastGold.withValues(alpha:0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Row(

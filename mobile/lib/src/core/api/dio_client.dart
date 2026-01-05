@@ -200,7 +200,6 @@ class DioClient {
         return const NetworkFailure('Security certificate error.');
 
       case DioExceptionType.unknown:
-      default:
         if (error.message?.contains('SocketException') ?? false) {
           return const NetworkFailure('No internet connection.');
         }

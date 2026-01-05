@@ -125,20 +125,25 @@ class VenueFiltersSheet extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacing12),
-        ...VenueSortBy.values.map((sortOption) {
-          return RadioListTile<VenueSortBy>(
-            title: Text(sortOption.label),
-            value: sortOption,
-            groupValue: filters.sortBy,
-            onChanged: (value) {
-              if (value != null) {
-                notifier.setSortBy(value);
-              }
-            },
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-          );
-        }),
+        RadioGroup<VenueSortBy>(
+          groupValue: filters.sortBy,
+          onChanged: (value) {
+            if (value != null) {
+              notifier.setSortBy(value);
+            }
+          },
+          child: Column(
+            children: VenueSortBy.values.map((sortOption) {
+              return ListTile(
+                title: Text(sortOption.label),
+                leading: Radio<VenueSortBy>(value: sortOption),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                onTap: () => notifier.setSortBy(sortOption),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }

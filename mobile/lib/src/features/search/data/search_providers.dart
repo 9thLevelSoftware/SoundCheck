@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/providers/providers.dart';
 import '../../venues/domain/venue.dart';
@@ -29,7 +30,7 @@ class SearchFilterState extends _$SearchFilterState {
 }
 
 @riverpod
-Future<List<Venue>> venueSearch(VenueSearchRef ref) async {
+Future<List<Venue>> venueSearch(Ref ref) async {
   final query = ref.watch(searchQueryProvider);
   final filter = ref.watch(searchFilterStateProvider);
 
@@ -42,7 +43,7 @@ Future<List<Venue>> venueSearch(VenueSearchRef ref) async {
 }
 
 @riverpod
-Future<List<Band>> bandSearch(BandSearchRef ref) async {
+Future<List<Band>> bandSearch(Ref ref) async {
   final query = ref.watch(searchQueryProvider);
   final filter = ref.watch(searchFilterStateProvider);
 
@@ -73,7 +74,7 @@ class SearchResults {
 }
 
 @riverpod
-SearchResults combinedSearchResults(CombinedSearchResultsRef ref) {
+SearchResults combinedSearchResults(Ref ref) {
   final venueResults = ref.watch(venueSearchProvider);
   final bandResults = ref.watch(bandSearchProvider);
 

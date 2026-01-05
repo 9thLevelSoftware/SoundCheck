@@ -23,7 +23,7 @@ class BandCard extends StatelessWidget {
       label: 'Band: ${band.name}${band.genre != null ? ', genre: ${band.genre}' : ''}, ${band.averageRating.toStringAsFixed(1)} star rating',
       child: Card(
         elevation: 4,
-        shadowColor: Colors.black.withOpacity(0.2),
+        shadowColor: Colors.black.withValues(alpha:0.2),
         clipBehavior: Clip.antiAlias,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         child: InkWell(
@@ -66,8 +66,8 @@ class BandCard extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withOpacity(0.2),
-                        Colors.black.withOpacity(0.8),
+                        Colors.black.withValues(alpha:0.2),
+                        Colors.black.withValues(alpha:0.8),
                       ],
                       stops: const [0.4, 0.6, 1.0],
                     ),
@@ -116,10 +116,10 @@ class BandCard extends StatelessWidget {
                               vertical: 2,
                             ),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withValues(alpha:0.2),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: Colors.white.withOpacity(0.3),
+                                color: Colors.white.withValues(alpha:0.3),
                                 width: 0.5,
                               ),
                             ),

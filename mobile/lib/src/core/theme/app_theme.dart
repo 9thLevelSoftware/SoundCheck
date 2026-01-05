@@ -456,7 +456,7 @@ class AppTheme {
       activeTrackColor: electricPurple,
       inactiveTrackColor: surfaceVariantDark,
       thumbColor: electricPurple,
-      overlayColor: electricPurple.withOpacity(0.2),
+      overlayColor: electricPurple.withValues(alpha:0.2),
       valueIndicatorColor: electricPurple,
       valueIndicatorTextStyle: const TextStyle(
         color: Colors.white,
@@ -474,7 +474,7 @@ class AppTheme {
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return electricPurple.withOpacity(0.5);
+          return electricPurple.withValues(alpha:0.5);
         }
         return surfaceVariantDark;
       }),

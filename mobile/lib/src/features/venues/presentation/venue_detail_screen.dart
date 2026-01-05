@@ -104,7 +104,7 @@ class _VenueContent extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        AppTheme.backgroundDark.withOpacity(0.95),
+                        AppTheme.backgroundDark.withValues(alpha:0.95),
                       ],
                     ),
                   ),
@@ -136,7 +136,7 @@ class _VenueContent extends StatelessWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.info.withOpacity(0.2),
+                                color: AppTheme.info.withValues(alpha:0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Row(
@@ -229,8 +229,8 @@ class _VenueContent extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.neonPink.withOpacity(0.7),
-            AppTheme.electricPurple.withOpacity(0.7),
+            AppTheme.neonPink.withValues(alpha:0.7),
+            AppTheme.electricPurple.withValues(alpha:0.7),
           ],
         ),
       ),
@@ -546,7 +546,7 @@ class _ShowListItem extends StatelessWidget {
             width: 50,
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              color: AppTheme.electricPurple.withOpacity(0.2),
+              color: AppTheme.electricPurple.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Column(

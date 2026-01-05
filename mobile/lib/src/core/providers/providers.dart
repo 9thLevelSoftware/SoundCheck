@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
@@ -13,23 +14,23 @@ import '../../features/checkins/data/checkin_repository.dart';
 part 'providers.g.dart';
 
 @Riverpod(keepAlive: true)
-BiometricService biometricService(BiometricServiceRef ref) {
+BiometricService biometricService(Ref ref) {
   return BiometricService();
 }
 
 @Riverpod(keepAlive: true)
-FlutterSecureStorage secureStorage(SecureStorageRef ref) {
+FlutterSecureStorage secureStorage(Ref ref) {
   return const FlutterSecureStorage();
 }
 
 @Riverpod(keepAlive: true)
-DioClient dioClient(DioClientRef ref) {
+DioClient dioClient(Ref ref) {
   final secureStorage = ref.watch(secureStorageProvider);
   return DioClient(secureStorage: secureStorage);
 }
 
 @Riverpod(keepAlive: true)
-AuthRepository authRepository(AuthRepositoryRef ref) {
+AuthRepository authRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   final secureStorage = ref.watch(secureStorageProvider);
   return AuthRepository(
@@ -39,25 +40,25 @@ AuthRepository authRepository(AuthRepositoryRef ref) {
 }
 
 @Riverpod(keepAlive: true)
-VenueRepository venueRepository(VenueRepositoryRef ref) {
+VenueRepository venueRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return VenueRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)
-BandRepository bandRepository(BandRepositoryRef ref) {
+BandRepository bandRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return BandRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)
-BadgeRepository badgeRepository(BadgeRepositoryRef ref) {
+BadgeRepository badgeRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return BadgeRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)
-CheckInRepository checkInRepository(CheckInRepositoryRef ref) {
+CheckInRepository checkInRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return CheckInRepository(dioClient: dioClient);
 }

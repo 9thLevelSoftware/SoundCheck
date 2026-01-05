@@ -34,13 +34,13 @@ class NotificationsScreen extends ConsumerWidget {
                 width: 120,
                 height: 120,
                 decoration: BoxDecoration(
-                  color: AppTheme.electricPurple.withOpacity(0.1),
+                  color: AppTheme.electricPurple.withValues(alpha:0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   Icons.notifications_outlined,
                   size: 64,
-                  color: AppTheme.electricPurple.withOpacity(0.6),
+                  color: AppTheme.electricPurple.withValues(alpha:0.6),
                 ),
               ),
               const SizedBox(height: 32),
@@ -62,7 +62,7 @@ class NotificationsScreen extends ConsumerWidget {
                 'Stay tuned for updates on toasts, comments, badges, and friend check-ins.',
                 style: TextStyle(
                   fontSize: 16,
-                  color: AppTheme.textSecondary.withOpacity(0.8),
+                  color: AppTheme.textSecondary.withValues(alpha:0.8),
                   height: 1.5,
                 ),
                 textAlign: TextAlign.center,
@@ -126,7 +126,7 @@ class _FeaturePreviewItem extends StatelessWidget {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha:0.2),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: color, size: 20),

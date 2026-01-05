@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -81,7 +82,6 @@ class ThemeSetting extends _$ThemeSetting {
       case AppThemeMode.dark:
         return ThemeMode.dark;
       case AppThemeMode.system:
-      default:
         return ThemeMode.system;
     }
   }
@@ -89,7 +89,7 @@ class ThemeSetting extends _$ThemeSetting {
 
 /// Provider to check if dark mode is currently active
 @riverpod
-bool isDarkMode(IsDarkModeRef ref) {
+bool isDarkMode(Ref ref) {
   final themeMode = ref.watch(themeSettingProvider);
   final brightness = WidgetsBinding.instance.platformDispatcher.platformBrightness;
   

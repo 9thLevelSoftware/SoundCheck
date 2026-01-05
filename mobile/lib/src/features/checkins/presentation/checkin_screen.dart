@@ -412,7 +412,7 @@ class _SelectedBandCard extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
+              color: Colors.white.withValues(alpha:0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Icon(Icons.music_note, color: Colors.white, size: 32),
@@ -496,7 +496,7 @@ class _VenueSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.electricPurple.withOpacity(0.2),
+                color: AppTheme.electricPurple.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -580,7 +580,7 @@ class _PhotoSelector extends StatelessWidget {
           color: AppTheme.surfaceVariantDark,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.textTertiary.withOpacity(0.3),
+            color: AppTheme.textTertiary.withValues(alpha:0.3),
             width: 2,
             style: BorderStyle.solid,
           ),
@@ -635,7 +635,7 @@ class _VibeSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: isSelected
                   ? null
-                  : Border.all(color: AppTheme.textTertiary.withOpacity(0.3)),
+                  : Border.all(color: AppTheme.textTertiary.withValues(alpha:0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -742,7 +742,7 @@ class _VenueSearchSheet extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonPink.withOpacity(0.2),
+                    color: AppTheme.neonPink.withValues(alpha:0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(

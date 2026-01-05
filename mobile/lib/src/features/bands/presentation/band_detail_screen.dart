@@ -89,7 +89,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          AppTheme.backgroundDark.withOpacity(0.9),
+                          AppTheme.backgroundDark.withValues(alpha:0.9),
                         ],
                       ),
                     ),
@@ -655,7 +655,7 @@ class _SocialIcon extends StatelessWidget {
           width: 48,
           height: 48,
           decoration: BoxDecoration(
-            color: color.withOpacity(0.15),
+            color: color.withValues(alpha:0.15),
             shape: BoxShape.circle,
           ),
           child: Icon(icon, color: color, size: 24),
@@ -731,7 +731,7 @@ class _YourActivityTab extends StatelessWidget {
             Icon(
               Icons.history,
               size: 64,
-              color: AppTheme.textTertiary.withOpacity(0.5),
+              color: AppTheme.textTertiary.withValues(alpha:0.5),
             ),
             const SizedBox(height: 16),
             const Text(

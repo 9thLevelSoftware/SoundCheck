@@ -11,21 +11,21 @@ part 'discover_screen.g.dart';
 
 /// Provider for trending bands (locally active)
 @riverpod
-Future<List<Band>> trendingBands(TrendingBandsRef ref) async {
+Future<List<Band>> trendingBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   return repository.getTrendingBands(limit: 10);
 }
 
 /// Provider for top rated venues
 @riverpod
-Future<List<Venue>> topRatedVenues(TopRatedVenuesRef ref) async {
+Future<List<Venue>> topRatedVenues(Ref ref) async {
   final repository = ref.watch(venueRepositoryProvider);
   return repository.getPopularVenues(limit: 10);
 }
 
 /// Provider for popular bands
 @riverpod
-Future<List<Band>> popularBands(PopularBandsRef ref) async {
+Future<List<Band>> popularBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   return repository.getPopularBands(limit: 10);
 }
@@ -425,7 +425,7 @@ class _SearchResultItem extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: _color.withOpacity(0.2),
+          color: _color.withValues(alpha:0.2),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Icon(_icon, color: _color),
@@ -478,8 +478,8 @@ class _TrendingBandCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.electricPurple.withOpacity(0.5),
-                    AppTheme.neonPink.withOpacity(0.5),
+                    AppTheme.electricPurple.withValues(alpha:0.5),
+                    AppTheme.neonPink.withValues(alpha:0.5),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
@@ -498,7 +498,7 @@ class _TrendingBandCard extends StatelessWidget {
                           child: Icon(
                             Icons.music_note,
                             size: 36,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha:0.7),
                           ),
                         ),
                       ),
@@ -507,7 +507,7 @@ class _TrendingBandCard extends StatelessWidget {
                       child: Icon(
                         Icons.music_note,
                         size: 36,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha:0.7),
                       ),
                     ),
             ),
@@ -584,8 +584,8 @@ class _TrendingVenueCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.neonPink.withOpacity(0.5),
-                    AppTheme.electricPurple.withOpacity(0.5),
+                    AppTheme.neonPink.withValues(alpha:0.5),
+                    AppTheme.electricPurple.withValues(alpha:0.5),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
@@ -604,7 +604,7 @@ class _TrendingVenueCard extends StatelessWidget {
                           child: Icon(
                             Icons.location_city,
                             size: 36,
-                            color: Colors.white.withOpacity(0.7),
+                            color: Colors.white.withValues(alpha:0.7),
                           ),
                         ),
                       ),
@@ -613,7 +613,7 @@ class _TrendingVenueCard extends StatelessWidget {
                       child: Icon(
                         Icons.location_city,
                         size: 36,
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha:0.7),
                       ),
                     ),
             ),

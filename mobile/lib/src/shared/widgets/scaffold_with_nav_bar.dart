@@ -70,7 +70,7 @@ class _CustomBottomNavBar extends StatelessWidget {
         color: isDark ? AppTheme.surfaceDark : Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha:0.1),
             blurRadius: 8,
             offset: const Offset(0, -2),
           ),
@@ -201,7 +201,7 @@ class _CheckInButton extends StatelessWidget {
           gradient: AppTheme.primaryGradient,
           boxShadow: [
             BoxShadow(
-              color: AppTheme.electricPurple.withOpacity(0.4),
+              color: AppTheme.electricPurple.withValues(alpha:0.4),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),

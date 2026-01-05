@@ -132,20 +132,25 @@ class BandFiltersSheet extends ConsumerWidget {
           ),
         ),
         const SizedBox(height: AppTheme.spacing12),
-        ...BandSortBy.values.map((sortOption) {
-          return RadioListTile<BandSortBy>(
-            title: Text(sortOption.label),
-            value: sortOption,
-            groupValue: filters.sortBy,
-            onChanged: (value) {
-              if (value != null) {
-                notifier.setSortBy(value);
-              }
-            },
-            contentPadding: EdgeInsets.zero,
-            dense: true,
-          );
-        }),
+        RadioGroup<BandSortBy>(
+          groupValue: filters.sortBy,
+          onChanged: (value) {
+            if (value != null) {
+              notifier.setSortBy(value);
+            }
+          },
+          child: Column(
+            children: BandSortBy.values.map((sortOption) {
+              return ListTile(
+                title: Text(sortOption.label),
+                leading: Radio<BandSortBy>(value: sortOption),
+                contentPadding: EdgeInsets.zero,
+                dense: true,
+                onTap: () => notifier.setSortBy(sortOption),
+              );
+            }).toList(),
+          ),
+        ),
       ],
     );
   }

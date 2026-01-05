@@ -85,7 +85,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         decoration: BoxDecoration(
                           color: _currentPage == index 
                               ? AppTheme.primary 
-                              : AppTheme.textSecondary.withOpacity(0.3),
+                              : AppTheme.textSecondary.withValues(alpha:0.3),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
@@ -167,7 +167,7 @@ class _OnboardingContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withOpacity(0.1),
+              color: AppTheme.primary.withValues(alpha:0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(

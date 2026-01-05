@@ -1,3 +1,4 @@
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'band_filters_state.dart';
 
@@ -50,7 +51,7 @@ class BandFilters extends _$BandFilters {
 }
 
 @riverpod
-Future<List<String>> availableGenres(AvailableGenresRef ref) async {
+Future<List<String>> availableGenres(Ref ref) async {
   // This would fetch from the API in a real scenario
   // For now, return a default list
   return [
