@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/error/failures.dart';
 import '../../../shared/utils/validators.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -58,28 +59,32 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     final authState = ref.read(authStateProvider);
     authState.whenOrNull(
       error: (error, stackTrace) {
-        // Extract error message from DioException if possible
+        // Extract error message - Failure objects have a message property
         String errorMessage = 'Registration failed';
-        final errorString = error.toString();
-        if (errorString.contains('Email already exists') ||
-            errorString.contains('email already')) {
-          errorMessage = 'An account with this email already exists';
-        } else if (errorString.contains('Username already exists') ||
-            errorString.contains('username already')) {
-          errorMessage = 'This username is already taken';
-        } else if (errorString.contains('400')) {
-          errorMessage = 'Invalid registration data. Please check your inputs.';
-        } else if (errorString.contains('network') ||
-            errorString.contains('connection')) {
-          errorMessage = 'Network error. Please check your connection.';
+
+        if (error is Failure) {
+          errorMessage = error.message;
         } else {
-          errorMessage = 'Registration failed: $errorString';
+          final errorString = error.toString();
+          if (errorString.contains('Email already exists') ||
+              errorString.contains('email already')) {
+            errorMessage = 'An account with this email already exists';
+          } else if (errorString.contains('Username already exists') ||
+              errorString.contains('username already')) {
+            errorMessage = 'This username is already taken';
+          } else if (errorString.contains('network') ||
+              errorString.contains('connection')) {
+            errorMessage = 'Network error. Please check your connection.';
+          }
         }
 
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
             backgroundColor: AppTheme.error,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
           ),
         );
       },
@@ -90,6 +95,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             const SnackBar(
               content: Text('Account created successfully!'),
               backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
             ),
           );
         }

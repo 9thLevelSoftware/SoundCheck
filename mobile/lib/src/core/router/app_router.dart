@@ -41,10 +41,18 @@ GoRouter goRouter(Ref ref) {
     redirect: (context, state) {
       final isLoading = authState.isLoading;
       final isAuthenticated = authState.hasValue && authState.value != null;
+      final isError = authState.hasError;
       final isOnAuthPage = state.matchedLocation.startsWith('/login') ||
           state.matchedLocation.startsWith('/register');
 
-      if (isLoading) {
+      // Don't redirect if on auth pages during loading or error state
+      // This allows the auth screens to show their own loading/error UI
+      if (isOnAuthPage && (isLoading || isError)) {
+        return null;
+      }
+
+      // Only redirect to splash during initial app loading (not auth actions)
+      if (isLoading && !isOnAuthPage) {
         return '/splash';
       }
 

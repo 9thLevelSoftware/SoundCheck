@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
+import '../../../core/error/failures.dart';
 import '../../../shared/utils/validators.dart';
 import '../../../shared/utils/haptic_feedback.dart';
 
@@ -62,18 +63,27 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       error: (error, stackTrace) async {
         await HapticFeedbackUtil.errorVibration();
 
-        // Extract user-friendly error message
+        // Extract error message - Failure objects have a message property
         String errorMessage = 'Login failed';
-        final errorString = error.toString();
-        if (errorString.contains('401') ||
-            errorString.contains('Invalid') ||
-            errorString.contains('invalid')) {
+
+        if (error is AuthFailure) {
           errorMessage = 'Invalid email or password';
-        } else if (errorString.contains('network') ||
-            errorString.contains('connection')) {
-          errorMessage = 'Network error. Please check your connection.';
-        } else if (errorString.contains('timeout')) {
-          errorMessage = 'Request timed out. Please try again.';
+        } else if (error is NetworkFailure) {
+          errorMessage = error.message;
+        } else if (error is Failure) {
+          errorMessage = error.message;
+        } else {
+          final errorString = error.toString();
+          if (errorString.contains('401') ||
+              errorString.contains('Invalid') ||
+              errorString.contains('invalid')) {
+            errorMessage = 'Invalid email or password';
+          } else if (errorString.contains('network') ||
+              errorString.contains('connection')) {
+            errorMessage = 'Network error. Please check your connection.';
+          } else if (errorString.contains('timeout')) {
+            errorMessage = 'Request timed out. Please try again.';
+          }
         }
 
         ScaffoldMessenger.of(context).showSnackBar(

@@ -170,10 +170,24 @@ class DioClient {
         final statusCode = error.response?.statusCode;
         final data = error.response?.data;
         String message = 'Request failed';
-        
-        if (data is Map<String, dynamic> && data.containsKey('error')) {
-            message = data['error'];
+
+        // Try to extract error message from various response formats
+        if (data is Map<String, dynamic>) {
+          if (data.containsKey('error')) {
+            message = data['error'].toString();
+          } else if (data.containsKey('message')) {
+            message = data['message'].toString();
+          } else if (data.containsKey('errors') && data['errors'] is List) {
+            // Zod validation errors format: [{message: "...", path: [...]}]
+            final errors = data['errors'] as List;
+            if (errors.isNotEmpty) {
+              message = errors.map((e) => e['message'] ?? e.toString()).join(', ');
+            }
+          }
         }
+
+        // Log the full response for debugging
+        LogService.d('API Error Response: $data');
 
         if (statusCode == 400) {
           return ValidationFailure(message);
