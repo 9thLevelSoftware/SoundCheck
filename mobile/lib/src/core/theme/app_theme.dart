@@ -1,77 +1,94 @@
 import 'package:flutter/material.dart';
 
 /// AppTheme defines the application's visual design
-/// Dark Mode Native theme modeled after Untappd with Electric Purple accent
+/// 2025 Trend: "Bio-Luminescent" - Acid Lime on Deep Gunmetal
+/// High energy, high contrast, avoiding the "AI Purple" stereotype.
 class AppTheme {
   // Private constructor to prevent instantiation
   AppTheme._();
 
-  // PitPulse Brand Colors - "Untappd for Music" Style
-  static const Color electricPurple = Color(0xFF9D00FF); // Primary Accent
-  static const Color electricPurpleLight = Color(0xFFB44DFF);
-  static const Color electricPurpleDark = Color(0xFF7A00CC);
+  // PitPulse Brand Colors - "High Voltage" Style
+  // 2025 Trend: Acid/Volt Greens are dominating dark mode interfaces for energetic brands
+  static const Color voltLime = Color(0xFFD2FF00); // Primary Accent (High visibility)
+  static const Color voltLimeLight = Color(0xFFE4FF5F);
+  static const Color voltLimeDark = Color(0xFF9FB300);
 
   // Secondary Accents
-  static const Color neonPink = Color(0xFFFF2D95);
-  static const Color liveGreen = Color(0xFF00E676); // "Live Now" indicator
-  static const Color toastGold = Color(0xFFFFD700); // Toast/fist bump color
+  // "Electric Blue" pairs well for cool contrast without blending into purple
+  static const Color electricBlue = Color(0xFF00F0FF);
+  static const Color hotOrange = Color(0xFFFF3D00); // "Live Now" / Urgent indicator
 
-  // Accent color aliases for convenience
-  static const Color accentTeal = liveGreen;
-  static const Color accentOrange = toastGold;
+  // Semantic Colors
+  static const Color liveIndicator = hotOrange;
+  static const Color toastGold = Color(0xFFFFD700); // Kept for legacy "Toast" feature
+
+  // Accent color aliases
+  static const Color accentCyan = electricBlue;
+  static const Color accentAlert = hotOrange;
+  static const Color accentTeal = electricBlue; // Alias for backward compatibility
+  static const Color accentOrange = hotOrange;
 
   // Background/surface aliases
   static const Color background = backgroundDark;
   static const Color surfaceVariant = surfaceVariantDark;
 
-  // Background Colors - Dark Mode Native
-  static const Color backgroundDark = Color(0xFF1A1A1A); // Deep charcoal
-  static const Color surfaceDark = Color(0xFF242424);
-  static const Color surfaceVariantDark = Color(0xFF2E2E2E);
-  static const Color cardDark = Color(0xFF2A2A2A);
+  // Background Colors - "Moonlit Grey" Palette
+  // Avoids pure black (#000000) for better eye comfort and depth
+  static const Color backgroundDark = Color(0xFF0D0F11); // Very deep slate/almost black
+  static const Color surfaceDark = Color(0xFF161B22); // Slightly lighter gunmetal
+  static const Color surfaceVariantDark = Color(0xFF21262D); // Borders/Inputs
+  static const Color cardDark = Color(0xFF1C2128);
 
-  // Text Colors
-  static const Color textPrimary = Color(0xFFFFFFFF);
-  static const Color textSecondary = Color(0xFFB3B3B3);
-  static const Color textTertiary = Color(0xFF808080);
-  static const Color textMuted = Color(0xFF666666);
+  // Text Colors - High Contrast
+  static const Color textPrimary = Color(0xFFF0F6FC); // Off-white/Ice
+  static const Color textSecondary = Color(0xFF8B949E);
+  static const Color textTertiary = Color(0xFF6E7681);
+  static const Color textMuted = Color(0xFF484F58);
 
   // Status Colors
-  static const Color success = Color(0xFF00E676);
+  static const Color success = voltLime;
   static const Color error = Color(0xFFFF5252);
   static const Color warning = Color(0xFFFFAB00);
-  static const Color info = Color(0xFF448AFF);
+  static const Color info = electricBlue;
 
   // Rating Colors (for 5-icon rating system)
-  static const Color ratingActive = electricPurple;
-  static const Color ratingInactive = Color(0xFF404040);
+  static const Color ratingActive = voltLime;
+  static const Color ratingInactive = Color(0xFF30363D);
 
   // Rating Color Scale
-  static const Color ratingExcellent = Color(0xFF00E676); // 4.5+
-  static const Color ratingGood = Color(0xFF8BC34A); // 4.0+
+  static const Color ratingExcellent = voltLime; // 4.5+
+  static const Color ratingGood = Color(0xFF2EA043); // 4.0+ (Forest Green)
   static const Color ratingAverage = Color(0xFFFFAB00); // 3.0+
   static const Color ratingPoor = Color(0xFFFF5252); // Below 3.0
 
   // Primary alias for convenience
-  static const Color primary = electricPurple;
+  static const Color primary = voltLime;
+
+  // Legacy aliases for backward compatibility
+  static const Color electricPurple = voltLime;
+  static const Color electricPurpleLight = voltLimeLight;
+  static const Color electricPurpleDark = voltLimeDark;
+  static const Color neonPink = hotOrange;
+  static const Color liveGreen = voltLime;
 
   // Gradients
+  // 2025 Trend: Subtle, "Brand-Centric" gradients rather than generic mesh
   static const LinearGradient primaryGradient = LinearGradient(
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
-    colors: [electricPurple, neonPink],
+    colors: [voltLime, Color(0xFF8CFF00)], // Subtle lime shift
   );
 
   static const LinearGradient checkInGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [electricPurple, electricPurpleDark],
+    colors: [voltLime, voltLimeDark],
   );
 
   static const LinearGradient cardOverlayGradient = LinearGradient(
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
-    colors: [Colors.transparent, Color(0xCC000000)],
+    colors: [Colors.transparent, Color(0xCC0D0F11)], // Matches backgroundDark
   );
 
   // Spacing
@@ -96,24 +113,24 @@ class AppTheme {
   static const double checkInButtonSize = 64.0;
   static const double checkInButtonElevation = 8.0;
 
-  // Dark Theme (Primary - Dark Mode Native)
+  // Dark Theme (Primary - Bio-Luminescent)
   static ThemeData darkTheme = ThemeData(
     useMaterial3: true,
     brightness: Brightness.dark,
     colorScheme: const ColorScheme.dark(
-      primary: electricPurple,
-      secondary: neonPink,
-      tertiary: liveGreen,
+      primary: voltLime,
+      secondary: electricBlue,
+      tertiary: hotOrange,
       surface: surfaceDark,
       error: error,
-      onPrimary: Colors.white,
-      onSecondary: Colors.white,
+      onPrimary: backgroundDark, // Dark text on Lime button for contrast
+      onSecondary: backgroundDark,
       onSurface: textPrimary,
       onError: Colors.white,
     ),
     scaffoldBackgroundColor: backgroundDark,
 
-    // AppBar Theme - Minimalist
+    // AppBar Theme - Brutalist/Minimal
     appBarTheme: const AppBarTheme(
       elevation: 0,
       centerTitle: false,
@@ -129,11 +146,12 @@ class AppTheme {
       iconTheme: IconThemeData(color: textPrimary),
     ),
 
-    // Card Theme - Dark elevated cards
+    // Card Theme - Dark with subtle border
     cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusLarge),
+        side: const BorderSide(color: surfaceVariantDark, width: 1),
       ),
       color: cardDark,
       margin: const EdgeInsets.symmetric(
@@ -142,10 +160,11 @@ class AppTheme {
       ),
     ),
 
-    // Input Decoration Theme
+    // Input Decoration Theme - Integrated
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
       fillColor: surfaceVariantDark,
+      hintStyle: const TextStyle(color: textTertiary),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
         borderSide: BorderSide.none,
@@ -156,7 +175,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
-        borderSide: const BorderSide(color: electricPurple, width: 2),
+        borderSide: const BorderSide(color: voltLime, width: 1),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
@@ -170,17 +189,13 @@ class AppTheme {
         horizontal: spacing20,
         vertical: spacing16,
       ),
-      hintStyle: const TextStyle(
-        color: textTertiary,
-        fontWeight: FontWeight.w400,
-      ),
     ),
 
-    // Elevated Button Theme
+    // Elevated Button Theme - "High Voltage"
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: electricPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: voltLime,
+        foregroundColor: backgroundDark, // Dark text on Lime
         minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(
           horizontal: spacing32,
@@ -192,7 +207,7 @@ class AppTheme {
         elevation: 0,
         textStyle: const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
         ),
       ),
@@ -201,8 +216,8 @@ class AppTheme {
     // Filled Button Theme
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
-        backgroundColor: electricPurple,
-        foregroundColor: Colors.white,
+        backgroundColor: voltLime,
+        foregroundColor: backgroundDark,
         minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(
           horizontal: spacing32,
@@ -214,7 +229,7 @@ class AppTheme {
         elevation: 0,
         textStyle: const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
         ),
       ),
@@ -223,7 +238,7 @@ class AppTheme {
     // Text Button Theme
     textButtonTheme: TextButtonThemeData(
       style: TextButton.styleFrom(
-        foregroundColor: electricPurple,
+        foregroundColor: voltLime,
         padding: const EdgeInsets.symmetric(
           horizontal: spacing20,
           vertical: spacing12,
@@ -239,8 +254,8 @@ class AppTheme {
     // Outlined Button Theme
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
-        foregroundColor: electricPurple,
-        side: const BorderSide(color: electricPurple, width: 2),
+        foregroundColor: voltLime,
+        side: const BorderSide(color: voltLime, width: 1.5),
         minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(
           horizontal: spacing32,
@@ -251,16 +266,15 @@ class AppTheme {
         ),
         textStyle: const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w600,
-          letterSpacing: 0.5,
+          fontWeight: FontWeight.bold,
         ),
       ),
     ),
 
-    // Bottom Navigation Bar Theme
+    // Bottom Navigation Bar Theme - Clean
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: surfaceDark,
-      selectedItemColor: electricPurple,
+      selectedItemColor: voltLime,
       unselectedItemColor: textTertiary,
       type: BottomNavigationBarType.fixed,
       elevation: 0,
@@ -277,7 +291,7 @@ class AppTheme {
     // Chip Theme - Vibe Tags
     chipTheme: ChipThemeData(
       backgroundColor: surfaceVariantDark,
-      selectedColor: electricPurple,
+      selectedColor: voltLime.withValues(alpha: 0.2),
       deleteIconColor: textSecondary,
       labelStyle: const TextStyle(
         color: textPrimary,
@@ -285,7 +299,7 @@ class AppTheme {
         fontSize: 13,
       ),
       secondaryLabelStyle: const TextStyle(
-        color: Colors.white,
+        color: voltLime,
         fontWeight: FontWeight.w600,
       ),
       padding: const EdgeInsets.symmetric(
@@ -294,14 +308,15 @@ class AppTheme {
       ),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusFull),
+        side: const BorderSide(color: Colors.transparent),
       ),
     ),
 
     // Floating Action Button Theme - Check-In Button
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: electricPurple,
-      foregroundColor: Colors.white,
-      elevation: checkInButtonElevation,
+      backgroundColor: voltLime,
+      foregroundColor: backgroundDark,
+      elevation: 4,
       shape: CircleBorder(),
       sizeConstraints: BoxConstraints.tightFor(
         width: checkInButtonSize,
@@ -318,9 +333,9 @@ class AppTheme {
 
     // Tab Bar Theme
     tabBarTheme: const TabBarThemeData(
-      labelColor: electricPurple,
+      labelColor: voltLime,
       unselectedLabelColor: textTertiary,
-      indicatorColor: electricPurple,
+      indicatorColor: voltLime,
       indicatorSize: TabBarIndicatorSize.label,
       labelStyle: TextStyle(
         fontSize: 14,
@@ -448,18 +463,18 @@ class AppTheme {
 
     // Progress Indicator Theme
     progressIndicatorTheme: const ProgressIndicatorThemeData(
-      color: electricPurple,
+      color: voltLime,
     ),
 
     // Slider Theme (for ratings)
     sliderTheme: SliderThemeData(
-      activeTrackColor: electricPurple,
+      activeTrackColor: voltLime,
       inactiveTrackColor: surfaceVariantDark,
-      thumbColor: electricPurple,
-      overlayColor: electricPurple.withValues(alpha:0.2),
-      valueIndicatorColor: electricPurple,
+      thumbColor: voltLime,
+      overlayColor: voltLime.withValues(alpha: 0.2),
+      valueIndicatorColor: voltLime,
       valueIndicatorTextStyle: const TextStyle(
-        color: Colors.white,
+        color: backgroundDark,
         fontWeight: FontWeight.bold,
       ),
     ),
@@ -468,13 +483,13 @@ class AppTheme {
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return electricPurple;
+          return voltLime;
         }
         return textTertiary;
       }),
       trackColor: WidgetStateProperty.resolveWith((states) {
         if (states.contains(WidgetState.selected)) {
-          return electricPurple.withValues(alpha:0.5);
+          return voltLime.withValues(alpha: 0.5);
         }
         return surfaceVariantDark;
       }),
@@ -509,41 +524,42 @@ class AppTheme {
     ),
   );
 
-  // Light Theme (Secondary - for accessibility)
+  // Light Theme (Clean Technical)
   static ThemeData lightTheme = ThemeData(
     useMaterial3: true,
     colorScheme: const ColorScheme.light(
-      primary: electricPurple,
-      secondary: neonPink,
-      tertiary: liveGreen,
+      primary: Color(0xFF2E7D32), // Darker Green for light mode readability
+      secondary: Color(0xFF0091EA),
+      tertiary: hotOrange,
       surface: Colors.white,
       error: error,
       onPrimary: Colors.white,
       onSecondary: Colors.white,
-      onSurface: Color(0xFF1A1A1A),
+      onSurface: Color(0xFF0D0F11),
       onError: Colors.white,
     ),
-    scaffoldBackgroundColor: const Color(0xFFF5F5F5),
+    scaffoldBackgroundColor: const Color(0xFFF0F2F5),
 
     appBarTheme: const AppBarTheme(
       elevation: 0,
       centerTitle: false,
       scrolledUnderElevation: 0,
       backgroundColor: Colors.white,
-      foregroundColor: Color(0xFF1A1A1A),
+      foregroundColor: Color(0xFF0D0F11),
       titleTextStyle: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
         letterSpacing: -0.5,
       ),
-      iconTheme: IconThemeData(color: Color(0xFF1A1A1A)),
+      iconTheme: IconThemeData(color: Color(0xFF0D0F11)),
     ),
 
     cardTheme: CardThemeData(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusLarge),
+        side: BorderSide(color: Colors.grey.shade200, width: 1),
       ),
       color: Colors.white,
       margin: const EdgeInsets.symmetric(
@@ -565,7 +581,7 @@ class AppTheme {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
-        borderSide: const BorderSide(color: electricPurple, width: 2),
+        borderSide: const BorderSide(color: Color(0xFF2E7D32), width: 1),
       ),
       contentPadding: const EdgeInsets.symmetric(
         horizontal: spacing20,
@@ -575,7 +591,7 @@ class AppTheme {
 
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
-        backgroundColor: electricPurple,
+        backgroundColor: const Color(0xFF2E7D32),
         foregroundColor: Colors.white,
         minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(
@@ -588,7 +604,7 @@ class AppTheme {
         elevation: 0,
         textStyle: const TextStyle(
           fontSize: 16,
-          fontWeight: FontWeight.w600,
+          fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
         ),
       ),
@@ -596,8 +612,8 @@ class AppTheme {
 
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
       backgroundColor: Colors.white,
-      selectedItemColor: electricPurple,
-      unselectedItemColor: Color(0xFF808080),
+      selectedItemColor: Color(0xFF2E7D32),
+      unselectedItemColor: Color(0xFF6E7681),
       type: BottomNavigationBarType.fixed,
       elevation: 8,
       selectedLabelStyle: TextStyle(
@@ -612,9 +628,9 @@ class AppTheme {
 
     chipTheme: ChipThemeData(
       backgroundColor: const Color(0xFFF0F0F0),
-      selectedColor: electricPurple,
+      selectedColor: const Color(0xFF2E7D32),
       labelStyle: const TextStyle(
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
         fontWeight: FontWeight.w500,
         fontSize: 13,
       ),
@@ -628,7 +644,7 @@ class AppTheme {
     ),
 
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
-      backgroundColor: electricPurple,
+      backgroundColor: Color(0xFF2E7D32),
       foregroundColor: Colors.white,
       elevation: checkInButtonElevation,
       shape: CircleBorder(),
@@ -639,9 +655,9 @@ class AppTheme {
     ),
 
     tabBarTheme: const TabBarThemeData(
-      labelColor: electricPurple,
-      unselectedLabelColor: Color(0xFF808080),
-      indicatorColor: electricPurple,
+      labelColor: Color(0xFF2E7D32),
+      unselectedLabelColor: Color(0xFF6E7681),
+      indicatorColor: Color(0xFF2E7D32),
       indicatorSize: TabBarIndicatorSize.label,
     ),
 
@@ -649,80 +665,80 @@ class AppTheme {
       displayLarge: TextStyle(
         fontSize: 40,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
         letterSpacing: -1.0,
       ),
       displayMedium: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
         letterSpacing: -0.8,
       ),
       displaySmall: TextStyle(
         fontSize: 28,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
         letterSpacing: -0.5,
       ),
       headlineLarge: TextStyle(
         fontSize: 24,
         fontWeight: FontWeight.bold,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       headlineMedium: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       headlineSmall: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w700,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       titleLarge: TextStyle(
         fontSize: 18,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       titleMedium: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       titleSmall: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       bodyLarge: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.normal,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       bodyMedium: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.normal,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       bodySmall: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.normal,
-        color: Color(0xFF666666),
+        color: Color(0xFF6E7681),
       ),
       labelLarge: TextStyle(
         fontSize: 14,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       labelMedium: TextStyle(
         fontSize: 12,
         fontWeight: FontWeight.w600,
-        color: Color(0xFF1A1A1A),
+        color: Color(0xFF0D0F11),
       ),
       labelSmall: TextStyle(
         fontSize: 11,
         fontWeight: FontWeight.w500,
-        color: Color(0xFF666666),
+        color: Color(0xFF6E7681),
       ),
     ),
   );
