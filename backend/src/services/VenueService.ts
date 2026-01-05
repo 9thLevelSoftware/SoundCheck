@@ -260,18 +260,22 @@ export class VenueService {
     radiusKm: number = 50,
     limit: number = 20
   ): Promise<Venue[]> {
+    // Use subquery to filter by computed distance column
+    // (can't use column alias in WHERE clause directly)
     const query = `
-      SELECT id, name, description, address, city, state, country, postal_code,
-             latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, created_at, updated_at,
-             (6371 * acos(cos(radians($1)) * cos(radians(latitude)) * 
-              cos(radians(longitude) - radians($2)) + 
-              sin(radians($1)) * sin(radians(latitude)))) AS distance
-      FROM venues
-      WHERE is_active = true 
-        AND latitude IS NOT NULL 
-        AND longitude IS NOT NULL
-      HAVING distance <= $3
+      SELECT * FROM (
+        SELECT id, name, description, address, city, state, country, postal_code,
+               latitude, longitude, website_url, phone, email, capacity, venue_type,
+               image_url, average_rating, total_reviews, is_active, created_at, updated_at,
+               (6371 * acos(cos(radians($1)) * cos(radians(latitude)) *
+                cos(radians(longitude) - radians($2)) +
+                sin(radians($1)) * sin(radians(latitude)))) AS distance
+        FROM venues
+        WHERE is_active = true
+          AND latitude IS NOT NULL
+          AND longitude IS NOT NULL
+      ) AS venues_with_distance
+      WHERE distance <= $3
       ORDER BY distance
       LIMIT $4
     `;

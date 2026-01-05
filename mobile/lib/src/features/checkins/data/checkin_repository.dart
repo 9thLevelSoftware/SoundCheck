@@ -112,13 +112,14 @@ class CheckInRepository {
   // ======== TOAST OPERATIONS ========
 
   /// Toast a check-in (like a fist bump)
-  Future<Toast> toastCheckIn(String checkInId) async {
+  /// Backend returns success-only response, no toast data
+  Future<void> toastCheckIn(String checkInId) async {
     try {
-      final response = await _dioClient.post(
+      await _dioClient.post(
         '${ApiConfig.checkins}/$checkInId/toast',
       );
-      final toastData = response.data['data'] as Map<String, dynamic>;
-      return Toast.fromJson(toastData);
+      // Backend returns { success: true, message: "Toasted!" }
+      // No toast data is returned, just confirm success
     } catch (e) {
       rethrow;
     }

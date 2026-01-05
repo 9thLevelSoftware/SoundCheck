@@ -509,11 +509,11 @@ class _CheckInCard extends StatelessWidget {
                     }).toList(),
                   ),
 
-                // Comment
-                if (checkIn.comment != null && checkIn.comment!.isNotEmpty) ...[
+                // Review text
+                if (checkIn.reviewText != null && checkIn.reviewText!.isNotEmpty) ...[
                   const SizedBox(height: 12),
                   Text(
-                    checkIn.comment!,
+                    checkIn.reviewText!,
                     style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 14,
