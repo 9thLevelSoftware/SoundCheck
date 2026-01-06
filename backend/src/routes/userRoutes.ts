@@ -2,12 +2,13 @@ import { Router } from 'express';
 import { UserController } from '../controllers/UserController';
 import { authenticateToken, rateLimit } from '../middleware/auth';
 import { validate } from '../middleware/validate';
-import { 
-  createUserSchema, 
-  loginUserSchema, 
-  updateProfileSchema, 
-  checkEmailSchema, 
-  checkUsernameSchema 
+import { uploadProfileImage } from '../middleware/upload';
+import {
+  createUserSchema,
+  loginUserSchema,
+  updateProfileSchema,
+  checkEmailSchema,
+  checkUsernameSchema
 } from '../utils/validationSchemas';
 
 const router = Router();
@@ -24,6 +25,7 @@ router.post('/login', authRateLimit, validate(loginUserSchema), userController.l
 // Protected routes (authentication required) - MUST come before /:username
 router.get('/me', authenticateToken, userController.getProfile);
 router.put('/me', authenticateToken, validate(updateProfileSchema), userController.updateProfile);
+router.post('/me/profile-image', authenticateToken, uploadProfileImage, userController.uploadProfileImage);
 router.delete('/me', authenticateToken, userController.deactivateAccount);
 
 // Username and email availability check - MUST come before /:username
