@@ -57,6 +57,10 @@ dependencies:
   # Sharing
   share_plus: ^9.0.0
 
+  # Maps
+  flutter_map: ^6.1.0
+  latlong2: ^0.9.0
+
   # Social Sign-In
   google_sign_in: ^6.2.1
   sign_in_with_apple: ^6.1.0
