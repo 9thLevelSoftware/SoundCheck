@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -109,6 +111,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = false);
   }
 
+  /// Converts social auth exceptions to user-friendly error messages.
+  String _getSocialAuthErrorMessage(dynamic error) {
+    final errorString = error.toString().toLowerCase();
+    if (errorString.contains('canceled') || errorString.contains('cancelled')) {
+      return 'Sign-in was cancelled';
+    } else if (errorString.contains('network')) {
+      return 'Network error. Please check your connection.';
+    } else if (errorString.contains('popup_closed') || errorString.contains('user_cancelled')) {
+      return 'Sign-in was cancelled';
+    }
+    return 'Sign-in failed. Please try again.';
+  }
+
   Future<void> _handleGoogleSignIn() async {
     await HapticFeedbackUtil.mediumImpact();
     setState(() => _isLoading = true);
@@ -136,7 +151,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await HapticFeedbackUtil.errorVibration();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Google Sign-In failed: ${e.toString()}'),
+          content: Text(_getSocialAuthErrorMessage(e)),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
@@ -175,7 +190,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       await HapticFeedbackUtil.errorVibration();
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Apple Sign-In failed: ${e.toString()}'),
+          content: Text(_getSocialAuthErrorMessage(e)),
           backgroundColor: AppTheme.error,
           behavior: SnackBarBehavior.floating,
           margin: const EdgeInsets.all(16),
@@ -369,10 +384,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
-                          _SocialLoginButton(
-                            icon: Icons.apple,
-                            onTap: _isLoading ? null : _handleAppleSignIn,
-                          ),
+                          // Apple Sign-In only available on iOS/macOS
+                          if (Platform.isIOS || Platform.isMacOS)
+                            _SocialLoginButton(
+                              icon: Icons.apple,
+                              onTap: _isLoading ? null : _handleAppleSignIn,
+                            ),
                           _SocialLoginButton(
                             icon: Icons.g_mobiledata, // Google icon
                             onTap: _isLoading ? null : _handleGoogleSignIn,
