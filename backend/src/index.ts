@@ -22,6 +22,7 @@ import checkinRoutes from './routes/checkinRoutes';
 import feedRoutes from './routes/feedRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import followRoutes from './routes/followRoutes';
+import wishlistRoutes from './routes/wishlistRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -167,6 +168,7 @@ app.use('/api/checkins', checkinRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/follow', followRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
