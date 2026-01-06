@@ -16,6 +16,7 @@ import '../../features/profile/presentation/user_profile_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/venues/presentation/venue_detail_screen.dart';
 import '../../features/bands/presentation/band_detail_screen.dart';
+import '../../features/checkins/presentation/checkin_detail_screen.dart';
 import '../../shared/widgets/scaffold_with_nav_bar.dart';
 
 part 'app_router.g.dart';
@@ -327,13 +328,9 @@ GoRouter goRouter(Ref ref) {
         name: 'checkin-detail',
         pageBuilder: (context, state) {
           final checkinId = state.pathParameters['id']!;
-          // TODO: Create CheckInDetailScreen
           return CustomTransitionPage(
             key: state.pageKey,
-            child: Scaffold(
-              appBar: AppBar(title: const Text('Check-in')),
-              body: Center(child: Text('Check-in $checkinId')),
-            ),
+            child: CheckInDetailScreen(checkinId: checkinId),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;

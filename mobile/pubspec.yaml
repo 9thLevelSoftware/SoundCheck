@@ -54,6 +54,9 @@ dependencies:
   # App Info
   package_info_plus: ^8.0.0
 
+  # Sharing
+  share_plus: ^9.0.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
