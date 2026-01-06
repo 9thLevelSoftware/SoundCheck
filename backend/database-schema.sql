@@ -227,6 +227,11 @@ CREATE TABLE IF NOT EXISTS user_wishlist (
     UNIQUE(user_id, band_id)
 );
 
+-- Wishlist indexes
+CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON user_wishlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_band_id ON user_wishlist(band_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_user_created ON user_wishlist(user_id, created_at DESC);
+
 -- =====================================================
 -- NOTIFICATIONS
 -- =====================================================

@@ -35,6 +35,6 @@ router.delete('/:wishlistId', wishlistRateLimit, wishlistController.removeFromWi
 // Update notification preference for a wishlisted band
 // PATCH /api/wishlist/:bandId/notify
 // Body: { notifyWhenNearby: boolean }
-router.patch('/:bandId/notify', wishlistController.updateNotificationPreference);
+router.patch('/:bandId/notify', wishlistRateLimit, wishlistController.updateNotificationPreference);
 
 export default router;
