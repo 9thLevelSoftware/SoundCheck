@@ -1,4 +1,5 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import { UserController } from '../controllers/UserController';
 import { authenticateToken, rateLimit } from '../middleware/auth';
 import { validate } from '../middleware/validate';
@@ -10,6 +11,23 @@ import {
   checkEmailSchema,
   checkUsernameSchema
 } from '../utils/validationSchemas';
+
+// Multer error handler for profile image uploads
+const handleMulterError = (err: Error | null, req: Request, res: Response, next: NextFunction): void => {
+  if (err instanceof multer.MulterError) {
+    if (err.code === 'LIMIT_FILE_SIZE') {
+      res.status(400).json({ success: false, error: 'File too large. Maximum size is 5MB.' });
+      return;
+    }
+    res.status(400).json({ success: false, error: err.message });
+    return;
+  }
+  if (err) {
+    res.status(400).json({ success: false, error: err.message });
+    return;
+  }
+  next();
+};
 
 const router = Router();
 const userController = new UserController();
@@ -25,7 +43,14 @@ router.post('/login', authRateLimit, validate(loginUserSchema), userController.l
 // Protected routes (authentication required) - MUST come before /:username
 router.get('/me', authenticateToken, userController.getProfile);
 router.put('/me', authenticateToken, validate(updateProfileSchema), userController.updateProfile);
-router.post('/me/profile-image', authenticateToken, uploadProfileImage, userController.uploadProfileImage);
+router.post('/me/profile-image', authenticateToken, (req: Request, res: Response, next: NextFunction) => {
+  uploadProfileImage(req, res, (err) => {
+    if (err) {
+      return handleMulterError(err, req, res, next);
+    }
+    next();
+  });
+}, userController.uploadProfileImage);
 router.delete('/me', authenticateToken, userController.deactivateAccount);
 
 // Username and email availability check - MUST come before /:username
