@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { NotificationService } from '../services/NotificationService';
 import { ApiResponse } from '../types';
 
+// UUID v4 validation regex
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export class NotificationController {
   private notificationService = new NotificationService();
 
@@ -12,7 +15,7 @@ export class NotificationController {
    */
   getNotifications = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -23,8 +26,8 @@ export class NotificationController {
         return;
       }
 
-      const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
-      const offset = req.query.offset ? parseInt(req.query.offset as string, 10) : 0;
+      const limit = Math.min(Math.max(parseInt(req.query.limit as string, 10) || 20, 1), 100);
+      const offset = Math.max(parseInt(req.query.offset as string, 10) || 0, 0);
 
       const result = await this.notificationService.getNotifications(userId, {
         limit,
@@ -55,7 +58,7 @@ export class NotificationController {
    */
   getUnreadCount = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -92,7 +95,7 @@ export class NotificationController {
    */
   markAsRead = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -104,6 +107,15 @@ export class NotificationController {
       }
 
       const { id } = req.params;
+
+      if (!UUID_REGEX.test(id)) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Invalid notification ID format',
+        };
+        res.status(400).json(response);
+        return;
+      }
 
       await this.notificationService.markAsRead(id, userId);
 
@@ -131,7 +143,7 @@ export class NotificationController {
    */
   markAllAsRead = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -169,7 +181,7 @@ export class NotificationController {
    */
   deleteNotification = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -181,6 +193,15 @@ export class NotificationController {
       }
 
       const { id } = req.params;
+
+      if (!UUID_REGEX.test(id)) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Invalid notification ID format',
+        };
+        res.status(400).json(response);
+        return;
+      }
 
       await this.notificationService.deleteNotification(id, userId);
 
