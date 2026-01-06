@@ -5,7 +5,10 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
+import '../../../shared/utils/date_formatter.dart';
+import '../../checkins/domain/checkin.dart';
 import '../domain/band.dart';
+import 'providers/band_providers.dart';
 
 final bandDetailProvider = FutureProvider.autoDispose.family<Band, String>((ref, id) async {
   final repository = ref.watch(bandRepositoryProvider);
@@ -696,62 +699,190 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   bool shouldRebuild(covariant SliverPersistentHeaderDelegate oldDelegate) => false;
 }
 
-class _GlobalActivityTab extends StatelessWidget {
+class _GlobalActivityTab extends ConsumerWidget {
   final String bandId;
 
   const _GlobalActivityTab({required this.bandId});
 
   @override
-  Widget build(BuildContext context) {
-    // Placeholder check-in feed
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: 5,
-      itemBuilder: (context, index) {
-        return _CheckInPreviewCard(index: index);
+  Widget build(BuildContext context, WidgetRef ref) {
+    final checkinsAsync = ref.watch(bandGlobalCheckinsProvider(bandId));
+
+    return checkinsAsync.when(
+      data: (checkins) {
+        if (checkins.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people_outline,
+                    size: 64,
+                    color: AppTheme.textTertiary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No check-ins yet',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Be the first to check in to this band!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: checkins.length,
+          itemBuilder: (context, index) {
+            return _CheckInPreviewCard(checkin: checkins[index]);
+          },
+        );
       },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppTheme.electricPurple),
+      ),
+      error: (error, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: AppTheme.error,
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Could not load activity',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => ref.invalidate(bandGlobalCheckinsProvider(bandId)),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.electricPurple,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
 
-class _YourActivityTab extends StatelessWidget {
+class _YourActivityTab extends ConsumerWidget {
   final String bandId;
 
   const _YourActivityTab({required this.bandId});
 
   @override
-  Widget build(BuildContext context) {
-    // Placeholder for user's check-ins to this band
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.history,
-              size: 64,
-              color: AppTheme.textTertiary.withValues(alpha:0.5),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'No check-ins yet',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: AppTheme.textSecondary,
+  Widget build(BuildContext context, WidgetRef ref) {
+    final checkinsAsync = ref.watch(bandUserCheckinsProvider(bandId));
+
+    return checkinsAsync.when(
+      data: (checkins) {
+        if (checkins.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.history,
+                    size: 64,
+                    color: AppTheme.textTertiary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'No check-ins yet',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Check in to this band to see your activity here',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'Check in to this band to see your activity here',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 14,
+          );
+        }
+        return ListView.builder(
+          padding: const EdgeInsets.all(16),
+          itemCount: checkins.length,
+          itemBuilder: (context, index) {
+            return _CheckInPreviewCard(checkin: checkins[index]);
+          },
+        );
+      },
+      loading: () => const Center(
+        child: CircularProgressIndicator(color: AppTheme.electricPurple),
+      ),
+      error: (error, _) => Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(
+                Icons.error_outline,
+                size: 48,
+                color: AppTheme.error,
               ),
-            ),
-          ],
+              const SizedBox(height: 16),
+              const Text(
+                'Could not load your activity',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 16),
+              ElevatedButton.icon(
+                onPressed: () => ref.invalidate(bandUserCheckinsProvider(bandId)),
+                icon: const Icon(Icons.refresh, size: 18),
+                label: const Text('Retry'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.electricPurple,
+                  foregroundColor: Colors.white,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -759,102 +890,146 @@ class _YourActivityTab extends StatelessWidget {
 }
 
 class _CheckInPreviewCard extends StatelessWidget {
-  final int index;
+  final CheckIn checkin;
 
-  const _CheckInPreviewCard({required this.index});
+  const _CheckInPreviewCard({required this.checkin});
 
   @override
   Widget build(BuildContext context) {
-    final users = ['Sarah M.', 'Mike T.', 'Alex R.', 'Jordan L.', 'Casey B.'];
-    final venues = ['The Forum', 'Red Rocks', 'MSG', 'Wembley', 'Fillmore'];
-    final times = ['15m ago', '1h ago', '2h ago', '3h ago', '5h ago'];
-    final ratings = [5.0, 4.5, 4.0, 5.0, 4.5];
+    final userName = checkin.user?.username ??
+        checkin.user?.firstName ??
+        'Unknown User';
+    final venueName = checkin.venue?.name ?? 'Unknown Venue';
+    final timeAgo = DateFormatter.formatRelativeTime(checkin.createdAt);
+    final rating = checkin.rating;
+    final userInitial = userName.isNotEmpty ? userName[0].toUpperCase() : '?';
+    final userAvatarUrl = checkin.user?.profileImageUrl;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppTheme.primaryGradient,
-            ),
-            child: Center(
-              child: Text(
-                users[index][0],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
+    return GestureDetector(
+      onTap: () => context.push('/checkins/${checkin.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Avatar
+            Container(
+              width: 40,
+              height: 40,
+              decoration: const BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: AppTheme.primaryGradient,
               ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 14),
-                    children: [
-                      TextSpan(
-                        text: users[index],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+              child: ClipOval(
+                child: userAvatarUrl != null
+                    ? CachedNetworkImage(
+                        imageUrl: userAvatarUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => Center(
+                          child: Text(
+                            userInitial,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      )
+                    : Center(
+                        child: Text(
+                          userInitial,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
-                      const TextSpan(
-                        text: ' at ',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
-                      TextSpan(
-                        text: venues[index],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Content
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  RichText(
+                    text: TextSpan(
+                      style: const TextStyle(fontSize: 14),
+                      children: [
+                        TextSpan(
+                          text: userName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        const TextSpan(
+                          text: ' at ',
+                          style: TextStyle(color: AppTheme.textSecondary),
+                        ),
+                        TextSpan(
+                          text: venueName,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.electricPurple,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (rating > 0) ...[
+                        ...List.generate(5, (i) {
+                          return Icon(
+                            Icons.star,
+                            size: 14,
+                            color: i < rating.round()
+                                ? AppTheme.electricPurple
+                                : AppTheme.ratingInactive,
+                          );
+                        }),
+                        const SizedBox(width: 8),
+                      ],
+                      Text(
+                        timeAgo,
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.electricPurple,
+                          color: AppTheme.textTertiary,
+                          fontSize: 12,
                         ),
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    ...List.generate(5, (i) {
-                      return Icon(
-                        Icons.star,
-                        size: 14,
-                        color: i < ratings[index]
-                            ? AppTheme.electricPurple
-                            : AppTheme.ratingInactive,
-                      );
-                    }),
-                    const SizedBox(width: 8),
+                  if (checkin.reviewText != null &&
+                      checkin.reviewText!.isNotEmpty) ...[
+                    const SizedBox(height: 8),
                     Text(
-                      times[index],
+                      checkin.reviewText!,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
                       ),
                     ),
                   ],
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+            // Chevron indicator
+            const Icon(
+              Icons.chevron_right,
+              color: AppTheme.textTertiary,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }
