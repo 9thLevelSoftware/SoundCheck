@@ -19,6 +19,7 @@ import discoveryRoutes from './routes/discoveryRoutes';
 import eventRoutes from './routes/eventRoutes';
 import checkinRoutes from './routes/checkinRoutes';
 import feedRoutes from './routes/feedRoutes';
+import notificationRoutes from './routes/notificationRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -156,6 +157,7 @@ app.use('/api/discover', discoveryRoutes);
 app.use('/api/events', eventRoutes);
 app.use('/api/checkins', checkinRoutes);
 app.use('/api/feed', feedRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
