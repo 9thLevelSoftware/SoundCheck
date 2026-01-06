@@ -43,5 +43,10 @@ export declare class UserController {
      * GET /api/users/check-email?email=test@example.com
      */
     checkEmail: (req: Request, res: Response) => Promise<void>;
+    /**
+     * Upload profile image
+     * POST /api/users/me/profile-image
+     */
+    uploadProfileImage: (req: Request, res: Response) => Promise<void>;
 }
 //# sourceMappingURL=UserController.d.ts.map

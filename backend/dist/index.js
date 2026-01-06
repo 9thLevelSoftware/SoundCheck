@@ -11,6 +11,7 @@ if (process.env.NODE_ENV !== 'production') {
     dotenv_1.default.config();
 }
 const express_1 = __importDefault(require("express"));
+const http_1 = require("http");
 const cors_1 = __importDefault(require("cors"));
 const helmet_1 = __importDefault(require("helmet"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
@@ -22,8 +23,12 @@ const discoveryRoutes_1 = __importDefault(require("./routes/discoveryRoutes"));
 const eventRoutes_1 = __importDefault(require("./routes/eventRoutes"));
 const checkinRoutes_1 = __importDefault(require("./routes/checkinRoutes"));
 const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
+const notificationRoutes_1 = __importDefault(require("./routes/notificationRoutes"));
+const followRoutes_1 = __importDefault(require("./routes/followRoutes"));
+const wishlistRoutes_1 = __importDefault(require("./routes/wishlistRoutes"));
 const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
+const websocket_1 = require("./utils/websocket");
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
 const requiredEnvVars = ['JWT_SECRET'];
@@ -103,6 +108,8 @@ app.use((0, cors_1.default)(corsOptions));
 // Body parsing middleware
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
+// Static file serving for uploads
+app.use('/uploads', express_1.default.static('uploads'));
 // Request logging middleware
 app.use((req, res, next) => {
     (0, logger_1.logHttp)(`${req.method} ${req.path}`);
@@ -113,6 +120,7 @@ app.get('/health', async (req, res) => {
     try {
         const db = database_1.default.getInstance();
         const isDbHealthy = await db.healthCheck();
+        const wsStats = (0, websocket_1.getWebSocketStats)();
         const response = {
             success: true,
             data: {
@@ -120,6 +128,10 @@ app.get('/health', async (req, res) => {
                 timestamp: new Date().toISOString(),
                 version: '1.0.0',
                 database: isDbHealthy ? 'connected' : 'disconnected',
+                websocket: {
+                    enabled: process.env.ENABLE_WEBSOCKET === 'true',
+                    ...wsStats,
+                },
             },
         };
         res.status(200).json(response);
@@ -142,6 +154,9 @@ app.use('/api/discover', discoveryRoutes_1.default);
 app.use('/api/events', eventRoutes_1.default);
 app.use('/api/checkins', checkinRoutes_1.default);
 app.use('/api/feed', feedRoutes_1.default);
+app.use('/api/notifications', notificationRoutes_1.default);
+app.use('/api/follow', followRoutes_1.default);
+app.use('/api/wishlist', wishlistRoutes_1.default);
 // Root endpoint
 app.get('/', (req, res) => {
     const response = {
@@ -190,6 +205,8 @@ app.use((error, req, res, next) => {
     }
     res.status(statusCode).json(response);
 });
+// Create HTTP server
+const server = (0, http_1.createServer)(app);
 // Start server
 const startServer = async () => {
     try {
@@ -209,7 +226,9 @@ const startServer = async () => {
         if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
             (0, logger_1.logWarn)('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
         }
-        app.listen(PORT, () => {
+        // Initialize WebSocket server
+        (0, websocket_1.initWebSocket)(server);
+        server.listen(PORT, () => {
             (0, logger_1.logInfo)(`PitPulse API Server running on port ${PORT}`);
             (0, logger_1.logInfo)(`Health check: http://localhost:${PORT}/health`);
             (0, logger_1.logInfo)(`Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -226,12 +245,14 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
     (0, logger_1.logInfo)('SIGTERM received, shutting down gracefully');
+    websocket_1.websocket.close();
     const db = database_1.default.getInstance();
     await db.close();
     process.exit(0);
 });
 process.on('SIGINT', async () => {
     (0, logger_1.logInfo)('SIGINT received, shutting down gracefully');
+    websocket_1.websocket.close();
     const db = database_1.default.getInstance();
     await db.close();
     process.exit(0);

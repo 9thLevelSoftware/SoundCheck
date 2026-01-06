@@ -257,6 +257,37 @@ class UserController {
                 res.status(500).json(response);
             }
         };
+        /**
+         * Upload profile image
+         * POST /api/users/me/profile-image
+         */
+        this.uploadProfileImage = async (req, res) => {
+            try {
+                if (!req.user) {
+                    res.status(401).json({ success: false, error: 'User not authenticated' });
+                    return;
+                }
+                if (!req.file) {
+                    res.status(400).json({ success: false, error: 'No image file provided' });
+                    return;
+                }
+                const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
+                const imageUrl = `${baseUrl}/uploads/profiles/${req.file.filename}`;
+                await this.userService.updateProfile(req.user.id, { profileImageUrl: imageUrl });
+                res.status(200).json({
+                    success: true,
+                    data: { imageUrl },
+                    message: 'Profile image uploaded successfully',
+                });
+            }
+            catch (error) {
+                console.error('Upload profile image error:', error);
+                res.status(500).json({
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Failed to upload image',
+                });
+            }
+        };
         this.userService = userService ?? new UserService_1.UserService();
     }
 }
