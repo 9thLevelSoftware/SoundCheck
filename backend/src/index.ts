@@ -8,6 +8,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 import express from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import helmet from 'helmet';
 import userRoutes from './routes/userRoutes';
@@ -23,6 +24,7 @@ import notificationRoutes from './routes/notificationRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
+import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
 
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
@@ -126,7 +128,8 @@ app.get('/health', async (req, res) => {
   try {
     const db = Database.getInstance();
     const isDbHealthy = await db.healthCheck();
-    
+    const wsStats = getWebSocketStats();
+
     const response: ApiResponse = {
       success: true,
       data: {
@@ -134,9 +137,13 @@ app.get('/health', async (req, res) => {
         timestamp: new Date().toISOString(),
         version: '1.0.0',
         database: isDbHealthy ? 'connected' : 'disconnected',
+        websocket: {
+          enabled: process.env.ENABLE_WEBSOCKET === 'true',
+          ...wsStats,
+        },
       },
     };
-    
+
     res.status(200).json(response);
   } catch (error) {
     const response: ApiResponse = {
@@ -214,6 +221,9 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   res.status(statusCode).json(response);
 });
 
+// Create HTTP server
+const server = createServer(app);
+
 // Start server
 const startServer = async () => {
   try {
@@ -238,7 +248,10 @@ const startServer = async () => {
       logWarn('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
     }
 
-    app.listen(PORT, () => {
+    // Initialize WebSocket server
+    initWebSocket(server);
+
+    server.listen(PORT, () => {
       logInfo(`PitPulse API Server running on port ${PORT}`);
       logInfo(`Health check: http://localhost:${PORT}/health`);
       logInfo(`Environment: ${process.env.NODE_ENV || 'development'}`);
@@ -257,6 +270,7 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
+  websocket.close();
   const db = Database.getInstance();
   await db.close();
   process.exit(0);
@@ -264,6 +278,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
+  websocket.close();
   const db = Database.getInstance();
   await db.close();
   process.exit(0);

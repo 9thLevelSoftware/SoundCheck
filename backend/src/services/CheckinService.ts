@@ -63,6 +63,7 @@ interface Comment {
   commentText: string;
   createdAt: Date;
   user?: any;
+  ownerId?: string; // Check-in owner for WebSocket notifications
 }
 
 export class CheckinService {
@@ -284,8 +285,9 @@ export class CheckinService {
 
   /**
    * Toast a check-in (like Untappd's toast feature)
+   * Returns toast count and owner ID for WebSocket broadcasts
    */
-  async toastCheckin(userId: string, checkinId: string): Promise<void> {
+  async toastCheckin(userId: string, checkinId: string): Promise<{ toastCount: number; ownerId: string }> {
     try {
       // Check if already toasted
       const existingToast = await this.db.query(
@@ -302,6 +304,21 @@ export class CheckinService {
         'INSERT INTO checkin_toasts (checkin_id, user_id) VALUES ($1, $2)',
         [checkinId, userId]
       );
+
+      // Get toast count and owner ID for WebSocket broadcast
+      const result = await this.db.query(
+        `SELECT c.user_id as owner_id, COUNT(t.id) as toast_count
+         FROM checkins c
+         LEFT JOIN checkin_toasts t ON c.id = t.checkin_id
+         WHERE c.id = $1
+         GROUP BY c.id`,
+        [checkinId]
+      );
+
+      return {
+        toastCount: parseInt(result.rows[0]?.toast_count || '0'),
+        ownerId: result.rows[0]?.owner_id,
+      };
     } catch (error) {
       console.error('Toast check-in error:', error);
       throw error;
@@ -325,6 +342,7 @@ export class CheckinService {
 
   /**
    * Add a comment to a check-in
+   * Returns comment with owner ID for WebSocket notifications
    */
   async addComment(
     userId: string,
@@ -340,8 +358,19 @@ export class CheckinService {
 
       const result = await this.db.query(query, [checkinId, userId, commentText]);
 
+      // Get check-in owner for WebSocket notification
+      const checkin = await this.db.query(
+        'SELECT user_id FROM checkins WHERE id = $1',
+        [checkinId]
+      );
+
       // Get comment with user details
-      return this.getCommentById(result.rows[0].id);
+      const comment = await this.getCommentById(result.rows[0].id);
+
+      return {
+        ...comment,
+        ownerId: checkin.rows[0]?.user_id,
+      };
     } catch (error) {
       console.error('Add comment error:', error);
       throw error;

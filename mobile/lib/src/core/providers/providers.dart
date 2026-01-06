@@ -5,6 +5,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/dio_client.dart';
 import '../services/biometric_service.dart';
+import '../services/websocket_service.dart';
 import '../../shared/services/location_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/domain/user.dart';
@@ -19,6 +20,13 @@ part 'providers.g.dart';
 @Riverpod(keepAlive: true)
 BiometricService biometricService(Ref ref) {
   return BiometricService();
+}
+
+@Riverpod(keepAlive: true)
+WebSocketService webSocketService(Ref ref) {
+  final service = WebSocketService();
+  ref.onDispose(() => service.dispose());
+  return service;
 }
 
 @Riverpod(keepAlive: true)
@@ -77,7 +85,14 @@ class AuthState extends _$AuthState {
   @override
   Future<User?> build() async {
     final authRepository = ref.watch(authRepositoryProvider);
-    return authRepository.getCurrentUser();
+    final user = await authRepository.getCurrentUser();
+
+    // Connect WebSocket if user is logged in
+    if (user != null) {
+      _connectWebSocket(user.id);
+    }
+
+    return user;
   }
 
   Future<void> login(String email, String password) async {
@@ -87,6 +102,10 @@ class AuthState extends _$AuthState {
       final authResponse = await authRepository.login(
         LoginRequest(email: email, password: password),
       );
+
+      // Connect WebSocket after successful login
+      _connectWebSocket(authResponse.user.id);
+
       return authResponse.user;
     });
   }
@@ -110,12 +129,21 @@ class AuthState extends _$AuthState {
           lastName: lastName,
         ),
       );
+
+      // Connect WebSocket after successful registration
+      _connectWebSocket(authResponse.user.id);
+
       return authResponse.user;
     });
   }
 
   Future<void> logout() async {
     final authRepository = ref.read(authRepositoryProvider);
+
+    // Disconnect WebSocket before logout
+    final wsService = ref.read(webSocketServiceProvider);
+    wsService.disconnect();
+
     await authRepository.logout();
     state = const AsyncValue.data(null);
   }
@@ -126,6 +154,22 @@ class AuthState extends _$AuthState {
       final authRepository = ref.read(authRepositoryProvider);
       return authRepository.getMe();
     });
+  }
+
+  /// Connect to WebSocket with authentication
+  Future<void> _connectWebSocket(String userId) async {
+    try {
+      final secureStorage = ref.read(secureStorageProvider);
+      final token = await secureStorage.read(key: 'auth_token');
+
+      if (token != null) {
+        final wsService = ref.read(webSocketServiceProvider);
+        await wsService.connect(authToken: token, userId: userId);
+      }
+    } catch (e) {
+      // WebSocket connection failure shouldn't prevent login
+      // Log error but continue
+    }
   }
 }
 

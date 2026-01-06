@@ -29,18 +29,17 @@
 
 import { Server } from 'http';
 import { AuthUtils } from './auth';
-// NOTE: Uncomment when ws is installed
-// import WebSocket from 'ws';
+import WebSocket from 'ws';
 
 interface Client {
-  ws: any; // WebSocket
+  ws: WebSocket;
   userId?: string;
   rooms: Set<string>;
   isAlive: boolean;
 }
 
 class WebSocketServer {
-  // private wss?: WebSocket.Server;
+  private wss?: WebSocket.Server;
   private clients: Map<string, Client> = new Map();
   private rooms: Map<string, Set<string>> = new Map();
   private heartbeatInterval?: NodeJS.Timeout;
@@ -51,8 +50,6 @@ class WebSocketServer {
       return;
     }
 
-    // NOTE: Uncomment when ws is installed
-    /*
     this.wss = new WebSocket.Server({ server });
 
     this.wss.on('connection', (ws: WebSocket, req) => {
@@ -65,7 +62,7 @@ class WebSocketServer {
       };
 
       this.clients.set(clientId, client);
-      console.log(`✅ WebSocket client connected: ${clientId}`);
+      console.log(`WebSocket client connected: ${clientId}`);
 
       // Handle messages
       ws.on('message', (message: string) => {
@@ -97,8 +94,7 @@ class WebSocketServer {
     // Start heartbeat
     this.startHeartbeat();
 
-    console.log('✅ WebSocket server initialized');
-    */
+    console.log('WebSocket server initialized');
   }
 
   private handleMessage(clientId: string, data: any): void {
@@ -201,12 +197,9 @@ class WebSocketServer {
     const client = this.clients.get(clientId);
     if (!client) return;
 
-    // NOTE: Uncomment when ws is installed
-    /*
     if (client.ws.readyState === WebSocket.OPEN) {
       client.ws.send(JSON.stringify({ type, payload }));
     }
-    */
   }
 
   /**
@@ -264,8 +257,6 @@ class WebSocketServer {
    */
   private startHeartbeat(): void {
     this.heartbeatInterval = setInterval(() => {
-      // NOTE: Uncomment when ws is installed
-      /*
       for (const [clientId, client] of this.clients.entries()) {
         if (!client.isAlive) {
           // Client didn't respond to last ping, terminate
@@ -277,7 +268,6 @@ class WebSocketServer {
         client.isAlive = false;
         client.ws.ping();
       }
-      */
     }, 30000); // Every 30 seconds
   }
 
@@ -318,10 +308,9 @@ class WebSocketServer {
       clearInterval(this.heartbeatInterval);
     }
 
-    // NOTE: Uncomment when ws is installed
-    // this.wss?.close();
+    this.wss?.close();
 
-    console.log('❌ WebSocket server closed');
+    console.log('WebSocket server closed');
   }
 }
 
@@ -354,6 +343,9 @@ export const WebSocketEvents = {
   NEW_REVIEW: 'new_review',
   NEW_FOLLOWER: 'new_follower',
   NEW_COMMENT: 'new_comment',
+  NEW_TOAST: 'new_toast',
+  TOAST_REMOVED: 'toast_removed',
+  COMMENT_DELETED: 'comment_deleted',
 
   // Typing indicators
   USER_TYPING: 'user_typing',

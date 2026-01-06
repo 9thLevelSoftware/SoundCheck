@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CheckinService } from '../services/CheckinService';
 import { ApiResponse } from '../types';
+import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
 
 export class CheckinController {
   private checkinService = new CheckinService();
@@ -158,6 +159,7 @@ export class CheckinController {
   toastCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = (req as any).user?.id;
+      const username = (req as any).user?.username;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -170,7 +172,27 @@ export class CheckinController {
 
       const { id } = req.params;
 
-      await this.checkinService.toastCheckin(userId, id);
+      const result = await this.checkinService.toastCheckin(userId, id);
+
+      // Broadcast real-time notification to check-in room
+      broadcastToRoom(`checkin:${id}`, WebSocketEvents.NEW_TOAST, {
+        checkinId: id,
+        userId,
+        username,
+        toastCount: result?.toastCount,
+        timestamp: new Date().toISOString(),
+      });
+
+      // Notify check-in owner if different from toaster
+      if (result?.ownerId && result.ownerId !== userId) {
+        sendToUser(result.ownerId, WebSocketEvents.NEW_TOAST, {
+          checkinId: id,
+          userId,
+          username,
+          message: `${username || 'Someone'} toasted your check-in!`,
+          timestamp: new Date().toISOString(),
+        });
+      }
 
       const response: ApiResponse = {
         success: true,
@@ -237,6 +259,7 @@ export class CheckinController {
   addComment = async (req: Request, res: Response): Promise<void> => {
     try {
       const userId = (req as any).user?.id;
+      const username = (req as any).user?.username;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -260,6 +283,28 @@ export class CheckinController {
       }
 
       const comment = await this.checkinService.addComment(userId, id, commentText);
+
+      // Broadcast real-time notification to check-in room
+      broadcastToRoom(`checkin:${id}`, WebSocketEvents.NEW_COMMENT, {
+        checkinId: id,
+        comment: {
+          ...comment,
+          username,
+        },
+        timestamp: new Date().toISOString(),
+      });
+
+      // Notify check-in owner if different from commenter
+      if (comment?.ownerId && comment.ownerId !== userId) {
+        sendToUser(comment.ownerId, WebSocketEvents.NEW_COMMENT, {
+          checkinId: id,
+          userId,
+          username,
+          message: `${username || 'Someone'} commented on your check-in!`,
+          preview: commentText.substring(0, 50),
+          timestamp: new Date().toISOString(),
+        });
+      }
 
       const response: ApiResponse = {
         success: true,
