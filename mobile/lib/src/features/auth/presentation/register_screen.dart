@@ -92,9 +92,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         if (user != null) {
           // Success - show message (router will handle navigation)
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Account created successfully!'),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: const Text('Account created successfully!'),
+              backgroundColor: AppTheme.success,
               behavior: SnackBarBehavior.floating,
             ),
           );
@@ -108,6 +108,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Create Account'),

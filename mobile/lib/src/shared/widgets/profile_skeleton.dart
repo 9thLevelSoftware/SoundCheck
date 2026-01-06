@@ -8,6 +8,12 @@ class ProfileSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? AppTheme.surfaceVariantDark : Colors.grey[300]!;
+    final highlightColor = isDark ? AppTheme.cardDark : Colors.grey[100]!;
+    final shapeColor = isDark ? AppTheme.surfaceDark : Colors.white;
+    final iconColor = isDark ? AppTheme.textMuted : Colors.grey[300];
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(AppTheme.spacing16),
       child: Column(
@@ -18,35 +24,35 @@ class ProfileSkeleton extends StatelessWidget {
             child: Column(
               children: [
                 Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
                   child: CircleAvatar(
                     radius: 50,
-                    backgroundColor: Colors.grey[300],
+                    backgroundColor: shapeColor,
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacing16),
                 Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
                   child: Container(
                     height: 28,
                     width: 180,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
                 ),
                 const SizedBox(height: AppTheme.spacing8),
                 Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
                   child: Container(
                     height: 16,
                     width: 220,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -58,13 +64,13 @@ class ProfileSkeleton extends StatelessWidget {
 
           // Badges Section Skeleton
           Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
+            baseColor: baseColor,
+            highlightColor: highlightColor,
             child: Container(
               height: 24,
               width: 120,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: shapeColor,
                 borderRadius: BorderRadius.circular(4),
               ),
             ),
@@ -84,8 +90,8 @@ class ProfileSkeleton extends StatelessWidget {
             itemBuilder: (context, index) {
               return Card(
                 child: Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
                   child: Padding(
                     padding: const EdgeInsets.all(AppTheme.spacing8),
                     child: Column(
@@ -94,14 +100,14 @@ class ProfileSkeleton extends StatelessWidget {
                         Icon(
                           Icons.emoji_events,
                           size: 32,
-                          color: Colors.grey[300],
+                          color: iconColor,
                         ),
                         const SizedBox(height: AppTheme.spacing4),
                         Container(
                           height: 12,
                           width: 60,
                           decoration: BoxDecoration(
-                            color: Colors.white,
+                            color: shapeColor,
                             borderRadius: BorderRadius.circular(4),
                           ),
                         ),

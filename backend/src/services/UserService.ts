@@ -10,7 +10,8 @@ export class UserService {
    * Create a new user
    */
   async createUser(userData: CreateUserRequest): Promise<AuthResponse> {
-    const { email, password, username, firstName, lastName } = userData;
+    const { email: rawEmail, password, username, firstName, lastName } = userData;
+    const email = rawEmail.toLowerCase();
 
     // Note: Basic validation is handled by middleware now,
     // but business logic validation (duplicates) remains here.
@@ -60,7 +61,8 @@ export class UserService {
    * Authenticate user login
    */
   async authenticateUser(loginData: LoginRequest): Promise<AuthResponse> {
-    const { email, password } = loginData;
+    const { email: rawEmail, password } = loginData;
+    const email = rawEmail.toLowerCase();
 
     // Find user by email
     const user = await this.findByEmailWithPassword(email);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
+import '../../core/theme/app_theme.dart';
 
 /// A reusable skeleton loader for list items
 class SkeletonListItem extends StatelessWidget {
@@ -21,8 +22,9 @@ class SkeletonListItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
-    final highlightColor = isDark ? Colors.grey[700]! : Colors.grey[100]!;
+    final baseColor = isDark ? AppTheme.surfaceVariantDark : Colors.grey[300]!;
+    final highlightColor = isDark ? AppTheme.cardDark : Colors.grey[100]!;
+    final shapeColor = isDark ? AppTheme.surfaceDark : Colors.white;
 
     return Container(
       margin: margin,
@@ -49,7 +51,7 @@ class SkeletonListItem extends StatelessWidget {
               width: 60,
               height: 60,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: shapeColor,
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
@@ -63,7 +65,7 @@ class SkeletonListItem extends StatelessWidget {
                     width: double.infinity,
                     height: 16,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -72,7 +74,7 @@ class SkeletonListItem extends StatelessWidget {
                     width: 150,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -81,7 +83,7 @@ class SkeletonListItem extends StatelessWidget {
                     width: 100,
                     height: 12,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),

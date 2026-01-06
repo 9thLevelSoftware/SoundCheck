@@ -55,9 +55,9 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           decoration: const InputDecoration(
             hintText: 'Search venues, bands...',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: Colors.white70),
+            hintStyle: TextStyle(color: AppTheme.textSecondary),
           ),
-          style: const TextStyle(color: Colors.white, fontSize: 18),
+          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 18),
         ),
         actions: [
           if (_searchController.text.isNotEmpty)
@@ -133,16 +133,16 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
+            const Icon(
               Icons.search,
               size: 64,
-              color: Colors.grey[400],
+              color: AppTheme.textTertiary,
             ),
             const SizedBox(height: AppTheme.spacing16),
             Text(
               'Start typing to search',
               style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    color: Colors.grey[600],
+                    color: AppTheme.textSecondary,
                   ),
             ),
           ],
@@ -195,10 +195,10 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
+              const Icon(
                 Icons.search_off,
                 size: 64,
-                color: Colors.grey[400],
+                color: AppTheme.textTertiary,
               ),
               const SizedBox(height: AppTheme.spacing16),
               Text(
@@ -209,7 +209,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               Text(
                 'Try searching with different keywords',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
+                      color: AppTheme.textSecondary,
                     ),
                 textAlign: TextAlign.center,
               ),

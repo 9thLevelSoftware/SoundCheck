@@ -8,6 +8,12 @@ class VenueCardSkeleton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final baseColor = isDark ? AppTheme.surfaceVariantDark : Colors.grey[300]!;
+    final highlightColor = isDark ? AppTheme.cardDark : Colors.grey[100]!;
+    final shapeColor = isDark ? AppTheme.surfaceDark : Colors.white;
+    final iconColor = isDark ? AppTheme.textMuted : Colors.grey[300];
+
     return Card(
       clipBehavior: Clip.antiAlias,
       child: Column(
@@ -15,12 +21,12 @@ class VenueCardSkeleton extends StatelessWidget {
         children: [
           // Image skeleton
           Shimmer.fromColors(
-            baseColor: Colors.grey[300]!,
-            highlightColor: Colors.grey[100]!,
+            baseColor: baseColor,
+            highlightColor: highlightColor,
             child: Container(
               height: 120,
               width: double.infinity,
-              color: Colors.white,
+              color: shapeColor,
             ),
           ),
 
@@ -32,13 +38,13 @@ class VenueCardSkeleton extends StatelessWidget {
               children: [
                 // Title skeleton
                 Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
                   child: Container(
                     height: 20,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -47,13 +53,13 @@ class VenueCardSkeleton extends StatelessWidget {
 
                 // Location skeleton
                 Shimmer.fromColors(
-                  baseColor: Colors.grey[300]!,
-                  highlightColor: Colors.grey[100]!,
+                  baseColor: baseColor,
+                  highlightColor: highlightColor,
                   child: Container(
                     height: 14,
                     width: 150,
                     decoration: BoxDecoration(
-                      color: Colors.white,
+                      color: shapeColor,
                       borderRadius: BorderRadius.circular(4),
                     ),
                   ),
@@ -64,8 +70,8 @@ class VenueCardSkeleton extends StatelessWidget {
                 Row(
                   children: [
                     Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
+                      baseColor: baseColor,
+                      highlightColor: highlightColor,
                       child: Row(
                         children: List.generate(
                           5,
@@ -74,7 +80,7 @@ class VenueCardSkeleton extends StatelessWidget {
                             child: Icon(
                               Icons.star,
                               size: 16,
-                              color: Colors.grey[300],
+                              color: iconColor,
                             ),
                           ),
                         ),
@@ -82,13 +88,13 @@ class VenueCardSkeleton extends StatelessWidget {
                     ),
                     const SizedBox(width: AppTheme.spacing8),
                     Shimmer.fromColors(
-                      baseColor: Colors.grey[300]!,
-                      highlightColor: Colors.grey[100]!,
+                      baseColor: baseColor,
+                      highlightColor: highlightColor,
                       child: Container(
                         height: 12,
                         width: 30,
                         decoration: BoxDecoration(
-                          color: Colors.white,
+                          color: shapeColor,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
