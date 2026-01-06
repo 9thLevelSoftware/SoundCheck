@@ -5,6 +5,9 @@ import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/utils/haptic_feedback.dart';
+import '../../../shared/utils/date_formatter.dart';
+import '../../checkins/domain/checkin.dart';
+import 'providers/profile_providers.dart';
 
 /// Profile Screen - Gamification-focused user profile
 /// Modeled after Untappd's profile with stats emphasis
@@ -53,7 +56,7 @@ class ProfileScreen extends ConsumerWidget {
 
                     // Recent Check-ins
                     SliverToBoxAdapter(
-                      child: _RecentCheckins(),
+                      child: _RecentCheckins(userId: user.id),
                     ),
 
                     // Section: Badges
@@ -90,7 +93,7 @@ class ProfileScreen extends ConsumerWidget {
 
                     // Genre Stats
                     SliverToBoxAdapter(
-                      child: _GenreStats(),
+                      child: _GenreStats(userId: user.id),
                     ),
 
                     // Bottom padding for nav bar
@@ -306,11 +309,11 @@ class _MainStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Mock data - would come from user stats
-    final totalCheckins = user.totalCheckins ?? 47;
-    final uniqueBands = user.uniqueBands ?? 32;
-    final uniqueVenues = user.uniqueVenues ?? 15;
-    final badgesCount = user.badgesCount ?? 8;
+    // Use real stats from user model
+    final totalCheckins = user.totalCheckins;
+    final uniqueBands = user.uniqueBands;
+    final uniqueVenues = user.uniqueVenues;
+    final badgesCount = user.badgesCount;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
@@ -607,51 +610,93 @@ class _SectionHeader extends StatelessWidget {
 }
 
 // Recent Check-ins
-class _RecentCheckins extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Mock data
-    final checkins = [
-      {
-        'band': 'Metallica',
-        'venue': 'Red Rocks Amphitheatre',
-        'rating': 4.75,
-        'time': '2 hours ago',
-        'toasts': 12,
-        'comments': 3,
-      },
-      {
-        'band': 'Ghost',
-        'venue': 'The Forum',
-        'rating': 4.5,
-        'time': 'Yesterday',
-        'toasts': 8,
-        'comments': 2,
-      },
-      {
-        'band': 'Iron Maiden',
-        'venue': 'Madison Square Garden',
-        'rating': 5.0,
-        'time': '3 days ago',
-        'toasts': 24,
-        'comments': 7,
-      },
-    ];
+class _RecentCheckins extends ConsumerWidget {
+  const _RecentCheckins({required this.userId});
 
-    return ListView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      itemCount: checkins.length,
-      itemBuilder: (context, index) {
-        final checkin = checkins[index];
-        return _CheckinCard(
-          bandName: checkin['band'] as String,
-          venueName: checkin['venue'] as String,
-          rating: checkin['rating'] as double,
-          timeAgo: checkin['time'] as String,
-          toasts: checkin['toasts'] as int,
-          comments: checkin['comments'] as int,
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final checkinsAsync = ref.watch(userRecentCheckinsProvider(userId));
+
+    return checkinsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+        ),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppTheme.error, size: 32),
+              const SizedBox(height: 8),
+              const Text(
+                'Failed to load check-ins',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(userRecentCheckinsProvider(userId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (checkins) {
+        if (checkins.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.music_off, size: 48, color: AppTheme.textTertiary),
+                  SizedBox(height: 12),
+                  Text(
+                    'No check-ins yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Start checking in to concerts!',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textTertiary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: checkins.length,
+          itemBuilder: (context, index) {
+            final checkin = checkins[index];
+            return _CheckinCard(
+              checkin: checkin,
+              onTap: () {
+                HapticFeedbackUtil.selectionClick();
+                context.push('/checkins/${checkin.id}');
+              },
+            );
+          },
         );
       },
     );
@@ -660,152 +705,168 @@ class _RecentCheckins extends StatelessWidget {
 
 class _CheckinCard extends StatelessWidget {
   const _CheckinCard({
-    required this.bandName,
-    required this.venueName,
-    required this.rating,
-    required this.timeAgo,
-    required this.toasts,
-    required this.comments,
+    required this.checkin,
+    this.onTap,
   });
 
-  final String bandName;
-  final String venueName;
-  final double rating;
-  final String timeAgo;
-  final int toasts;
-  final int comments;
+  final CheckIn checkin;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              // Band logo placeholder
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceDark,
-                  borderRadius: BorderRadius.circular(8),
+    final bandName = checkin.band?.name ?? 'Unknown Band';
+    final venueName = checkin.venue?.name ?? 'Unknown Venue';
+    final rating = checkin.rating;
+    final timeAgo = DateFormatter.formatRelativeTime(checkin.createdAt);
+    final toasts = checkin.toastCount;
+    final comments = checkin.commentCount;
+    final bandImageUrl = checkin.band?.imageUrl;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                // Band logo
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceDark,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: bandImageUrl != null
+                      ? ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: Image.network(
+                            bandImageUrl,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => const Icon(
+                              Icons.album,
+                              color: AppTheme.electricPurple,
+                            ),
+                          ),
+                        )
+                      : const Icon(
+                          Icons.album,
+                          color: AppTheme.electricPurple,
+                        ),
                 ),
-                child: const Icon(
-                  Icons.album,
-                  color: AppTheme.electricPurple,
-                ),
-              ),
-              const SizedBox(width: 12),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      bandName,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
+                const SizedBox(width: 12),
+                // Info
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        bandName,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
                       ),
+                      Text(
+                        venueName,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: AppTheme.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // Rating (only show if rating > 0)
+                if (rating > 0)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: _getRatingColor(rating).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.star,
+                          size: 16,
+                          color: _getRatingColor(rating),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          rating.toStringAsFixed(2),
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                            color: _getRatingColor(rating),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Footer with social stats
+            Row(
+              children: [
+                Text(
+                  timeAgo,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: AppTheme.textTertiary,
+                  ),
+                ),
+                const Spacer(),
+                // Toasts
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.sports_bar,
+                      size: 14,
+                      color: AppTheme.toastGold,
+                    ),
+                    const SizedBox(width: 4),
                     Text(
-                      venueName,
+                      '$toasts',
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: AppTheme.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-              // Rating
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _getRatingColor(rating).withValues(alpha:0.15),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Row(
+                const SizedBox(width: 16),
+                // Comments
+                Row(
                   children: [
-                    Icon(
-                      Icons.star,
-                      size: 16,
-                      color: _getRatingColor(rating),
+                    const Icon(
+                      Icons.chat_bubble_outline,
+                      size: 14,
+                      color: AppTheme.textTertiary,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      rating.toStringAsFixed(2),
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: _getRatingColor(rating),
+                      '$comments',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                   ],
                 ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Footer with social stats
-          Row(
-            children: [
-              Text(
-                timeAgo,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppTheme.textTertiary,
-                ),
-              ),
-              const Spacer(),
-              // Toasts
-              Row(
-                children: [
-                  const Icon(
-                    Icons.sports_bar,
-                    size: 14,
-                    color: AppTheme.toastGold,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$toasts',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(width: 16),
-              // Comments
-              Row(
-                children: [
-                  const Icon(
-                    Icons.chat_bubble_outline,
-                    size: 14,
-                    color: AppTheme.textTertiary,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    '$comments',
-                    style: const TextStyle(
-                      fontSize: 12,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -958,76 +1019,141 @@ class _WishlistPreview extends StatelessWidget {
 }
 
 // Genre Stats
-class _GenreStats extends StatelessWidget {
+class _GenreStats extends ConsumerWidget {
+  const _GenreStats({required this.userId});
+
+  final String userId;
+
+  static const _colors = [
+    AppTheme.electricPurple,
+    AppTheme.neonPink,
+    AppTheme.liveGreen,
+    AppTheme.toastGold,
+    AppTheme.textTertiary,
+  ];
+
   @override
-  Widget build(BuildContext context) {
-    // Mock genre stats
-    final genres = [
-      {'name': 'Heavy Metal', 'count': 18, 'percent': 0.38},
-      {'name': 'Thrash Metal', 'count': 12, 'percent': 0.25},
-      {'name': 'Progressive Metal', 'count': 8, 'percent': 0.17},
-      {'name': 'Hard Rock', 'count': 5, 'percent': 0.11},
-      {'name': 'Other', 'count': 4, 'percent': 0.09},
-    ];
+  Widget build(BuildContext context, WidgetRef ref) {
+    final genreStatsAsync = ref.watch(userGenreStatsProvider(userId));
 
-    final colors = [
-      AppTheme.electricPurple,
-      AppTheme.neonPink,
-      AppTheme.liveGreen,
-      AppTheme.toastGold,
-      AppTheme.textTertiary,
-    ];
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(12),
+    return genreStatsAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+        ),
       ),
-      child: Column(
-        children: genres.asMap().entries.map((entry) {
-          final index = entry.key;
-          final genre = entry.value;
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      genre['name'] as String,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        color: AppTheme.textSecondary,
-                      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppTheme.error, size: 32),
+              const SizedBox(height: 8),
+              const Text(
+                'Failed to load genre stats',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(userGenreStatsProvider(userId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (genres) {
+        if (genres.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bar_chart, size: 48, color: AppTheme.textTertiary),
+                  SizedBox(height: 12),
+                  Text(
+                    'No genre data yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.textSecondary,
                     ),
-                    Text(
-                      '${genre['count']} check-ins',
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textTertiary,
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Check in to concerts to see your genre stats!',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textTertiary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardDark,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: genres.asMap().entries.map((entry) {
+              final index = entry.key;
+              final genre = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          genre['name'] as String,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          '${genre['count']} check-ins',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: (genre['percent'] as double).clamp(0.0, 1.0),
+                        minHeight: 6,
+                        backgroundColor: AppTheme.surfaceDark,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                          _colors[index % _colors.length],
+                        ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(3),
-                  child: LinearProgressIndicator(
-                    value: genre['percent'] as double,
-                    minHeight: 6,
-                    backgroundColor: AppTheme.surfaceDark,
-                    valueColor: AlwaysStoppedAnimation<Color>(colors[index]),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
+              );
+            }).toList(),
+          ),
+        );
+      },
     );
   }
 }
