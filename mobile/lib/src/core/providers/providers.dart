@@ -1,9 +1,11 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/dio_client.dart';
 import '../services/biometric_service.dart';
+import '../../shared/services/location_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/domain/user.dart';
 import '../../features/venues/data/venue_repository.dart';
@@ -117,5 +119,42 @@ class AuthState extends _$AuthState {
       final authRepository = ref.read(authRepositoryProvider);
       return authRepository.getMe();
     });
+  }
+}
+
+/// Location permission state
+enum LocationStatus {
+  unknown,
+  denied,
+  deniedForever,
+  granted,
+  serviceDisabled,
+}
+
+/// Provider for current user location
+@riverpod
+Future<Position?> currentLocation(Ref ref) async {
+  return LocationService.getCurrentPosition();
+}
+
+/// Provider for location permission status
+@riverpod
+Future<LocationStatus> locationStatus(Ref ref) async {
+  final serviceEnabled = await LocationService.isLocationServiceEnabled();
+  if (!serviceEnabled) {
+    return LocationStatus.serviceDisabled;
+  }
+
+  final permission = await LocationService.checkPermission();
+  switch (permission) {
+    case LocationPermission.denied:
+      return LocationStatus.denied;
+    case LocationPermission.deniedForever:
+      return LocationStatus.deniedForever;
+    case LocationPermission.whileInUse:
+    case LocationPermission.always:
+      return LocationStatus.granted;
+    default:
+      return LocationStatus.unknown;
   }
 }

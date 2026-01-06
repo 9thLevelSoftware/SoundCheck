@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
+import '../../../shared/services/location_service.dart';
 import '../../bands/domain/band.dart';
 import '../../venues/domain/venue.dart';
 
@@ -28,6 +29,23 @@ Future<List<Venue>> topRatedVenues(Ref ref) async {
 Future<List<Band>> popularBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   return repository.getPopularBands(limit: 10);
+}
+
+/// Provider for nearby venues based on user location
+@riverpod
+Future<List<Venue>> nearbyVenues(Ref ref) async {
+  final position = await ref.watch(currentLocationProvider.future);
+  if (position == null) {
+    return []; // No location available
+  }
+
+  final repository = ref.watch(venueRepositoryProvider);
+  return repository.getNearbyVenues(
+    latitude: position.latitude,
+    longitude: position.longitude,
+    radius: 50, // 50km radius
+    limit: 10,
+  );
 }
 
 /// Discover & Search Screen
@@ -196,11 +214,17 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     final trendingBandsAsync = ref.watch(trendingBandsProvider);
     final topVenuesAsync = ref.watch(topRatedVenuesProvider);
     final popularBandsAsync = ref.watch(popularBandsProvider);
+    final nearbyVenuesAsync = ref.watch(nearbyVenuesProvider);
+    final locationStatusAsync = ref.watch(locationStatusProvider);
 
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 100),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
+          // Nearby Venues (location-based)
+          _buildNearbyVenuesSection(nearbyVenuesAsync, locationStatusAsync),
+          const SizedBox(height: 24),
+
           // Trending Locally
           const _SectionHeader(
             title: 'Trending Locally',
@@ -335,6 +359,156 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             ),
           ),
         ]),
+      ),
+    );
+  }
+
+  Widget _buildNearbyVenuesSection(
+    AsyncValue<List<Venue>> nearbyVenuesAsync,
+    AsyncValue<LocationStatus> locationStatusAsync,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          title: 'Nearby Venues',
+          subtitle: 'Live music spots near you',
+        ),
+        SizedBox(
+          height: 160,
+          child: locationStatusAsync.when(
+            data: (status) {
+              // Handle permission states
+              if (status == LocationStatus.denied) {
+                return _LocationPermissionPrompt(
+                  message: 'Enable location to find venues near you',
+                  buttonText: 'Grant Permission',
+                  onPressed: () async {
+                    await LocationService.requestPermission();
+                    ref.invalidate(locationStatusProvider);
+                    ref.invalidate(nearbyVenuesProvider);
+                  },
+                );
+              } else if (status == LocationStatus.deniedForever) {
+                return _LocationPermissionPrompt(
+                  message: 'Location permission denied. Enable it in settings.',
+                  buttonText: 'Open Settings',
+                  onPressed: () async {
+                    await LocationService.openAppSettings();
+                  },
+                );
+              } else if (status == LocationStatus.serviceDisabled) {
+                return _LocationPermissionPrompt(
+                  message: 'Location services are disabled',
+                  buttonText: 'Enable Location',
+                  onPressed: () async {
+                    await LocationService.openLocationSettings();
+                  },
+                );
+              }
+
+              // Location granted - show nearby venues
+              return nearbyVenuesAsync.when(
+                data: (venues) => venues.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No venues found nearby',
+                          style: TextStyle(color: AppTheme.textTertiary),
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: venues.length,
+                        itemBuilder: (context, index) {
+                          return _TrendingVenueCard(
+                            venue: venues[index],
+                            onTap: () {
+                              context.push('/venues/${venues[index].id}');
+                            },
+                          );
+                        },
+                      ),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.voltLime,
+                  ),
+                ),
+                error: (err, stack) => const Center(
+                  child: Text(
+                    'Error loading nearby venues',
+                    style: TextStyle(color: AppTheme.textTertiary),
+                  ),
+                ),
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.voltLime,
+              ),
+            ),
+            error: (err, stack) => const Center(
+              child: Text(
+                'Error checking location',
+                style: TextStyle(color: AppTheme.textTertiary),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Prompt widget for location permission
+class _LocationPermissionPrompt extends StatelessWidget {
+  const _LocationPermissionPrompt({
+    required this.message,
+    required this.buttonText,
+    required this.onPressed,
+  });
+
+  final String message;
+  final String buttonText;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.location_off,
+              color: AppTheme.textTertiary,
+              size: 32,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            ElevatedButton(
+              onPressed: onPressed,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.voltLime,
+                foregroundColor: AppTheme.backgroundDark,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 10,
+                ),
+              ),
+              child: Text(buttonText),
+            ),
+          ],
+        ),
       ),
     );
   }

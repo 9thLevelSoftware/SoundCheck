@@ -76,7 +76,7 @@ class LocationService {
 
   /// Open app settings to manually enable location permission
   static Future<bool> openAppSettings() async {
-    return await openAppSettings();
+    return await Geolocator.openAppSettings();
   }
 
   /// Get location permission status as user-friendly string
