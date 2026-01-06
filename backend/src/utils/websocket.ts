@@ -119,6 +119,18 @@ class WebSocketServer {
 
     const { type, payload } = data;
 
+    // Authentication gate for room operations
+    // Security: Prevent unauthenticated clients from joining/leaving rooms
+    // This fixes CVSS 8.2 High vulnerability where rooms could be joined without auth
+    if (['join_room', 'leave_room'].includes(type)) {
+      if (!client.userId) {
+        this.send(clientId, 'error', {
+          message: 'You must authenticate before joining or leaving rooms',
+        });
+        return;
+      }
+    }
+
     switch (type) {
       case 'auth':
         this.authenticateClient(clientId, payload.userId, payload.token);
