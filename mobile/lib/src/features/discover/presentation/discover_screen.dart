@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -7,6 +8,7 @@ import '../../../core/providers/providers.dart';
 import '../../../shared/services/location_service.dart';
 import '../../bands/domain/band.dart';
 import '../../venues/domain/venue.dart';
+import 'providers/discover_providers.dart';
 
 part 'discover_screen.g.dart';
 
@@ -61,11 +63,32 @@ class DiscoverScreen extends ConsumerStatefulWidget {
 class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
+  Timer? _debounceTimer;
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
+  }
+
+  void _onSearchChanged(String value) {
+    setState(() => _isSearching = value.isNotEmpty);
+
+    // Cancel previous timer
+    _debounceTimer?.cancel();
+
+    // Create new timer for debouncing (300ms delay)
+    _debounceTimer = Timer(const Duration(milliseconds: 300), () {
+      ref.read(discoverSearchQueryProvider.notifier).setQuery(value);
+    });
+  }
+
+  void _clearSearch() {
+    _searchController.clear();
+    _debounceTimer?.cancel();
+    ref.read(discoverSearchQueryProvider.notifier).clear();
+    setState(() => _isSearching = false);
   }
 
   @override
@@ -117,10 +140,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                                     Icons.clear,
                                     color: AppTheme.textTertiary,
                                   ),
-                                  onPressed: () {
-                                    _searchController.clear();
-                                    setState(() => _isSearching = false);
-                                  },
+                                  onPressed: _clearSearch,
                                 )
                               : null,
                           border: InputBorder.none,
@@ -129,9 +149,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                             vertical: 12,
                           ),
                         ),
-                        onChanged: (value) {
-                          setState(() => _isSearching = value.isNotEmpty);
-                        },
+                        onChanged: _onSearchChanged,
                       ),
                     ),
                   ],
@@ -179,32 +197,197 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 
   Widget _buildSearchResults() {
-    // Placeholder search results
+    final searchResults = ref.watch(discoverSearchResultsProvider);
+    final query = ref.watch(discoverSearchQueryProvider);
+
+    // Minimum length check
+    if (query.length < 2) {
+      return SliverPadding(
+        padding: const EdgeInsets.all(16),
+        sliver: SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search,
+                    size: 48,
+                    color: AppTheme.textTertiary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Type at least 2 characters to search',
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Loading state
+    if (searchResults.isLoading) {
+      return const SliverPadding(
+        padding: EdgeInsets.all(16),
+        sliver: SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: CircularProgressIndicator(
+                color: AppTheme.electricPurple,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Error state
+    if (searchResults.error != null) {
+      return const SliverPadding(
+        padding: EdgeInsets.all(16),
+        sliver: SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 48,
+                    color: AppTheme.neonPink,
+                  ),
+                  SizedBox(height: 16),
+                  Text(
+                    'Could not load search results',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Please check your connection and try again',
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Empty results
+    if (searchResults.isEmpty) {
+      return SliverPadding(
+        padding: const EdgeInsets.all(16),
+        sliver: SliverToBoxAdapter(
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.search_off,
+                    size: 48,
+                    color: AppTheme.textTertiary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No results for "$query"',
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Try searching with different keywords',
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    // Show results
     return SliverPadding(
       padding: const EdgeInsets.all(16),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
-          const _SectionHeader(title: 'Search Results'),
-          const SizedBox(height: 12),
-          // Placeholder results
-          _SearchResultItem(
-            type: SearchResultType.band,
-            name: 'Metallica',
-            subtitle: 'Thrash Metal',
-            onTap: () {},
-          ),
-          _SearchResultItem(
-            type: SearchResultType.venue,
-            name: 'The Forum',
-            subtitle: 'Los Angeles, CA',
-            onTap: () {},
-          ),
-          _SearchResultItem(
-            type: SearchResultType.user,
-            name: '@metalhead92',
-            subtitle: '150 check-ins',
-            onTap: () {},
-          ),
+          // Bands section
+          if (searchResults.bands.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Bands',
+              subtitle: '${searchResults.bands.length} found',
+            ),
+            const SizedBox(height: 8),
+            ...searchResults.bands.map(
+              (band) => _SearchResultItem(
+                type: SearchResultType.band,
+                name: band.name,
+                subtitle: band.genre ?? 'Band',
+                onTap: () => context.push('/bands/${band.id}'),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Venues section
+          if (searchResults.venues.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Venues',
+              subtitle: '${searchResults.venues.length} found',
+            ),
+            const SizedBox(height: 8),
+            ...searchResults.venues.map(
+              (venue) => _SearchResultItem(
+                type: SearchResultType.venue,
+                name: venue.name,
+                subtitle: '${venue.city ?? ''}, ${venue.state ?? ''}',
+                onTap: () => context.push('/venues/${venue.id}'),
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
+          // Users section
+          if (searchResults.users.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Users',
+              subtitle: '${searchResults.users.length} found',
+            ),
+            const SizedBox(height: 8),
+            ...searchResults.users.map(
+              (user) => _SearchResultItem(
+                type: SearchResultType.user,
+                name: '@${user.username}',
+                subtitle: '${user.totalCheckins} check-ins',
+                onTap: () => context.push('/users/${user.id}'),
+              ),
+            ),
+          ],
         ]),
       ),
     );
