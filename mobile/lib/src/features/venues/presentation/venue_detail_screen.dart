@@ -769,21 +769,25 @@ class _RecentBandsSection extends ConsumerWidget {
       );
     }
 
-    final bandNames = bands.map((b) => b.name).join(', ');
-    return GestureDetector(
-      onTap: bands.isNotEmpty
-          ? () => context.push('/bands/${bands.first.id}')
-          : null,
-      child: Text(
-        bandNames,
-        style: const TextStyle(
-          color: AppTheme.textPrimary,
-          fontSize: 12,
-          fontWeight: FontWeight.w500,
-        ),
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
-      ),
+    return Wrap(
+      spacing: 0,
+      runSpacing: 4,
+      children: bands.asMap().entries.map((entry) {
+        final index = entry.key;
+        final band = entry.value;
+        final isLast = index == bands.length - 1;
+        return GestureDetector(
+          onTap: () => context.push('/bands/${band.id}'),
+          child: Text(
+            isLast ? band.name : '${band.name}, ',
+            style: const TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }
