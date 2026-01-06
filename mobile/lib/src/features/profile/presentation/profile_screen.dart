@@ -39,8 +39,8 @@ class ProfileScreen extends ConsumerWidget {
                     ),
 
                     // Level Progress
-                    const SliverToBoxAdapter(
-                      child: _LevelProgress(),
+                    SliverToBoxAdapter(
+                      child: _LevelProgress(totalCheckins: user.totalCheckins),
                     ),
 
                     // Section: Recent Activity
@@ -412,15 +412,63 @@ class _StatDivider extends StatelessWidget {
 
 // Level Progress Bar
 class _LevelProgress extends StatelessWidget {
-  const _LevelProgress();
+  final int totalCheckins;
+
+  const _LevelProgress({required this.totalCheckins});
+
+  // Calculate level from total checkins
+  // Each level requires more XP: Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 250 XP, etc.
+  static (int level, int currentXP, int nextLevelXP, String title) _calculateLevel(int checkins) {
+    // XP per checkin
+    const xpPerCheckin = 50;
+    final totalXP = checkins * xpPerCheckin;
+
+    // Level thresholds (cumulative XP needed)
+    const levels = [
+      (1, 0, 'Newcomer'),
+      (2, 100, 'Explorer'),
+      (3, 250, 'Regular'),
+      (4, 500, 'Enthusiast'),
+      (5, 800, 'Devotee'),
+      (6, 1200, 'Aficionado'),
+      (7, 1700, 'Veteran'),
+      (8, 2300, 'Expert'),
+      (9, 3000, 'Master'),
+      (10, 4000, 'Legend'),
+      (11, 5500, 'Icon'),
+      (12, 7500, 'Superstar'),
+      (13, 10000, 'Elite'),
+      (14, 15000, 'Champion'),
+      (15, 25000, 'Ultimate'),
+    ];
+
+    int currentLevel = 1;
+    int currentThreshold = 0;
+    int nextThreshold = 100;
+    String title = 'Newcomer';
+
+    for (int i = 0; i < levels.length; i++) {
+      final (level, threshold, levelTitle) = levels[i];
+      if (totalXP >= threshold) {
+        currentLevel = level;
+        currentThreshold = threshold;
+        title = levelTitle;
+        nextThreshold = i + 1 < levels.length ? levels[i + 1].$2 : threshold + 10000;
+      } else {
+        break;
+      }
+    }
+
+    final xpInCurrentLevel = totalXP - currentThreshold;
+    final xpNeededForNext = nextThreshold - currentThreshold;
+
+    return (currentLevel, xpInCurrentLevel, xpNeededForNext, title);
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Mock level data
-    const currentLevel = 12;
-    const currentXP = 2350;
-    const nextLevelXP = 3000;
-    const progress = currentXP / nextLevelXP;
+    final (currentLevel, currentXP, nextLevelXP, title) = _calculateLevel(totalCheckins);
+    final progress = nextLevelXP > 0 ? (currentXP / nextLevelXP).clamp(0.0, 1.0) : 1.0;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -443,19 +491,19 @@ class _LevelProgress extends StatelessWidget {
                       gradient: AppTheme.primaryGradient,
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Text(
+                    child: Text(
                       'LVL $currentLevel',
-                      style: TextStyle(
+                      style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: AppTheme.backgroundDark,
                       ),
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Text(
-                    'Concert Veteran',
-                    style: TextStyle(
+                  Text(
+                    title,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: AppTheme.textPrimary,
@@ -463,9 +511,9 @@ class _LevelProgress extends StatelessWidget {
                   ),
                 ],
               ),
-              const Text(
+              Text(
                 '$currentXP / $nextLevelXP XP',
-                style: TextStyle(
+                style: const TextStyle(
                   fontSize: 12,
                   color: AppTheme.textTertiary,
                 ),
@@ -476,17 +524,17 @@ class _LevelProgress extends StatelessWidget {
           // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
-            child: const LinearProgressIndicator(
+            child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
               backgroundColor: AppTheme.surfaceDark,
-              valueColor: AlwaysStoppedAnimation<Color>(AppTheme.electricPurple),
+              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+          Text(
             '${nextLevelXP - currentXP} XP until Level ${currentLevel + 1}',
-            style: TextStyle(
+            style: const TextStyle(
               fontSize: 11,
               color: AppTheme.textTertiary,
             ),
