@@ -136,7 +136,7 @@ This is a personal project, but suggestions and feedback are welcome. Please ope
 
 ## 📄 License
 
-Copyright © 2024 PitPulse. All rights reserved.
+Copyright © 2024-2026 PitPulse. All rights reserved.
 
 ## 📞 Support
 

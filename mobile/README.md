@@ -89,4 +89,4 @@ flutter pub run build_runner watch
 
 ## License
 
-Copyright © 2024 PitPulse
+Copyright © 2024-2026 PitPulse
