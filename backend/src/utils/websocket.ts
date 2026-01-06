@@ -36,6 +36,8 @@ interface Client {
   userId?: string;
   rooms: Set<string>;
   isAlive: boolean;
+  messageCount: number;
+  lastMessageReset: number;
 }
 
 class WebSocketServer {
@@ -59,6 +61,8 @@ class WebSocketServer {
         userId: undefined,
         rooms: new Set(),
         isAlive: true,
+        messageCount: 0,
+        lastMessageReset: Date.now(),
       };
 
       this.clients.set(clientId, client);
@@ -98,6 +102,21 @@ class WebSocketServer {
   }
 
   private handleMessage(clientId: string, data: any): void {
+    const client = this.clients.get(clientId);
+    if (!client) return;
+
+    // Rate limiting: max 100 messages per 10 seconds
+    const now = Date.now();
+    if (now - client.lastMessageReset > 10000) {
+      client.messageCount = 0;
+      client.lastMessageReset = now;
+    }
+    client.messageCount++;
+    if (client.messageCount > 100) {
+      this.send(clientId, 'error', { message: 'Rate limit exceeded' });
+      return;
+    }
+
     const { type, payload } = data;
 
     switch (type) {
@@ -124,10 +143,16 @@ class WebSocketServer {
 
   private authenticateClient(clientId: string, userId: string, token: string): void {
     const decoded = AuthUtils.verifyToken(token);
-    
+
     if (!decoded || decoded.userId !== userId) {
       console.warn(`❌ Client ${clientId} failed authentication: Invalid token or user mismatch`);
       this.send(clientId, 'error', { message: 'Authentication failed' });
+      // Close connection on auth failure
+      const client = this.clients.get(clientId);
+      if (client) {
+        client.ws.close(4001, 'Authentication failed');
+        this.handleDisconnect(clientId);
+      }
       return;
     }
 
@@ -275,7 +300,7 @@ class WebSocketServer {
    * Generate unique client ID
    */
   private generateClientId(): string {
-    return `client_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    return `client_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
   }
 
   /**
