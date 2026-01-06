@@ -6,6 +6,8 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../domain/venue.dart';
+import '../../checkins/presentation/providers/checkin_providers.dart';
+import '../../checkins/domain/checkin.dart';
 
 final venueDetailProvider = FutureProvider.autoDispose.family<Venue, String>((ref, id) async {
   final repository = ref.watch(venueRepositoryProvider);
@@ -205,8 +207,8 @@ class _VenueContent extends StatelessWidget {
         ),
 
         // Loyal Patrons & Trending Bands
-        const SliverToBoxAdapter(
-          child: _VenueInsightsSection(),
+        SliverToBoxAdapter(
+          child: _VenueInsightsSection(venueId: venueId),
         ),
 
         // Recent Check-ins Feed
@@ -618,7 +620,9 @@ class _ShowListItem extends StatelessWidget {
 }
 
 class _VenueInsightsSection extends StatelessWidget {
-  const _VenueInsightsSection();
+  final String venueId;
+
+  const _VenueInsightsSection({required this.venueId});
 
   @override
   Widget build(BuildContext context) {
@@ -682,47 +686,103 @@ class _VenueInsightsSection extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          // Trending Bands
+          // Recent Bands - Now using real data
           Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: AppTheme.cardDark,
-                borderRadius: BorderRadius.circular(12),
+            child: _RecentBandsSection(venueId: venueId),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Widget that displays recent bands from venue check-ins
+class _RecentBandsSection extends ConsumerWidget {
+  final String venueId;
+
+  const _RecentBandsSection({required this.venueId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final bandsAsync = ref.watch(venueRecentBandsProvider(venueId));
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardDark,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(Icons.trending_up, color: AppTheme.neonPink, size: 16),
+              SizedBox(width: 6),
+              Text(
+                'Recent Bands',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
-              child: const Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Icon(Icons.trending_up, color: AppTheme.neonPink, size: 16),
-                      SizedBox(width: 6),
-                      Text(
-                        'Trending Bands',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+            ],
+          ),
+          const SizedBox(height: 8),
+          bandsAsync.when(
+            data: (bands) => _buildBandsList(context, bands),
+            loading: () => const SizedBox(
+              height: 20,
+              child: Center(
+                child: SizedBox(
+                  width: 14,
+                  height: 14,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.electricPurple,
                   ),
-                  SizedBox(height: 8),
-                  Text(
-                    'Metallica, Ghost, Gojira',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                ),
+              ),
+            ),
+            error: (_, __) => const Text(
+              'Unable to load',
+              style: TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 12,
               ),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildBandsList(BuildContext context, List<CheckInBand> bands) {
+    if (bands.isEmpty) {
+      return const Text(
+        'No recent check-ins',
+        style: TextStyle(
+          color: AppTheme.textTertiary,
+          fontSize: 12,
+        ),
+      );
+    }
+
+    final bandNames = bands.map((b) => b.name).join(', ');
+    return GestureDetector(
+      onTap: bands.isNotEmpty
+          ? () => context.push('/bands/${bands.first.id}')
+          : null,
+      child: Text(
+        bandNames,
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }

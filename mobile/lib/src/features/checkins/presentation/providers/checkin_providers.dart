@@ -239,3 +239,26 @@ Future<Map<String, dynamic>> userCheckInStats(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
   return repository.getUserStats(userId);
 }
+
+/// Provider for bands that recently played at a venue
+/// Extracts unique bands from check-ins at this venue
+@riverpod
+Future<List<CheckInBand>> venueRecentBands(Ref ref, String venueId) async {
+  final checkInRepository = ref.watch(checkInRepositoryProvider);
+  final checkIns = await checkInRepository.getCheckIns(venueId: venueId, limit: 20);
+
+  // Extract unique bands from check-ins
+  final seenBandIds = <String>{};
+  final bands = <CheckInBand>[];
+
+  for (final checkIn in checkIns) {
+    final band = checkIn.band;
+    if (band != null && !seenBandIds.contains(band.id)) {
+      seenBandIds.add(band.id);
+      bands.add(band);
+    }
+    if (bands.length >= 5) break;
+  }
+
+  return bands;
+}
