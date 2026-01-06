@@ -1,6 +1,7 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { UserController } from '../controllers/UserController';
+import { FollowController } from '../controllers/FollowController';
 import { authenticateToken, rateLimit } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { uploadProfileImage } from '../middleware/upload';
@@ -31,6 +32,7 @@ const handleMulterError = (err: Error | null, req: Request, res: Response, next:
 
 const router = Router();
 const userController = new UserController();
+const followController = new FollowController();
 
 // Rate limiting for auth endpoints
 const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
@@ -56,6 +58,14 @@ router.delete('/me', authenticateToken, userController.deactivateAccount);
 // Username and email availability check - MUST come before /:username
 router.get('/check-username/:username', generalRateLimit, validate(checkUsernameSchema), userController.checkUsername);
 router.get('/check-email', generalRateLimit, validate(checkEmailSchema), userController.checkEmail); // Changed to query param
+
+// Followers/Following routes - use userId (UUID) for these
+// These are public routes since follower/following lists are typically public info
+// GET /api/users/:userId/followers - get followers of a user
+router.get('/:userId/followers', generalRateLimit, followController.getFollowers);
+
+// GET /api/users/:userId/following - get users that this user is following
+router.get('/:userId/following', generalRateLimit, followController.getFollowing);
 
 // Public user profiles - MUST be last as it's a catch-all
 router.get('/:username', generalRateLimit, userController.getUserByUsername);
