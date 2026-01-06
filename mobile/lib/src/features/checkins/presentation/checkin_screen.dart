@@ -177,7 +177,9 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                       vertical: 14,
                     ),
                   ),
-                  onChanged: (value) => setState(() {}),
+                  onChanged: (value) {
+                    ref.read(bandSearchQueryProvider.notifier).setQuery(value);
+                  },
                 ),
               ),
             ],
@@ -186,22 +188,141 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
 
         // Search Results
         Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: 5,
-            itemBuilder: (context, index) {
-              final bands = ['Metallica', 'Iron Maiden', 'Ghost', 'Gojira', 'Mastodon'];
-              final genres = ['Thrash Metal', 'Heavy Metal', 'Rock', 'Death Metal', 'Sludge Metal'];
-
-              return _BandSearchResult(
-                name: bands[index],
-                genre: genres[index],
-                onTap: () => _selectBand('band_$index', bands[index]),
-              );
-            },
-          ),
+          child: _buildBandSearchResults(),
         ),
       ],
+    );
+  }
+
+  Widget _buildBandSearchResults() {
+    final searchQuery = ref.watch(bandSearchQueryProvider);
+    final searchResults = ref.watch(searchBandsForCheckinProvider);
+
+    // Show empty state when no search query
+    if (searchQuery.isEmpty) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.search,
+                size: 64,
+                color: AppTheme.textTertiary.withValues(alpha: 0.5),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Search for a band to check in',
+                style: TextStyle(
+                  color: AppTheme.textTertiary,
+                  fontSize: 16,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return searchResults.when(
+      data: (bands) {
+        if (bands.isEmpty) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.music_off,
+                    size: 64,
+                    color: AppTheme.textTertiary.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No bands found for "$searchQuery"',
+                    style: const TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 16,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          itemCount: bands.length,
+          itemBuilder: (context, index) {
+            final band = bands[index];
+            return _BandSearchResult(
+              name: band.name,
+              genre: band.genre ?? 'Unknown Genre',
+              imageUrl: band.imageUrl,
+              onTap: () => _selectBand(band.id, band.name),
+            );
+          },
+        );
+      },
+      loading: () => const Center(
+        child: Padding(
+          padding: EdgeInsets.all(32),
+          child: CircularProgressIndicator(
+            color: AppTheme.electricPurple,
+          ),
+        ),
+      ),
+      error: (error, stack) {
+        // Ignore debounce cancellation errors
+        if (error.toString().contains('Query changed')) {
+          return const Center(
+            child: Padding(
+              padding: EdgeInsets.all(32),
+              child: CircularProgressIndicator(
+                color: AppTheme.electricPurple,
+              ),
+            ),
+          );
+        }
+
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  Icons.error_outline,
+                  size: 64,
+                  color: AppTheme.error.withValues(alpha: 0.7),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to search bands',
+                  style: TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 16,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                TextButton(
+                  onPressed: () => ref.invalidate(searchBandsForCheckinProvider),
+                  child: const Text(
+                    'Retry',
+                    style: TextStyle(color: AppTheme.electricPurple),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -352,11 +473,13 @@ class _BandSearchResult extends StatelessWidget {
     required this.name,
     required this.genre,
     required this.onTap,
+    this.imageUrl,
   });
 
   final String name;
   final String genre;
   final VoidCallback onTap;
+  final String? imageUrl;
 
   @override
   Widget build(BuildContext context) {
@@ -367,10 +490,18 @@ class _BandSearchResult extends StatelessWidget {
         width: 56,
         height: 56,
         decoration: BoxDecoration(
-          gradient: AppTheme.primaryGradient,
+          gradient: imageUrl == null ? AppTheme.primaryGradient : null,
           borderRadius: BorderRadius.circular(12),
+          image: imageUrl != null
+              ? DecorationImage(
+                  image: NetworkImage(imageUrl!),
+                  fit: BoxFit.cover,
+                )
+              : null,
         ),
-        child: const Icon(Icons.music_note, color: Colors.white, size: 28),
+        child: imageUrl == null
+            ? const Icon(Icons.music_note, color: Colors.white, size: 28)
+            : null,
       ),
       title: Text(
         name,

@@ -2,12 +2,47 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../bands/domain/band.dart';
 import '../../domain/checkin.dart';
 import '../../domain/vibe_tag.dart';
 import '../../domain/toast.dart';
 import '../../domain/checkin_comment.dart';
 
 part 'checkin_providers.g.dart';
+
+/// Provider for tracking band search query during check-in
+@riverpod
+class BandSearchQuery extends _$BandSearchQuery {
+  @override
+  String build() => '';
+
+  void setQuery(String query) {
+    state = query;
+  }
+
+  void clear() {
+    state = '';
+  }
+}
+
+/// Provider for searching bands during check-in
+@riverpod
+Future<List<Band>> searchBandsForCheckin(Ref ref) async {
+  final query = ref.watch(bandSearchQueryProvider);
+  if (query.isEmpty) return [];
+
+  // Add debounce by delaying the search
+  await Future.delayed(const Duration(milliseconds: 300));
+
+  // Check if the query is still the same after debounce
+  if (ref.watch(bandSearchQueryProvider) != query) {
+    // Query changed during debounce, throw to cancel this request
+    throw Exception('Query changed');
+  }
+
+  final bandRepository = ref.watch(bandRepositoryProvider);
+  return bandRepository.getBands(search: query, limit: 10);
+}
 
 /// Provider for the social feed
 @riverpod
