@@ -1,6 +1,9 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
 import 'providers/checkin_providers.dart';
 
@@ -18,6 +21,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   final TextEditingController _bandSearchController = TextEditingController();
   final TextEditingController _venueSearchController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
+  final ImagePicker _imagePicker = ImagePicker();
 
   // State
   String? _selectedBandId;
@@ -27,6 +31,8 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   double _rating = 0;
   final Set<String> _selectedVibes = {};
   bool _isSearchingBand = true;
+  final List<XFile> _selectedImages = [];
+  static const int _maxImages = 4;
 
   final List<Map<String, String>> _vibeOptions = [
     {'id': 'mosh_pit', 'name': 'Mosh Pit', 'icon': '🤘'},
@@ -73,6 +79,159 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         _selectedVibes.add(vibeId);
       }
     });
+  }
+
+  Future<void> _pickImage() async {
+    if (_selectedImages.length >= _maxImages) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum $_maxImages photos allowed'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImages.add(image);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to pick image. Please try again.'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    }
+  }
+
+  void _removeImage(int index) {
+    setState(() {
+      _selectedImages.removeAt(index);
+    });
+  }
+
+  void _showImageOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: AppTheme.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: AppTheme.textTertiary,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 24),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.electricPurple.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.photo_library,
+                    color: AppTheme.electricPurple,
+                  ),
+                ),
+                title: const Text(
+                  'Choose from Gallery',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImage();
+                },
+              ),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: AppTheme.neonPink.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.camera_alt,
+                    color: AppTheme.neonPink,
+                  ),
+                ),
+                title: const Text(
+                  'Take a Photo',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _pickImageFromCamera();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickImageFromCamera() async {
+    if (_selectedImages.length >= _maxImages) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Maximum $_maxImages photos allowed'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+      return;
+    }
+
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.camera,
+        maxWidth: 1920,
+        maxHeight: 1080,
+        imageQuality: 85,
+      );
+
+      if (image != null) {
+        setState(() {
+          _selectedImages.add(image);
+        });
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to take photo. Please try again.'),
+          backgroundColor: AppTheme.error,
+        ),
+      );
+    }
   }
 
   Future<void> _submitCheckIn() async {
@@ -362,20 +521,15 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 24),
 
           // Photo
-          const _SectionTitle(title: 'Add a photo (optional)'),
+          _SectionTitle(
+            title: 'Add photos (${_selectedImages.length}/$_maxImages)',
+          ),
           const SizedBox(height: 12),
           _PhotoSelector(
-            onTap: () {
-              // TODO: Implement image picker using image_picker package
-              // Steps:
-              // 1. Add image_picker to pubspec.yaml
-              // 2. Add platform-specific permissions (iOS Info.plist, Android manifest)
-              // 3. Use ImagePicker().pickImage(source: ImageSource.gallery)
-              // 4. Upload to backend and attach to checkin
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Photo picker coming soon!')),
-              );
-            },
+            selectedImages: _selectedImages,
+            maxImages: _maxImages,
+            onAddPhoto: _showImageOptions,
+            onRemovePhoto: _removeImage,
           ),
           const SizedBox(height: 24),
 
@@ -697,41 +851,140 @@ class _RatingSelector extends StatelessWidget {
 }
 
 class _PhotoSelector extends StatelessWidget {
-  const _PhotoSelector({required this.onTap});
+  const _PhotoSelector({
+    required this.selectedImages,
+    required this.maxImages,
+    required this.onAddPhoto,
+    required this.onRemovePhoto,
+  });
 
-  final VoidCallback onTap;
+  final List<XFile> selectedImages;
+  final int maxImages;
+  final VoidCallback onAddPhoto;
+  final void Function(int) onRemovePhoto;
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 120,
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceVariantDark,
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppTheme.textTertiary.withValues(alpha:0.3),
-            width: 2,
-            style: BorderStyle.solid,
+    if (selectedImages.isEmpty) {
+      // Show empty state placeholder
+      return GestureDetector(
+        onTap: onAddPhoto,
+        child: Container(
+          height: 120,
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceVariantDark,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppTheme.textTertiary.withValues(alpha: 0.3),
+              width: 2,
+              style: BorderStyle.solid,
+            ),
+          ),
+          child: const Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.camera_alt, color: AppTheme.textTertiary, size: 32),
+                SizedBox(height: 8),
+                Text(
+                  'Tap to add photo',
+                  style: TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
-        child: const Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.camera_alt, color: AppTheme.textTertiary, size: 32),
-              SizedBox(height: 8),
-              Text(
-                'Tap to add photo',
-                style: TextStyle(
-                  color: AppTheme.textTertiary,
-                  fontSize: 14,
+      );
+    }
+
+    // Show selected images in horizontal scroll
+    return SizedBox(
+      height: 120,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: selectedImages.length + (selectedImages.length < maxImages ? 1 : 0),
+        itemBuilder: (context, index) {
+          // Add button at the end
+          if (index == selectedImages.length) {
+            return GestureDetector(
+              onTap: onAddPhoto,
+              child: Container(
+                width: 100,
+                height: 120,
+                margin: const EdgeInsets.only(right: 12),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariantDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: AppTheme.textTertiary.withValues(alpha: 0.3),
+                    width: 2,
+                    style: BorderStyle.solid,
+                  ),
+                ),
+                child: const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.add, color: AppTheme.textTertiary, size: 28),
+                      SizedBox(height: 4),
+                      Text(
+                        'Add',
+                        style: TextStyle(
+                          color: AppTheme.textTertiary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
+            );
+          }
+
+          // Image thumbnail
+          return Container(
+            width: 100,
+            height: 120,
+            margin: const EdgeInsets.only(right: 12),
+            child: Stack(
+              children: [
+                // Image
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.file(
+                    File(selectedImages[index].path),
+                    width: 100,
+                    height: 120,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                // Remove button
+                Positioned(
+                  top: 4,
+                  right: 4,
+                  child: GestureDetector(
+                    onTap: () => onRemovePhoto(index),
+                    child: Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: BoxDecoration(
+                        color: AppTheme.error.withValues(alpha: 0.9),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
       ),
     );
   }
