@@ -6,6 +6,7 @@ import '../../../core/providers/providers.dart';
 import '../../../core/error/failures.dart';
 import '../../../shared/utils/validators.dart';
 import '../../../shared/utils/haptic_feedback.dart';
+import '../data/social_auth_service.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({super.key});
@@ -18,6 +19,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _socialAuthService = SocialAuthService();
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _canCheckBiometrics = false;
@@ -105,6 +107,84 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     );
 
     setState(() => _isLoading = false);
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    await HapticFeedbackUtil.mediumImpact();
+    setState(() => _isLoading = true);
+
+    try {
+      final credentials = await _socialAuthService.signInWithGoogle();
+      if (!mounted) return;
+
+      if (credentials != null) {
+        // TODO: Send credentials to backend for verification and token exchange
+        // await ref.read(authStateProvider.notifier).loginWithGoogle(credentials);
+        await HapticFeedbackUtil.successVibration();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Google Sign-In successful: ${credentials['email']}'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      await HapticFeedbackUtil.errorVibration();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Google Sign-In failed: ${e.toString()}'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _handleAppleSignIn() async {
+    await HapticFeedbackUtil.mediumImpact();
+    setState(() => _isLoading = true);
+
+    try {
+      final credentials = await _socialAuthService.signInWithApple();
+      if (!mounted) return;
+
+      if (credentials != null) {
+        // TODO: Send credentials to backend for verification and token exchange
+        // await ref.read(authStateProvider.notifier).loginWithApple(credentials);
+        await HapticFeedbackUtil.successVibration();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Apple Sign-In successful: ${(credentials['email']?.isNotEmpty ?? false) ? credentials['email'] : 'User authenticated'}'),
+            backgroundColor: AppTheme.success,
+            behavior: SnackBarBehavior.floating,
+            margin: const EdgeInsets.all(16),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          ),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      await HapticFeedbackUtil.errorVibration();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Apple Sign-In failed: ${e.toString()}'),
+          backgroundColor: AppTheme.error,
+          behavior: SnackBarBehavior.floating,
+          margin: const EdgeInsets.all(16),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -285,36 +365,28 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       
                       const SizedBox(height: AppTheme.spacing24),
                       
-                      // Social Login Placeholders
+                      // Social Login Buttons
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                         children: [
                           _SocialLoginButton(
                             icon: Icons.apple,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Apple Sign-In coming soon')),
-                              );
-                              // TODO: Implement Apple Sign-In with sign_in_with_apple package
-                            },
+                            onTap: _isLoading ? null : _handleAppleSignIn,
                           ),
                           _SocialLoginButton(
                             icon: Icons.g_mobiledata, // Google icon
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Google Sign-In coming soon')),
-                              );
-                              // TODO: Implement Google Sign-In with google_sign_in package
-                            },
+                            onTap: _isLoading ? null : _handleGoogleSignIn,
                           ),
                           _SocialLoginButton(
                             icon: Icons.facebook,
-                            onTap: () {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Facebook Sign-In coming soon')),
-                              );
-                              // TODO: Implement Facebook Sign-In with flutter_facebook_auth package
-                            },
+                            onTap: _isLoading
+                                ? null
+                                : () {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(content: Text('Facebook Sign-In coming soon')),
+                                    );
+                                    // TODO: Implement Facebook Sign-In with flutter_facebook_auth package
+                                  },
                           ),
                         ],
                       ),
@@ -367,28 +439,32 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
 class _SocialLoginButton extends StatelessWidget {
   final IconData icon;
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
 
   const _SocialLoginButton({
     required this.icon,
-    required this.onTap,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
+    final isEnabled = onTap != null;
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
-      child: Container(
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          border: Border.all(color: AppTheme.surfaceVariantDark),
-          shape: BoxShape.circle,
-        ),
-        child: Icon(
-          icon,
-          size: 28,
-          color: AppTheme.textPrimary,
+      child: Opacity(
+        opacity: isEnabled ? 1.0 : 0.5,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(color: AppTheme.surfaceVariantDark),
+            shape: BoxShape.circle,
+          ),
+          child: Icon(
+            icon,
+            size: 28,
+            color: AppTheme.textPrimary,
+          ),
         ),
       ),
     );
