@@ -6,6 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/utils/haptic_feedback.dart';
 import '../../../shared/utils/date_formatter.dart';
+import '../../badges/domain/badge.dart';
 import '../../checkins/domain/checkin.dart';
 import 'providers/profile_providers.dart';
 
@@ -69,7 +70,7 @@ class ProfileScreen extends ConsumerWidget {
 
                     // Badges Grid
                     SliverToBoxAdapter(
-                      child: _BadgesShowcase(),
+                      child: _BadgesShowcase(userId: user.id),
                     ),
 
                     // Section: Wishlist
@@ -880,67 +881,174 @@ class _CheckinCard extends StatelessWidget {
 }
 
 // Badges Showcase
-class _BadgesShowcase extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    // Mock badges
-    final badges = [
-      {'name': 'First Check-in', 'icon': Icons.celebration, 'color': AppTheme.liveGreen, 'earned': true},
-      {'name': 'Mosh Pit Hero', 'icon': Icons.whatshot, 'color': AppTheme.neonPink, 'earned': true},
-      {'name': 'Venue Explorer', 'icon': Icons.explore, 'color': AppTheme.info, 'earned': true},
-      {'name': 'Weekend Warrior', 'icon': Icons.nightlife, 'color': AppTheme.electricPurple, 'earned': true},
-      {'name': 'Metal Head', 'icon': Icons.music_note, 'color': AppTheme.toastGold, 'earned': true},
-      {'name': 'Night Owl', 'icon': Icons.nights_stay, 'color': Colors.indigo, 'earned': false},
-    ];
+class _BadgesShowcase extends ConsumerWidget {
+  const _BadgesShowcase({required this.userId});
 
-    return SizedBox(
-      height: 110,
-      child: ListView.builder(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        itemCount: badges.length,
-        itemBuilder: (context, index) {
-          final badge = badges[index];
-          final isEarned = badge['earned'] as bool;
+  final String userId;
+
+  // Map badge types to icons and colors
+  static IconData _getBadgeIcon(BadgeType type) {
+    switch (type) {
+      case BadgeType.reviewCount:
+        return Icons.rate_review;
+      case BadgeType.venueExplorer:
+        return Icons.explore;
+      case BadgeType.musicLover:
+        return Icons.music_note;
+      case BadgeType.eventAttendance:
+        return Icons.celebration;
+      case BadgeType.helpfulCount:
+        return Icons.thumb_up;
+    }
+  }
+
+  static Color _getBadgeColor(BadgeType type) {
+    switch (type) {
+      case BadgeType.reviewCount:
+        return AppTheme.neonPink;
+      case BadgeType.venueExplorer:
+        return AppTheme.info;
+      case BadgeType.musicLover:
+        return AppTheme.toastGold;
+      case BadgeType.eventAttendance:
+        return AppTheme.liveGreen;
+      case BadgeType.helpfulCount:
+        return AppTheme.electricPurple;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final badgesAsync = ref.watch(userBadgesProvider(userId));
+
+    return badgesAsync.when(
+      loading: () => const SizedBox(
+        height: 110,
+        child: Center(
+          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+        ),
+      ),
+      error: (error, _) => SizedBox(
+        height: 110,
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppTheme.error, size: 32),
+              const SizedBox(height: 8),
+              const Text(
+                'Failed to load badges',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(userBadgesProvider(userId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (userBadges) {
+        if (userBadges.isEmpty) {
           return Container(
-            width: 80,
-            margin: const EdgeInsets.only(right: 12),
-            child: Column(
-              children: [
-                Container(
-                  width: 60,
-                  height: 60,
-                  decoration: BoxDecoration(
-                    color: isEarned
-                        ? (badge['color'] as Color).withValues(alpha:0.15)
-                        : AppTheme.surfaceDark,
-                    shape: BoxShape.circle,
-                    border: isEarned
-                        ? Border.all(color: badge['color'] as Color, width: 2)
-                        : Border.all(color: AppTheme.textTertiary.withValues(alpha:0.3)),
+            height: 110,
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.emoji_events_outlined, size: 32, color: AppTheme.textTertiary),
+                  SizedBox(height: 8),
+                  Text(
+                    'No badges earned yet',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                    ),
                   ),
-                  child: Icon(
-                    badge['icon'] as IconData,
-                    color: isEarned ? badge['color'] as Color : AppTheme.textTertiary.withValues(alpha:0.5),
-                    size: 28,
+                  Text(
+                    'Keep checking in to earn badges!',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: AppTheme.textTertiary,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  badge['name'] as String,
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: isEarned ? AppTheme.textSecondary : AppTheme.textTertiary.withValues(alpha:0.5),
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                ],
+              ),
             ),
           );
-        },
-      ),
+        }
+
+        return SizedBox(
+          height: 110,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: userBadges.length,
+            itemBuilder: (context, index) {
+              final userBadge = userBadges[index];
+              final badge = userBadge.badge;
+              final badgeName = badge?.name ?? 'Badge';
+              final badgeType = badge?.badgeType ?? BadgeType.eventAttendance;
+              final badgeColor = badge?.color != null
+                  ? Color(int.parse(badge!.color!.replaceFirst('#', '0xFF')))
+                  : _getBadgeColor(badgeType);
+              final badgeIcon = _getBadgeIcon(badgeType);
+
+              return Container(
+                width: 80,
+                margin: const EdgeInsets.only(right: 12),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 60,
+                      height: 60,
+                      decoration: BoxDecoration(
+                        color: badgeColor.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: badgeColor, width: 2),
+                      ),
+                      child: badge?.iconUrl != null
+                          ? ClipOval(
+                              child: Image.network(
+                                badge!.iconUrl!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  badgeIcon,
+                                  color: badgeColor,
+                                  size: 28,
+                                ),
+                              ),
+                            )
+                          : Icon(
+                              badgeIcon,
+                              color: badgeColor,
+                              size: 28,
+                            ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      badgeName,
+                      style: const TextStyle(
+                        fontSize: 10,
+                        color: AppTheme.textSecondary,
+                      ),
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

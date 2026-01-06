@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/providers/providers.dart';
+import '../../../badges/domain/badge.dart';
 import '../../../checkins/domain/checkin.dart';
 
 part 'profile_providers.g.dart';
@@ -35,4 +36,11 @@ Future<List<Map<String, dynamic>>> userGenreStats(Ref ref, String userId) async 
     'count': e.value,
     'percent': total > 0 ? e.value / total : 0.0,
   },).toList();
+}
+
+/// Provider for user's earned badges
+@riverpod
+Future<List<UserBadge>> userBadges(Ref ref, String userId) async {
+  final repository = ref.watch(badgeRepositoryProvider);
+  return repository.getMyBadges();
 }
