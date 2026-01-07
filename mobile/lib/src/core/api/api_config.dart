@@ -1,3 +1,5 @@
+import 'dart:io' show Platform;
+
 /// API Configuration with environment-based URL switching
 ///
 /// To set environment:
@@ -14,9 +16,21 @@ class ApiConfig {
   );
 
   // Base URLs per environment
-  static const String _devBaseUrl = 'http://localhost:3000/api';
   static const String _stagingBaseUrl = 'https://pitpulse-staging.railway.app/api';
   static const String _prodBaseUrl = 'https://pitpulsemobile-production.up.railway.app/api';
+
+  // Development base URL - platform-aware
+  static String get _devBaseUrl {
+    if (Platform.isAndroid) {
+      // Android emulator uses 10.0.2.2 to reach host machine
+      return 'http://10.0.2.2:3000/api';
+    } else if (Platform.isIOS) {
+      // iOS simulator can use localhost
+      return 'http://localhost:3000/api';
+    }
+    // Fallback for other platforms (web, desktop)
+    return 'http://localhost:3000/api';
+  }
 
   // Get base URL based on environment
   static String get baseUrl {
@@ -29,6 +43,21 @@ class ApiConfig {
       default:
         return _prodBaseUrl;
     }
+  }
+
+  // WebSocket base URL for real-time features
+  static String get wsBaseUrl {
+    if (_environment == 'prod') {
+      return 'wss://pitpulsemobile-production.up.railway.app';
+    } else if (_environment == 'staging') {
+      return 'wss://pitpulse-staging.railway.app';
+    }
+
+    // Development WebSocket URL - platform-aware
+    if (Platform.isAndroid) {
+      return 'ws://10.0.2.2:3000';
+    }
+    return 'ws://localhost:3000';
   }
 
   // Environment helpers
