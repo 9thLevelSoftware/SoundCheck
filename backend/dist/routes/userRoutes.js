@@ -57,6 +57,8 @@ router.get('/check-email', generalRateLimit, (0, validate_1.validate)(validation
 router.get('/:userId/followers', generalRateLimit, followController.getFollowers);
 // GET /api/users/:userId/following - get users that this user is following
 router.get('/:userId/following', generalRateLimit, followController.getFollowing);
+// GET /api/users/:userId/stats - get user stats by ID
+router.get('/:userId/stats', auth_1.authenticateToken, userController.getUserStats);
 // Public user profiles - MUST be last as it's a catch-all
 router.get('/:username', generalRateLimit, userController.getUserByUsername);
 exports.default = router;

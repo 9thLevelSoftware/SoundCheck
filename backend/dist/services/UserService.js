@@ -201,29 +201,44 @@ class UserService {
      * Get user statistics
      */
     async getUserStats(userId) {
-        const statsQuery = `
-      SELECT
-        (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
-        (SELECT COUNT(*) FROM user_badges WHERE user_id = $1) as badge_count,
-        (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as follower_count,
-        (SELECT COUNT(*) FROM user_followers WHERE follower_id = $1) as following_count
-    `;
-        const result = await this.db.query(statsQuery, [userId]);
-        if (!result.rows.length) {
+        try {
+            const statsQuery = `
+        SELECT
+          (SELECT COUNT(*) FROM checkins WHERE user_id = $1) as checkin_count,
+          (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
+          (SELECT COUNT(*) FROM user_badges WHERE user_id = $1) as badge_count,
+          (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as follower_count,
+          (SELECT COUNT(*) FROM user_followers WHERE follower_id = $1) as following_count,
+          (SELECT COUNT(DISTINCT venue_id) FROM checkins WHERE user_id = $1) as unique_venues,
+          (SELECT COUNT(DISTINCT band_id) FROM checkins WHERE user_id = $1) as unique_bands
+      `;
+            const result = await this.db.query(statsQuery, [userId]);
+            if (!result.rows.length) {
+                return {
+                    totalCheckins: 0,
+                    totalReviews: 0,
+                    badgesEarned: 0,
+                    followersCount: 0,
+                    followingCount: 0,
+                    uniqueVenues: 0,
+                    uniqueBands: 0,
+                };
+            }
+            const stats = result.rows[0];
             return {
-                totalCheckins: 0,
-                badgesEarned: 0,
-                followersCount: 0,
-                followingCount: 0,
+                totalCheckins: parseInt(stats.checkin_count, 10) || 0,
+                totalReviews: parseInt(stats.review_count, 10) || 0,
+                badgesEarned: parseInt(stats.badge_count, 10) || 0,
+                followersCount: parseInt(stats.follower_count, 10) || 0,
+                followingCount: parseInt(stats.following_count, 10) || 0,
+                uniqueVenues: parseInt(stats.unique_venues, 10) || 0,
+                uniqueBands: parseInt(stats.unique_bands, 10) || 0,
             };
         }
-        const stats = result.rows[0];
-        return {
-            totalCheckins: parseInt(stats.review_count) || 0,
-            badgesEarned: parseInt(stats.badge_count) || 0,
-            followersCount: parseInt(stats.follower_count) || 0,
-            followingCount: parseInt(stats.following_count) || 0,
-        };
+        catch (error) {
+            console.error('Error getting user stats:', error);
+            throw new Error('Failed to retrieve user statistics');
+        }
     }
 }
 exports.UserService = UserService;

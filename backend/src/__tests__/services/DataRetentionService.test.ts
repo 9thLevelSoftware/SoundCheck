@@ -4,8 +4,18 @@ import Database from '../../config/database';
 // Mock dependencies
 jest.mock('../../config/database');
 
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
+const mockPool = {
+  connect: jest.fn().mockResolvedValue(mockClient),
+};
+
 const mockDb = {
   query: jest.fn(),
+  getPool: jest.fn().mockReturnValue(mockPool),
 };
 
 (Database.getInstance as jest.Mock).mockReturnValue(mockDb);
@@ -16,6 +26,8 @@ describe('DataRetentionService', () => {
   beforeEach(() => {
     dataRetentionService = new DataRetentionService();
     jest.clearAllMocks();
+    // Reset pool mock to return client
+    mockPool.connect.mockResolvedValue(mockClient);
   });
 
   describe('requestAccountDeletion', () => {
@@ -84,18 +96,24 @@ describe('DataRetentionService', () => {
   });
 
   describe('executeAccountDeletion', () => {
-    it('should anonymize user data and delete related records', async () => {
+    it('should anonymize user data and delete related records using a transaction', async () => {
       const userId = 'user-123';
       const originalEmail = 'test@example.com';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: originalEmail }] }) // User check
+      // User check (outside transaction)
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: originalEmail }] });
+
+      // Transaction queries (on client)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 5 }) // Delete notifications
         .mockResolvedValueOnce({ rowCount: 10 }) // Delete follows
         .mockResolvedValueOnce({ rowCount: 3 }) // Delete wishlists
         .mockResolvedValueOnce({ rowCount: 2 }) // Revoke tokens
+        .mockResolvedValueOnce({ rowCount: 4 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
-        .mockResolvedValueOnce({ rowCount: 1 }); // Update deletion request
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.executeAccountDeletion(userId);
 
@@ -106,19 +124,28 @@ describe('DataRetentionService', () => {
       expect(result.deletedFollows).toBe(10);
       expect(result.deletedWishlists).toBe(3);
       expect(result.revokedTokens).toBe(2);
+      expect(result.anonymizedCheckinPhotos).toBe(4);
+
+      // Verify transaction was used
+      expect(mockClient.query).toHaveBeenCalledWith('BEGIN');
+      expect(mockClient.query).toHaveBeenCalledWith('COMMIT');
+      expect(mockClient.release).toHaveBeenCalled();
     });
 
     it('should anonymize email with unique suffix', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.executeAccountDeletion(userId);
 
@@ -138,19 +165,22 @@ describe('DataRetentionService', () => {
     it('should delete notifications both received and sent', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 8 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
 
       // Verify notification deletion query includes both directions
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('user_id = $1 OR from_user_id = $1'),
         [userId]
       );
@@ -159,19 +189,22 @@ describe('DataRetentionService', () => {
     it('should delete follows in both directions', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 15 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
 
       // Verify follows deletion includes both directions
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('follower_id = $1 OR following_id = $1'),
         [userId]
       );
@@ -180,19 +213,22 @@ describe('DataRetentionService', () => {
     it('should revoke all active refresh tokens', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 5 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.executeAccountDeletion(userId);
 
       expect(result.revokedTokens).toBe(5);
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining('UPDATE refresh_tokens'),
         [userId]
       );
@@ -201,19 +237,22 @@ describe('DataRetentionService', () => {
     it('should set password_hash to DELETED', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
 
       // Verify password_hash is set to 'DELETED'
-      expect(mockDb.query).toHaveBeenCalledWith(
+      expect(mockClient.query).toHaveBeenCalledWith(
         expect.stringContaining("password_hash = 'DELETED'"),
         expect.any(Array)
       );
@@ -222,19 +261,22 @@ describe('DataRetentionService', () => {
     it('should nullify personal profile fields', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
 
       // Verify personal fields are nullified
-      const anonymizeCall = mockDb.query.mock.calls.find((call: any[]) =>
+      const anonymizeCall = mockClient.query.mock.calls.find((call: any[]) =>
         call[0].includes('first_name = NULL') &&
         call[0].includes('last_name = NULL') &&
         call[0].includes('bio = NULL') &&
@@ -243,6 +285,71 @@ describe('DataRetentionService', () => {
         call[0].includes('date_of_birth = NULL')
       );
       expect(anonymizeCall).toBeDefined();
+    });
+
+    it('should anonymize check-in photos', async () => {
+      const userId = 'user-123';
+
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
+        .mockResolvedValueOnce({ rowCount: 7 }) // Anonymize check-in photos
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
+        .mockResolvedValueOnce({}); // COMMIT
+
+      const result = await dataRetentionService.executeAccountDeletion(userId);
+
+      expect(result.anonymizedCheckinPhotos).toBe(7);
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE checkins SET photo_url = NULL WHERE user_id = $1'),
+        [userId]
+      );
+    });
+
+    it('should set is_verified to false', async () => {
+      const userId = 'user-123';
+
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
+
+      await dataRetentionService.executeAccountDeletion(userId);
+
+      // Verify is_verified is set to false
+      expect(mockClient.query).toHaveBeenCalledWith(
+        expect.stringContaining('is_verified = false'),
+        expect.any(Array)
+      );
+    });
+
+    it('should rollback transaction on error', async () => {
+      const userId = 'user-123';
+
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockRejectedValueOnce(new Error('Database error')); // Delete follows fails
+
+      await expect(dataRetentionService.executeAccountDeletion(userId))
+        .rejects.toThrow('Database error');
+
+      // Verify rollback was called
+      expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
+      expect(mockClient.release).toHaveBeenCalled();
     });
   });
 
@@ -351,30 +458,34 @@ describe('DataRetentionService', () => {
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       // Mock getPendingDeletions
-      mockDb.query.mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'request-1',
-            user_id: 'user-1',
-            status: 'pending',
-            requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
-            scheduled_for: pastDate,
-            completed_at: null,
-            cancelled_at: null,
-          },
-        ],
-      });
-
-      // Mock processing for first deletion
       mockDb.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'request-1',
+              user_id: 'user-1',
+              status: 'pending',
+              requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+              scheduled_for: pastDate,
+              completed_at: null,
+              cancelled_at: null,
+            },
+          ],
+        })
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
-        .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: 'test1@example.com' }] }) // User check
+        .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: 'test1@example.com' }] }); // User check
+
+      // Transaction queries (on client)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 2 }) // Delete notifications
         .mockResolvedValueOnce({ rowCount: 3 }) // Delete follows
         .mockResolvedValueOnce({ rowCount: 1 }) // Delete wishlists
         .mockResolvedValueOnce({ rowCount: 1 }) // Revoke tokens
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
-        .mockResolvedValueOnce({ rowCount: 1 }); // Update deletion request
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.processPendingDeletions();
 
@@ -389,45 +500,48 @@ describe('DataRetentionService', () => {
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
       // Mock getPendingDeletions
-      mockDb.query.mockResolvedValueOnce({
-        rows: [
-          {
-            id: 'request-1',
-            user_id: 'user-1',
-            status: 'pending',
-            requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
-            scheduled_for: pastDate,
-            completed_at: null,
-            cancelled_at: null,
-          },
-          {
-            id: 'request-2',
-            user_id: 'user-2',
-            status: 'pending',
-            requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
-            scheduled_for: pastDate,
-            completed_at: null,
-            cancelled_at: null,
-          },
-        ],
-      });
-
-      // First deletion fails
       mockDb.query
+        .mockResolvedValueOnce({
+          rows: [
+            {
+              id: 'request-1',
+              user_id: 'user-1',
+              status: 'pending',
+              requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+              scheduled_for: pastDate,
+              completed_at: null,
+              cancelled_at: null,
+            },
+            {
+              id: 'request-2',
+              user_id: 'user-2',
+              status: 'pending',
+              requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+              scheduled_for: pastDate,
+              completed_at: null,
+              cancelled_at: null,
+            },
+          ],
+        })
+        // First deletion fails
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
         .mockResolvedValueOnce({ rows: [] }) // User not found - will throw
-        .mockResolvedValueOnce({ rowCount: 1 }); // Revert status
-
-      // Second deletion succeeds
-      mockDb.query
+        .mockResolvedValueOnce({ rowCount: 1 }) // Revert status
+        // Second deletion succeeds
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
-        .mockResolvedValueOnce({ rows: [{ id: 'user-2', email: 'test2@example.com' }] })
+        .mockResolvedValueOnce({ rows: [{ id: 'user-2', email: 'test2@example.com' }] }); // User check
+
+      // Transaction queries for second deletion (on client)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 2 })
         .mockResolvedValueOnce({ rowCount: 3 })
         .mockResolvedValueOnce({ rowCount: 1 })
         .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.processPendingDeletions();
 
@@ -442,19 +556,18 @@ describe('DataRetentionService', () => {
       const now = new Date();
       const pastDate = new Date(now.getTime() - 24 * 60 * 60 * 1000);
 
-      mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'request-1',
-          user_id: 'user-1',
-          status: 'pending',
-          requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
-          scheduled_for: pastDate,
-          completed_at: null,
-          cancelled_at: null,
-        }],
-      });
-
       mockDb.query
+        .mockResolvedValueOnce({
+          rows: [{
+            id: 'request-1',
+            user_id: 'user-1',
+            status: 'pending',
+            requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+            scheduled_for: pastDate,
+            completed_at: null,
+            cancelled_at: null,
+          }],
+        })
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
         .mockResolvedValueOnce({ rows: [] }) // User not found
         .mockResolvedValueOnce({ rowCount: 1 }); // Revert status
@@ -567,19 +680,22 @@ describe('DataRetentionService', () => {
     it('should anonymize all PII fields', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'personal@email.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'personal@email.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
 
       // Verify all PII fields are anonymized or nullified
-      const updateCall = mockDb.query.mock.calls.find((call: any[]) =>
+      const updateCall = mockClient.query.mock.calls.find((call: any[]) =>
         call[0].includes('UPDATE users SET')
       );
 
@@ -598,26 +714,34 @@ describe('DataRetentionService', () => {
     it('should use unique anonymized identifiers', async () => {
       const userId = 'user-123';
 
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] })
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result1 = await dataRetentionService.executeAccountDeletion(userId);
 
       // Reset mocks for second call
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [{ id: 'user-456', email: 'another@example.com' }] })
+      jest.clearAllMocks();
+      mockPool.connect.mockResolvedValue(mockClient);
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: 'user-456', email: 'another@example.com' }] });
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
         .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 });
+        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result2 = await dataRetentionService.executeAccountDeletion('user-456');
 
@@ -680,6 +804,7 @@ describe('DataRetentionService', () => {
 
       // Reset mocks for cancellation
       jest.clearAllMocks();
+      mockPool.connect.mockResolvedValue(mockClient);
       mockDb.query
         .mockResolvedValueOnce({ rows: [{ id: 'request-123' }] })
         .mockResolvedValueOnce({

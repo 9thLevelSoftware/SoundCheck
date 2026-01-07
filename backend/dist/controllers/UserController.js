@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const UserService_1 = require("../services/UserService");
+// UUID validation regex (supports UUID v1-5)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 class UserController {
     constructor(userService) {
         /**
@@ -258,6 +260,48 @@ class UserController {
             }
         };
         /**
+         * Get user stats by ID
+         * GET /api/users/:userId/stats
+         */
+        this.getUserStats = async (req, res) => {
+            try {
+                const { userId } = req.params;
+                // Validate UUID format
+                if (!UUID_REGEX.test(userId)) {
+                    const response = {
+                        success: false,
+                        error: 'Invalid user ID format',
+                    };
+                    res.status(400).json(response);
+                    return;
+                }
+                // Verify user exists
+                const user = await this.userService.findById(userId);
+                if (!user) {
+                    const response = {
+                        success: false,
+                        error: 'User not found',
+                    };
+                    res.status(404).json(response);
+                    return;
+                }
+                const stats = await this.userService.getUserStats(userId);
+                const response = {
+                    success: true,
+                    data: stats,
+                };
+                res.json(response);
+            }
+            catch (error) {
+                console.error('Error getting user stats:', error);
+                const response = {
+                    success: false,
+                    error: 'Failed to get user stats',
+                };
+                res.status(500).json(response);
+            }
+        };
+        /**
          * Upload profile image
          * POST /api/users/me/profile-image
          */
@@ -272,7 +316,7 @@ class UserController {
                     return;
                 }
                 const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-                const imageUrl = `${baseUrl}/uploads/profiles/${req.file.filename}`;
+                const imageUrl = `${baseUrl}/api/uploads/profiles/${req.file.filename}`;
                 await this.userService.updateProfile(req.user.id, { profileImageUrl: imageUrl });
                 res.status(200).json({
                     success: true,

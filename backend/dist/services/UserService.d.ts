@@ -38,9 +38,12 @@ export declare class UserService {
      */
     getUserStats(userId: string): Promise<{
         totalCheckins: number;
+        totalReviews: number;
         badgesEarned: number;
         followersCount: number;
         followingCount: number;
+        uniqueVenues: number;
+        uniqueBands: number;
     }>;
 }
 //# sourceMappingURL=UserService.d.ts.map

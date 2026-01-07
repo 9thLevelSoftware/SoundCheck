@@ -26,6 +26,8 @@ export interface ExportedCheckin {
   comment: string | null;
   photoUrl: string | null;
   eventDate: string | null;
+  checkinLatitude: number | null;
+  checkinLongitude: number | null;
   createdAt: string;
 }
 
@@ -65,6 +67,29 @@ export interface ExportedBadge {
   earnedAt: string;
 }
 
+export interface ExportedToast {
+  id: string;
+  checkinId: string;
+  checkinOwnerUsername: string;
+  createdAt: string;
+}
+
+export interface ExportedComment {
+  id: string;
+  checkinId: string;
+  checkinOwnerUsername: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ExportedNotification {
+  id: string;
+  type: string;
+  message: string | null;
+  isRead: boolean;
+  createdAt: string;
+}
+
 export interface GDPRExport {
   format: 'GDPR_EXPORT_V1';
   exportedAt: string;
@@ -75,6 +100,9 @@ export interface GDPRExport {
   following: ExportedFollower[];
   wishlist: ExportedWishlistItem[];
   badges: ExportedBadge[];
+  toasts: ExportedToast[];
+  comments: ExportedComment[];
+  notifications: ExportedNotification[];
 }
 
 export class DataExportService {
@@ -82,7 +110,8 @@ export class DataExportService {
 
   /**
    * Export all user data for GDPR compliance
-   * Collects profile, checkins, reviews, followers, following, wishlist, and badges
+   * Collects profile, checkins, reviews, followers, following, wishlist, badges,
+   * toasts, comments, and notifications
    * Excludes sensitive fields like password_hash
    */
   async exportUserData(userId: string): Promise<GDPRExport> {
@@ -93,13 +122,16 @@ export class DataExportService {
     }
 
     // Collect all data in parallel for efficiency
-    const [checkins, reviews, followers, following, wishlist, badges] = await Promise.all([
+    const [checkins, reviews, followers, following, wishlist, badges, toasts, comments, notifications] = await Promise.all([
       this.getCheckins(userId),
       this.getReviews(userId),
       this.getFollowers(userId),
       this.getFollowing(userId),
       this.getWishlist(userId),
       this.getBadges(userId),
+      this.getToasts(userId),
+      this.getComments(userId),
+      this.getNotifications(userId),
     ]);
 
     return {
@@ -112,6 +144,9 @@ export class DataExportService {
       following,
       wishlist,
       badges,
+      toasts,
+      comments,
+      notifications,
     };
   }
 
@@ -156,6 +191,7 @@ export class DataExportService {
   private async getCheckins(userId: string): Promise<ExportedCheckin[]> {
     const query = `
       SELECT c.id, c.rating, c.comment, c.photo_url, c.event_date, c.created_at,
+             c.checkin_latitude, c.checkin_longitude,
              v.name as venue_name, v.city as venue_city,
              b.name as band_name, b.genre as band_genre
       FROM checkins c
@@ -177,6 +213,8 @@ export class DataExportService {
       comment: row.comment,
       photoUrl: row.photo_url,
       eventDate: row.event_date ? row.event_date.toISOString() : null,
+      checkinLatitude: row.checkin_latitude ? parseFloat(row.checkin_latitude) : null,
+      checkinLongitude: row.checkin_longitude ? parseFloat(row.checkin_longitude) : null,
       createdAt: row.created_at.toISOString(),
     }));
   }
@@ -301,6 +339,77 @@ export class DataExportService {
       description: row.description,
       badgeType: row.badge_type,
       earnedAt: row.earned_at.toISOString(),
+    }));
+  }
+
+  /**
+   * Get toasts the user has given to others' check-ins
+   */
+  private async getToasts(userId: string): Promise<ExportedToast[]> {
+    const query = `
+      SELECT t.id, t.checkin_id, t.created_at,
+             u.username as checkin_owner_username
+      FROM toasts t
+      INNER JOIN checkins c ON c.id = t.checkin_id
+      INNER JOIN users u ON u.id = c.user_id
+      WHERE t.user_id = $1
+      ORDER BY t.created_at DESC
+    `;
+
+    const result = await this.db.query(query, [userId]);
+
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      checkinId: row.checkin_id,
+      checkinOwnerUsername: row.checkin_owner_username,
+      createdAt: row.created_at.toISOString(),
+    }));
+  }
+
+  /**
+   * Get comments the user has made on check-ins
+   */
+  private async getComments(userId: string): Promise<ExportedComment[]> {
+    const query = `
+      SELECT cc.id, cc.checkin_id, cc.content, cc.created_at,
+             u.username as checkin_owner_username
+      FROM checkin_comments cc
+      INNER JOIN checkins c ON c.id = cc.checkin_id
+      INNER JOIN users u ON u.id = c.user_id
+      WHERE cc.user_id = $1
+      ORDER BY cc.created_at DESC
+    `;
+
+    const result = await this.db.query(query, [userId]);
+
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      checkinId: row.checkin_id,
+      checkinOwnerUsername: row.checkin_owner_username,
+      content: row.content,
+      createdAt: row.created_at.toISOString(),
+    }));
+  }
+
+  /**
+   * Get user's notification history
+   */
+  private async getNotifications(userId: string): Promise<ExportedNotification[]> {
+    const query = `
+      SELECT id, type, message, is_read, created_at
+      FROM notifications
+      WHERE user_id = $1
+      ORDER BY created_at DESC
+    `;
+
+    const result = await this.db.query(query, [userId]);
+
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      type: row.type,
+      message: row.message,
+      isRead: row.is_read,
+      createdAt: row.created_at.toISOString(),
     }));
   }
 }

@@ -55,8 +55,11 @@ import userRoutes from '../../routes/userRoutes';
 describe('User Stats Routes', () => {
   let app: express.Express;
 
+  // Valid UUID for testing
+  const TEST_USER_UUID = '550e8400-e29b-41d4-a716-446655440000';
+
   const mockUser = {
-    id: 'user-123',
+    id: TEST_USER_UUID,
     email: 'test@example.com',
     username: 'testuser',
     first_name: 'Test',
@@ -106,7 +109,7 @@ describe('User Stats Routes', () => {
       });
 
       const response = await request(app)
-        .get('/api/users/user-123/stats')
+        .get(`/api/users/${TEST_USER_UUID}/stats`)
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);
@@ -122,7 +125,20 @@ describe('User Stats Routes', () => {
       });
     });
 
+    it('should return 400 for invalid UUID format', async () => {
+      const response = await request(app)
+        .get('/api/users/not-a-valid-uuid/stats')
+        .set('Authorization', 'Bearer valid-token');
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Invalid user ID format');
+    });
+
     it('should return 404 for non-existent user', async () => {
+      // Use a different valid UUID that doesn't exist in our mock data
+      const NON_EXISTENT_UUID = '550e8400-e29b-41d4-a716-446655440001';
+
       // Mock findById - returns no user
       mockQuery.mockResolvedValueOnce({
         rows: [],
@@ -130,7 +146,7 @@ describe('User Stats Routes', () => {
       });
 
       const response = await request(app)
-        .get('/api/users/non-existent-user/stats')
+        .get(`/api/users/${NON_EXISTENT_UUID}/stats`)
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(404);
@@ -140,7 +156,7 @@ describe('User Stats Routes', () => {
 
     it('should return 401 for unauthenticated request', async () => {
       const response = await request(app)
-        .get('/api/users/user-123/stats');
+        .get(`/api/users/${TEST_USER_UUID}/stats`);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -149,7 +165,7 @@ describe('User Stats Routes', () => {
 
     it('should return 401 for invalid token', async () => {
       const response = await request(app)
-        .get('/api/users/user-123/stats')
+        .get(`/api/users/${TEST_USER_UUID}/stats`)
         .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
@@ -162,7 +178,7 @@ describe('User Stats Routes', () => {
       mockQuery.mockRejectedValueOnce(new Error('Database connection error'));
 
       const response = await request(app)
-        .get('/api/users/user-123/stats')
+        .get(`/api/users/${TEST_USER_UUID}/stats`)
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(500);
@@ -181,7 +197,7 @@ describe('User Stats Routes', () => {
       mockQuery.mockRejectedValueOnce(new Error('Stats query failed'));
 
       const response = await request(app)
-        .get('/api/users/user-123/stats')
+        .get(`/api/users/${TEST_USER_UUID}/stats`)
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(500);
@@ -211,7 +227,7 @@ describe('User Stats Routes', () => {
       });
 
       const response = await request(app)
-        .get('/api/users/user-123/stats')
+        .get(`/api/users/${TEST_USER_UUID}/stats`)
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(200);

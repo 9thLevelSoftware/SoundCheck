@@ -31,11 +31,13 @@ router.get(
 
       res.status(200).json(exportData);
     } catch (error: any) {
+      // Sanitize error messages - only expose safe messages to client
+      const isUserNotFound = error.message === 'User not found';
       const response: ApiResponse = {
         success: false,
-        error: error.message || 'Failed to export user data',
+        error: isUserNotFound ? 'User not found' : 'Failed to export user data',
       };
-      res.status(error.message === 'User not found' ? 404 : 500).json(response);
+      res.status(isUserNotFound ? 404 : 500).json(response);
     }
   }
 );

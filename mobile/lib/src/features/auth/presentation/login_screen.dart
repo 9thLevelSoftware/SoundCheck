@@ -21,7 +21,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  final _socialAuthService = SocialAuthService();
+  SocialAuthService? _socialAuthService;
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _canCheckBiometrics = false;
@@ -29,7 +29,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    _initSocialAuth();
     _checkBiometrics();
+  }
+
+  void _initSocialAuth() {
+    final dioClient = ref.read(dioClientProvider);
+    final secureStorage = ref.read(secureStorageProvider);
+    _socialAuthService = SocialAuthService(
+      dioClient: dioClient,
+      secureStorage: secureStorage,
+    );
   }
 
   Future<void> _checkBiometrics() async {
@@ -90,6 +100,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           }
         }
 
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(errorMessage),
@@ -129,16 +140,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final credentials = await _socialAuthService.signInWithGoogle();
+      final result = await _socialAuthService?.signInWithGoogle();
       if (!mounted) return;
 
-      if (credentials != null) {
-        // TODO: Send credentials to backend for verification and token exchange
-        // await ref.read(authStateProvider.notifier).loginWithGoogle(credentials);
+      if (result != null) {
+        // Refresh user state after social auth
+        await ref.read(authStateProvider.notifier).refreshUser();
         await HapticFeedbackUtil.successVibration();
+        if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Google Sign-In successful: ${credentials['email']}'),
+            content: Text('Google Sign-In successful: ${result.user.email}'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
@@ -149,6 +161,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       await HapticFeedbackUtil.errorVibration();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_getSocialAuthErrorMessage(e)),
@@ -168,16 +181,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final credentials = await _socialAuthService.signInWithApple();
+      final result = await _socialAuthService?.signInWithApple();
       if (!mounted) return;
 
-      if (credentials != null) {
-        // TODO: Send credentials to backend for verification and token exchange
-        // await ref.read(authStateProvider.notifier).loginWithApple(credentials);
+      if (result != null) {
+        // Refresh user state after social auth
+        await ref.read(authStateProvider.notifier).refreshUser();
         await HapticFeedbackUtil.successVibration();
+        if (!mounted) return;
+        final displayText = result.user.email.isNotEmpty
+            ? result.user.email
+            : 'User authenticated';
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Apple Sign-In successful: ${(credentials['email']?.isNotEmpty ?? false) ? credentials['email'] : 'User authenticated'}'),
+            content: Text('Apple Sign-In successful: $displayText'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
@@ -188,6 +205,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       await HapticFeedbackUtil.errorVibration();
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(_getSocialAuthErrorMessage(e)),
@@ -342,7 +360,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                            onPressed: () async {
                              // Placeholder for biometrics
                              final success = await ref.read(biometricServiceProvider).authenticate();
-                             if (success && mounted) {
+                             if (!context.mounted) return;
+                             if (success) {
                                 ScaffoldMessenger.of(context).showSnackBar(
                                   const SnackBar(content: Text('Biometric Auth Successful (Simulated)')),
                                 );

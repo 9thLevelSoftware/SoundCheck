@@ -44,6 +44,11 @@ export declare class UserController {
      */
     checkEmail: (req: Request, res: Response) => Promise<void>;
     /**
+     * Get user stats by ID
+     * GET /api/users/:userId/stats
+     */
+    getUserStats: (req: Request, res: Response) => Promise<void>;
+    /**
      * Upload profile image
      * POST /api/users/me/profile-image
      */

@@ -226,6 +226,10 @@ export class CheckinService {
         whereClause = 'WHERE 1=1';
       }
 
+      // Calculate dynamic parameter indexes for LIMIT and OFFSET
+      const limitParamIdx = params.length + 1;
+      const offsetParamIdx = params.length + 2;
+
       const query = `
         SELECT
           c.*,
@@ -249,7 +253,7 @@ export class CheckinService {
         ${whereClause}
         GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
-        LIMIT $2 OFFSET $3
+        LIMIT $${limitParamIdx} OFFSET $${offsetParamIdx}
       `;
 
       params.push(limit, offset);

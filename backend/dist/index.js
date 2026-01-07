@@ -10,6 +10,12 @@ const dotenv_1 = __importDefault(require("dotenv"));
 if (process.env.NODE_ENV !== 'production') {
     dotenv_1.default.config();
 }
+// Initialize Sentry EARLY, before other imports that might throw errors
+const sentry_1 = require("./utils/sentry");
+(0, sentry_1.initSentry)();
+// Initialize Redis for distributed rate limiting and caching
+const redisRateLimiter_1 = require("./utils/redisRateLimiter");
+(0, redisRateLimiter_1.initRedis)();
 const express_1 = __importDefault(require("express"));
 const http_1 = require("http");
 const cors_1 = __importDefault(require("cors"));
@@ -26,6 +32,11 @@ const feedRoutes_1 = __importDefault(require("./routes/feedRoutes"));
 const notificationRoutes_1 = __importDefault(require("./routes/notificationRoutes"));
 const followRoutes_1 = __importDefault(require("./routes/followRoutes"));
 const wishlistRoutes_1 = __importDefault(require("./routes/wishlistRoutes"));
+const uploadsRoutes_1 = __importDefault(require("./routes/uploadsRoutes"));
+const tokenRoutes_1 = __importDefault(require("./routes/tokenRoutes"));
+const dataExportRoutes_1 = __importDefault(require("./routes/dataExportRoutes"));
+const consentRoutes_1 = __importDefault(require("./routes/consentRoutes"));
+const socialAuthRoutes_1 = __importDefault(require("./routes/socialAuthRoutes"));
 const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
 const websocket_1 = require("./utils/websocket");
@@ -108,8 +119,9 @@ app.use((0, cors_1.default)(corsOptions));
 // Body parsing middleware
 app.use(express_1.default.json({ limit: '10mb' }));
 app.use(express_1.default.urlencoded({ extended: true, limit: '10mb' }));
-// Static file serving for uploads
-app.use('/uploads', express_1.default.static('uploads'));
+// Authenticated file serving for uploads (security: requires JWT)
+// Note: Static serving removed to prevent unauthorized access to user uploads
+app.use('/api/uploads', uploadsRoutes_1.default);
 // Request logging middleware
 app.use((req, res, next) => {
     (0, logger_1.logHttp)(`${req.method} ${req.path}`);
@@ -157,6 +169,10 @@ app.use('/api/feed', feedRoutes_1.default);
 app.use('/api/notifications', notificationRoutes_1.default);
 app.use('/api/follow', followRoutes_1.default);
 app.use('/api/wishlist', wishlistRoutes_1.default);
+app.use('/api/tokens', tokenRoutes_1.default);
+app.use('/api/users', dataExportRoutes_1.default);
+app.use('/api/users/consents', consentRoutes_1.default);
+app.use('/api/auth/social', socialAuthRoutes_1.default);
 // Root endpoint
 app.get('/', (req, res) => {
     const response = {
@@ -177,6 +193,9 @@ app.use('*', (req, res) => {
     };
     res.status(404).json(response);
 });
+// Setup Sentry Express error handler - must be before other error handlers
+// Uses Sentry SDK v10+ API: setupExpressErrorHandler(app)
+(0, sentry_1.setupSentryForExpress)(app);
 // Global error handler - catches ALL errors including async
 app.use((error, req, res, next) => {
     // Determine status code
@@ -190,6 +209,15 @@ app.use((error, req, res, next) => {
         statusCode,
         userId: req.user?.id,
     });
+    // Send to Sentry for server errors (5xx)
+    if (statusCode >= 500) {
+        (0, sentry_1.captureException)(error, {
+            path: req.path,
+            method: req.method,
+            statusCode,
+            userId: req.user?.id,
+        });
+    }
     // Build response
     const response = {
         success: false,
@@ -245,6 +273,8 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
     (0, logger_1.logInfo)('SIGTERM received, shutting down gracefully');
+    await (0, sentry_1.closeSentry)(2000); // Wait up to 2s for pending Sentry events
+    await (0, redisRateLimiter_1.closeRedis)();
     websocket_1.websocket.close();
     const db = database_1.default.getInstance();
     await db.close();
@@ -252,6 +282,8 @@ process.on('SIGTERM', async () => {
 });
 process.on('SIGINT', async () => {
     (0, logger_1.logInfo)('SIGINT received, shutting down gracefully');
+    await (0, sentry_1.closeSentry)(2000); // Wait up to 2s for pending Sentry events
+    await (0, redisRateLimiter_1.closeRedis)();
     websocket_1.websocket.close();
     const db = database_1.default.getInstance();
     await db.close();
@@ -260,10 +292,14 @@ process.on('SIGINT', async () => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
     (0, logger_1.logError)('Uncaught Exception', { error });
+    (0, sentry_1.captureException)(error, { type: 'uncaughtException' });
     process.exit(1);
 });
 process.on('unhandledRejection', (reason, promise) => {
     (0, logger_1.logError)('Unhandled Rejection', { reason, promise });
+    if (reason instanceof Error) {
+        (0, sentry_1.captureException)(reason, { type: 'unhandledRejection' });
+    }
     process.exit(1);
 });
 startServer();

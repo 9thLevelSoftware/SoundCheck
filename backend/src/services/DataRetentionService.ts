@@ -39,6 +39,7 @@ export interface DeletionExecutionResult {
   deletedFollows: number;
   deletedWishlists: number;
   revokedTokens: number;
+  anonymizedCheckinPhotos: number;
 }
 
 /**
@@ -123,13 +124,14 @@ export class DataRetentionService {
   /**
    * Execute account deletion for a user.
    * Anonymizes user data and deletes related records.
+   * All operations are wrapped in a transaction for atomicity.
    *
    * @param userId - The ID of the user to delete
    * @returns DeletionExecutionResult with deletion statistics
-   * @throws Error if user not found
+   * @throws Error if user not found or transaction fails
    */
   async executeAccountDeletion(userId: string): Promise<DeletionExecutionResult> {
-    // Verify user exists
+    // Verify user exists before starting transaction
     const userCheck = await this.db.query(
       'SELECT id, email FROM users WHERE id = $1',
       [userId]
@@ -144,77 +146,101 @@ export class DataRetentionService {
     const anonymizedEmail = `deleted_${anonymizedSuffix}@deleted.local`;
     const anonymizedUsername = `deleted_user_${anonymizedSuffix}`;
 
+    // Get database client for transaction
+    const client = await this.db.getPool().connect();
+
     // Start tracking deletions
     let deletedNotifications = 0;
     let deletedFollows = 0;
     let deletedWishlists = 0;
     let revokedTokens = 0;
+    let anonymizedCheckinPhotos = 0;
 
-    // 1. Delete notifications (both received and sent)
-    const notificationResult = await this.db.query(
-      'DELETE FROM notifications WHERE user_id = $1 OR from_user_id = $1',
-      [userId]
-    );
-    deletedNotifications = notificationResult.rowCount || 0;
+    try {
+      await client.query('BEGIN');
 
-    // 2. Delete follows (both directions)
-    const followsResult = await this.db.query(
-      'DELETE FROM user_followers WHERE follower_id = $1 OR following_id = $1',
-      [userId]
-    );
-    deletedFollows = followsResult.rowCount || 0;
+      // 1. Delete notifications (both received and sent)
+      const notificationResult = await client.query(
+        'DELETE FROM notifications WHERE user_id = $1 OR from_user_id = $1',
+        [userId]
+      );
+      deletedNotifications = notificationResult.rowCount || 0;
 
-    // 3. Delete wishlists
-    const wishlistResult = await this.db.query(
-      'DELETE FROM user_wishlist WHERE user_id = $1',
-      [userId]
-    );
-    deletedWishlists = wishlistResult.rowCount || 0;
+      // 2. Delete follows (both directions)
+      const followsResult = await client.query(
+        'DELETE FROM user_followers WHERE follower_id = $1 OR following_id = $1',
+        [userId]
+      );
+      deletedFollows = followsResult.rowCount || 0;
 
-    // 4. Revoke all refresh tokens
-    const tokenResult = await this.db.query(
-      `UPDATE refresh_tokens
-       SET revoked_at = NOW()
-       WHERE user_id = $1 AND revoked_at IS NULL`,
-      [userId]
-    );
-    revokedTokens = tokenResult.rowCount || 0;
+      // 3. Delete wishlists
+      const wishlistResult = await client.query(
+        'DELETE FROM user_wishlist WHERE user_id = $1',
+        [userId]
+      );
+      deletedWishlists = wishlistResult.rowCount || 0;
 
-    // 5. Anonymize user profile data
-    await this.db.query(
-      `UPDATE users SET
-         email = $2,
-         username = $3,
-         password_hash = 'DELETED',
-         first_name = NULL,
-         last_name = NULL,
-         bio = NULL,
-         profile_image_url = NULL,
-         location = NULL,
-         date_of_birth = NULL,
-         is_active = false,
-         updated_at = NOW()
-       WHERE id = $1`,
-      [userId, anonymizedEmail, anonymizedUsername]
-    );
+      // 4. Revoke all refresh tokens
+      const tokenResult = await client.query(
+        `UPDATE refresh_tokens
+         SET revoked_at = NOW()
+         WHERE user_id = $1 AND revoked_at IS NULL`,
+        [userId]
+      );
+      revokedTokens = tokenResult.rowCount || 0;
 
-    // 6. Update deletion request status to completed
-    await this.db.query(
-      `UPDATE deletion_requests
-       SET status = 'completed', completed_at = NOW()
-       WHERE user_id = $1 AND status IN ('pending', 'processing')`,
-      [userId]
-    );
+      // 5. Anonymize check-in photos
+      const checkinPhotoResult = await client.query(
+        'UPDATE checkins SET photo_url = NULL WHERE user_id = $1',
+        [userId]
+      );
+      anonymizedCheckinPhotos = checkinPhotoResult.rowCount || 0;
 
-    return {
-      success: true,
-      userId,
-      anonymizedEmail,
-      deletedNotifications,
-      deletedFollows,
-      deletedWishlists,
-      revokedTokens,
-    };
+      // 6. Anonymize user profile data (including is_verified = false)
+      await client.query(
+        `UPDATE users SET
+           email = $2,
+           username = $3,
+           password_hash = 'DELETED',
+           first_name = NULL,
+           last_name = NULL,
+           bio = NULL,
+           profile_image_url = NULL,
+           location = NULL,
+           date_of_birth = NULL,
+           is_active = false,
+           is_verified = false,
+           updated_at = NOW()
+         WHERE id = $1`,
+        [userId, anonymizedEmail, anonymizedUsername]
+      );
+
+      // 7. Update deletion request status to completed
+      await client.query(
+        `UPDATE deletion_requests
+         SET status = 'completed', completed_at = NOW()
+         WHERE user_id = $1 AND status IN ('pending', 'processing')`,
+        [userId]
+      );
+
+      await client.query('COMMIT');
+
+      return {
+        success: true,
+        userId,
+        anonymizedEmail,
+        deletedNotifications,
+        deletedFollows,
+        deletedWishlists,
+        revokedTokens,
+        anonymizedCheckinPhotos,
+      };
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
 
   /**

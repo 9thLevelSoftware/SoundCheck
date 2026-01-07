@@ -179,4 +179,11 @@ describe('UserService.getUserStats', () => {
       ['specific-user-id']
     );
   });
+
+  test('should handle database errors gracefully', async () => {
+    mockDb.query.mockRejectedValueOnce(new Error('Connection failed'));
+
+    await expect(userService.getUserStats('user-123'))
+      .rejects.toThrow('Failed to retrieve user statistics');
+  });
 });
