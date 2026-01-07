@@ -324,7 +324,7 @@ export class UserController {
       }
 
       const baseUrl = process.env.BASE_URL || `http://localhost:${process.env.PORT || 3000}`;
-      const imageUrl = `${baseUrl}/uploads/profiles/${req.file.filename}`;
+      const imageUrl = `${baseUrl}/api/uploads/profiles/${req.file.filename}`;
 
       await this.userService.updateProfile(req.user.id, { profileImageUrl: imageUrl });
 
