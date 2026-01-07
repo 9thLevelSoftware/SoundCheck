@@ -571,3 +571,20 @@ CREATE TABLE IF NOT EXISTS user_consents (
 CREATE INDEX IF NOT EXISTS idx_user_consents_user ON user_consents(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_consents_purpose ON user_consents(user_id, purpose);
 CREATE INDEX IF NOT EXISTS idx_user_consents_recorded ON user_consents(recorded_at);
+
+-- =====================================================
+-- SOCIAL AUTHENTICATION ACCOUNTS
+-- =====================================================
+
+-- Social authentication accounts for Google, Apple, Facebook sign-in
+CREATE TABLE IF NOT EXISTS user_social_accounts (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    provider VARCHAR(20) NOT NULL CHECK (provider IN ('google', 'apple', 'facebook')),
+    provider_id VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    UNIQUE(provider, provider_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_social_accounts_user ON user_social_accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_social_accounts_provider ON user_social_accounts(provider, provider_id);
