@@ -308,6 +308,30 @@ export class UserController {
   };
 
   /**
+   * Get user stats by ID
+   * GET /api/users/:userId/stats
+   */
+  getUserStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId } = req.params;
+
+      // Verify user exists
+      const user = await this.userService.findById(userId);
+      if (!user) {
+        res.status(404).json({ success: false, error: 'User not found' });
+        return;
+      }
+
+      const stats = await this.userService.getUserStats(userId);
+
+      res.json({ success: true, data: stats });
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      res.status(500).json({ success: false, error: 'Failed to get user stats' });
+    }
+  };
+
+  /**
    * Upload profile image
    * POST /api/users/me/profile-image
    */
