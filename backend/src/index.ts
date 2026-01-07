@@ -23,6 +23,7 @@ import feedRoutes from './routes/feedRoutes';
 import notificationRoutes from './routes/notificationRoutes';
 import followRoutes from './routes/followRoutes';
 import wishlistRoutes from './routes/wishlistRoutes';
+import uploadsRoutes from './routes/uploadsRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -116,8 +117,9 @@ app.use(cors(corsOptions));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
-// Static file serving for uploads
-app.use('/uploads', express.static('uploads'));
+// Authenticated file serving for uploads (security: requires JWT)
+// Note: Static serving removed to prevent unauthorized access to user uploads
+app.use('/api/uploads', uploadsRoutes);
 
 // Request logging middleware
 app.use((req, res, next) => {
