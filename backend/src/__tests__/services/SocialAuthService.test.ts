@@ -11,6 +11,12 @@ jest.mock('google-auth-library', () => ({
     verifyIdToken: jest.fn(),
   })),
 }));
+jest.mock('apple-signin-auth', () => ({
+  verifyIdToken: jest.fn(),
+}));
+
+import appleSignin from 'apple-signin-auth';
+const mockAppleVerify = appleSignin.verifyIdToken as jest.Mock;
 
 const mockClient = {
   query: jest.fn(),
@@ -112,25 +118,18 @@ describe('SocialAuthService', () => {
   });
 
   describe('verifyAppleToken', () => {
-    // Create a valid Apple JWT for testing
-    const createAppleToken = (payload: object): string => {
-      const header = Buffer.from(JSON.stringify({ alg: 'RS256', typ: 'JWT' })).toString('base64url');
-      const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-      return `${header}.${body}.fake-signature`;
-    };
+    beforeEach(() => {
+      mockAppleVerify.mockReset();
+      process.env.APPLE_BUNDLE_ID = 'com.test.pitpulse';
+    });
 
     it('should verify a valid Apple token and return profile', async () => {
-      const futureTime = Math.floor(Date.now() / 1000) + 3600; // 1 hour from now
-      const validToken = createAppleToken({
+      mockAppleVerify.mockResolvedValueOnce({
         sub: 'apple-user-123',
         email: 'test@icloud.com',
-        email_verified: 'true',
-        iss: 'https://appleid.apple.com',
-        aud: 'com.test.pitpulse',
-        exp: futureTime,
       });
 
-      const result = await socialAuthService.verifyAppleToken(validToken, {
+      const result = await socialAuthService.verifyAppleToken('valid-apple-token', {
         givenName: 'Apple',
         familyName: 'User',
       });
@@ -142,40 +141,52 @@ describe('SocialAuthService', () => {
         firstName: 'Apple',
         lastName: 'User',
       });
+      expect(mockAppleVerify).toHaveBeenCalledWith('valid-apple-token', {
+        audience: 'com.test.pitpulse',
+        ignoreExpiration: false,
+      });
     });
 
     it('should return null for expired token', async () => {
-      const pastTime = Math.floor(Date.now() / 1000) - 3600; // 1 hour ago
-      const expiredToken = createAppleToken({
-        sub: 'apple-user-123',
-        email: 'test@icloud.com',
-        iss: 'https://appleid.apple.com',
-        aud: 'com.test.pitpulse',
-        exp: pastTime,
-      });
+      mockAppleVerify.mockRejectedValueOnce(new Error('Token expired'));
 
-      const result = await socialAuthService.verifyAppleToken(expiredToken);
+      const result = await socialAuthService.verifyAppleToken('expired-token');
 
       expect(result).toBeNull();
     });
 
     it('should return null for invalid issuer', async () => {
-      const futureTime = Math.floor(Date.now() / 1000) + 3600;
-      const invalidToken = createAppleToken({
-        sub: 'apple-user-123',
-        email: 'test@icloud.com',
-        iss: 'https://fake-issuer.com',
-        aud: 'com.test.pitpulse',
-        exp: futureTime,
-      });
+      mockAppleVerify.mockRejectedValueOnce(new Error('Invalid issuer'));
 
-      const result = await socialAuthService.verifyAppleToken(invalidToken);
+      const result = await socialAuthService.verifyAppleToken('invalid-issuer-token');
 
       expect(result).toBeNull();
     });
 
     it('should return null for invalid token format', async () => {
+      mockAppleVerify.mockRejectedValueOnce(new Error('jwt malformed'));
+
       const result = await socialAuthService.verifyAppleToken('not-a-valid-jwt');
+
+      expect(result).toBeNull();
+    });
+
+    it('should return null when APPLE_BUNDLE_ID is not set', async () => {
+      delete process.env.APPLE_BUNDLE_ID;
+
+      const result = await socialAuthService.verifyAppleToken('any-token');
+
+      expect(result).toBeNull();
+      expect(mockAppleVerify).not.toHaveBeenCalled();
+    });
+
+    it('should return null when token has no subject', async () => {
+      mockAppleVerify.mockResolvedValueOnce({
+        email: 'test@icloud.com',
+        // no sub field
+      });
+
+      const result = await socialAuthService.verifyAppleToken('token-no-subject');
 
       expect(result).toBeNull();
     });
