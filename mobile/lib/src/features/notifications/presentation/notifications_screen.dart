@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/notification.dart';
 import 'providers/notification_providers.dart';
@@ -200,8 +201,66 @@ class NotificationsScreen extends ConsumerWidget {
           .markAsRead(notification.id);
     }
 
+    // Check if context is still valid after async operation
+    if (!context.mounted) return;
+
     // Navigate based on notification type
-    // TODO: Implement navigation to relevant screens
+    switch (notification.type) {
+      case 'new_follower':
+        // Navigate to the follower's profile
+        final userId = notification.fromUserId ?? notification.fromUser?.id;
+        if (userId != null) {
+          context.push('/users/$userId');
+        }
+        break;
+
+      case 'toast':
+      case 'comment':
+        // Navigate to the check-in
+        final checkinId = notification.checkinId ?? notification.checkin?.id;
+        if (checkinId != null) {
+          context.push('/checkins/$checkinId');
+        }
+        break;
+
+      case 'friend_checkin':
+        // Navigate to the check-in (or venue if no check-in ID)
+        final checkinId = notification.checkinId ?? notification.checkin?.id;
+        if (checkinId != null) {
+          context.push('/checkins/$checkinId');
+        } else {
+          // Fallback to venue if available
+          final venueId = notification.checkin?.venue?.id;
+          if (venueId != null) {
+            context.push('/venues/$venueId');
+          }
+        }
+        break;
+
+      case 'badge_earned':
+        // Navigate to user's own profile to see badges
+        // No dedicated badges route exists, so go to profile
+        context.go('/profile');
+        break;
+
+      case 'show_reminder':
+        // Navigate to band detail (shows are tied to bands)
+        final bandId = notification.show?.band?.id;
+        if (bandId != null) {
+          context.push('/bands/$bandId');
+        } else {
+          // Fallback to venue if available
+          final venueId = notification.show?.venue?.id;
+          if (venueId != null) {
+            context.push('/venues/$venueId');
+          }
+        }
+        break;
+
+      default:
+        // For unknown types, log and do nothing
+        debugPrint('Unknown notification type: ${notification.type}');
+    }
   }
 
   void _handleNotificationDismiss(WidgetRef ref, AppNotification notification) {
