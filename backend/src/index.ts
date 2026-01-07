@@ -24,6 +24,8 @@ import notificationRoutes from './routes/notificationRoutes';
 import followRoutes from './routes/followRoutes';
 import wishlistRoutes from './routes/wishlistRoutes';
 import uploadsRoutes from './routes/uploadsRoutes';
+import tokenRoutes from './routes/tokenRoutes';
+import dataExportRoutes from './routes/dataExportRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -171,6 +173,8 @@ app.use('/api/feed', feedRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/wishlist', wishlistRoutes);
+app.use('/api/tokens', tokenRoutes);
+app.use('/api/users', dataExportRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
