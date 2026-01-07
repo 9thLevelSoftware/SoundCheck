@@ -39,7 +39,13 @@ describe('SocialAuthService', () => {
 
     socialAuthService = new SocialAuthService();
     mockGoogleClient = (socialAuthService as any).googleClient;
+
+    // Reset all mocks including mockClient
     jest.clearAllMocks();
+    mockClient.query.mockReset();
+    mockClient.release.mockReset();
+    mockDb.query.mockReset();
+    mockPool.connect.mockResolvedValue(mockClient);
   });
 
   afterEach(() => {
@@ -237,12 +243,18 @@ describe('SocialAuthService', () => {
     });
 
     it('should create new user when no existing account found', async () => {
+      // Mock db.query for findSocialAccount and findUserByEmail
       mockDb.query
         .mockResolvedValueOnce({ rows: [] }) // findSocialAccount - not found
-        .mockResolvedValueOnce({ rows: [] }) // findUserByEmail - not found
-        .mockResolvedValueOnce({ rows: [] }) // usernameExists check - testuser available
-        .mockResolvedValueOnce({ rows: [mockUser] }) // createSocialUser - INSERT
-        .mockResolvedValueOnce({ rows: [] }); // linkSocialAccount
+        .mockResolvedValueOnce({ rows: [] }); // findUserByEmail - not found
+
+      // Mock client.query for transaction (createSocialUser)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // usernameExistsWithClient - testuser available
+        .mockResolvedValueOnce({ rows: [mockUser] }) // INSERT user
+        .mockResolvedValueOnce({}) // INSERT social_account (linkSocialAccountWithClient)
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await socialAuthService.authenticateOrCreate(mockProfile);
 
@@ -251,13 +263,19 @@ describe('SocialAuthService', () => {
     });
 
     it('should generate unique username when username already exists', async () => {
+      // Mock db.query for findSocialAccount and findUserByEmail
       mockDb.query
         .mockResolvedValueOnce({ rows: [] }) // findSocialAccount
-        .mockResolvedValueOnce({ rows: [] }) // findUserByEmail
-        .mockResolvedValueOnce({ rows: [{ id: 'existing' }] }) // usernameExists - testuser taken
-        .mockResolvedValueOnce({ rows: [] }) // usernameExists - testuser1 available
-        .mockResolvedValueOnce({ rows: [mockUser] }) // createSocialUser
-        .mockResolvedValueOnce({ rows: [] }); // linkSocialAccount
+        .mockResolvedValueOnce({ rows: [] }); // findUserByEmail
+
+      // Mock client.query for transaction (createSocialUser)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [{ id: 'existing' }] }) // usernameExistsWithClient - testuser taken
+        .mockResolvedValueOnce({ rows: [] }) // usernameExistsWithClient - testuser1 available
+        .mockResolvedValueOnce({ rows: [mockUser] }) // INSERT user
+        .mockResolvedValueOnce({}) // INSERT social_account (linkSocialAccountWithClient)
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await socialAuthService.authenticateOrCreate(mockProfile);
 
@@ -303,12 +321,18 @@ describe('SocialAuthService', () => {
         username: 'johndoe',
       };
 
+      // Mock db.query for findSocialAccount and findUserByEmail
       mockDb.query
         .mockResolvedValueOnce({ rows: [] }) // findSocialAccount
-        .mockResolvedValueOnce({ rows: [] }) // findUserByEmail
-        .mockResolvedValueOnce({ rows: [] }) // usernameExists
-        .mockResolvedValueOnce({ rows: [userWithGeneratedUsername] }) // createSocialUser
-        .mockResolvedValueOnce({ rows: [] }); // linkSocialAccount
+        .mockResolvedValueOnce({ rows: [] }); // findUserByEmail
+
+      // Mock client.query for transaction (createSocialUser)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // usernameExistsWithClient
+        .mockResolvedValueOnce({ rows: [userWithGeneratedUsername] }) // INSERT user
+        .mockResolvedValueOnce({}) // INSERT social_account (linkSocialAccountWithClient)
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await socialAuthService.authenticateOrCreate(profileWithoutName);
 
@@ -344,12 +368,18 @@ describe('SocialAuthService', () => {
       (AuthUtils.generateToken as jest.Mock).mockReturnValue('mock-jwt-token');
       jest.spyOn(authModule, 'generateRefreshToken').mockResolvedValue('mock-refresh-token');
 
+      // Mock db.query for findSocialAccount and findUserByEmail
       mockDb.query
         .mockResolvedValueOnce({ rows: [] }) // findSocialAccount
-        .mockResolvedValueOnce({ rows: [] }) // findUserByEmail
-        .mockResolvedValueOnce({ rows: [] }) // usernameExists
-        .mockResolvedValueOnce({ rows: [mockCreatedUser] }) // createSocialUser
-        .mockResolvedValueOnce({ rows: [] }); // linkSocialAccount
+        .mockResolvedValueOnce({ rows: [] }); // findUserByEmail
+
+      // Mock client.query for transaction (createSocialUser)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // usernameExistsWithClient
+        .mockResolvedValueOnce({ rows: [mockCreatedUser] }) // INSERT user
+        .mockResolvedValueOnce({}) // INSERT social_account (linkSocialAccountWithClient)
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await socialAuthService.authenticateOrCreate(shortNameProfile);
 
@@ -384,12 +414,18 @@ describe('SocialAuthService', () => {
       (AuthUtils.generateToken as jest.Mock).mockReturnValue('mock-jwt-token');
       jest.spyOn(authModule, 'generateRefreshToken').mockResolvedValue('mock-refresh-token');
 
+      // Mock db.query for findSocialAccount and findUserByEmail
       mockDb.query
         .mockResolvedValueOnce({ rows: [] }) // findSocialAccount
-        .mockResolvedValueOnce({ rows: [] }) // findUserByEmail
-        .mockResolvedValueOnce({ rows: [] }) // usernameExists
-        .mockResolvedValueOnce({ rows: [mockCreatedUser] }) // createSocialUser
-        .mockResolvedValueOnce({ rows: [] }); // linkSocialAccount
+        .mockResolvedValueOnce({ rows: [] }); // findUserByEmail
+
+      // Mock client.query for transaction (createSocialUser)
+      mockClient.query
+        .mockResolvedValueOnce({}) // BEGIN
+        .mockResolvedValueOnce({ rows: [] }) // usernameExistsWithClient
+        .mockResolvedValueOnce({ rows: [mockCreatedUser] }) // INSERT user
+        .mockResolvedValueOnce({}) // INSERT social_account (linkSocialAccountWithClient)
+        .mockResolvedValueOnce({}); // COMMIT
 
       const result = await socialAuthService.authenticateOrCreate(longNameProfile);
 
