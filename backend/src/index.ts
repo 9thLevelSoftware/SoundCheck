@@ -36,6 +36,7 @@ import tokenRoutes from './routes/tokenRoutes';
 import dataExportRoutes from './routes/dataExportRoutes';
 import consentRoutes from './routes/consentRoutes';
 import socialAuthRoutes from './routes/socialAuthRoutes';
+import searchRoutes from './routes/searchRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -187,6 +188,7 @@ app.use('/api/tokens', tokenRoutes);
 app.use('/api/users', dataExportRoutes);
 app.use('/api/users/consents', consentRoutes);
 app.use('/api/auth/social', socialAuthRoutes);
+app.use('/api/search', searchRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

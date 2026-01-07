@@ -2,6 +2,9 @@ import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
 import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
 
+// UUID validation regex (supports UUID v1-5)
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export class UserController {
   private userService: UserService;
 
@@ -315,19 +318,86 @@ export class UserController {
     try {
       const { userId } = req.params;
 
+      // Validate UUID format
+      if (!UUID_REGEX.test(userId)) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Invalid user ID format',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
       // Verify user exists
       const user = await this.userService.findById(userId);
       if (!user) {
-        res.status(404).json({ success: false, error: 'User not found' });
+        const response: ApiResponse = {
+          success: false,
+          error: 'User not found',
+        };
+        res.status(404).json(response);
         return;
       }
 
       const stats = await this.userService.getUserStats(userId);
 
-      res.json({ success: true, data: stats });
+      const response: ApiResponse = {
+        success: true,
+        data: stats,
+      };
+      res.json(response);
     } catch (error) {
       console.error('Error getting user stats:', error);
-      res.status(500).json({ success: false, error: 'Failed to get user stats' });
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to get user stats',
+      };
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Search users by username or display name
+   * GET /api/search/users?q=query&limit=20&offset=0
+   */
+  searchUsers = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { q, limit = '20', offset = '0' } = req.query;
+
+      if (!q || typeof q !== 'string' || q.length < 2) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Query must be at least 2 characters',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      const parsedLimit = Math.min(Math.max(parseInt(limit as string, 10) || 20, 1), 50);
+      const parsedOffset = Math.max(parseInt(offset as string, 10) || 0, 0);
+
+      const result = await this.userService.searchUsers(q, parsedLimit, parsedOffset);
+
+      const response: ApiResponse = {
+        success: true,
+        data: result.users,
+        pagination: {
+          limit: parsedLimit,
+          offset: parsedOffset,
+          hasMore: result.hasMore,
+        },
+      };
+
+      res.json(response);
+    } catch (error) {
+      console.error('User search error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Search failed',
+      };
+
+      res.status(500).json(response);
     }
   };
 

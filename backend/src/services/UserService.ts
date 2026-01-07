@@ -235,6 +235,58 @@ export class UserService {
   }
 
   /**
+   * Search users by username or display name
+   */
+  async searchUsers(
+    query: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<{
+    users: Array<{
+      id: string;
+      username: string;
+      displayName: string | null;
+      profileImageUrl: string | null;
+      bio: string | null;
+    }>;
+    hasMore: boolean;
+  }> {
+    const searchTerm = `%${query.toLowerCase()}%`;
+    const exactTerm = query.toLowerCase();
+    const prefixTerm = `${query.toLowerCase()}%`;
+
+    const result = await this.db.query(
+      `SELECT id, username,
+              COALESCE(first_name || ' ' || last_name, first_name, last_name) as display_name,
+              profile_image_url, bio
+       FROM users
+       WHERE is_active = true
+         AND (LOWER(username) LIKE $1
+              OR LOWER(first_name) LIKE $1
+              OR LOWER(last_name) LIKE $1
+              OR LOWER(COALESCE(first_name || ' ' || last_name, '')) LIKE $1)
+       ORDER BY
+         CASE WHEN LOWER(username) = $4 THEN 0
+              WHEN LOWER(username) LIKE $5 THEN 1
+              ELSE 2 END,
+         created_at DESC
+       LIMIT $2 OFFSET $3`,
+      [searchTerm, limit, offset, exactTerm, prefixTerm]
+    );
+
+    return {
+      users: result.rows.map((row: any) => ({
+        id: row.id,
+        username: row.username,
+        displayName: row.display_name?.trim() || null,
+        profileImageUrl: row.profile_image_url,
+        bio: row.bio,
+      })),
+      hasMore: result.rows.length === limit,
+    };
+  }
+
+  /**
    * Get user statistics
    */
   async getUserStats(userId: string): Promise<{
@@ -246,40 +298,45 @@ export class UserService {
     uniqueVenues: number;
     uniqueBands: number;
   }> {
-    const statsQuery = `
-      SELECT
-        (SELECT COUNT(*) FROM checkins WHERE user_id = $1) as checkin_count,
-        (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
-        (SELECT COUNT(*) FROM user_badges WHERE user_id = $1) as badge_count,
-        (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as follower_count,
-        (SELECT COUNT(*) FROM user_followers WHERE follower_id = $1) as following_count,
-        (SELECT COUNT(DISTINCT venue_id) FROM checkins WHERE user_id = $1) as unique_venues,
-        (SELECT COUNT(DISTINCT band_id) FROM checkins WHERE user_id = $1) as unique_bands
-    `;
+    try {
+      const statsQuery = `
+        SELECT
+          (SELECT COUNT(*) FROM checkins WHERE user_id = $1) as checkin_count,
+          (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
+          (SELECT COUNT(*) FROM user_badges WHERE user_id = $1) as badge_count,
+          (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as follower_count,
+          (SELECT COUNT(*) FROM user_followers WHERE follower_id = $1) as following_count,
+          (SELECT COUNT(DISTINCT venue_id) FROM checkins WHERE user_id = $1) as unique_venues,
+          (SELECT COUNT(DISTINCT band_id) FROM checkins WHERE user_id = $1) as unique_bands
+      `;
 
-    const result = await this.db.query(statsQuery, [userId]);
+      const result = await this.db.query(statsQuery, [userId]);
 
-    if (!result.rows.length) {
+      if (!result.rows.length) {
+        return {
+          totalCheckins: 0,
+          totalReviews: 0,
+          badgesEarned: 0,
+          followersCount: 0,
+          followingCount: 0,
+          uniqueVenues: 0,
+          uniqueBands: 0,
+        };
+      }
+      const stats = result.rows[0];
+
       return {
-        totalCheckins: 0,
-        totalReviews: 0,
-        badgesEarned: 0,
-        followersCount: 0,
-        followingCount: 0,
-        uniqueVenues: 0,
-        uniqueBands: 0,
+        totalCheckins: parseInt(stats.checkin_count, 10) || 0,
+        totalReviews: parseInt(stats.review_count, 10) || 0,
+        badgesEarned: parseInt(stats.badge_count, 10) || 0,
+        followersCount: parseInt(stats.follower_count, 10) || 0,
+        followingCount: parseInt(stats.following_count, 10) || 0,
+        uniqueVenues: parseInt(stats.unique_venues, 10) || 0,
+        uniqueBands: parseInt(stats.unique_bands, 10) || 0,
       };
+    } catch (error) {
+      console.error('Error getting user stats:', error);
+      throw new Error('Failed to retrieve user statistics');
     }
-    const stats = result.rows[0];
-
-    return {
-      totalCheckins: parseInt(stats.checkin_count) || 0,
-      totalReviews: parseInt(stats.review_count) || 0,
-      badgesEarned: parseInt(stats.badge_count) || 0,
-      followersCount: parseInt(stats.follower_count) || 0,
-      followingCount: parseInt(stats.following_count) || 0,
-      uniqueVenues: parseInt(stats.unique_venues) || 0,
-      uniqueBands: parseInt(stats.unique_bands) || 0,
-    };
   }
 }
