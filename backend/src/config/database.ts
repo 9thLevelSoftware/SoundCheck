@@ -1,42 +1,61 @@
 import { Pool } from 'pg';
 import { DatabaseConfig } from '../types';
 
+/**
+ * Get SSL configuration for database connection.
+ * Defaults to verified TLS for security (rejectUnauthorized: true).
+ *
+ * @returns SSL configuration object or false to disable SSL
+ */
+export function getSSLConfig(): false | { rejectUnauthorized: boolean } {
+  const dbSSL = process.env.DB_SSL?.toLowerCase();
+
+  // Explicit disable
+  if (dbSSL === 'false' || dbSSL === 'no' || dbSSL === 'off') {
+    return false;
+  }
+
+  // Explicit no-verify (not recommended, logs warning)
+  if (dbSSL === 'no-verify') {
+    console.warn('WARNING: DB_SSL=no-verify disables certificate verification. Use only for development.');
+    return { rejectUnauthorized: false };
+  }
+
+  // Default: SSL enabled with verification (secure default)
+  return { rejectUnauthorized: true };
+}
+
 class Database {
   private pool: Pool;
   private static instance: Database;
 
   private constructor() {
+    // Get SSL configuration (defaults to verified TLS)
+    const sslConfig = getSSLConfig();
+    const sslMode = process.env.DB_SSL?.toLowerCase() || 'verify';
+
     // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
     if (process.env.DATABASE_URL) {
       console.log('🔗 Using DATABASE_URL for database connection');
-      console.log('📦 Database config version: 2025-01-03-v2');
+      console.log('📦 Database config version: 2025-01-06-v3');
 
       // Modify DATABASE_URL to control SSL mode
       // Railway's URL may have sslmode=require which overrides Pool options
       let connectionString = process.env.DATABASE_URL;
-      const sslMode = process.env.DB_SSL || 'no-verify';
 
       // Remove any existing sslmode from URL
       connectionString = connectionString.replace(/[?&]sslmode=[^&]*/gi, '');
 
       // Add appropriate sslmode based on DB_SSL setting
       const separator = connectionString.includes('?') ? '&' : '?';
-      if (sslMode === 'false') {
+      if (sslConfig === false) {
         connectionString = `${connectionString}${separator}sslmode=disable`;
-      } else if (sslMode === 'no-verify') {
+      } else if (!sslConfig.rejectUnauthorized) {
         connectionString = `${connectionString}${separator}sslmode=no-verify`;
       }
-      // sslMode === 'true' uses default (require with verification)
+      // Default (rejectUnauthorized: true) uses sslmode=require with verification
 
-      console.log(`🔒 SSL mode: ${sslMode}`);
-
-      // SSL config for Pool (belt and suspenders with URL param)
-      let sslConfig: boolean | { rejectUnauthorized: boolean } = false;
-      if (sslMode === 'no-verify') {
-        sslConfig = { rejectUnauthorized: false };
-      } else if (sslMode === 'true') {
-        sslConfig = { rejectUnauthorized: true };
-      }
+      console.log(`🔒 SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
 
       this.pool = new Pool({
         connectionString,
@@ -48,6 +67,8 @@ class Database {
     } else {
       // Fall back to individual environment variables
       console.log('🔗 Using individual DB_* environment variables');
+      console.log(`🔒 SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
+
       const config: DatabaseConfig = {
         host: process.env.DB_HOST || 'localhost',
         port: parseInt(process.env.DB_PORT || '5432'),
@@ -58,6 +79,7 @@ class Database {
 
       this.pool = new Pool({
         ...config,
+        ssl: sslConfig,
         max: 20, // Maximum number of clients in the pool
         idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
         connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
