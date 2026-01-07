@@ -26,6 +26,7 @@ import wishlistRoutes from './routes/wishlistRoutes';
 import uploadsRoutes from './routes/uploadsRoutes';
 import tokenRoutes from './routes/tokenRoutes';
 import dataExportRoutes from './routes/dataExportRoutes';
+import consentRoutes from './routes/consentRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -175,6 +176,7 @@ app.use('/api/follow', followRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/tokens', tokenRoutes);
 app.use('/api/users', dataExportRoutes);
+app.use('/api/users/consents', consentRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {

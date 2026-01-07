@@ -551,3 +551,23 @@ CREATE TABLE IF NOT EXISTS deletion_requests (
 CREATE INDEX IF NOT EXISTS idx_deletion_requests_user ON deletion_requests(user_id);
 CREATE INDEX IF NOT EXISTS idx_deletion_requests_status ON deletion_requests(status);
 CREATE INDEX IF NOT EXISTS idx_deletion_requests_scheduled ON deletion_requests(scheduled_for);
+
+-- =====================================================
+-- GDPR COMPLIANCE - USER CONSENTS
+-- =====================================================
+
+-- Consent records for GDPR compliance
+-- Tracks user consent for various data processing purposes with full audit trail
+CREATE TABLE IF NOT EXISTS user_consents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    purpose VARCHAR(50) NOT NULL,
+    granted BOOLEAN NOT NULL,
+    recorded_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ip_address VARCHAR(45),
+    user_agent TEXT
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_consents_user ON user_consents(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_consents_purpose ON user_consents(user_id, purpose);
+CREATE INDEX IF NOT EXISTS idx_user_consents_recorded ON user_consents(recorded_at);
