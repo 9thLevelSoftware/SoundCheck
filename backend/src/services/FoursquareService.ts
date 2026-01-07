@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import Database from '../config/database';
+import { sanitizeForLogging } from '../utils/logSanitizer';
 
 interface FoursquareVenueResult {
   fsq_id: string;
@@ -94,16 +95,17 @@ export class FoursquareService {
 
       return response.data.results || [];
     } catch (error: any) {
-      console.error('Foursquare search error:', error);
+      console.error('Foursquare search error:', error.message || error);
       if (error.response) {
         console.error('Response status:', error.response.status);
         console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-        console.error('Request config:', {
+        // Sanitize config to prevent API key leakage in logs
+        console.error('Request config:', sanitizeForLogging({
           baseURL: error.config.baseURL,
           url: error.config.url,
           params: error.config.params,
           headers: error.config.headers,
-        });
+        }));
       }
       throw new Error('Failed to search venues from Foursquare');
     }
