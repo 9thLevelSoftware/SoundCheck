@@ -15,6 +15,7 @@ export interface SocialProfile {
   email: string;
   firstName?: string;
   lastName?: string;
+  profileImageUrl?: string;
 }
 
 /**
@@ -75,6 +76,7 @@ export class SocialAuthService {
         email: payload.email!,
         firstName: payload.given_name,
         lastName: payload.family_name,
+        profileImageUrl: payload.picture,
       };
     } catch (error) {
       console.error('Google token verification failed:', error);
@@ -275,8 +277,8 @@ export class SocialAuthService {
 
     // Create user without password (social-only auth)
     const result = await this.db.query(
-      `INSERT INTO users (email, password_hash, username, first_name, last_name, is_verified)
-       VALUES ($1, $2, $3, $4, $5, true)
+      `INSERT INTO users (email, password_hash, username, first_name, last_name, profile_image_url, is_verified)
+       VALUES ($1, $2, $3, $4, $5, $6, true)
        RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
                  location, date_of_birth, is_verified, is_active, created_at, updated_at`,
       [
@@ -285,6 +287,7 @@ export class SocialAuthService {
         username,
         profile.firstName || null,
         profile.lastName || null,
+        profile.profileImageUrl || null,
       ]
     );
 
