@@ -1,53 +1,112 @@
 /**
  * Caching Layer
  *
- * STATUS: In-memory only (Redis disabled)
- *
- * Current implementation uses in-memory Map cache which:
- * - Doesn't persist across restarts
- * - Doesn't scale across multiple instances
- *
- * To enable Redis:
- * 1. npm install ioredis
- * 2. Set REDIS_URL environment variable
- * 3. Uncomment Redis initialization and methods
+ * Provides caching with Redis backend (preferred) or in-memory fallback.
  *
  * FEATURES:
- * - In-memory caching (default, works immediately)
- * - Redis caching (optional, for distributed systems)
+ * - Redis caching for distributed systems (when REDIS_URL is set)
+ * - In-memory fallback (automatic when Redis unavailable)
  * - TTL support
  * - Automatic cleanup
  * - Type-safe cache keys
  *
  * USAGE:
- * import { cache } from './utils/cache';
+ * import { cache, getCache, setCache, deleteCache } from './utils/cache';
  *
- * // Set value with TTL
- * await cache.set('user:123', userData, 3600); // 1 hour
+ * // Using standalone functions
+ * await setCache('user:123', userData, 3600); // 1 hour TTL
+ * const user = await getCache('user:123');
+ * await deleteCache('user:123');
  *
- * // Get value
+ * // Using cache service
+ * await cache.set('user:123', userData, 3600);
  * const user = await cache.get('user:123');
- *
- * // Delete value
- * await cache.del('user:123');
- *
- * // Clear all
- * await cache.clear();
  */
 
-// NOTE: Uncomment when Redis is available
-// import { createClient } from 'redis';
-// type RedisClientType = ReturnType<typeof createClient>;
+import { getRedis } from './redisRateLimiter';
+
+// In-memory fallback cache
+const memoryCache = new Map<string, { value: any; expiresAt: number }>();
+
+/**
+ * Get value from cache (Redis or memory fallback)
+ */
+export async function getCache<T>(key: string): Promise<T | null> {
+  const redis = getRedis();
+
+  if (redis) {
+    try {
+      const value = await redis.get(key);
+      return value ? JSON.parse(value) : null;
+    } catch (error) {
+      console.error('Redis get error:', error);
+      // Fall through to memory cache
+    }
+  }
+
+  // Memory fallback
+  const entry = memoryCache.get(key);
+  if (!entry) return null;
+
+  if (Date.now() > entry.expiresAt) {
+    memoryCache.delete(key);
+    return null;
+  }
+
+  return entry.value;
+}
+
+/**
+ * Set value in cache with TTL (Redis or memory fallback)
+ */
+export async function setCache<T>(key: string, value: T, ttlSeconds: number): Promise<void> {
+  const redis = getRedis();
+
+  if (redis) {
+    try {
+      await redis.setex(key, ttlSeconds, JSON.stringify(value));
+      return;
+    } catch (error) {
+      console.error('Redis setex error:', error);
+      // Fall through to memory cache
+    }
+  }
+
+  // Memory fallback
+  memoryCache.set(key, {
+    value,
+    expiresAt: Date.now() + ttlSeconds * 1000,
+  });
+}
+
+/**
+ * Delete value from cache
+ */
+export async function deleteCache(key: string): Promise<void> {
+  const redis = getRedis();
+
+  if (redis) {
+    try {
+      await redis.del(key);
+      return;
+    } catch (error) {
+      console.error('Redis del error:', error);
+      // Fall through to memory cache
+    }
+  }
+
+  memoryCache.delete(key);
+}
 
 interface CacheEntry<T> {
   value: T;
   expiresAt: number;
 }
 
+/**
+ * Cache service class with extended functionality
+ */
 class CacheService {
-  private memoryCache: Map<string, CacheEntry<any>> = new Map();
-  // private redis?: RedisClientType;
-  private useRedis: boolean = false;
   private cleanupInterval?: NodeJS.Timeout;
 
   constructor() {
@@ -55,129 +114,72 @@ class CacheService {
     this.cleanupInterval = setInterval(() => {
       this.cleanupExpired();
     }, 60000); // Every minute
-
-    this.initRedis();
-  }
-
-  private async initRedis(): Promise<void> {
-    if (!process.env.REDIS_URL) {
-      console.log('📦 Using in-memory cache (Redis not configured)');
-      return;
-    }
-
-    // NOTE: Uncomment when Redis is available
-    /*
-    try {
-      this.redis = createClient({
-        url: process.env.REDIS_URL,
-      });
-
-      this.redis.on('error', (err) => {
-        console.error('Redis error:', err);
-        this.useRedis = false;
-      });
-
-      await this.redis.connect();
-      this.useRedis = true;
-      console.log('✅ Redis cache connected');
-    } catch (error) {
-      console.error('Failed to connect to Redis:', error);
-      console.log('📦 Falling back to in-memory cache');
-      this.useRedis = false;
-    }
-    */
   }
 
   /**
    * Set value in cache with TTL (seconds)
    */
   async set<T>(key: string, value: T, ttl: number = 3600): Promise<void> {
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      /*
-      await this.redis!.setEx(
-        key,
-        ttl,
-        JSON.stringify(value)
-      );
-      */
-    } else {
-      // In-memory cache
-      const expiresAt = Date.now() + ttl * 1000;
-      this.memoryCache.set(key, { value, expiresAt });
-    }
+    await setCache(key, value, ttl);
   }
 
   /**
    * Get value from cache
    */
   async get<T>(key: string): Promise<T | null> {
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      /*
-      const data = await this.redis!.get(key);
-      return data ? JSON.parse(data) : null;
-      */
-      return null;
-    } else {
-      // In-memory cache
-      const entry = this.memoryCache.get(key);
-      if (!entry) return null;
-
-      // Check if expired
-      if (Date.now() > entry.expiresAt) {
-        this.memoryCache.delete(key);
-        return null;
-      }
-
-      return entry.value as T;
-    }
+    return getCache<T>(key);
   }
 
   /**
    * Delete value from cache
    */
   async del(key: string): Promise<void> {
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      // await this.redis!.del(key);
-    } else {
-      this.memoryCache.delete(key);
-    }
+    await deleteCache(key);
   }
 
   /**
    * Check if key exists
    */
   async has(key: string): Promise<boolean> {
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      // return await this.redis!.exists(key) > 0;
-      return false;
-    } else {
-      const entry = this.memoryCache.get(key);
-      if (!entry) return false;
+    const redis = getRedis();
 
-      // Check if expired
-      if (Date.now() > entry.expiresAt) {
-        this.memoryCache.delete(key);
-        return false;
+    if (redis) {
+      try {
+        return (await redis.exists(key)) > 0;
+      } catch (error) {
+        console.error('Redis exists error:', error);
+        // Fall through to memory cache
       }
-
-      return true;
     }
+
+    const entry = memoryCache.get(key);
+    if (!entry) return false;
+
+    // Check if expired
+    if (Date.now() > entry.expiresAt) {
+      memoryCache.delete(key);
+      return false;
+    }
+
+    return true;
   }
 
   /**
    * Clear all cache
    */
   async clear(): Promise<void> {
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      // await this.redis!.flushDb();
-    } else {
-      this.memoryCache.clear();
+    const redis = getRedis();
+
+    if (redis) {
+      try {
+        await redis.flushdb();
+        return;
+      } catch (error) {
+        console.error('Redis flushdb error:', error);
+      }
     }
+
+    memoryCache.clear();
   }
 
   /**
@@ -204,54 +206,60 @@ class CacheService {
   }
 
   /**
-   * Delete keys by pattern (in-memory only)
+   * Delete keys by pattern
    */
   async delPattern(pattern: string): Promise<void> {
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      /*
-      const keys = await this.redis!.keys(pattern);
-      if (keys.length > 0) {
-        await this.redis!.del(keys);
-      }
-      */
-    } else {
-      const regex = new RegExp(pattern.replace('*', '.*'));
-      const keysToDelete: string[] = [];
+    const redis = getRedis();
 
-      for (const key of this.memoryCache.keys()) {
-        if (regex.test(key)) {
-          keysToDelete.push(key);
+    if (redis) {
+      try {
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+          await redis.del(...keys);
         }
-      }
-
-      for (const key of keysToDelete) {
-        this.memoryCache.delete(key);
+        return;
+      } catch (error) {
+        console.error('Redis del pattern error:', error);
       }
     }
+
+    // Memory fallback
+    const regex = new RegExp(pattern.replace(/\*/g, '.*'));
+    const keysToDelete: string[] = [];
+
+    Array.from(memoryCache.keys()).forEach((key) => {
+      if (regex.test(key)) {
+        keysToDelete.push(key);
+      }
+    });
+
+    keysToDelete.forEach((key) => {
+      memoryCache.delete(key);
+    });
   }
 
   /**
    * Cleanup expired entries (in-memory only)
    */
   private cleanupExpired(): void {
-    if (this.useRedis) return;
+    const redis = getRedis();
+    if (redis) return; // Redis handles its own expiration
 
     const now = Date.now();
     const keysToDelete: string[] = [];
 
-    for (const [key, entry] of this.memoryCache.entries()) {
+    Array.from(memoryCache.entries()).forEach(([key, entry]) => {
       if (now > entry.expiresAt) {
         keysToDelete.push(key);
       }
-    }
+    });
 
-    for (const key of keysToDelete) {
-      this.memoryCache.delete(key);
-    }
+    keysToDelete.forEach((key) => {
+      memoryCache.delete(key);
+    });
 
     if (keysToDelete.length > 0) {
-      console.log(`🧹 Cleaned up ${keysToDelete.length} expired cache entries`);
+      console.log(`Cleaned up ${keysToDelete.length} expired cache entries`);
     }
   }
 
@@ -259,9 +267,10 @@ class CacheService {
    * Get cache stats
    */
   getStats(): { size: number; type: 'memory' | 'redis' } {
+    const redis = getRedis();
     return {
-      size: this.memoryCache.size,
-      type: this.useRedis ? 'redis' : 'memory',
+      size: memoryCache.size,
+      type: redis ? 'redis' : 'memory',
     };
   }
 
@@ -271,11 +280,6 @@ class CacheService {
   async close(): Promise<void> {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
-    }
-
-    if (this.useRedis) {
-      // NOTE: Uncomment when Redis is available
-      // await this.redis?.quit();
     }
   }
 }

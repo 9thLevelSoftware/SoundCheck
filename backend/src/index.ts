@@ -11,6 +11,10 @@ if (process.env.NODE_ENV !== 'production') {
 import { initSentry, setupSentryForExpress, closeSentry, captureException as sentryCaptureException } from './utils/sentry';
 initSentry();
 
+// Initialize Redis for distributed rate limiting and caching
+import { initRedis, closeRedis } from './utils/redisRateLimiter';
+initRedis();
+
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
@@ -303,6 +307,7 @@ const startServer = async () => {
 process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
+  await closeRedis();
   websocket.close();
   const db = Database.getInstance();
   await db.close();
@@ -312,6 +317,7 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
+  await closeRedis();
   websocket.close();
   const db = Database.getInstance();
   await db.close();
