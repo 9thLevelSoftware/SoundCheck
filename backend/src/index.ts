@@ -8,7 +8,7 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Initialize Sentry EARLY, before other imports that might throw errors
-import { initSentry, sentryErrorHandler, captureException as sentryCaptureException } from './utils/sentry';
+import { initSentry, setupSentryForExpress, closeSentry, captureException as sentryCaptureException } from './utils/sentry';
 initSentry();
 
 import express from 'express';
@@ -206,8 +206,9 @@ app.use('*', (req, res) => {
   res.status(404).json(response);
 });
 
-// Sentry error handler - must be before other error handlers
-app.use(sentryErrorHandler());
+// Setup Sentry Express error handler - must be before other error handlers
+// Uses Sentry SDK v10+ API: setupExpressErrorHandler(app)
+setupSentryForExpress(app);
 
 // Global error handler - catches ALL errors including async
 app.use((error: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -301,6 +302,7 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
+  await closeSentry(2000); // Wait up to 2s for pending Sentry events
   websocket.close();
   const db = Database.getInstance();
   await db.close();
@@ -309,6 +311,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
+  await closeSentry(2000); // Wait up to 2s for pending Sentry events
   websocket.close();
   const db = Database.getInstance();
   await db.close();

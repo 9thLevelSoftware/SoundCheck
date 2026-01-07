@@ -30,6 +30,16 @@ export function initSentry(): void {
       // Enable HTTP request tracing
       Sentry.httpIntegration(),
     ],
+    // Scrub sensitive data before sending to Sentry
+    beforeSend: (event) => {
+      // Scrub sensitive headers
+      if (event.request?.headers) {
+        delete event.request.headers['authorization'];
+        delete event.request.headers['cookie'];
+        delete event.request.headers['x-api-key'];
+      }
+      return event;
+    },
   });
 
   sentryInitialized = true;
@@ -37,25 +47,27 @@ export function initSentry(): void {
 }
 
 /**
- * Express request handler middleware
- * Must be the first middleware in the stack
+ * Setup Sentry Express error handler on the app
+ * In Sentry SDK v10+, setupExpressErrorHandler must be called directly on the app
+ * This should be called after routes but before custom error handlers
  */
-export function sentryRequestHandler() {
+export function setupSentryForExpress(app: any): void {
   if (!sentryInitialized) {
-    return (_req: any, _res: any, next: any) => next();
+    return;
   }
-  return Sentry.expressIntegration().setupOnce as any;
+  // Sentry v10+ API: setupExpressErrorHandler adds both request and error handling
+  Sentry.setupExpressErrorHandler(app);
 }
 
 /**
- * Express error handler middleware
- * Must be placed before other error handlers
+ * Flush pending events and close Sentry
+ * Should be called during graceful shutdown
  */
-export function sentryErrorHandler() {
+export async function closeSentry(timeout: number = 2000): Promise<void> {
   if (!sentryInitialized) {
-    return (_err: any, _req: any, _res: any, next: any) => next(_err);
+    return;
   }
-  return Sentry.setupExpressErrorHandler as any;
+  await Sentry.close(timeout);
 }
 
 /**
