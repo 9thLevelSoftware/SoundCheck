@@ -531,3 +531,23 @@ CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash)
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at);
 -- Composite index for cleanup queries (expired or revoked tokens)
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_cleanup ON refresh_tokens(expires_at, revoked_at);
+
+-- =====================================================
+-- GDPR COMPLIANCE - ACCOUNT DELETION REQUESTS
+-- =====================================================
+
+-- Account deletion requests for GDPR compliance
+-- Implements a 30-day grace period before permanent deletion/anonymization
+CREATE TABLE IF NOT EXISTS deletion_requests (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'cancelled')),
+    requested_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    scheduled_for TIMESTAMP WITH TIME ZONE NOT NULL,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    cancelled_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE INDEX IF NOT EXISTS idx_deletion_requests_user ON deletion_requests(user_id);
+CREATE INDEX IF NOT EXISTS idx_deletion_requests_status ON deletion_requests(status);
+CREATE INDEX IF NOT EXISTS idx_deletion_requests_scheduled ON deletion_requests(scheduled_for);
