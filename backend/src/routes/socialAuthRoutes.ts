@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { SocialAuthService } from '../services/SocialAuthService';
 import { ApiResponse } from '../types';
 import { logError, logInfo } from '../utils/logger';
+import { rateLimit } from '../middleware/auth';
 
 const router = Router();
 const socialAuthService = new SocialAuthService();
@@ -37,6 +38,7 @@ const appleAuthSchema = z.object({
  */
 router.post(
   '/google',
+  rateLimit(15 * 60 * 1000, 5), // 5 attempts per 15 minutes
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Validate request body
@@ -68,7 +70,6 @@ router.post(
 
       logInfo('Google social auth successful', {
         userId: result.user.id,
-        email: result.user.email,
         isNewUser: result.isNewUser,
       });
 
@@ -126,6 +127,7 @@ router.post(
  */
 router.post(
   '/apple',
+  rateLimit(15 * 60 * 1000, 5), // 5 attempts per 15 minutes
   async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
       // Validate request body
@@ -157,7 +159,6 @@ router.post(
 
       logInfo('Apple social auth successful', {
         userId: result.user.id,
-        email: result.user.email,
         isNewUser: result.isNewUser,
       });
 

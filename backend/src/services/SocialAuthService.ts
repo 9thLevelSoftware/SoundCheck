@@ -1,10 +1,14 @@
 import { OAuth2Client } from 'google-auth-library';
-import jwt from 'jsonwebtoken';
+import appleSignin from 'apple-signin-auth';
 import Database from '../config/database';
 import { User, AuthResponse } from '../types';
 import { AuthUtils } from '../utils/auth';
 import { generateRefreshToken } from '../utils/auth';
 import { mapDbUserToUser } from '../utils/dbMappers';
+import { PoolClient } from 'pg';
+
+// Placeholder password for social auth users (they authenticate via provider, not password)
+const SOCIAL_AUTH_NO_PASSWORD = '$SOCIAL_AUTH$';
 
 /**
  * Profile information extracted from social auth tokens
@@ -86,7 +90,7 @@ export class SocialAuthService {
 
   /**
    * Verify an Apple identity token and extract user profile
-   * Apple tokens are JWTs that can be verified by decoding
+   * Uses apple-signin-auth to properly verify the token signature against Apple's public keys
    * @param identityToken - The Apple identity token from the mobile client
    * @param fullName - Optional full name (only provided on first sign-in)
    * @returns The verified user profile or null if invalid
@@ -96,53 +100,36 @@ export class SocialAuthService {
     fullName?: { givenName?: string; familyName?: string }
   ): Promise<SocialProfile | null> {
     try {
-      // Decode the Apple JWT (Apple tokens are self-contained JWTs)
-      // In production, you should also fetch Apple's public keys to verify the signature
-      const decoded = jwt.decode(identityToken) as {
-        sub: string; // Apple's unique user ID
-        email?: string;
-        email_verified?: string | boolean;
-        iss: string;
-        aud: string;
-        exp: number;
-      } | null;
-
-      if (!decoded) {
-        console.error('Failed to decode Apple identity token');
-        return null;
-      }
-
-      // Verify token issuer
-      if (decoded.iss !== 'https://appleid.apple.com') {
-        console.error('Invalid Apple token issuer');
-        return null;
-      }
-
-      // Verify token is not expired
-      if (decoded.exp * 1000 < Date.now()) {
-        console.error('Apple token expired');
-        return null;
-      }
-
-      // Apple bundle ID should match
+      // Require APPLE_BUNDLE_ID for Apple sign-in
       const appleBundleId = process.env.APPLE_BUNDLE_ID;
-      if (appleBundleId && decoded.aud !== appleBundleId) {
-        console.error('Apple token audience mismatch');
+      if (!appleBundleId) {
+        console.error('APPLE_BUNDLE_ID environment variable required for Apple sign-in');
+        throw new Error('APPLE_BUNDLE_ID environment variable required for Apple sign-in');
+      }
+
+      // Verify the token signature against Apple's public keys
+      const appleUser = await appleSignin.verifyIdToken(identityToken, {
+        audience: appleBundleId,
+        ignoreExpiration: false,
+      });
+
+      if (!appleUser.sub) {
+        console.error('Invalid Apple token: missing subject');
         return null;
       }
 
       // Email might not be present after first sign-in
       // We need to look it up from existing social account if not provided
-      const email = decoded.email;
+      const email = appleUser.email;
 
       return {
         provider: 'apple',
-        providerId: decoded.sub,
+        providerId: appleUser.sub,
         email: email || '', // May be empty, will be handled in authenticateOrCreate
         firstName: fullName?.givenName,
         lastName: fullName?.familyName,
       };
-    } catch (error) {
+    } catch (error: any) {
       console.error('Apple token verification failed:', error);
       return null;
     }
@@ -266,39 +253,66 @@ export class SocialAuthService {
       [userId, provider, providerId]
     );
   }
+  /**
+   * Link a social account using a specific database client (for transactions)
+   */
+  private async linkSocialAccountWithClient(
+    client: PoolClient,
+    userId: string,
+    provider: string,
+    providerId: string
+  ): Promise<void> {
+    await client.query(
+      `INSERT INTO user_social_accounts (user_id, provider, provider_id)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (provider, provider_id) DO NOTHING`,
+      [userId, provider, providerId]
+    );
+  }
 
   /**
    * Create a new user from social profile
+   * Uses a database transaction to ensure user creation and social account linking are atomic
    */
   private async createSocialUser(profile: SocialProfile): Promise<User> {
-    // Generate a unique username based on email or name
-    const baseUsername = this.generateBaseUsername(profile);
-    const username = await this.generateUniqueUsername(baseUsername);
+    const client = await this.db.getPool().connect();
+    try {
+      await client.query('BEGIN');
 
-    // Create user without password (social-only auth)
-    const result = await this.db.query(
-      `INSERT INTO users (email, password_hash, username, first_name, last_name, profile_image_url, is_verified)
-       VALUES ($1, $2, $3, $4, $5, $6, true)
-       RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
-                 location, date_of_birth, is_verified, is_active, created_at, updated_at`,
-      [
-        profile.email.toLowerCase(),
-        '', // No password for social auth users
-        username,
-        profile.firstName || null,
-        profile.lastName || null,
-        profile.profileImageUrl || null,
-      ]
-    );
+      // Generate a unique username based on email or name
+      const baseUsername = this.generateBaseUsername(profile);
+      const username = await this.generateUniqueUsernameWithClient(client, baseUsername);
 
-    const user = mapDbUserToUser(result.rows[0]);
+      // Create user with placeholder password (social-only auth)
+      const result = await client.query(
+        `INSERT INTO users (email, password_hash, username, first_name, last_name, profile_image_url, is_verified)
+         VALUES ($1, $2, $3, $4, $5, $6, true)
+         RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
+                   location, date_of_birth, is_verified, is_active, created_at, updated_at`,
+        [
+          profile.email.toLowerCase(),
+          SOCIAL_AUTH_NO_PASSWORD, // Recognizable placeholder for social auth users
+          username,
+          profile.firstName || null,
+          profile.lastName || null,
+          profile.profileImageUrl || null,
+        ]
+      );
 
-    // Link the social account
-    await this.linkSocialAccount(user.id, profile.provider, profile.providerId);
+      const user = mapDbUserToUser(result.rows[0]);
 
-    return user;
+      // Link the social account within the same transaction
+      await this.linkSocialAccountWithClient(client, user.id, profile.provider, profile.providerId);
+
+      await client.query('COMMIT');
+      return user;
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
   }
-
   /**
    * Generate a base username from profile
    */
@@ -350,6 +364,48 @@ export class SocialAuthService {
    */
   private async usernameExists(username: string): Promise<boolean> {
     const result = await this.db.query(
+      `SELECT 1 FROM users WHERE username = $1 LIMIT 1`,
+      [username]
+    );
+    return result.rows.length > 0;
+  }
+
+  /**
+   * Generate a unique username using a specific database client (for transactions)
+   */
+  private async generateUniqueUsernameWithClient(client: PoolClient, baseUsername: string): Promise<string> {
+    // Ensure base username is at least 3 characters
+    if (baseUsername.length < 3) {
+      baseUsername = baseUsername + 'user';
+    }
+
+    // Truncate to leave room for suffix
+    if (baseUsername.length > 25) {
+      baseUsername = baseUsername.substring(0, 25);
+    }
+
+    let username = baseUsername;
+    let suffix = 1;
+
+    while (await this.usernameExistsWithClient(client, username)) {
+      username = `${baseUsername}${suffix}`;
+      suffix++;
+
+      // Safety limit to prevent infinite loop
+      if (suffix > 9999) {
+        username = `${baseUsername}${Date.now()}`;
+        break;
+      }
+    }
+
+    return username;
+  }
+
+  /**
+   * Check if a username already exists using a specific database client (for transactions)
+   */
+  private async usernameExistsWithClient(client: PoolClient, username: string): Promise<boolean> {
+    const result = await client.query(
       `SELECT 1 FROM users WHERE username = $1 LIMIT 1`,
       [username]
     );

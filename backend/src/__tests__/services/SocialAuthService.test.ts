@@ -12,8 +12,18 @@ jest.mock('google-auth-library', () => ({
   })),
 }));
 
+const mockClient = {
+  query: jest.fn(),
+  release: jest.fn(),
+};
+
+const mockPool = {
+  connect: jest.fn().mockResolvedValue(mockClient),
+};
+
 const mockDb = {
   query: jest.fn(),
+  getPool: jest.fn().mockReturnValue(mockPool),
 };
 
 (Database.getInstance as jest.Mock).mockReturnValue(mockDb);

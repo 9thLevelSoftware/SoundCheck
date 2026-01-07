@@ -27,6 +27,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/multer": "^2.0.0",
+    "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
