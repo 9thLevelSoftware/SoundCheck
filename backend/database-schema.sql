@@ -459,3 +459,75 @@ INSERT INTO badges (name, description, badge_type, requirement_value, color) VAL
 ('Loyal Fan', 'Check in to the same band 5 times', 'loyal_fan', 5, '#FF4081'),
 ('Genre Master', 'Check in to 20 shows of the same genre', 'genre_master', 20, '#7C4DFF')
 ON CONFLICT (name) DO NOTHING;
+
+-- =====================================================
+-- REVIEWS (Venue and Band Reviews)
+-- =====================================================
+
+-- Reviews for venues and bands
+CREATE TABLE IF NOT EXISTS reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    venue_id UUID REFERENCES venues(id) ON DELETE CASCADE,
+    band_id UUID REFERENCES bands(id) ON DELETE CASCADE,
+    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+    title VARCHAR(100),
+    content TEXT,
+    event_date DATE,
+    image_urls TEXT[], -- Array of image URLs
+    is_verified BOOLEAN DEFAULT FALSE,
+    helpful_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    -- Ensure review is for either venue OR band, not both or neither
+    CONSTRAINT review_target_check CHECK (
+        (venue_id IS NOT NULL AND band_id IS NULL) OR
+        (venue_id IS NULL AND band_id IS NOT NULL)
+    )
+);
+
+-- Review helpfulness tracking (users marking reviews as helpful)
+CREATE TABLE IF NOT EXISTS review_helpfulness (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    review_id UUID NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    is_helpful BOOLEAN NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(review_id, user_id)
+);
+
+-- Reviews indexes
+CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_venue ON reviews(venue_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_band ON reviews(band_id);
+CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews(rating);
+CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_reviews_helpful ON reviews(helpful_count DESC);
+
+-- Review helpfulness indexes
+CREATE INDEX IF NOT EXISTS idx_review_helpfulness_review ON review_helpfulness(review_id);
+CREATE INDEX IF NOT EXISTS idx_review_helpfulness_user ON review_helpfulness(user_id);
+
+-- Trigger for reviews updated_at
+DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
+CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- =====================================================
+-- REFRESH TOKENS (JWT Revocation Support)
+-- =====================================================
+
+-- Refresh tokens for JWT revocation
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token_hash VARCHAR(64) NOT NULL UNIQUE,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    revoked_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_hash ON refresh_tokens(token_hash);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires ON refresh_tokens(expires_at);
+-- Composite index for cleanup queries (expired or revoked tokens)
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_cleanup ON refresh_tokens(expires_at, revoked_at);
