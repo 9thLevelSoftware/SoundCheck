@@ -62,7 +62,7 @@ class CrashReportingService {
         // Filter out non-critical errors
         options.beforeSend = (event, hint) {
           // Filter setState errors which are usually Flutter internals
-          if (event.message?.formatted?.contains('setState') ?? false) {
+          if (event.message?.formatted.contains('setState') ?? false) {
             return null;
           }
           return event;
@@ -93,9 +93,7 @@ class CrashReportingService {
       stackTrace: stackTrace,
       withScope: (scope) {
         if (extra != null) {
-          extra.forEach((key, value) {
-            scope.setExtra(key, value);
-          });
+          scope.setContexts('extra', extra);
         }
       },
     );
@@ -117,9 +115,7 @@ class CrashReportingService {
       level: level,
       withScope: (scope) {
         if (extra != null) {
-          extra.forEach((key, value) {
-            scope.setExtra(key, value);
-          });
+          scope.setContexts('extra', extra);
         }
       },
     );
@@ -133,7 +129,7 @@ class CrashReportingService {
       scope.setUser(SentryUser(
         id: userId,
         email: email,
-      ));
+      ),);
     });
   }
 
@@ -159,7 +155,7 @@ class CrashReportingService {
       category: category,
       data: data,
       timestamp: DateTime.now(),
-    ));
+    ),);
   }
 
   /// Check if Sentry is initialized

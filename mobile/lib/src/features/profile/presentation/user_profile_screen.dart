@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class UserProfileScreen extends ConsumerWidget {
   final String userId;
 
-  const UserProfileScreen({super.key, required this.userId});
+  const UserProfileScreen({required this.userId, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

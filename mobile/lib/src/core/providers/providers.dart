@@ -25,7 +25,7 @@ BiometricService biometricService(Ref ref) {
 @Riverpod(keepAlive: true)
 WebSocketService webSocketService(Ref ref) {
   final service = WebSocketService();
-  ref.onDispose(() => service.dispose());
+  ref.onDispose(service.dispose);
   return service;
 }
 

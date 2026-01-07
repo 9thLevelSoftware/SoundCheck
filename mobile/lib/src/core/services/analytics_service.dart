@@ -115,7 +115,7 @@ class AnalyticsService {
       'venue_id': venueId,
       if (bandId != null) 'band_id': bandId,
       if (rating != null) 'rating': rating,
-    });
+    },);
   }
 
   /// Log a search event
@@ -128,7 +128,7 @@ class AnalyticsService {
     await logEvent(name: 'venue_viewed', parameters: {
       'venue_id': venueId,
       if (venueName != null) 'venue_name': venueName,
-    });
+    },);
   }
 
   /// Log band view
@@ -136,7 +136,7 @@ class AnalyticsService {
     await logEvent(name: 'band_viewed', parameters: {
       'band_id': bandId,
       if (bandName != null) 'band_name': bandName,
-    });
+    },);
   }
 
   /// Log follow action
@@ -147,7 +147,7 @@ class AnalyticsService {
     await logEvent(name: 'follow', parameters: {
       'target_type': targetType,
       'target_id': targetId,
-    });
+    },);
   }
 
   /// Log unfollow action
@@ -158,7 +158,7 @@ class AnalyticsService {
     await logEvent(name: 'unfollow', parameters: {
       'target_type': targetType,
       'target_id': targetId,
-    });
+    },);
   }
 
   /// Log content share
@@ -169,7 +169,7 @@ class AnalyticsService {
     await logEvent(name: 'share', parameters: {
       'content_type': contentType,
       'item_id': itemId,
-    });
+    },);
   }
 
   /// Log error occurrence
@@ -182,7 +182,7 @@ class AnalyticsService {
       'error_type': errorType,
       if (errorMessage != null) 'error_message': errorMessage,
       if (errorCode != null) 'error_code': errorCode,
-    });
+    },);
   }
 }
 

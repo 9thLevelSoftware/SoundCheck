@@ -181,7 +181,7 @@ class WebSocketService {
         'userId': userId,
         'token': token,
       },
-    ));
+    ),);
   }
 
   /// Join a room for targeted messages
@@ -194,7 +194,7 @@ class WebSocketService {
     _send(WebSocketMessage(
       type: 'join_room',
       payload: {'room': room},
-    ));
+    ),);
 
     _joinedRooms.add(room);
   }
@@ -209,7 +209,7 @@ class WebSocketService {
     _send(WebSocketMessage(
       type: 'leave_room',
       payload: {'room': room},
-    ));
+    ),);
 
     _joinedRooms.remove(room);
   }
@@ -263,7 +263,7 @@ class WebSocketService {
             _send(WebSocketMessage(
               type: 'join_room',
               payload: {'room': room},
-            ));
+            ),);
           }
           break;
 
@@ -320,7 +320,7 @@ class WebSocketService {
         _send(WebSocketMessage(
           type: 'ping',
           payload: {},
-        ));
+        ),);
       }
     });
   }

@@ -92,8 +92,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         if (user != null) {
           // Success - show message (router will handle navigation)
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Account created successfully!'),
+            const SnackBar(
+              content: Text('Account created successfully!'),
               backgroundColor: AppTheme.success,
               behavior: SnackBarBehavior.floating,
             ),

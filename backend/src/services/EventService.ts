@@ -13,6 +13,14 @@ interface CreateShowRequest {
   description?: string;
 }
 
+interface CreateEventRequest {
+  venueId: string;
+  bandId: string;
+  eventDate: Date;
+  eventName?: string;
+  createdByUserId?: string;
+}
+
 interface Show {
   id: string;
   venueId: string;
@@ -307,6 +315,70 @@ export class EventService {
       console.error('Delete show error:', error);
       throw error;
     }
+  }
+
+  // ============================================
+  // Event API wrapper methods (for EventController)
+  // ============================================
+
+  /**
+   * Create a new event (wrapper for createShow)
+   */
+  async createEvent(data: CreateEventRequest): Promise<Show> {
+    return this.createShow({
+      venueId: data.venueId,
+      bandId: data.bandId,
+      showDate: data.eventDate,
+      description: data.eventName,
+    });
+  }
+
+  /**
+   * Get event by ID (wrapper for getShowById)
+   */
+  async getEventById(eventId: string): Promise<Show> {
+    return this.getShowById(eventId);
+  }
+
+  /**
+   * Get events by venue (wrapper for getShowsByVenue)
+   */
+  async getEventsByVenue(
+    venueId: string,
+    options: { upcoming?: boolean; limit?: number } = {}
+  ): Promise<Show[]> {
+    return this.getShowsByVenue(venueId, options);
+  }
+
+  /**
+   * Get events by band (wrapper for getShowsByBand)
+   */
+  async getEventsByBand(
+    bandId: string,
+    options: { upcoming?: boolean; limit?: number } = {}
+  ): Promise<Show[]> {
+    return this.getShowsByBand(bandId, options);
+  }
+
+  /**
+   * Get upcoming events (wrapper for getUpcomingShows)
+   */
+  async getUpcomingEvents(limit: number = 50): Promise<Show[]> {
+    return this.getUpcomingShows(limit);
+  }
+
+  /**
+   * Get trending events (wrapper for getTrendingShows)
+   */
+  async getTrendingEvents(limit: number = 20): Promise<Show[]> {
+    return this.getTrendingShows(limit);
+  }
+
+  /**
+   * Delete an event (wrapper for deleteShow)
+   */
+  async deleteEvent(eventId: string): Promise<void> {
+    return this.deleteShow(eventId);
   }
 
   /**

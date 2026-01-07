@@ -84,7 +84,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   Future<void> _pickImage() async {
     if (_selectedImages.length >= _maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Maximum $_maxImages photos allowed'),
           backgroundColor: AppTheme.error,
         ),
@@ -202,7 +202,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   Future<void> _pickImageFromCamera() async {
     if (_selectedImages.length >= _maxImages) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
+        const SnackBar(
           content: Text('Maximum $_maxImages photos allowed'),
           backgroundColor: AppTheme.error,
         ),

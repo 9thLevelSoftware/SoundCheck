@@ -156,7 +156,7 @@ class SettingsScreen extends ConsumerWidget {
               const _SectionHeader(title: 'Account'),
               _SettingsTile(
                 title: 'Logout',
-                leading: Icon(Icons.logout, color: AppTheme.error),
+                leading: const Icon(Icons.logout, color: AppTheme.error),
                 textColor: AppTheme.error,
                 onTap: () async {
                   final shouldLogout = await showDialog<bool>(
