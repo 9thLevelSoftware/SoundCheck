@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../providers/providers.dart';
+import '../services/analytics_service.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/feed/presentation/feed_screen.dart';
@@ -39,6 +40,9 @@ GoRouter goRouter(Ref ref) {
 
   return GoRouter(
     initialLocation: '/splash',
+    observers: [
+      if (AnalyticsService.observer != null) AnalyticsService.observer!,
+    ],
     redirect: (context, state) {
       final isLoading = authState.isLoading;
       final isAuthenticated = authState.hasValue && authState.value != null;

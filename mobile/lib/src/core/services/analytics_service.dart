@@ -1,159 +1,197 @@
 /// Analytics Service for tracking user events and behavior
 ///
-/// Supports multiple analytics providers:
-/// - Mixpanel (recommended for user analytics)
-/// - Amplitude (good for product analytics)
-/// - Google Analytics (good for web conversion tracking)
-/// - Firebase Analytics (good for mobile app analytics)
-///
-/// SETUP INSTRUCTIONS:
-/// 1. Choose analytics provider (Mixpanel recommended)
-/// 2. Create project and get API key
-/// 3. Add to pubspec.yaml: mixpanel_flutter: ^2.2.0 (or your choice)
-/// 4. Set API_KEY via --dart-define=MIXPANEL_TOKEN=your_token
-/// 5. Uncomment implementation code below
+/// Uses Firebase Analytics for mobile app analytics.
 ///
 /// USAGE:
 /// import 'package:pitpulse_flutter/src/core/services/analytics_service.dart';
 ///
 /// // In main.dart
-/// await AnalyticsService.init();
+/// await AnalyticsService.initialize();
 ///
 /// // Track events
-/// AnalyticsService.trackEvent('venue_viewed', {'venue_id': '123'});
-/// AnalyticsService.trackScreen('VenueDetailScreen');
-/// AnalyticsService.setUserProperties({'plan': 'premium'});
+/// AnalyticsService.logEvent(name: 'venue_viewed', parameters: {'venue_id': '123'});
+/// AnalyticsService.logScreenView('VenueDetailScreen');
+/// AnalyticsService.setUserProperty(name: 'plan', value: 'premium');
 library;
 
+import 'package:firebase_analytics/firebase_analytics.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/foundation.dart';
-// NOTE: Uncomment when mixpanel_flutter is added to pubspec.yaml
-// import 'package:mixpanel_flutter/mixpanel_flutter.dart';
 
 class AnalyticsService {
-  // static Mixpanel? _mixpanel;
-
-  static const String _mixpanelToken = String.fromEnvironment(
-    'MIXPANEL_TOKEN',
-    defaultValue: '',
-  );
-
+  static FirebaseAnalytics? _analytics;
+  static FirebaseAnalyticsObserver? _observer;
   static bool _initialized = false;
 
-  /// Initialize analytics
-  static Future<void> init() async {
+  /// Initialize Firebase Analytics
+  static Future<void> initialize() async {
     if (_initialized) return;
 
-    if (_mixpanelToken.isEmpty) {
-      if (kReleaseMode) {
-        debugPrint('WARNING: MIXPANEL_TOKEN not configured. Analytics disabled.');
-      }
+    try {
+      await Firebase.initializeApp();
+      _analytics = FirebaseAnalytics.instance;
+      _observer = FirebaseAnalyticsObserver(analytics: _analytics!);
       _initialized = true;
-      return;
+      debugPrint('Analytics initialized');
+    } catch (e) {
+      debugPrint('Analytics initialization failed: $e');
+      _initialized = true; // Mark as initialized to prevent retry loops
     }
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    /*
-    _mixpanel = await Mixpanel.init(
-      _mixpanelToken,
-      trackAutomaticEvents: true,
-    );
-
-    debugPrint('✅ Analytics initialized (Mixpanel)');
-    */
-
-    _initialized = true;
   }
 
-  /// Track a custom event
-  static void trackEvent(String eventName, [Map<String, dynamic>? properties]) {
-    if (!_initialized || _mixpanelToken.isEmpty) {
-      debugPrint('Analytics (not configured): $eventName - $properties');
+  /// Get the analytics observer for automatic screen tracking in GoRouter
+  static FirebaseAnalyticsObserver? get observer => _observer;
+
+  /// Check if analytics is properly initialized
+  static bool get isInitialized => _initialized && _analytics != null;
+
+  /// Log a custom event
+  static Future<void> logEvent({
+    required String name,
+    Map<String, Object>? parameters,
+  }) async {
+    if (!_initialized || _analytics == null) {
+      debugPrint('Analytics (not initialized): $name - $parameters');
       return;
     }
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    // _mixpanel?.track(eventName, properties: properties);
+    await _analytics!.logEvent(name: name, parameters: parameters);
   }
 
-  /// Track screen view
-  static void trackScreen(String screenName, [Map<String, dynamic>? properties]) {
-    trackEvent('screen_viewed', {
-      'screen_name': screenName,
-      ...?properties,
+  /// Set the user ID for analytics
+  static Future<void> setUserId(String userId) async {
+    if (!_initialized || _analytics == null) return;
+    await _analytics!.setUserId(id: userId);
+  }
+
+  /// Clear the user ID (on logout)
+  static Future<void> clearUserId() async {
+    if (!_initialized || _analytics == null) return;
+    await _analytics!.setUserId(id: null);
+  }
+
+  /// Set a user property
+  static Future<void> setUserProperty({
+    required String name,
+    required String value,
+  }) async {
+    if (!_initialized || _analytics == null) return;
+    await _analytics!.setUserProperty(name: name, value: value);
+  }
+
+  /// Log a screen view
+  static Future<void> logScreenView(String screenName) async {
+    if (!_initialized || _analytics == null) {
+      debugPrint('Analytics (not initialized): screen_view - $screenName');
+      return;
+    }
+    await _analytics!.logScreenView(screenName: screenName);
+  }
+
+  // ============ Standard Events ============
+
+  /// Log user login
+  static Future<void> logLogin(String method) async {
+    await logEvent(name: 'login', parameters: {'method': method});
+  }
+
+  /// Log user sign up
+  static Future<void> logSignUp(String method) async {
+    await logEvent(name: 'sign_up', parameters: {'method': method});
+  }
+
+  /// Log user logout
+  static Future<void> logLogout() async {
+    await logEvent(name: 'logout');
+    await clearUserId();
+  }
+
+  /// Log a check-in event
+  static Future<void> logCheckin({
+    required String venueId,
+    String? bandId,
+    int? rating,
+  }) async {
+    await logEvent(name: 'checkin', parameters: {
+      'venue_id': venueId,
+      if (bandId != null) 'band_id': bandId,
+      if (rating != null) 'rating': rating,
     });
   }
 
-  /// Identify user
-  static void identifyUser(String userId, {
-    String? email,
-    String? username,
-  }) {
-    if (!_initialized || _mixpanelToken.isEmpty) return;
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    /*
-    _mixpanel?.identify(userId);
-
-    if (email != null) {
-      _mixpanel?.getPeople().set('\$email', email);
-    }
-    if (username != null) {
-      _mixpanel?.getPeople().set('\$name', username);
-    }
-    */
+  /// Log a search event
+  static Future<void> logSearch(String query) async {
+    await logEvent(name: 'search', parameters: {'search_term': query});
   }
 
-  /// Set user properties
-  static void setUserProperties(Map<String, dynamic> properties) {
-    if (!_initialized || _mixpanelToken.isEmpty) return;
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    /*
-    properties.forEach((key, value) {
-      _mixpanel?.getPeople().set(key, value);
+  /// Log venue view
+  static Future<void> logVenueView(String venueId, {String? venueName}) async {
+    await logEvent(name: 'venue_viewed', parameters: {
+      'venue_id': venueId,
+      if (venueName != null) 'venue_name': venueName,
     });
-    */
   }
 
-  /// Increment user property
-  static void incrementProperty(String property, [double by = 1]) {
-    if (!_initialized || _mixpanelToken.isEmpty) return;
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    // _mixpanel?.getPeople().increment(property, by);
+  /// Log band view
+  static Future<void> logBandView(String bandId, {String? bandName}) async {
+    await logEvent(name: 'band_viewed', parameters: {
+      'band_id': bandId,
+      if (bandName != null) 'band_name': bandName,
+    });
   }
 
-  /// Track revenue
-  static void trackRevenue(double amount, {Map<String, dynamic>? properties}) {
-    if (!_initialized || _mixpanelToken.isEmpty) return;
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    // _mixpanel?.getPeople().trackCharge(amount, properties: properties);
+  /// Log follow action
+  static Future<void> logFollow({
+    required String targetType,
+    required String targetId,
+  }) async {
+    await logEvent(name: 'follow', parameters: {
+      'target_type': targetType,
+      'target_id': targetId,
+    });
   }
 
-  /// Reset user (logout)
-  static void reset() {
-    if (!_initialized || _mixpanelToken.isEmpty) return;
-
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    // _mixpanel?.reset();
+  /// Log unfollow action
+  static Future<void> logUnfollow({
+    required String targetType,
+    required String targetId,
+  }) async {
+    await logEvent(name: 'unfollow', parameters: {
+      'target_type': targetType,
+      'target_id': targetId,
+    });
   }
 
-  /// Flush pending events
-  static void flush() {
-    if (!_initialized || _mixpanelToken.isEmpty) return;
+  /// Log content share
+  static Future<void> logShare({
+    required String contentType,
+    required String itemId,
+  }) async {
+    await logEvent(name: 'share', parameters: {
+      'content_type': contentType,
+      'item_id': itemId,
+    });
+  }
 
-    // NOTE: Uncomment when mixpanel_flutter is installed
-    // _mixpanel?.flush();
+  /// Log error occurrence
+  static Future<void> logError({
+    required String errorType,
+    String? errorMessage,
+    String? errorCode,
+  }) async {
+    await logEvent(name: 'app_error', parameters: {
+      'error_type': errorType,
+      if (errorMessage != null) 'error_message': errorMessage,
+      if (errorCode != null) 'error_code': errorCode,
+    });
   }
 }
 
 /// Common event names for consistency
 class AnalyticsEvents {
   // Authentication
-  static const String login = 'user_logged_in';
-  static const String register = 'user_registered';
-  static const String logout = 'user_logged_out';
+  static const String login = 'login';
+  static const String register = 'sign_up';
+  static const String logout = 'logout';
 
   // Venues
   static const String venueViewed = 'venue_viewed';
@@ -175,22 +213,22 @@ class AnalyticsEvents {
   static const String reviewUnliked = 'review_unliked';
 
   // Check-ins
-  static const String checkinCreated = 'checkin_created';
+  static const String checkinCreated = 'checkin';
   static const String checkinDeleted = 'checkin_deleted';
 
   // Social
-  static const String userFollowed = 'user_followed';
-  static const String userUnfollowed = 'user_unfollowed';
+  static const String userFollowed = 'follow';
+  static const String userUnfollowed = 'unfollow';
   static const String profileViewed = 'profile_viewed';
 
   // Engagement
-  static const String shareContent = 'content_shared';
-  static const String searchPerformed = 'search_performed';
+  static const String shareContent = 'share';
+  static const String searchPerformed = 'search';
   static const String filterApplied = 'filter_applied';
   static const String sortApplied = 'sort_applied';
 
   // Errors
-  static const String errorOccurred = 'error_occurred';
+  static const String errorOccurred = 'app_error';
   static const String apiError = 'api_error';
 }
 
@@ -202,7 +240,7 @@ class AnalyticsProperties {
   static const String bandName = 'band_name';
   static const String reviewId = 'review_id';
   static const String rating = 'rating';
-  static const String searchQuery = 'search_query';
+  static const String searchQuery = 'search_term';
   static const String filterType = 'filter_type';
   static const String sortBy = 'sort_by';
   static const String errorMessage = 'error_message';
@@ -210,4 +248,7 @@ class AnalyticsProperties {
   static const String userId = 'user_id';
   static const String screenName = 'screen_name';
   static const String source = 'source';
+  static const String contentType = 'content_type';
+  static const String itemId = 'item_id';
+  static const String method = 'method';
 }
