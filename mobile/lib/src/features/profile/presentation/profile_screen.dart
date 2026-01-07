@@ -713,8 +713,14 @@ class _CheckinCard extends StatelessWidget {
   final CheckIn checkin;
   final VoidCallback? onTap;
 
+  void _navigateToBand(BuildContext context, String bandId) {
+    HapticFeedbackUtil.selectionClick();
+    context.push('/bands/$bandId');
+  }
+
   @override
   Widget build(BuildContext context) {
+    final bandId = checkin.band?.id;
     final bandName = checkin.band?.name ?? 'Unknown Band';
     final venueName = checkin.venue?.name ?? 'Unknown Venue';
     final rating = checkin.rating;
@@ -737,43 +743,49 @@ class _CheckinCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Band logo
-                Container(
-                  width: 48,
-                  height: 48,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceDark,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: bandImageUrl != null
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            bandImageUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) => const Icon(
-                              Icons.album,
-                              color: AppTheme.electricPurple,
+                // Band logo - tappable to navigate to band detail
+                GestureDetector(
+                  onTap: bandId != null ? () => _navigateToBand(context, bandId) : null,
+                  child: Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: AppTheme.surfaceDark,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: bandImageUrl != null
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.network(
+                              bandImageUrl,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) => const Icon(
+                                Icons.album,
+                                color: AppTheme.electricPurple,
+                              ),
                             ),
+                          )
+                        : const Icon(
+                            Icons.album,
+                            color: AppTheme.electricPurple,
                           ),
-                        )
-                      : const Icon(
-                          Icons.album,
-                          color: AppTheme.electricPurple,
-                        ),
+                  ),
                 ),
                 const SizedBox(width: 12),
-                // Info
+                // Info - band name tappable to navigate to band detail
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        bandName,
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
+                      GestureDetector(
+                        onTap: bandId != null ? () => _navigateToBand(context, bandId) : null,
+                        child: Text(
+                          bandName,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
                         ),
                       ),
                       Text(
@@ -1055,13 +1067,18 @@ class _BadgesShowcase extends ConsumerWidget {
 
 // Wishlist Preview
 class _WishlistPreview extends StatelessWidget {
+  void _navigateToBand(BuildContext context, String bandId) {
+    HapticFeedbackUtil.selectionClick();
+    context.push('/bands/$bandId');
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Mock wishlist
+    // Mock wishlist - when real data is available, each item should have a bandId
     final wishlist = [
-      {'band': 'Tool', 'genre': 'Progressive Metal'},
-      {'band': 'Rammstein', 'genre': 'Industrial Metal'},
-      {'band': 'Slipknot', 'genre': 'Nu Metal'},
+      {'id': 'mock-tool-id', 'band': 'Tool', 'genre': 'Progressive Metal'},
+      {'id': 'mock-rammstein-id', 'band': 'Rammstein', 'genre': 'Industrial Metal'},
+      {'id': 'mock-slipknot-id', 'band': 'Slipknot', 'genre': 'Nu Metal'},
     ];
 
     return Container(
@@ -1074,6 +1091,7 @@ class _WishlistPreview extends StatelessWidget {
         children: wishlist.asMap().entries.map((entry) {
           final index = entry.key;
           final item = entry.value;
+          final bandId = item['id'];
           return Column(
             children: [
               ListTile(
@@ -1105,12 +1123,7 @@ class _WishlistPreview extends StatelessWidget {
                   Icons.bookmark,
                   color: AppTheme.electricPurple,
                 ),
-                onTap: () {
-                  HapticFeedbackUtil.selectionClick();
-                  debugPrint('Wishlist item tapped: ${item['band']}');
-                  // TODO: Navigate to band detail screen when route is available
-                  // context.push('/bands/${bandId}');
-                },
+                onTap: bandId != null ? () => _navigateToBand(context, bandId) : null,
               ),
               if (index < wishlist.length - 1)
                 Divider(
