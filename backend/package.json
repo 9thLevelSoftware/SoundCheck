@@ -26,6 +26,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@sentry/node": "^10.32.1",
     "@types/multer": "^2.0.0",
     "apple-signin-auth": "^2.0.0",
     "axios": "^1.13.2",

@@ -7,6 +7,10 @@ if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
 }
 
+// Initialize Sentry EARLY, before other imports that might throw errors
+import { initSentry, captureException as sentryCaptureException } from './utils/sentry';
+initSentry();
+
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
@@ -217,6 +221,16 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     userId: (req as any).user?.id,
   });
 
+  // Send to Sentry for server errors (5xx)
+  if (statusCode >= 500) {
+    sentryCaptureException(error, {
+      path: req.path,
+      method: req.method,
+      statusCode,
+      userId: (req as any).user?.id,
+    });
+  }
+
   // Build response
   const response: ApiResponse = {
     success: false,
@@ -301,11 +315,15 @@ process.on('SIGINT', async () => {
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
   logError('Uncaught Exception', { error });
+  sentryCaptureException(error, { type: 'uncaughtException' });
   process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
   logError('Unhandled Rejection', { reason, promise });
+  if (reason instanceof Error) {
+    sentryCaptureException(reason, { type: 'unhandledRejection' });
+  }
   process.exit(1);
 });
 
