@@ -50,11 +50,12 @@ describe('CheckinController', () => {
     const mockCheckin = {
       id: 'checkin-123',
       userId: 'user-123',
-      eventId: 'event-123',
-      venueRating: 4,
-      bandRating: 5,
-      reviewText: 'Great show!',
-      imageUrls: [],
+      venueId: 'venue-123',
+      bandId: 'band-123',
+      rating: 4.5,
+      comment: 'Great show!',
+      photoUrl: undefined,
+      eventDate: new Date('2024-01-01'),
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
       toastCount: 0,
@@ -69,10 +70,9 @@ describe('CheckinController', () => {
       const checkinData = {
         venueId: 'venue-123',
         bandId: 'band-123',
+        rating: 4.5,
+        comment: 'Great show!',
         eventDate: '2024-01-01',
-        venueRating: 4,
-        bandRating: 5,
-        reviewText: 'Great show!',
       };
 
       const response = await request(app)
@@ -90,9 +90,8 @@ describe('CheckinController', () => {
         userId: 'user-123',
         venueId: 'venue-123',
         bandId: 'band-123',
-        venueRating: 4,
-        bandRating: 5,
-        reviewText: 'Great show!',
+        rating: 4.5,
+        comment: 'Great show!',
       }));
     });
 
@@ -102,7 +101,7 @@ describe('CheckinController', () => {
       const checkinData = {
         venueId: 'venue-123',
         bandId: 'band-123',
-        eventDate: '2024-01-01',
+        rating: 4,
       };
 
       const response = await request(app)
@@ -120,7 +119,7 @@ describe('CheckinController', () => {
 
       const incompleteData = {
         venueId: 'venue-123',
-        // Missing bandId and eventDate
+        // Missing bandId and rating
       };
 
       const response = await request(app)
@@ -129,18 +128,18 @@ describe('CheckinController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Venue ID, band ID, and event date are required');
+      expect(response.body.error).toBe('Venue ID, band ID, and rating are required');
       expect(mockCheckinService.createCheckin).not.toHaveBeenCalled();
     });
 
     it('should return 400 when service throws an error', async () => {
       setupApp('user-123');
-      mockCheckinService.createCheckin.mockRejectedValue(new Error('User already checked into this event'));
+      mockCheckinService.createCheckin.mockRejectedValue(new Error('Failed to create check-in'));
 
       const checkinData = {
         venueId: 'venue-123',
         bandId: 'band-123',
-        eventDate: '2024-01-01',
+        rating: 4,
       };
 
       const response = await request(app)
@@ -149,7 +148,7 @@ describe('CheckinController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('User already checked into this event');
+      expect(response.body.error).toBe('Failed to create check-in');
     });
 
     it('should include vibeTagIds when provided', async () => {
@@ -159,7 +158,7 @@ describe('CheckinController', () => {
       const checkinData = {
         venueId: 'venue-123',
         bandId: 'band-123',
-        eventDate: '2024-01-01',
+        rating: 4,
         vibeTagIds: ['vibe-1', 'vibe-2'],
       };
 
@@ -179,7 +178,9 @@ describe('CheckinController', () => {
       {
         id: 'checkin-1',
         userId: 'user-1',
-        eventId: 'event-1',
+        venueId: 'venue-1',
+        bandId: 'band-1',
+        rating: 4,
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-01T00:00:00Z'),
         toastCount: 5,
@@ -189,7 +190,9 @@ describe('CheckinController', () => {
       {
         id: 'checkin-2',
         userId: 'user-2',
-        eventId: 'event-2',
+        venueId: 'venue-2',
+        bandId: 'band-2',
+        rating: 5,
         createdAt: new Date('2024-01-02T00:00:00Z'),
         updatedAt: new Date('2024-01-02T00:00:00Z'),
         toastCount: 3,
@@ -289,7 +292,9 @@ describe('CheckinController', () => {
     const mockCheckin = {
       id: 'checkin-123',
       userId: 'user-123',
-      eventId: 'event-123',
+      venueId: 'venue-123',
+      bandId: 'band-123',
+      rating: 4,
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
       toastCount: 0,
@@ -325,7 +330,7 @@ describe('CheckinController', () => {
   describe('POST /checkins/:id/toast (toastCheckin)', () => {
     it('should toast a checkin successfully', async () => {
       setupApp('user-123');
-      mockCheckinService.toastCheckin.mockResolvedValue();
+      mockCheckinService.toastCheckin.mockResolvedValue({ toastCount: 1, ownerId: 'owner-123' });
 
       const response = await request(app)
         .post('/checkins/checkin-123/toast');
@@ -391,7 +396,7 @@ describe('CheckinController', () => {
       id: 'comment-123',
       checkinId: 'checkin-123',
       userId: 'user-123',
-      commentText: 'Nice show!',
+      content: 'Nice show!',
       createdAt: new Date('2024-01-01T00:00:00Z'),
       user: {
         id: 'user-123',
@@ -410,7 +415,7 @@ describe('CheckinController', () => {
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.commentText).toBe('Nice show!');
+      expect(response.body.data.content).toBe('Nice show!');
       expect(response.body.message).toBe('Comment added successfully');
       expect(mockCheckinService.addComment).toHaveBeenCalledWith('user-123', 'checkin-123', 'Nice show!');
     });
@@ -458,14 +463,14 @@ describe('CheckinController', () => {
         id: 'comment-1',
         checkinId: 'checkin-123',
         userId: 'user-1',
-        commentText: 'Great!',
+        content: 'Great!',
         createdAt: new Date('2024-01-01T00:00:00Z'),
       },
       {
         id: 'comment-2',
         checkinId: 'checkin-123',
         userId: 'user-2',
-        commentText: 'Awesome show!',
+        content: 'Awesome show!',
         createdAt: new Date('2024-01-01T01:00:00Z'),
       },
     ];
@@ -539,7 +544,9 @@ describe('CheckinController', () => {
       {
         id: 'checkin-1',
         userId: 'user-1',
-        eventId: 'event-1',
+        venueId: 'venue-1',
+        bandId: 'band-1',
+        rating: 4,
         createdAt: new Date('2024-01-01T00:00:00Z'),
         updatedAt: new Date('2024-01-01T00:00:00Z'),
         toastCount: 0,

@@ -1,5 +1,4 @@
 import Database from '../config/database';
-import { EventService } from './EventService';
 import { VenueService } from './VenueService';
 import { BandService } from './BandService';
 
@@ -7,18 +6,19 @@ interface CreateCheckinRequest {
   userId: string;
   venueId: string;
   bandId: string;
-  eventDate: Date;
-  venueRating?: number;
-  bandRating?: number;
-  reviewText?: string;
-  imageUrls?: string[];
+  rating: number;
+  comment?: string;
+  photoUrl?: string;
+  eventDate?: Date;
+  checkinLatitude?: number;
+  checkinLongitude?: number;
   vibeTagIds?: string[];
 }
 
 interface VibeTag {
   id: string;
   name: string;
-  emoji: string;
+  icon: string;
   category: string;
 }
 
@@ -33,15 +33,17 @@ interface Toast {
 interface Checkin {
   id: string;
   userId: string;
-  eventId: string;
-  venueRating?: number;
-  bandRating?: number;
-  reviewText?: string;
-  imageUrls?: string[];
+  venueId: string;
+  bandId: string;
+  rating: number;
+  comment?: string;
+  photoUrl?: string;
+  eventDate?: Date;
   createdAt: Date;
   updatedAt: Date;
   user?: any;
-  event?: any;
+  venue?: any;
+  band?: any;
   toastCount?: number;
   commentCount?: number;
   hasUserToasted?: boolean;
@@ -60,7 +62,7 @@ interface Comment {
   id: string;
   checkinId: string;
   userId: string;
-  commentText: string;
+  content: string;
   createdAt: Date;
   user?: any;
   ownerId?: string; // Check-in owner for WebSocket notifications
@@ -68,13 +70,12 @@ interface Comment {
 
 export class CheckinService {
   private db = Database.getInstance();
-  private eventService = new EventService();
   private venueService = new VenueService();
   private bandService = new BandService();
 
   /**
    * Create a new check-in
-   * Creates event if it doesn't exist
+   * Uses venue_id and band_id directly (matches database schema)
    */
   async createCheckin(data: CreateCheckinRequest): Promise<Checkin> {
     try {
@@ -82,49 +83,35 @@ export class CheckinService {
         userId,
         venueId,
         bandId,
+        rating,
+        comment,
+        photoUrl,
         eventDate,
-        venueRating,
-        bandRating,
-        reviewText,
-        imageUrls,
+        checkinLatitude,
+        checkinLongitude,
         vibeTagIds,
       } = data;
 
-      // Create or get event
-      const event = await this.eventService.createEvent({
-        venueId,
-        bandId,
-        eventDate,
-        createdByUserId: userId,
-      });
-
-      // Check if user already checked into this event
-      const existingCheckin = await this.db.query(
-        'SELECT id FROM checkins WHERE user_id = $1 AND event_id = $2',
-        [userId, event.id]
-      );
-
-      if (existingCheckin.rows.length > 0) {
-        throw new Error('User already checked into this event');
-      }
-
-      // Create check-in
+      // Create check-in using venue_id and band_id (matching schema)
       const insertQuery = `
         INSERT INTO checkins (
-          user_id, event_id, venue_rating, band_rating,
-          review_text, image_urls
+          user_id, band_id, venue_id, rating, comment, photo_url,
+          event_date, checkin_latitude, checkin_longitude
         )
-        VALUES ($1, $2, $3, $4, $5, $6)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
         RETURNING *
       `;
 
       const result = await this.db.query(insertQuery, [
         userId,
-        event.id,
-        venueRating || null,
-        bandRating || null,
-        reviewText || null,
-        imageUrls || null,
+        bandId,
+        venueId,
+        rating,
+        comment || null,
+        photoUrl || null,
+        eventDate || null,
+        checkinLatitude || null,
+        checkinLongitude || null,
       ]);
 
       const checkinId = result.rows[0].id;
@@ -134,17 +121,13 @@ export class CheckinService {
         await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
       }
 
-      // Update venue and band ratings asynchronously
-      if (venueRating) {
-        this.venueService.updateVenueRating(venueId).catch(err =>
-          console.error('Error updating venue rating:', err)
-        );
-      }
-      if (bandRating) {
-        this.bandService.updateBandRating(bandId).catch(err =>
-          console.error('Error updating band rating:', err)
-        );
-      }
+      // Update venue and band ratings asynchronously (triggers handle stats)
+      this.venueService.updateVenueRating(venueId).catch(err =>
+        console.error('Error updating venue rating:', err)
+      );
+      this.bandService.updateBandRating(bandId).catch(err =>
+        console.error('Error updating band rating:', err)
+      );
 
       // Return full check-in with details
       return this.getCheckinById(checkinId, userId);
@@ -163,7 +146,6 @@ export class CheckinService {
         SELECT
           c.*,
           u.id as user_id, u.username, u.profile_image_url,
-          e.id as event_id, e.event_date, e.event_name,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
@@ -171,18 +153,17 @@ export class CheckinService {
           COUNT(DISTINCT t.id) as toast_count,
           COUNT(DISTINCT cm.id) as comment_count
           ${currentUserId ? `, EXISTS(
-            SELECT 1 FROM checkin_toasts
+            SELECT 1 FROM toasts
             WHERE checkin_id = c.id AND user_id = $2
           ) as has_user_toasted` : ''}
         FROM checkins c
         LEFT JOIN users u ON c.user_id = u.id
-        LEFT JOIN events e ON c.event_id = e.id
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkin_toasts t ON c.id = t.checkin_id
+        LEFT JOIN venues v ON c.venue_id = v.id
+        LEFT JOIN bands b ON c.band_id = b.id
+        LEFT JOIN toasts t ON c.id = t.checkin_id
         LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
         WHERE c.id = $1
-        GROUP BY c.id, u.id, e.id, v.id, b.id
+        GROUP BY c.id, u.id, v.id, b.id
       `;
 
       const params = currentUserId ? [checkinId, currentUserId] : [checkinId];
@@ -249,7 +230,6 @@ export class CheckinService {
         SELECT
           c.*,
           u.id as user_id, u.username, u.profile_image_url,
-          e.id as event_id, e.event_date, e.event_name,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
@@ -257,18 +237,17 @@ export class CheckinService {
           COUNT(DISTINCT t.id) as toast_count,
           COUNT(DISTINCT cm.id) as comment_count,
           EXISTS(
-            SELECT 1 FROM checkin_toasts
+            SELECT 1 FROM toasts
             WHERE checkin_id = c.id AND user_id = $1
           ) as has_user_toasted
         FROM checkins c
         LEFT JOIN users u ON c.user_id = u.id
-        LEFT JOIN events e ON c.event_id = e.id
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkin_toasts t ON c.id = t.checkin_id
+        LEFT JOIN venues v ON c.venue_id = v.id
+        LEFT JOIN bands b ON c.band_id = b.id
+        LEFT JOIN toasts t ON c.id = t.checkin_id
         LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
         ${whereClause}
-        GROUP BY c.id, u.id, e.id, v.id, b.id
+        GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
         LIMIT $2 OFFSET $3
       `;
@@ -291,7 +270,7 @@ export class CheckinService {
     try {
       // Check if already toasted
       const existingToast = await this.db.query(
-        'SELECT id FROM checkin_toasts WHERE checkin_id = $1 AND user_id = $2',
+        'SELECT id FROM toasts WHERE checkin_id = $1 AND user_id = $2',
         [checkinId, userId]
       );
 
@@ -301,7 +280,7 @@ export class CheckinService {
 
       // Create toast
       await this.db.query(
-        'INSERT INTO checkin_toasts (checkin_id, user_id) VALUES ($1, $2)',
+        'INSERT INTO toasts (checkin_id, user_id) VALUES ($1, $2)',
         [checkinId, userId]
       );
 
@@ -309,7 +288,7 @@ export class CheckinService {
       const result = await this.db.query(
         `SELECT c.user_id as owner_id, COUNT(t.id) as toast_count
          FROM checkins c
-         LEFT JOIN checkin_toasts t ON c.id = t.checkin_id
+         LEFT JOIN toasts t ON c.id = t.checkin_id
          WHERE c.id = $1
          GROUP BY c.id`,
         [checkinId]
@@ -331,7 +310,7 @@ export class CheckinService {
   async untoastCheckin(userId: string, checkinId: string): Promise<void> {
     try {
       await this.db.query(
-        'DELETE FROM checkin_toasts WHERE checkin_id = $1 AND user_id = $2',
+        'DELETE FROM toasts WHERE checkin_id = $1 AND user_id = $2',
         [checkinId, userId]
       );
     } catch (error) {
@@ -347,16 +326,16 @@ export class CheckinService {
   async addComment(
     userId: string,
     checkinId: string,
-    commentText: string
+    content: string
   ): Promise<Comment> {
     try {
       const query = `
-        INSERT INTO checkin_comments (checkin_id, user_id, comment_text)
+        INSERT INTO checkin_comments (checkin_id, user_id, content)
         VALUES ($1, $2, $3)
         RETURNING *
       `;
 
-      const result = await this.db.query(query, [checkinId, userId, commentText]);
+      const result = await this.db.query(query, [checkinId, userId, content]);
 
       // Get check-in owner for WebSocket notification
       const checkin = await this.db.query(
@@ -398,7 +377,7 @@ export class CheckinService {
         id: row.id,
         checkinId: row.checkin_id,
         userId: row.user_id,
-        commentText: row.comment_text,
+        content: row.content,
         createdAt: row.created_at,
         user: {
           id: row.user_id,
@@ -452,12 +431,12 @@ export class CheckinService {
       let whereClause = 'WHERE 1=1';
 
       if (venueId) {
-        whereClause += ` AND e.venue_id = $${paramIndex++}`;
+        whereClause += ` AND c.venue_id = $${paramIndex++}`;
         params.push(venueId);
       }
 
       if (bandId) {
-        whereClause += ` AND e.band_id = $${paramIndex++}`;
+        whereClause += ` AND c.band_id = $${paramIndex++}`;
         params.push(bandId);
       }
 
@@ -470,7 +449,6 @@ export class CheckinService {
         SELECT
           c.*,
           u.id as user_id, u.username, u.profile_image_url,
-          e.id as event_id, e.event_date, e.event_name,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
@@ -479,13 +457,12 @@ export class CheckinService {
           COUNT(DISTINCT cm.id) as comment_count
         FROM checkins c
         LEFT JOIN users u ON c.user_id = u.id
-        LEFT JOIN events e ON c.event_id = e.id
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkin_toasts t ON c.id = t.checkin_id
+        LEFT JOIN venues v ON c.venue_id = v.id
+        LEFT JOIN bands b ON c.band_id = b.id
+        LEFT JOIN toasts t ON c.id = t.checkin_id
         LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
         ${whereClause}
-        GROUP BY c.id, u.id, e.id, v.id, b.id
+        GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}
       `;
@@ -506,7 +483,7 @@ export class CheckinService {
   async getVibeTags(): Promise<VibeTag[]> {
     try {
       const query = `
-        SELECT id, name, emoji, category
+        SELECT id, name, icon, category
         FROM vibe_tags
         ORDER BY category, name
       `;
@@ -516,7 +493,7 @@ export class CheckinService {
       return result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
-        emoji: row.emoji,
+        icon: row.icon,
         category: row.category,
       }));
     } catch (error) {
@@ -534,7 +511,7 @@ export class CheckinService {
         SELECT
           t.*,
           u.id as user_id, u.username, u.profile_image_url
-        FROM checkin_toasts t
+        FROM toasts t
         LEFT JOIN users u ON t.user_id = u.id
         WHERE t.checkin_id = $1
         ORDER BY t.created_at DESC
@@ -622,7 +599,7 @@ export class CheckinService {
   async getCheckinVibeTags(checkinId: string): Promise<VibeTag[]> {
     try {
       const query = `
-        SELECT vt.id, vt.name, vt.emoji, vt.category
+        SELECT vt.id, vt.name, vt.icon, vt.category
         FROM vibe_tags vt
         INNER JOIN checkin_vibes cv ON vt.id = cv.vibe_tag_id
         WHERE cv.checkin_id = $1
@@ -633,7 +610,7 @@ export class CheckinService {
       return result.rows.map((row: any) => ({
         id: row.id,
         name: row.name,
-        emoji: row.emoji,
+        icon: row.icon,
         category: row.category,
       }));
     } catch (error) {
@@ -666,7 +643,7 @@ export class CheckinService {
       id: row.id,
       checkinId: row.checkin_id,
       userId: row.user_id,
-      commentText: row.comment_text,
+      content: row.content,
       createdAt: row.created_at,
       user: {
         id: row.user_id,
@@ -683,11 +660,12 @@ export class CheckinService {
     return {
       id: row.id,
       userId: row.user_id,
-      eventId: row.event_id,
-      venueRating: row.venue_rating,
-      bandRating: row.band_rating,
-      reviewText: row.review_text,
-      imageUrls: row.image_urls || [],
+      venueId: row.venue_id,
+      bandId: row.band_id,
+      rating: parseFloat(row.rating) || 0,
+      comment: row.comment,
+      photoUrl: row.photo_url,
+      eventDate: row.event_date,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       user: row.username ? {
@@ -695,23 +673,18 @@ export class CheckinService {
         username: row.username,
         profileImageUrl: row.profile_image_url,
       } : undefined,
-      event: row.event_date ? {
-        id: row.event_id,
-        eventDate: row.event_date,
-        eventName: row.event_name,
-        venue: {
-          id: row.venue_id,
-          name: row.venue_name,
-          city: row.venue_city,
-          state: row.venue_state,
-          imageUrl: row.venue_image,
-        },
-        band: {
-          id: row.band_id,
-          name: row.band_name,
-          genre: row.band_genre,
-          imageUrl: row.band_image,
-        },
+      venue: row.venue_name ? {
+        id: row.venue_id,
+        name: row.venue_name,
+        city: row.venue_city,
+        state: row.venue_state,
+        imageUrl: row.venue_image,
+      } : undefined,
+      band: row.band_name ? {
+        id: row.band_id,
+        name: row.band_name,
+        genre: row.band_genre,
+        imageUrl: row.band_image,
       } : undefined,
       toastCount: parseInt(row.toast_count || 0),
       commentCount: parseInt(row.comment_count || 0),

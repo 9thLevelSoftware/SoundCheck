@@ -9,7 +9,7 @@ export class CheckinController {
   /**
    * Create a new check-in
    * POST /api/checkins
-   * Body: { venueId, bandId, eventDate, venueRating?, bandRating?, reviewText?, imageUrls? }
+   * Body: { venueId, bandId, rating, comment?, photoUrl?, eventDate?, vibeTagIds? }
    */
   createCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -27,18 +27,19 @@ export class CheckinController {
       const {
         venueId,
         bandId,
+        rating,
+        comment,
+        photoUrl,
         eventDate,
-        venueRating,
-        bandRating,
-        reviewText,
-        imageUrls,
+        checkinLatitude,
+        checkinLongitude,
         vibeTagIds,
       } = req.body;
 
-      if (!venueId || !bandId || !eventDate) {
+      if (!venueId || !bandId || rating === undefined) {
         const response: ApiResponse = {
           success: false,
-          error: 'Venue ID, band ID, and event date are required',
+          error: 'Venue ID, band ID, and rating are required',
         };
         res.status(400).json(response);
         return;
@@ -48,11 +49,12 @@ export class CheckinController {
         userId,
         venueId,
         bandId,
-        eventDate: new Date(eventDate),
-        venueRating,
-        bandRating,
-        reviewText,
-        imageUrls,
+        rating,
+        comment,
+        photoUrl,
+        eventDate: eventDate ? new Date(eventDate) : undefined,
+        checkinLatitude,
+        checkinLongitude,
         vibeTagIds,
       });
 

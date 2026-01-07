@@ -1,21 +1,32 @@
 import Database from '../config/database';
 
-interface CreateEventRequest {
+interface CreateShowRequest {
   venueId: string;
   bandId: string;
-  eventDate: Date;
-  eventName?: string;
-  createdByUserId?: string;
+  showDate: Date;
+  doorsTime?: string;
+  startTime?: string;
+  endTime?: string;
+  ticketUrl?: string;
+  ticketPriceMin?: number;
+  ticketPriceMax?: number;
+  description?: string;
 }
 
-interface Event {
+interface Show {
   id: string;
   venueId: string;
   bandId: string;
-  eventDate: Date;
-  eventName?: string;
-  createdByUserId?: string;
-  isVerified: boolean;
+  showDate: Date;
+  doorsTime?: string;
+  startTime?: string;
+  endTime?: string;
+  ticketUrl?: string;
+  ticketPriceMin?: number;
+  ticketPriceMax?: number;
+  isSoldOut: boolean;
+  isCancelled: boolean;
+  description?: string;
   createdAt: Date;
   updatedAt: Date;
   venue?: any;
@@ -27,266 +38,295 @@ export class EventService {
   private db = Database.getInstance();
 
   /**
-   * Create a new event or return existing one
-   * Events are unique by venue + band + date combination
+   * Create a new show or return existing one
+   * Shows are unique by venue + band + date combination
    */
-  async createEvent(data: CreateEventRequest): Promise<Event> {
+  async createShow(data: CreateShowRequest): Promise<Show> {
     try {
-      const { venueId, bandId, eventDate, eventName, createdByUserId } = data;
+      const {
+        venueId,
+        bandId,
+        showDate,
+        doorsTime,
+        startTime,
+        endTime,
+        ticketUrl,
+        ticketPriceMin,
+        ticketPriceMax,
+        description,
+      } = data;
 
-      // Check if event already exists
-      const existingEvent = await this.db.query(
-        `SELECT * FROM events
-         WHERE venue_id = $1 AND band_id = $2 AND event_date = $3`,
-        [venueId, bandId, eventDate]
+      // Check if show already exists
+      const existingShow = await this.db.query(
+        `SELECT * FROM shows
+         WHERE venue_id = $1 AND band_id = $2 AND show_date = $3`,
+        [venueId, bandId, showDate]
       );
 
-      if (existingEvent.rows.length > 0) {
-        // Return existing event with venue and band details
-        return this.getEventById(existingEvent.rows[0].id);
+      if (existingShow.rows.length > 0) {
+        // Return existing show with venue and band details
+        return this.getShowById(existingShow.rows[0].id);
       }
 
-      // Create new event
+      // Create new show
       const insertQuery = `
-        INSERT INTO events (venue_id, band_id, event_date, event_name, created_by_user_id)
-        VALUES ($1, $2, $3, $4, $5)
+        INSERT INTO shows (
+          venue_id, band_id, show_date, doors_time, start_time, end_time,
+          ticket_url, ticket_price_min, ticket_price_max, description
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `;
 
       const result = await this.db.query(insertQuery, [
         venueId,
         bandId,
-        eventDate,
-        eventName || null,
-        createdByUserId || null,
+        showDate,
+        doorsTime || null,
+        startTime || null,
+        endTime || null,
+        ticketUrl || null,
+        ticketPriceMin || null,
+        ticketPriceMax || null,
+        description || null,
       ]);
 
-      // Return new event with venue and band details
-      return this.getEventById(result.rows[0].id);
+      // Return new show with venue and band details
+      return this.getShowById(result.rows[0].id);
     } catch (error) {
-      console.error('Create event error:', error);
+      console.error('Create show error:', error);
       throw error;
     }
   }
 
   /**
-   * Get event by ID with venue and band details
+   * Get show by ID with venue and band details
+   * Note: checkin_count is based on checkins for this venue+band+date, not show_id
    */
-  async getEventById(eventId: string): Promise<Event> {
+  async getShowById(showId: string): Promise<Show> {
     try {
       const query = `
         SELECT
-          e.*,
+          s.*,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(c.id) as checkin_count
-        FROM events e
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkins c ON e.id = c.event_id
-        WHERE e.id = $1
-        GROUP BY e.id, v.id, b.id
+          (
+            SELECT COUNT(*) FROM checkins c
+            WHERE c.venue_id = s.venue_id
+              AND c.band_id = s.band_id
+              AND c.event_date = s.show_date
+          ) as checkin_count
+        FROM shows s
+        LEFT JOIN venues v ON s.venue_id = v.id
+        LEFT JOIN bands b ON s.band_id = b.id
+        WHERE s.id = $1
       `;
 
-      const result = await this.db.query(query, [eventId]);
+      const result = await this.db.query(query, [showId]);
 
       if (result.rows.length === 0) {
-        throw new Error('Event not found');
+        throw new Error('Show not found');
       }
 
-      return this.mapDbEventToEvent(result.rows[0]);
+      return this.mapDbShowToShow(result.rows[0]);
     } catch (error) {
-      console.error('Get event error:', error);
+      console.error('Get show error:', error);
       throw error;
     }
   }
 
   /**
-   * Get events at a specific venue
+   * Get shows at a specific venue
    */
-  async getEventsByVenue(
+  async getShowsByVenue(
     venueId: string,
     options: { upcoming?: boolean; limit?: number } = {}
-  ): Promise<Event[]> {
+  ): Promise<Show[]> {
     try {
       const { upcoming = true, limit = 50 } = options;
 
-      let whereClause = 'WHERE e.venue_id = $1';
+      let whereClause = 'WHERE s.venue_id = $1';
       if (upcoming) {
-        whereClause += ' AND e.event_date >= CURRENT_DATE';
+        whereClause += ' AND s.show_date >= CURRENT_DATE';
       }
 
       const query = `
         SELECT
-          e.*,
+          s.*,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(c.id) as checkin_count
-        FROM events e
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkins c ON e.id = c.event_id
+          (
+            SELECT COUNT(*) FROM checkins c
+            WHERE c.venue_id = s.venue_id
+              AND c.band_id = s.band_id
+              AND c.event_date = s.show_date
+          ) as checkin_count
+        FROM shows s
+        LEFT JOIN venues v ON s.venue_id = v.id
+        LEFT JOIN bands b ON s.band_id = b.id
         ${whereClause}
-        GROUP BY e.id, v.id, b.id
-        ORDER BY e.event_date ${upcoming ? 'ASC' : 'DESC'}
+        ORDER BY s.show_date ${upcoming ? 'ASC' : 'DESC'}
         LIMIT $2
       `;
 
       const result = await this.db.query(query, [venueId, limit]);
 
-      return result.rows.map((row: any) => this.mapDbEventToEvent(row));
+      return result.rows.map((row: any) => this.mapDbShowToShow(row));
     } catch (error) {
-      console.error('Get events by venue error:', error);
+      console.error('Get shows by venue error:', error);
       throw error;
     }
   }
 
   /**
-   * Get events for a specific band
+   * Get shows for a specific band
    */
-  async getEventsByBand(
+  async getShowsByBand(
     bandId: string,
     options: { upcoming?: boolean; limit?: number } = {}
-  ): Promise<Event[]> {
+  ): Promise<Show[]> {
     try {
       const { upcoming = true, limit = 50 } = options;
 
-      let whereClause = 'WHERE e.band_id = $1';
+      let whereClause = 'WHERE s.band_id = $1';
       if (upcoming) {
-        whereClause += ' AND e.event_date >= CURRENT_DATE';
+        whereClause += ' AND s.show_date >= CURRENT_DATE';
       }
 
       const query = `
         SELECT
-          e.*,
+          s.*,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(c.id) as checkin_count
-        FROM events e
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkins c ON e.id = c.event_id
+          (
+            SELECT COUNT(*) FROM checkins c
+            WHERE c.venue_id = s.venue_id
+              AND c.band_id = s.band_id
+              AND c.event_date = s.show_date
+          ) as checkin_count
+        FROM shows s
+        LEFT JOIN venues v ON s.venue_id = v.id
+        LEFT JOIN bands b ON s.band_id = b.id
         ${whereClause}
-        GROUP BY e.id, v.id, b.id
-        ORDER BY e.event_date ${upcoming ? 'ASC' : 'DESC'}
+        ORDER BY s.show_date ${upcoming ? 'ASC' : 'DESC'}
         LIMIT $2
       `;
 
       const result = await this.db.query(query, [bandId, limit]);
 
-      return result.rows.map((row: any) => this.mapDbEventToEvent(row));
+      return result.rows.map((row: any) => this.mapDbShowToShow(row));
     } catch (error) {
-      console.error('Get events by band error:', error);
+      console.error('Get shows by band error:', error);
       throw error;
     }
   }
 
   /**
-   * Get upcoming events (across all venues/bands)
+   * Get upcoming shows (across all venues/bands)
    */
-  async getUpcomingEvents(limit: number = 50): Promise<Event[]> {
+  async getUpcomingShows(limit: number = 50): Promise<Show[]> {
     try {
       const query = `
         SELECT
-          e.*,
+          s.*,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(c.id) as checkin_count
-        FROM events e
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkins c ON e.id = c.event_id
-        WHERE e.event_date >= CURRENT_DATE
-        GROUP BY e.id, v.id, b.id
-        ORDER BY e.event_date ASC, e.created_at DESC
+          (
+            SELECT COUNT(*) FROM checkins c
+            WHERE c.venue_id = s.venue_id
+              AND c.band_id = s.band_id
+              AND c.event_date = s.show_date
+          ) as checkin_count
+        FROM shows s
+        LEFT JOIN venues v ON s.venue_id = v.id
+        LEFT JOIN bands b ON s.band_id = b.id
+        WHERE s.show_date >= CURRENT_DATE AND s.is_cancelled = FALSE
+        ORDER BY s.show_date ASC, s.created_at DESC
         LIMIT $1
       `;
 
       const result = await this.db.query(query, [limit]);
 
-      return result.rows.map((row: any) => this.mapDbEventToEvent(row));
+      return result.rows.map((row: any) => this.mapDbShowToShow(row));
     } catch (error) {
-      console.error('Get upcoming events error:', error);
+      console.error('Get upcoming shows error:', error);
       throw error;
     }
   }
 
   /**
-   * Get trending events (most check-ins recently)
+   * Get trending shows (most check-ins recently)
    */
-  async getTrendingEvents(limit: number = 20): Promise<Event[]> {
+  async getTrendingShows(limit: number = 20): Promise<Show[]> {
     try {
       const query = `
         SELECT
-          e.*,
+          s.*,
           v.id as venue_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(c.id) as checkin_count
-        FROM events e
-        LEFT JOIN venues v ON e.venue_id = v.id
-        LEFT JOIN bands b ON e.band_id = b.id
-        LEFT JOIN checkins c ON e.id = c.event_id
-        WHERE e.event_date >= CURRENT_DATE - INTERVAL '30 days'
-        GROUP BY e.id, v.id, b.id
-        HAVING COUNT(c.id) > 0
-        ORDER BY COUNT(c.id) DESC, e.event_date DESC
+          (
+            SELECT COUNT(*) FROM checkins c
+            WHERE c.venue_id = s.venue_id
+              AND c.band_id = s.band_id
+              AND c.event_date = s.show_date
+          ) as checkin_count
+        FROM shows s
+        LEFT JOIN venues v ON s.venue_id = v.id
+        LEFT JOIN bands b ON s.band_id = b.id
+        WHERE s.show_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY checkin_count DESC, s.show_date DESC
         LIMIT $1
       `;
 
       const result = await this.db.query(query, [limit]);
 
-      return result.rows.map((row: any) => this.mapDbEventToEvent(row));
+      return result.rows.map((row: any) => this.mapDbShowToShow(row));
     } catch (error) {
-      console.error('Get trending events error:', error);
+      console.error('Get trending shows error:', error);
       throw error;
     }
   }
 
   /**
-   * Delete an event (soft delete or hard delete based on check-ins)
+   * Delete a show
    */
-  async deleteEvent(eventId: string): Promise<void> {
+  async deleteShow(showId: string): Promise<void> {
     try {
-      // Check if event has any check-ins
-      const checkinCount = await this.db.query(
-        'SELECT COUNT(*) as count FROM checkins WHERE event_id = $1',
-        [eventId]
-      );
-
-      if (parseInt(checkinCount.rows[0].count) > 0) {
-        throw new Error('Cannot delete event with existing check-ins');
-      }
-
-      // Delete event (cascades to check-ins if any)
-      await this.db.query('DELETE FROM events WHERE id = $1', [eventId]);
+      await this.db.query('DELETE FROM shows WHERE id = $1', [showId]);
     } catch (error) {
-      console.error('Delete event error:', error);
+      console.error('Delete show error:', error);
       throw error;
     }
   }
 
   /**
-   * Map database event row to Event type
+   * Map database show row to Show type
    */
-  private mapDbEventToEvent(row: any): Event {
+  private mapDbShowToShow(row: any): Show {
     return {
       id: row.id,
       venueId: row.venue_id,
       bandId: row.band_id,
-      eventDate: row.event_date,
-      eventName: row.event_name,
-      createdByUserId: row.created_by_user_id,
-      isVerified: row.is_verified,
+      showDate: row.show_date,
+      doorsTime: row.doors_time,
+      startTime: row.start_time,
+      endTime: row.end_time,
+      ticketUrl: row.ticket_url,
+      ticketPriceMin: row.ticket_price_min ? parseFloat(row.ticket_price_min) : undefined,
+      ticketPriceMax: row.ticket_price_max ? parseFloat(row.ticket_price_max) : undefined,
+      isSoldOut: row.is_sold_out || false,
+      isCancelled: row.is_cancelled || false,
+      description: row.description,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       venue: row.venue_name ? {
