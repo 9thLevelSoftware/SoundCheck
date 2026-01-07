@@ -130,8 +130,16 @@ export class FoursquareService {
       );
 
       return response.data;
-    } catch (error) {
-      console.error('Foursquare details error:', error);
+    } catch (error: any) {
+      console.error('Foursquare getVenueDetails error:', error.message || 'Unknown error');
+      if (error.config) {
+        console.error('Request config:', sanitizeForLogging({
+          baseURL: error.config.baseURL,
+          url: error.config.url,
+          params: error.config.params,
+          headers: error.config.headers,
+        }));
+      }
       throw new Error('Failed to get venue details from Foursquare');
     }
   }
@@ -216,8 +224,16 @@ export class FoursquareService {
         ...this.mapDbVenueToVenue(result.rows[0]),
         alreadyExists: false,
       };
-    } catch (error) {
-      console.error('Foursquare import error:', error);
+    } catch (error: any) {
+      console.error('Foursquare importVenue error:', error.message || 'Unknown error');
+      if (error.config) {
+        console.error('Request config:', sanitizeForLogging({
+          baseURL: error.config.baseURL,
+          url: error.config.url,
+          params: error.config.params,
+          headers: error.config.headers,
+        }));
+      }
       throw error;
     }
   }
@@ -246,8 +262,16 @@ export class FoursquareService {
       });
 
       return response.data.results || [];
-    } catch (error) {
-      console.error('Foursquare nearby search error:', error);
+    } catch (error: any) {
+      console.error('Foursquare searchNearbyVenues error:', error.message || 'Unknown error');
+      if (error.config) {
+        console.error('Request config:', sanitizeForLogging({
+          baseURL: error.config.baseURL,
+          url: error.config.url,
+          params: error.config.params,
+          headers: error.config.headers,
+        }));
+      }
       throw new Error('Failed to search nearby venues');
     }
   }
