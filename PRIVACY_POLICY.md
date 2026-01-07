@@ -1,7 +1,7 @@
 # Privacy Policy for PitPulse
 
 **Effective Date:** November 13, 2025
-**Last Updated:** November 13, 2025
+**Last Updated:** January 6, 2026
 
 ## Introduction
 
@@ -171,6 +171,31 @@ If we discover that a child under 13 has provided us with personal information:
 
 If you believe a child under 13 has created an account, please contact us at support@pitpulse.app.
 
+## Third-Party Data Processors
+
+We use the following third-party services that may process your data:
+
+### Venue and Location Data
+- **Foursquare** (foursquare.com): We use Foursquare's API to find and display venue information. When you search for venues, your search query is sent to Foursquare. Foursquare's privacy policy: https://foursquare.com/legal/privacy
+
+### Music and Band Data
+- **setlist.fm** (setlist.fm): We use setlist.fm to display concert setlists and tour information. Band searches and setlist requests are processed by setlist.fm. Privacy policy: https://www.setlist.fm/help/privacy
+
+- **MusicBrainz** (musicbrainz.org): We use MusicBrainz for band metadata and discography information. Privacy policy: https://musicbrainz.org/doc/About/Privacy_Policy
+
+### Infrastructure Providers
+- **Railway** (railway.app): Our backend servers are hosted on Railway. Your data is stored on Railway's infrastructure.
+- **PostgreSQL Database**: User data is stored in a PostgreSQL database hosted by our infrastructure provider.
+
+### What Data is Shared
+| Service | Data Shared | Purpose |
+|---------|-------------|---------|
+| Foursquare | Venue search queries, location (if provided) | Finding nearby venues |
+| setlist.fm | Band names, concert queries | Displaying setlists |
+| MusicBrainz | Band names | Retrieving band metadata |
+
+We do not sell your personal information to any third parties.
+
 ## Third-Party Services
 
 ### The App May Integrate With:
@@ -263,6 +288,6 @@ By creating a PitPulse account and using the App, you acknowledge that you have 
 
 ---
 
-**This privacy policy was last updated on November 13, 2025.**
+**This privacy policy was last updated on January 6, 2026.**
 
-**Version:** 1.0
+**Version:** 1.1
