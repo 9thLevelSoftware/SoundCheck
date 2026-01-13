@@ -59,7 +59,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
-                    'PITPULSE',
+                    'SOUNDCHECK',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
