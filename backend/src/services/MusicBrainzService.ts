@@ -38,7 +38,7 @@ export class MusicBrainzService {
   private REQUEST_DELAY = 1000; // 1 second between requests (MusicBrainz requirement)
 
   constructor() {
-    this.userAgent = process.env.MUSICBRAINZ_USER_AGENT || 'PitPulse/1.0';
+    this.userAgent = process.env.MUSICBRAINZ_USER_AGENT || 'SoundCheck/1.0';
 
     this.client = axios.create({
       baseURL: 'https://musicbrainz.org/ws/2',
