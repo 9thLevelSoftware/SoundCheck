@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "name": "pitpulse-api",
+  "name": "soundcheck-api",
   "builds": [
     {
       "src": "dist/index.js",
