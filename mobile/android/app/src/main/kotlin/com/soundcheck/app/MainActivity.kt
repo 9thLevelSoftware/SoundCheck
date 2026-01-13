@@ -1,4 +1,4 @@
-package com.example.pitpulse_flutter
+package com.soundcheck.app
 
 import io.flutter.embedding.android.FlutterActivity
 
