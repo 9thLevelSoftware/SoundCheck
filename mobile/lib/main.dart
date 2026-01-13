@@ -34,7 +34,7 @@ void main() {
 
       runApp(
         const ProviderScope(
-          child: PitPulseApp(),
+          child: SoundCheckApp(),
         ),
       );
     },
@@ -42,8 +42,8 @@ void main() {
   );
 }
 
-class PitPulseApp extends ConsumerWidget {
-  const PitPulseApp({super.key});
+class SoundCheckApp extends ConsumerWidget {
+  const SoundCheckApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -51,7 +51,7 @@ class PitPulseApp extends ConsumerWidget {
     final themeMode = ref.watch(themeSettingProvider.notifier).getThemeMode();
 
     return MaterialApp.router(
-      title: 'PitPulse',
+      title: 'SoundCheck',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
       darkTheme: AppTheme.darkTheme,
