@@ -1,9 +1,9 @@
--- PitPulse Database Schema
+-- SoundCheck Database Schema
 -- PostgreSQL Database Design - "Untappd for Music" Model
 -- The Check-in is King
 
 -- Create database (run this separately)
--- CREATE DATABASE pitpulse;
+-- CREATE DATABASE soundcheck;
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
