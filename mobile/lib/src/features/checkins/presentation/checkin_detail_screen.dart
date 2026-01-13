@@ -115,8 +115,8 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
     final userName = checkIn.user?.username ?? 'Someone';
 
     Share.share(
-      '$userName checked in to $bandName at $venueName! Check it out on PitPulse.',
-      subject: 'Check-in on PitPulse',
+      '$userName checked in to $bandName at $venueName! Check it out on SoundCheck.',
+      subject: 'Check-in on SoundCheck',
     );
   }
 
