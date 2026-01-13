@@ -1,16 +1,16 @@
-# Privacy Policy for PitPulse
+# Privacy Policy for SoundCheck
 
 **Effective Date:** November 13, 2025
 **Last Updated:** January 6, 2026
 
 ## Introduction
 
-Welcome to PitPulse. We are committed to protecting your privacy and ensuring transparency about how we collect, use, and safeguard your personal information. This Privacy Policy explains our practices regarding data collection and usage when you use the PitPulse mobile application ("App").
+Welcome to SoundCheck. We are committed to protecting your privacy and ensuring transparency about how we collect, use, and safeguard your personal information. This Privacy Policy explains our practices regarding data collection and usage when you use the SoundCheck mobile application ("App").
 
 ## Information We Collect
 
 ### 1. Account Information
-When you create a PitPulse account, we collect:
+When you create a SoundCheck account, we collect:
 - Email address (required for account creation and login)
 - Username (your chosen display name)
 - Password (stored securely using industry-standard encryption)
@@ -92,7 +92,7 @@ We may disclose your information if required by law:
 - To respond to government requests
 
 #### 4. Business Transfers
-- If PitPulse is acquired or merged with another company, your information may be transferred
+- If SoundCheck is acquired or merged with another company, your information may be transferred
 - You will be notified of any such change in ownership
 
 ### We DO NOT:
@@ -124,7 +124,7 @@ We may disclose your information if required by law:
 #### 3. Delete Your Data
 - Delete individual reviews or comments
 - Request deletion of your entire account
-- Contact us at support@pitpulse.app to request data deletion
+- Contact us at support@soundcheck.app to request data deletion
 
 #### 4. Control Location Access
 - Enable or disable location services at any time
@@ -140,7 +140,7 @@ We may disclose your information if required by law:
 
 ### To Exercise Your Rights:
 - In-app settings for most privacy controls
-- Email us at privacy@pitpulse.app for data requests
+- Email us at privacy@soundcheck.app for data requests
 - We will respond to requests within 30 days
 
 ## Data Security
@@ -162,14 +162,14 @@ We take data security seriously and implement multiple safeguards:
 
 ## Children's Privacy
 
-PitPulse is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13.
+SoundCheck is not intended for users under the age of 13. We do not knowingly collect personal information from children under 13.
 
 If we discover that a child under 13 has provided us with personal information:
 - We will delete that information immediately
 - We will terminate the account
 - We will notify the user via email
 
-If you believe a child under 13 has created an account, please contact us at support@pitpulse.app.
+If you believe a child under 13 has created an account, please contact us at support@soundcheck.app.
 
 ## Third-Party Data Processors
 
@@ -212,7 +212,7 @@ We are not responsible for the privacy practices of third-party services.
 
 ## International Data Transfers
 
-- PitPulse is operated from the United States
+- SoundCheck is operated from the United States
 - Your information may be transferred to and stored in the United States
 - We ensure appropriate safeguards are in place for international transfers
 - By using the App, you consent to the transfer of your information
@@ -235,7 +235,7 @@ If you are a California resident, you have additional rights under the Californi
 - **Right to Opt-Out:** Opt out of the sale of personal information (we don't sell data)
 - **Right to Non-Discrimination:** Equal service regardless of privacy choices
 
-To exercise your CCPA rights, contact us at privacy@pitpulse.app.
+To exercise your CCPA rights, contact us at privacy@soundcheck.app.
 
 ## European Privacy Rights (GDPR)
 
@@ -250,7 +250,7 @@ If you are located in the European Economic Area (EEA), you have rights under th
 - **Right to Object:** Object to certain data processing activities
 - **Right to Withdraw Consent:** Withdraw consent at any time
 
-To exercise your GDPR rights, contact us at privacy@pitpulse.app.
+To exercise your GDPR rights, contact us at privacy@soundcheck.app.
 
 ### Legal Basis for Processing:
 - **Consent:** You have given explicit consent
@@ -260,7 +260,7 @@ To exercise your GDPR rights, contact us at privacy@pitpulse.app.
 
 ## Cookies and Tracking Technologies
 
-The PitPulse mobile app does not use cookies. However, we may use:
+The SoundCheck mobile app does not use cookies. However, we may use:
 - **Local Storage:** To save your login session and preferences locally on your device
 - **Analytics SDKs:** To collect anonymized usage statistics
 - **Crash Reporting:** To identify and fix app crashes
@@ -271,12 +271,12 @@ You can control some of these through your device settings.
 
 If you have questions, concerns, or requests regarding this Privacy Policy or our data practices:
 
-**Email:** privacy@pitpulse.app
-**Support:** support@pitpulse.app
+**Email:** privacy@soundcheck.app
+**Support:** support@soundcheck.app
 **Website:** [Coming Soon]
 
 **Mailing Address:**
-PitPulse
+SoundCheck
 (Address to be added)
 (City, State, ZIP)
 
@@ -284,7 +284,7 @@ We will respond to all privacy inquiries within 30 days.
 
 ## Consent
 
-By creating a PitPulse account and using the App, you acknowledge that you have read, understood, and agree to this Privacy Policy.
+By creating a SoundCheck account and using the App, you acknowledge that you have read, understood, and agree to this Privacy Policy.
 
 ---
 

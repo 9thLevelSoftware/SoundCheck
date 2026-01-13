@@ -1,4 +1,4 @@
-# PitPulse Changelog
+# SoundCheck Changelog
 
 All notable changes to this project will be documented in this file.
 
@@ -33,7 +33,7 @@ All notable changes to this project will be documented in this file.
   - Free for non-commercial use (vs $200/month credits)
   - Music-specific data (concerts, setlists, tours)
   - MusicBrainz ID integration
-  - Actual concert history and setlists (unique feature for PitPulse!)
+  - Actual concert history and setlists (unique feature for SoundCheck!)
   - Simple authentication (just API key, no complex OAuth or version headers)
 
 ### Added - 2025-11-13
@@ -41,7 +41,7 @@ All notable changes to this project will be documented in this file.
   - Android INTERNET and ACCESS_NETWORK_STATE permissions added to AndroidManifest.xml
   - iOS platform support initialized with complete configuration
   - iOS Info.plist configured with App Transport Security and privacy permissions
-  - Production package names set: `com.pitpulse.app` (was `com.example.pitpulse_flutter`)
+  - Production package names set: `com.soundcheck.app` (was `com.example.soundcheck_flutter`)
   - Version updated to `0.1.0+1` for beta semantic versioning
   - Release signing configuration added to Android build.gradle.kts
   - ProGuard rules created for Flutter/Dart code optimization
@@ -57,7 +57,7 @@ All notable changes to this project will be documented in this file.
 ### Technical Details - 2025-11-13
 - **Android Configuration**:
   - Package name changed in build.gradle.kts namespace and applicationId
-  - MainActivity.kt moved to new package structure: `com/pitpulse/app/`
+  - MainActivity.kt moved to new package structure: `com/soundcheck/app/`
   - Release signing config loads from `key.properties` (not committed)
   - Falls back to debug signing if keystore not present (for testing)
   - ProGuard rules cover Flutter, Dio, Gson, OkHttp, and plugin classes
@@ -65,10 +65,10 @@ All notable changes to this project will be documented in this file.
 
 - **iOS Configuration**:
   - 39 iOS platform files generated via `flutter create --platforms=ios`
-  - Bundle identifier updated in project.pbxproj: `com.pitpulse.app`
+  - Bundle identifier updated in project.pbxproj: `com.soundcheck.app`
   - App Transport Security configured for HTTPS-only (localhost exception)
   - Privacy permissions added: Camera, Photos, Location (for image_picker)
-  - Display name set to "PitPulse" (user-facing name)
+  - Display name set to "SoundCheck" (user-facing name)
 
 - **Backend Configuration**:
   - JWT_SECRET: 128 hex characters (cryptographically strong)
@@ -185,7 +185,7 @@ All notable changes to this project will be documented in this file.
 **Task**: IDE configuration fix - Enable monorepo support in Android Studio
 **Status**: Completed ✅ (Dart facet configured, matching NoBSDating structure)
 **Changes**:
-- Added Dart facet to `.idea/PitPulse.iml` for Flutter recognition
+- Added Dart facet to `.idea/SoundCheck.iml` for Flutter recognition
 - Created `.idea/libraries.xml` with Dart SDK and Dart Packages libraries
 - Updated library order entries in module configuration
 - Project now works at monorepo root, just like NoBSDating
@@ -201,7 +201,7 @@ All notable changes to this project will be documented in this file.
 - ✅ iOS platform: Fully configured (requires macOS to build)
 
 **Multi-Platform Status**:
-- PitPulse IS multi-platform configured (Android + iOS)
+- SoundCheck IS multi-platform configured (Android + iOS)
 - Both platforms are 100% ready for builds
 - iOS requires Mac/Xcode (standard Flutter requirement)
 - Not a project limitation—it's a build environment requirement
@@ -218,14 +218,14 @@ All notable changes to this project will be documented in this file.
 
 **Previous Session Summary**:
 **Date**: 2025-11-13 (Initial Beta Prep)
-**Task**: Prepared PitPulse Flutter app for beta release
+**Task**: Prepared SoundCheck Flutter app for beta release
 **Status**: Completed ✅ (All critical blockers resolved)
 **Changes**: Android permissions, package rename, iOS platform setup, signing config, backend .env, beta checklist
 **Details**:
 - Resolved all 3 critical blockers identified in beta-readiness review
 - iOS support now fully configured (was missing entirely)
 - Updated outdated Android/Kotlin checklist to Flutter-specific version
-- Backend is live at https://pitpulsemobile-production.up.railway.app/api
+- Backend is live at https://soundcheckmobile-production.up.railway.app/api
 - Mobile app configured to use production backend
 - Comprehensive documentation created for remaining tasks
 

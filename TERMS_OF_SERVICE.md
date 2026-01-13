@@ -1,25 +1,25 @@
-# Terms of Service for PitPulse
+# Terms of Service for SoundCheck
 
 **Effective Date:** November 13, 2025
 **Last Updated:** November 13, 2025
 
 ## 1. Agreement to Terms
 
-By creating an account or using the PitPulse mobile application ("App," "Service," "PitPulse," or "we"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the App.
+By creating an account or using the SoundCheck mobile application ("App," "Service," "SoundCheck," or "we"), you agree to be bound by these Terms of Service ("Terms"). If you do not agree to these Terms, do not use the App.
 
 ### 1.1 Binding Agreement
-These Terms constitute a legally binding agreement between you ("User," "you," or "your") and PitPulse. Your use of the Service confirms your acceptance of these Terms.
+These Terms constitute a legally binding agreement between you ("User," "you," or "your") and SoundCheck. Your use of the Service confirms your acceptance of these Terms.
 
 ### 1.2 Age Requirements
-You must be at least 13 years old to use PitPulse. By using the App, you represent and warrant that you are at least 13 years of age.
+You must be at least 13 years old to use SoundCheck. By using the App, you represent and warrant that you are at least 13 years of age.
 
 ### 1.3 Changes to Terms
 We reserve the right to modify these Terms at any time. We will notify you of material changes via email or in-app notification. Continued use of the App after changes constitutes acceptance of the modified Terms.
 
 ## 2. Description of Service
 
-### 2.1 What PitPulse Provides
-PitPulse is a mobile application that enables users to:
+### 2.1 What SoundCheck Provides
+SoundCheck is a mobile application that enables users to:
 - Discover concert venues and live music spaces
 - Browse and search for bands and musical artists
 - Read and write reviews for venues and bands
@@ -36,7 +36,7 @@ PitPulse is a mobile application that enables users to:
 ## 3. Account Registration and Security
 
 ### 3.1 Account Creation
-To use most features of PitPulse, you must create an account by providing:
+To use most features of SoundCheck, you must create an account by providing:
 - A valid email address
 - A username
 - A secure password
@@ -63,7 +63,7 @@ You agree to:
 ## 4. User Conduct and Content
 
 ### 4.1 Acceptable Use
-You agree to use PitPulse only for lawful purposes. You will not:
+You agree to use SoundCheck only for lawful purposes. You will not:
 
 #### Prohibited Content:
 - Post false, misleading, or fraudulent reviews
@@ -82,7 +82,7 @@ You agree to use PitPulse only for lawful purposes. You will not:
 - Circumvent security measures or access controls
 
 ### 4.2 User-Generated Content
-When you post content (reviews, comments, photos) on PitPulse:
+When you post content (reviews, comments, photos) on SoundCheck:
 
 #### Your Responsibilities:
 - You are solely responsible for your content
@@ -91,7 +91,7 @@ When you post content (reviews, comments, photos) on PitPulse:
 - You must comply with these Terms
 
 #### Your Grant of Rights:
-By posting content, you grant PitPulse:
+By posting content, you grant SoundCheck:
 - A worldwide, non-exclusive, royalty-free license
 - The right to use, reproduce, modify, and display your content
 - The right to distribute your content through the App
@@ -130,14 +130,14 @@ When uploading photos:
 
 ## 5. Intellectual Property Rights
 
-### 5.1 PitPulse's Intellectual Property
+### 5.1 SoundCheck's Intellectual Property
 The App and its content (excluding user-generated content) are protected by copyright, trademark, and other intellectual property laws.
 
 #### We Own:
-- The PitPulse name, logo, and branding
+- The SoundCheck name, logo, and branding
 - The App's design, layout, and user interface
 - The App's code, software, and technology
-- All original content created by PitPulse
+- All original content created by SoundCheck
 
 #### You May Not:
 - Copy, modify, or reverse-engineer the App
@@ -158,7 +158,7 @@ This license does not permit:
 - Use in any way that violates these Terms
 
 ### 5.3 Third-Party Content
-Venues and bands mentioned in PitPulse are not affiliated with us unless explicitly stated. Trademarks and names belong to their respective owners.
+Venues and bands mentioned in SoundCheck are not affiliated with us unless explicitly stated. Trademarks and names belong to their respective owners.
 
 ## 6. Content Moderation
 
@@ -172,7 +172,7 @@ We reserve the right, but are not obligated, to:
 ### 6.2 Reporting Violations
 If you see content that violates these Terms:
 - Use the in-app reporting feature
-- Email us at support@pitpulse.app with details
+- Email us at support@soundcheck.app with details
 - We will review reports within 48 hours
 
 ### 6.3 No Obligation to Monitor
@@ -180,14 +180,14 @@ We are not responsible for user-generated content and have no obligation to moni
 
 ## 7. Privacy
 
-Your use of PitPulse is subject to our Privacy Policy, which is incorporated into these Terms by reference. Please review our Privacy Policy to understand our data practices.
+Your use of SoundCheck is subject to our Privacy Policy, which is incorporated into these Terms by reference. Please review our Privacy Policy to understand our data practices.
 
 **Privacy Policy Link:** [Available in App Settings]
 
 ## 8. Third-Party Services and Links
 
 ### 8.1 Third-Party Integrations
-PitPulse may integrate with third-party services (e.g., Google Maps, social media platforms). Your use of these services is governed by their respective terms and policies.
+SoundCheck may integrate with third-party services (e.g., Google Maps, social media platforms). Your use of these services is governed by their respective terms and policies.
 
 ### 8.2 External Links
 The App may contain links to third-party websites or services. We are not responsible for:
@@ -244,7 +244,7 @@ Some jurisdictions do not allow the exclusion of certain warranties or limitatio
 
 ## 10. Indemnification
 
-You agree to indemnify, defend, and hold harmless PitPulse and its affiliates, officers, directors, employees, agents, and partners from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from:
+You agree to indemnify, defend, and hold harmless SoundCheck and its affiliates, officers, directors, employees, agents, and partners from any claims, damages, losses, liabilities, costs, and expenses (including reasonable attorneys' fees) arising from:
 
 - Your use or misuse of the App
 - Your violation of these Terms
@@ -260,7 +260,7 @@ We reserve the right to assume exclusive defense and control of any matter subje
 ### 11.1 Termination by You
 You may terminate your account at any time by:
 - Using the account deletion feature in app settings
-- Emailing us at support@pitpulse.app
+- Emailing us at support@soundcheck.app
 
 Upon termination:
 - Your account will be deactivated
@@ -297,10 +297,10 @@ The following sections survive termination:
 We respect intellectual property rights and expect users to do the same.
 
 ### 12.2 DMCA Takedown Notices
-If you believe content on PitPulse infringes your copyright, submit a DMCA notice to:
+If you believe content on SoundCheck infringes your copyright, submit a DMCA notice to:
 
 **DMCA Agent:**
-Email: dmca@pitpulse.app
+Email: dmca@soundcheck.app
 Subject Line: "DMCA Takedown Notice"
 
 Your notice must include:
@@ -326,7 +326,7 @@ We will terminate accounts of users who repeatedly infringe copyright.
 ## 13. Dispute Resolution
 
 ### 13.1 Informal Resolution
-Before filing a legal claim, you agree to contact us at legal@pitpulse.app to attempt to resolve the dispute informally. We will attempt to resolve disputes within 60 days.
+Before filing a legal claim, you agree to contact us at legal@soundcheck.app to attempt to resolve the dispute informally. We will attempt to resolve disputes within 60 days.
 
 ### 13.2 Arbitration Agreement
 If informal resolution fails, you agree that disputes will be resolved by binding arbitration, not in court, except:
@@ -344,7 +344,7 @@ If informal resolution fails, you agree that disputes will be resolved by bindin
 You agree to resolve disputes on an individual basis only. You waive your right to participate in class actions, class arbitrations, or representative actions.
 
 ### 13.4 Opt-Out
-You may opt out of arbitration within 30 days of accepting these Terms by emailing legal@pitpulse.app with "Arbitration Opt-Out" in the subject line.
+You may opt out of arbitration within 30 days of accepting these Terms by emailing legal@soundcheck.app with "Arbitration Opt-Out" in the subject line.
 
 ## 14. Governing Law and Jurisdiction
 
@@ -357,7 +357,7 @@ For disputes not subject to arbitration, you agree to submit to the exclusive ju
 ## 15. General Provisions
 
 ### 15.1 Entire Agreement
-These Terms, along with our Privacy Policy, constitute the entire agreement between you and PitPulse regarding the Service.
+These Terms, along with our Privacy Policy, constitute the entire agreement between you and SoundCheck regarding the Service.
 
 ### 15.2 Severability
 If any provision of these Terms is found to be unenforceable, the remaining provisions will remain in full effect.
@@ -372,10 +372,10 @@ You may not assign or transfer these Terms or your account. We may assign these 
 We are not liable for failure to perform due to circumstances beyond our reasonable control (e.g., natural disasters, war, pandemics, government actions).
 
 ### 15.6 No Agency
-These Terms do not create any agency, partnership, joint venture, or employment relationship between you and PitPulse.
+These Terms do not create any agency, partnership, joint venture, or employment relationship between you and SoundCheck.
 
 ### 15.7 Notices
-Notices to you may be provided via email or in-app notification. Notices to us should be sent to legal@pitpulse.app.
+Notices to you may be provided via email or in-app notification. Notices to us should be sent to legal@soundcheck.app.
 
 ### 15.8 Export Compliance
 You agree to comply with all applicable export and import laws and regulations.
@@ -385,25 +385,25 @@ You agree to comply with all applicable export and import laws and regulations.
 For questions, concerns, or notices regarding these Terms:
 
 **General Inquiries:**
-Email: support@pitpulse.app
+Email: support@soundcheck.app
 
 **Legal Matters:**
-Email: legal@pitpulse.app
+Email: legal@soundcheck.app
 
 **DMCA Notices:**
-Email: dmca@pitpulse.app
+Email: dmca@soundcheck.app
 
 **Privacy Matters:**
-Email: privacy@pitpulse.app
+Email: privacy@soundcheck.app
 
 **Mailing Address:**
-PitPulse
+SoundCheck
 (Address to be added)
 (City, State, ZIP)
 
 ## 17. Acknowledgment
 
-By creating an account and using PitPulse, you acknowledge that:
+By creating an account and using SoundCheck, you acknowledge that:
 - You have read and understood these Terms of Service
 - You agree to be bound by these Terms
 - You understand your rights and obligations
@@ -415,4 +415,4 @@ By creating an account and using PitPulse, you acknowledge that:
 
 **Version:** 1.0
 
-**Thank you for using PitPulse! Enjoy discovering great music venues and bands.**
+**Thank you for using SoundCheck! Enjoy discovering great music venues and bands.**
