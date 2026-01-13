@@ -1,6 +1,6 @@
 #!/bin/bash
 set -e
 
-echo "Starting PitPulse backend..."
+echo "Starting SoundCheck backend..."
 cd backend
 npm start
