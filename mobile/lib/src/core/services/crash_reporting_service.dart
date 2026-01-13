@@ -4,7 +4,7 @@
 /// Requires SENTRY_DSN to be set via --dart-define=SENTRY_DSN=your_dsn
 ///
 /// USAGE:
-/// import 'package:pitpulse_flutter/src/core/services/crash_reporting_service.dart';
+/// import 'package:soundcheck_flutter/src/core/services/crash_reporting_service.dart';
 ///
 /// // In main.dart
 /// await CrashReportingService.init();

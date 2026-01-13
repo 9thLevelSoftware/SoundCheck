@@ -3,7 +3,7 @@
 /// Uses Firebase Analytics for mobile app analytics.
 ///
 /// USAGE:
-/// import 'package:pitpulse_flutter/src/core/services/analytics_service.dart';
+/// import 'package:soundcheck_flutter/src/core/services/analytics_service.dart';
 ///
 /// // In main.dart
 /// await AnalyticsService.initialize();

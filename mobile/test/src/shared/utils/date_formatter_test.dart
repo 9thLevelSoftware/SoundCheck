@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pitpulse_flutter/src/shared/utils/date_formatter.dart';
+import 'package:soundcheck_flutter/src/shared/utils/date_formatter.dart';
 
 void main() {
   group('DateFormatter', () {

@@ -8,14 +8,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import 'package:pitpulse_flutter/main.dart';
+import 'package:soundcheck_flutter/main.dart';
 
 void main() {
   testWidgets('App smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(const ProviderScope(child: PitPulseApp()));
+    await tester.pumpWidget(const ProviderScope(child: SoundCheckApp()));
 
     // Verify that the app starts without crashing.
-    expect(find.byType(PitPulseApp), findsOneWidget);
+    expect(find.byType(SoundCheckApp), findsOneWidget);
   });
 }

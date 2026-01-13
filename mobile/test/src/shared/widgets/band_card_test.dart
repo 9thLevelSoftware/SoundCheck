@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pitpulse_flutter/src/shared/widgets/band_card.dart';
-import 'package:pitpulse_flutter/src/features/bands/domain/band.dart';
+import 'package:soundcheck_flutter/src/shared/widgets/band_card.dart';
+import 'package:soundcheck_flutter/src/features/bands/domain/band.dart';
 
 void main() {
   // Mock the haptic feedback platform channel

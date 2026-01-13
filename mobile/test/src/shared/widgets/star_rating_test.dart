@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pitpulse_flutter/src/shared/widgets/star_rating.dart';
-import 'package:pitpulse_flutter/src/core/theme/app_theme.dart';
+import 'package:soundcheck_flutter/src/shared/widgets/star_rating.dart';
+import 'package:soundcheck_flutter/src/core/theme/app_theme.dart';
 
 void main() {
   group('StarRating Widget', () {

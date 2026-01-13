@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:pitpulse_flutter/src/features/auth/presentation/login_screen.dart';
+import 'package:soundcheck_flutter/src/features/auth/presentation/login_screen.dart';
 
 void main() {
   group('LoginScreen Widget', () {

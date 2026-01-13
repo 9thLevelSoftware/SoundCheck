@@ -1,6 +1,6 @@
-# PitPulse Flutter Tests
+# SoundCheck Flutter Tests
 
-This directory contains comprehensive tests for the PitPulse Flutter application.
+This directory contains comprehensive tests for the SoundCheck Flutter application.
 
 ## Test Structure
 
@@ -73,7 +73,7 @@ Tests for complete user flows (to be added).
 ### Unit Test Example
 ```dart
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pitpulse_flutter/src/shared/utils/validators.dart';
+import 'package:soundcheck_flutter/src/shared/utils/validators.dart';
 
 void main() {
   group('Validators', () {
@@ -89,7 +89,7 @@ void main() {
 ```dart
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pitpulse_flutter/src/shared/widgets/star_rating.dart';
+import 'package:soundcheck_flutter/src/shared/widgets/star_rating.dart';
 
 void main() {
   testWidgets('displays correct number of stars', (tester) async {
