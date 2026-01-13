@@ -5,7 +5,7 @@ import 'vibe_tag.dart';
 part 'checkin.freezed.dart';
 part 'checkin.g.dart';
 
-/// CheckIn - The core entity of PitPulse
+/// CheckIn - The core entity of SoundCheck
 /// A user checking in to a specific Band at a specific Venue at a specific Time
 @freezed
 class CheckIn with _$CheckIn {
