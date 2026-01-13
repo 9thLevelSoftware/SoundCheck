@@ -1,8 +1,8 @@
 {
-  "name": "pitpulse-monorepo",
+  "name": "soundcheck-monorepo",
   "version": "1.0.0",
   "private": true,
-  "description": "PitPulse monorepo - delegates to backend for Railway deployment",
+  "description": "SoundCheck monorepo - delegates to backend for Railway deployment",
   "scripts": {
     "preinstall": "echo 'Installing from backend directory...'",
     "install": "npm install --prefix backend",
