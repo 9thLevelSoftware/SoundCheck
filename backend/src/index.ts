@@ -195,7 +195,7 @@ app.get('/', (req, res) => {
   const response: ApiResponse = {
     success: true,
     data: {
-      message: 'PitPulse API Server',
+      message: 'SoundCheck API Server',
       version: '1.0.0',
       timestamp: new Date().toISOString(),
     },
@@ -290,7 +290,7 @@ const startServer = async () => {
     initWebSocket(server);
 
     server.listen(PORT, () => {
-      logInfo(`PitPulse API Server running on port ${PORT}`);
+      logInfo(`SoundCheck API Server running on port ${PORT}`);
       logInfo(`Health check: http://localhost:${PORT}/health`);
       logInfo(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
