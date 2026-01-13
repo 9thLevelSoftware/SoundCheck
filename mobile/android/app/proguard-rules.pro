@@ -43,7 +43,7 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Keep data model classes (update with your actual model package if needed)
--keep class com.pitpulse.app.models.** { *; }
+-keep class com.soundcheck.app.models.** { *; }
 
 # OkHttp
 -dontwarn okhttp3.**
