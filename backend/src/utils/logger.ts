@@ -62,7 +62,7 @@ if (process.env.NODE_ENV === 'production') {
   transports.push(
     new DailyRotateFile({
       dirname: path.join(__dirname, '../../logs'),
-      filename: 'pitpulse-%DATE%.log',
+      filename: 'soundcheck-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxSize: '20m',
       maxFiles: '14d', // Keep logs for 14 days
@@ -74,7 +74,7 @@ if (process.env.NODE_ENV === 'production') {
   transports.push(
     new DailyRotateFile({
       dirname: path.join(__dirname, '../../logs'),
-      filename: 'pitpulse-error-%DATE%.log',
+      filename: 'soundcheck-error-%DATE%.log',
       datePattern: 'YYYY-MM-DD',
       maxSize: '20m',
       maxFiles: '30d', // Keep error logs for 30 days
