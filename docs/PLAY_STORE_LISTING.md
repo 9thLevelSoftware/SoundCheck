@@ -1,9 +1,9 @@
-# PitPulse - Play Store Listing
+# SoundCheck - Play Store Listing
 
 ## App Information
 
-**App Name**: PitPulse
-**Package Name**: com.pitpulse.app
+**App Name**: SoundCheck
+**Package Name**: com.soundcheck.app
 **Category**: Music & Audio
 **Content Rating**: Everyone (pending questionnaire)
 **Price**: Free
@@ -23,7 +23,7 @@ Character count: 76/80 ✅
 ## Long Description (4000 characters max)
 
 ```
-🎵 PitPulse - Your Concert Companion
+🎵 SoundCheck - Your Concert Companion
 
 Discover the best concert venues and music bands in your area. Share your live music experiences, earn badges, and connect with fellow music enthusiasts.
 
@@ -64,7 +64,7 @@ Discover the best concert venues and music bands in your area. Share your live m
 • Venue explorers
 • Live performance fans
 
-🎯 WHY PITPULSE?
+🎯 WHY SOUNDCHECK?
 • Clean, modern Flutter interface
 • Real reviews from real fans
 • Comprehensive venue information
@@ -80,7 +80,7 @@ We respect your privacy. Your data is encrypted and secure. See our privacy poli
 📧 SUPPORT
 Have questions or feedback? Contact us at dasblueeyeddevil@gmail.com
 
-Download PitPulse today and never miss a great show! 🎤🎶
+Download SoundCheck today and never miss a great show! 🎤🎶
 ```
 
 Character count: ~1,550/4000 ✅
@@ -181,7 +181,7 @@ Design elements:
 
 ## Privacy Policy
 
-**URL**: https://yourusername.github.io/pitpulse-privacy/
+**URL**: https://yourusername.github.io/soundcheck-privacy/
 (Or host on your website)
 
 **Required Updates**:

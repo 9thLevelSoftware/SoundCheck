@@ -25,7 +25,7 @@
 1. On Railway dashboard, click **"New Project"**
 2. Select **"Deploy from GitHub repo"**
 3. If prompted, click **"Configure GitHub App"**
-4. Select your **PitPulseMobile** repository
+4. Select your **SoundCheck** repository
 5. Click **"Install & Authorize"**
 
 ---
@@ -108,7 +108,7 @@ Railway automatically deploys when you:
 2. Click **"Settings"** tab
 3. Scroll to **"Domains"** section
 4. Click **"Generate Domain"**
-5. Railway creates a URL like: `https://pitpulse-backend-production.up.railway.app`
+5. Railway creates a URL like: `https://soundcheck-backend-production.up.railway.app`
 
 **Copy this URL!** You'll need it for:
 - Testing the API
@@ -293,7 +293,7 @@ curl https://your-app.up.railway.app/api/users/me \
 
 **Service might not be starting:**
 1. Check deployment logs
-2. Look for: "PitPulse API Server running on port 3000"
+2. Look for: "SoundCheck API Server running on port 3000"
 3. If not starting, check:
    - `npm start` command in package.json
    - dist/index.js exists after build
@@ -313,7 +313,7 @@ Once your API is working, update your Android app:
 
 ### **Update API URL**
 
-Edit: `app/src/main/java/com/example/pitpulseandroid/data/network/ApiConfig.kt`
+Edit: `app/src/main/java/com/example/soundcheckandroid/data/network/ApiConfig.kt`
 
 ```kotlin
 object ApiConfig {

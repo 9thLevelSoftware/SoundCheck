@@ -31,7 +31,7 @@ You have two options:
 
 5. **Rebuild the app**
    ```powershell
-   cd C:\Users\dasbl\AndroidStudioProjects\PitPulse\mobile
+   cd C:\Users\dasbl\AndroidStudioProjects\SoundCheck\mobile
    flutter clean
    flutter pub get
    flutter run -d windows

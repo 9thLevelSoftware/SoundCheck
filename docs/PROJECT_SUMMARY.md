@@ -1,4 +1,4 @@
-# 🎵 PitPulse - Complete Full-Stack Application
+# 🎵 SoundCheck - Complete Full-Stack Application
 
 ## 🏆 PROJECT COMPLETION STATUS
 
@@ -10,7 +10,7 @@ This project demonstrates the complete development of a production-ready mobile 
 
 ## 📱 APPLICATION OVERVIEW
 
-**PitPulse** is a mobile application that allows music enthusiasts to:
+**SoundCheck** is a mobile application that allows music enthusiasts to:
 - Discover concert venues and bands
 - Write and read reviews with ratings
 - Earn badges based on activity
@@ -104,7 +104,7 @@ This project demonstrates the complete development of a production-ready mobile 
 ## 📂 PROJECT STRUCTURE
 
 ```
-PitPulseMobile/
+SoundCheckMobile/
 ├── backend/                     # Node.js/Express Backend
 │   ├── src/
 │   │   ├── config/              # Database configuration
@@ -119,7 +119,7 @@ PitPulseMobile/
 │   ├── README.md               # Backend documentation
 │   └── package.json            # Dependencies
 │
-├── mobile/PitPulseMobile/       # React Native Frontend
+├── mobile/SoundCheckMobile/       # React Native Frontend
 │   ├── src/
 │   │   ├── components/          # Reusable UI components
 │   │   ├── constants/           # App constants & theme
@@ -291,14 +291,14 @@ cd backend
 npm install
 cp .env.example .env
 # Configure database credentials in .env
-createdb pitpulse
-psql -d pitpulse -f database-schema.sql
+createdb soundcheck
+psql -d soundcheck -f database-schema.sql
 npm run dev
 ```
 
 ### Mobile App Setup
 ```bash
-cd mobile/PitPulseMobile
+cd mobile/SoundCheckMobile
 npm install
 npm start
 # Use Expo Go app to scan QR code

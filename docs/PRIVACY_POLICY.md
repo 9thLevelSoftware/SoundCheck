@@ -1,10 +1,10 @@
-# Privacy Policy for PitPulse
+# Privacy Policy for SoundCheck
 
 **Last Updated: [INSERT DATE]**
 
 ## Introduction
 
-PitPulse ("we," "our," or "us") respects your privacy and is committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our mobile application.
+SoundCheck ("we," "our," or "us") respects your privacy and is committed to protecting your personal data. This privacy policy explains how we collect, use, and safeguard your information when you use our mobile application.
 
 ## Information We Collect
 
@@ -79,7 +79,7 @@ We retain your data for as long as your account is active. When you delete your 
 
 ## Children's Privacy
 
-PitPulse is not intended for users under 13 years of age. We do not knowingly collect information from children under 13. If we discover we have collected data from a child under 13, we will delete it immediately.
+SoundCheck is not intended for users under 13 years of age. We do not knowingly collect information from children under 13. If we discover we have collected data from a child under 13, we will delete it immediately.
 
 ## Third-Party Services
 
@@ -135,7 +135,7 @@ This privacy policy complies with:
 
 ## Consent
 
-By using PitPulse, you consent to this privacy policy and our data practices as described.
+By using SoundCheck, you consent to this privacy policy and our data practices as described.
 
 ---
 

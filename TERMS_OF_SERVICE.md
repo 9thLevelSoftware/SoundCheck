@@ -201,7 +201,7 @@ Inclusion of external links does not imply endorsement or affiliation.
 ## 9. Disclaimers and Limitations of Liability
 
 ### 9.1 Disclaimer of Warranties
-TO THE MAXIMUM EXTENT PERMITTED BY LAW, PITPULSE IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOUNDCHECK IS PROVIDED "AS IS" AND "AS AVAILABLE" WITHOUT WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO:
 
 - **Merchantability:** We do not warrant that the App is suitable for your needs
 - **Fitness for a Particular Purpose:** We do not guarantee the App will meet your expectations
@@ -217,7 +217,7 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, PITPULSE IS PROVIDED "AS IS" AND "AS AVA
 - Use reviews and ratings at your own risk
 
 ### 9.3 Limitation of Liability
-TO THE MAXIMUM EXTENT PERMITTED BY LAW, PITPULSE AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR:
+TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOUNDCHECK AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR:
 
 #### Types of Damages Excluded:
 - Indirect, incidental, or consequential damages

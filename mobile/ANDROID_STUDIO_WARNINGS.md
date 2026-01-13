@@ -56,7 +56,7 @@ android:name="${applicationName}"
 
 **Why it's safe:** `MainActivity.kt` exists at:
 ```
-mobile/android/app/src/main/kotlin/com/pitpulse/app/MainActivity.kt
+mobile/android/app/src/main/kotlin/com/soundcheck/app/MainActivity.kt
 ```
 
 The `.MainActivity` notation is a standard Android shorthand for `com.soundcheck.app.MainActivity` (current package).

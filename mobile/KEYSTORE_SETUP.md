@@ -13,7 +13,7 @@ Run this command in your terminal from the project root:
 ```bash
 keytool -genkey -v -keystore mobile/android/app/upload-keystore.jks \
   -keyalg RSA -keysize 2048 -validity 10000 \
-  -alias pitpulse
+  -alias soundcheck
 ```
 
 You'll be prompted for:
@@ -35,7 +35,7 @@ Create a file at `mobile/android/key.properties` with the following content:
 ```properties
 storePassword=YOUR_KEYSTORE_PASSWORD
 keyPassword=YOUR_KEY_PASSWORD
-keyAlias=pitpulse
+keyAlias=soundcheck
 storeFile=upload-keystore.jks
 ```
 

@@ -27,7 +27,7 @@ void main() {
       expect(find.byIcon(Icons.music_note), findsOneWidget);
       
       // Check for app name
-      expect(find.text('PitPulse'), findsOneWidget);
+      expect(find.text('SoundCheck'), findsOneWidget);
       
       // Check for tagline
       expect(find.text('Discover, Review, Connect'), findsOneWidget);
