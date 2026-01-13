@@ -1,6 +1,6 @@
 # Flutter App Setup Guide
 
-This guide will help you complete the setup and run the PitPulse Flutter application.
+This guide will help you complete the setup and run the SoundCheck Flutter application.
 
 ## Prerequisites
 
@@ -56,7 +56,7 @@ For local development:
 
 ## Step 4: Start the Backend
 
-Make sure the PitPulse backend server is running:
+Make sure the SoundCheck backend server is running:
 
 ```bash
 cd ../backend

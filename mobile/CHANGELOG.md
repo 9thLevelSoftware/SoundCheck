@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes to the PitPulse Flutter app will be documented in this file.
+All notable changes to the SoundCheck Flutter app will be documented in this file.
 
 ## [Unreleased]
 
@@ -129,7 +129,7 @@ All notable changes to the PitPulse Flutter app will be documented in this file.
 
 ## Migration from React Native
 
-This Flutter app replicates all functionality from the React Native PitPulse app:
+This Flutter app replicates all functionality from the React Native SoundCheck app:
 
 | React Native Feature | Flutter Equivalent | Status |
 |---------------------|-------------------|--------|

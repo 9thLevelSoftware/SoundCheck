@@ -1,8 +1,8 @@
-# PitPulse Flutter App Architecture
+# SoundCheck Flutter App Architecture
 
 ## Overview
 
-The PitPulse Flutter app follows a **feature-driven architecture** with clean separation of concerns. It uses modern Flutter patterns and best practices for maintainability, testability, and scalability.
+The SoundCheck Flutter app follows a **feature-driven architecture** with clean separation of concerns. It uses modern Flutter patterns and best practices for maintainability, testability, and scalability.
 
 ## Tech Stack
 

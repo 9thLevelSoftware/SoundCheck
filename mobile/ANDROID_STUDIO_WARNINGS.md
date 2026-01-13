@@ -1,6 +1,6 @@
 # Android Studio False Positive Warnings
 
-This document explains the errors and warnings you may see in Android Studio for the PitPulse Flutter project. **These are false positives and can be safely ignored** - the code is correct and the app builds successfully.
+This document explains the errors and warnings you may see in Android Studio for the SoundCheck Flutter project. **These are false positives and can be safely ignored** - the code is correct and the app builds successfully.
 
 ## Summary
 
@@ -32,7 +32,7 @@ android:name="${applicationName}"
 
 ```xml
 <application
-    android:label="PitPulse"
+    android:label="SoundCheck"
     android:name="${applicationName}"
     android:icon="@mipmap/ic_launcher">
 ```
@@ -59,7 +59,7 @@ android:name="${applicationName}"
 mobile/android/app/src/main/kotlin/com/pitpulse/app/MainActivity.kt
 ```
 
-The `.MainActivity` notation is a standard Android shorthand for `com.pitpulse.app.MainActivity` (current package).
+The `.MainActivity` notation is a standard Android shorthand for `com.soundcheck.app.MainActivity` (current package).
 
 **How to fix the warning:**
 1. File → Invalidate Caches → Invalidate and Restart

@@ -1,6 +1,6 @@
 # React Native to Flutter Conversion Notes
 
-This document outlines the conversion process from the original React Native PitPulse app to Flutter.
+This document outlines the conversion process from the original React Native SoundCheck app to Flutter.
 
 ## Overview
 
@@ -280,7 +280,7 @@ If you're familiar with React Native, here's how to think in Flutter:
 
 ### React Native
 ```
-mobile/PitPulseMobile/src/
+mobile/SoundCheckMobile/src/
 ├── components/       # Reusable components
 ├── screens/          # Screen components
 ├── store/            # Redux slices

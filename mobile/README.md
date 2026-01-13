@@ -1,4 +1,4 @@
-# PitPulse Flutter
+# SoundCheck Flutter
 
 A Flutter application for discovering and reviewing concert venues and bands.
 
@@ -71,7 +71,7 @@ flutter run
 
 ## Backend API
 
-This app connects to the PitPulse backend API. Ensure the backend is running and accessible.
+This app connects to the SoundCheck backend API. Ensure the backend is running and accessible.
 
 Default API URL: `http://localhost:3000/api`
 
@@ -89,4 +89,4 @@ flutter pub run build_runner watch
 
 ## License
 
-Copyright © 2024-2026 PitPulse
+Copyright © 2024-2026 SoundCheck
