@@ -58,7 +58,7 @@ async function runMigration() {
         pool = new pg_1.Pool({
             host: process.env.DB_HOST || 'localhost',
             port: parseInt(process.env.DB_PORT || '5432'),
-            database: process.env.DB_NAME || 'pitpulse',
+            database: process.env.DB_NAME || 'soundcheck',
             user: process.env.DB_USER || 'postgres',
             password: process.env.DB_PASSWORD || 'password',
         });

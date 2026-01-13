@@ -198,6 +198,39 @@ class UserService {
         await this.db.query(query, [userId]);
     }
     /**
+     * Search users by username or display name
+     */
+    async searchUsers(query, limit = 20, offset = 0) {
+        const searchTerm = `%${query.toLowerCase()}%`;
+        const exactTerm = query.toLowerCase();
+        const prefixTerm = `${query.toLowerCase()}%`;
+        const result = await this.db.query(`SELECT id, username,
+              COALESCE(first_name || ' ' || last_name, first_name, last_name) as display_name,
+              profile_image_url, bio
+       FROM users
+       WHERE is_active = true
+         AND (LOWER(username) LIKE $1
+              OR LOWER(first_name) LIKE $1
+              OR LOWER(last_name) LIKE $1
+              OR LOWER(COALESCE(first_name || ' ' || last_name, '')) LIKE $1)
+       ORDER BY
+         CASE WHEN LOWER(username) = $4 THEN 0
+              WHEN LOWER(username) LIKE $5 THEN 1
+              ELSE 2 END,
+         created_at DESC
+       LIMIT $2 OFFSET $3`, [searchTerm, limit, offset, exactTerm, prefixTerm]);
+        return {
+            users: result.rows.map((row) => ({
+                id: row.id,
+                username: row.username,
+                displayName: row.display_name?.trim() || null,
+                profileImageUrl: row.profile_image_url,
+                bio: row.bio,
+            })),
+            hasMore: result.rows.length === limit,
+        };
+    }
+    /**
      * Get user statistics
      */
     async getUserStats(userId) {

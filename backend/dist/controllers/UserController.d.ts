@@ -49,6 +49,11 @@ export declare class UserController {
      */
     getUserStats: (req: Request, res: Response) => Promise<void>;
     /**
+     * Search users by username or display name
+     * GET /api/search/users?q=query&limit=20&offset=0
+     */
+    searchUsers: (req: Request, res: Response) => Promise<void>;
+    /**
      * Upload profile image
      * POST /api/users/me/profile-image
      */

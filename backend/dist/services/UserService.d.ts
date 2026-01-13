@@ -34,6 +34,19 @@ export declare class UserService {
      */
     deactivateAccount(userId: string): Promise<void>;
     /**
+     * Search users by username or display name
+     */
+    searchUsers(query: string, limit?: number, offset?: number): Promise<{
+        users: Array<{
+            id: string;
+            username: string;
+            displayName: string | null;
+            profileImageUrl: string | null;
+            bio: string | null;
+        }>;
+        hasMore: boolean;
+    }>;
+    /**
      * Get user statistics
      */
     getUserStats(userId: string): Promise<{

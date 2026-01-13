@@ -44,8 +44,8 @@ class AuthUtils {
     static generateToken(payload) {
         const options = {
             expiresIn: JWT_EXPIRES_IN, // '7d' format is valid but types are strict
-            issuer: 'pitpulse-api',
-            audience: 'pitpulse-mobile',
+            issuer: 'soundcheck-api',
+            audience: 'soundcheck-mobile',
         };
         return jsonwebtoken_1.default.sign(payload, JWT_SECRET, options);
     }
@@ -55,8 +55,8 @@ class AuthUtils {
     static verifyToken(token) {
         try {
             const decoded = jsonwebtoken_1.default.verify(token, JWT_SECRET, {
-                issuer: 'pitpulse-api',
-                audience: 'pitpulse-mobile',
+                issuer: 'soundcheck-api',
+                audience: 'soundcheck-mobile',
             });
             return decoded;
         }

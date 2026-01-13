@@ -37,6 +37,7 @@ const tokenRoutes_1 = __importDefault(require("./routes/tokenRoutes"));
 const dataExportRoutes_1 = __importDefault(require("./routes/dataExportRoutes"));
 const consentRoutes_1 = __importDefault(require("./routes/consentRoutes"));
 const socialAuthRoutes_1 = __importDefault(require("./routes/socialAuthRoutes"));
+const searchRoutes_1 = __importDefault(require("./routes/searchRoutes"));
 const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
 const websocket_1 = require("./utils/websocket");
@@ -173,12 +174,13 @@ app.use('/api/tokens', tokenRoutes_1.default);
 app.use('/api/users', dataExportRoutes_1.default);
 app.use('/api/users/consents', consentRoutes_1.default);
 app.use('/api/auth/social', socialAuthRoutes_1.default);
+app.use('/api/search', searchRoutes_1.default);
 // Root endpoint
 app.get('/', (req, res) => {
     const response = {
         success: true,
         data: {
-            message: 'PitPulse API Server',
+            message: 'SoundCheck API Server',
             version: '1.0.0',
             timestamp: new Date().toISOString(),
         },
@@ -257,7 +259,7 @@ const startServer = async () => {
         // Initialize WebSocket server
         (0, websocket_1.initWebSocket)(server);
         server.listen(PORT, () => {
-            (0, logger_1.logInfo)(`PitPulse API Server running on port ${PORT}`);
+            (0, logger_1.logInfo)(`SoundCheck API Server running on port ${PORT}`);
             (0, logger_1.logInfo)(`Health check: http://localhost:${PORT}/health`);
             (0, logger_1.logInfo)(`Environment: ${process.env.NODE_ENV || 'development'}`);
             if (process.env.NODE_ENV === 'development') {

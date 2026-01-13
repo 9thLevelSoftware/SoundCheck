@@ -302,6 +302,44 @@ class UserController {
             }
         };
         /**
+         * Search users by username or display name
+         * GET /api/search/users?q=query&limit=20&offset=0
+         */
+        this.searchUsers = async (req, res) => {
+            try {
+                const { q, limit = '20', offset = '0' } = req.query;
+                if (!q || typeof q !== 'string' || q.length < 2) {
+                    const response = {
+                        success: false,
+                        error: 'Query must be at least 2 characters',
+                    };
+                    res.status(400).json(response);
+                    return;
+                }
+                const parsedLimit = Math.min(Math.max(parseInt(limit, 10) || 20, 1), 50);
+                const parsedOffset = Math.max(parseInt(offset, 10) || 0, 0);
+                const result = await this.userService.searchUsers(q, parsedLimit, parsedOffset);
+                const response = {
+                    success: true,
+                    data: result.users,
+                    pagination: {
+                        limit: parsedLimit,
+                        offset: parsedOffset,
+                        hasMore: result.hasMore,
+                    },
+                };
+                res.json(response);
+            }
+            catch (error) {
+                console.error('User search error:', error);
+                const response = {
+                    success: false,
+                    error: 'Search failed',
+                };
+                res.status(500).json(response);
+            }
+        };
+        /**
          * Upload profile image
          * POST /api/users/me/profile-image
          */

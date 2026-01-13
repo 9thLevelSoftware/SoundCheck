@@ -172,6 +172,12 @@ export interface ApiResponse<T = any> {
     data?: T;
     message?: string;
     error?: string;
+    pagination?: {
+        limit: number;
+        offset: number;
+        hasMore: boolean;
+        total?: number;
+    };
 }
 export interface PaginationQuery {
     page?: number;
