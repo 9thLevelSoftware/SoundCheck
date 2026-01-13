@@ -25,7 +25,7 @@ router.get(
       const exportData = await dataExportService.exportUserData(userId);
 
       // Set headers for file download
-      const filename = `pitpulse-data-export-${new Date().toISOString().split('T')[0]}.json`;
+      const filename = `soundcheck-data-export-${new Date().toISOString().split('T')[0]}.json`;
       res.setHeader('Content-Type', 'application/json');
       res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
 
