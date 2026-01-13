@@ -239,7 +239,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     children: [
                       // Logo/Title
                       Semantics(
-                        label: 'PitPulse logo',
+                        label: 'SoundCheck logo',
                         image: true,
                         child: const Icon(
                           Icons.music_note,
@@ -250,7 +250,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: AppTheme.spacing16),
                       
                       Text(
-                        'PitPulse',
+                        'SoundCheck',
                         style: Theme.of(context).textTheme.displayLarge?.copyWith(
                               color: AppTheme.primary,
                               fontWeight: FontWeight.bold,
