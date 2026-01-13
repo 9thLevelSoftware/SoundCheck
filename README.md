@@ -1,10 +1,10 @@
-# 🎵 PitPulse
+# 🎵 SoundCheck
 
 A full-stack mobile application for discovering and reviewing concert venues and bands, built with Flutter and Node.js.
 
 ## 📱 Overview
 
-**PitPulse** is a cross-platform mobile application that allows music enthusiasts to:
+**SoundCheck** is a cross-platform mobile application that allows music enthusiasts to:
 - Discover concert venues and bands
 - Write and read reviews with ratings
 - Earn badges based on activity
@@ -16,7 +16,7 @@ A full-stack mobile application for discovering and reviewing concert venues and
 This is a monorepo containing both the backend API and the Flutter mobile application:
 
 ```
-PitPulseMobile/
+SoundCheckMobile/
 ├── backend/          # Node.js/Express/TypeScript API server
 │   ├── src/         # Source code
 │   ├── database-schema.sql
@@ -65,8 +65,8 @@ PitPulseMobile/
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/DasBluEyedDevil/PitPulseMobile.git
-   cd PitPulseMobile
+   git clone https://github.com/DasBluEyedDevil/SoundCheckMobile.git
+   cd SoundCheckMobile
    ```
 
 2. **Set up and run the backend:**
@@ -75,8 +75,8 @@ PitPulseMobile/
    npm install
    cp .env.example .env
    # Edit .env with your configuration
-   createdb pitpulse
-   psql -d pitpulse -f database-schema.sql
+   createdb soundcheck
+   psql -d soundcheck -f database-schema.sql
    npm run dev
    ```
    
@@ -136,7 +136,7 @@ This is a personal project, but suggestions and feedback are welcome. Please ope
 
 ## 📄 License
 
-Copyright © 2024-2026 PitPulse. All rights reserved.
+Copyright © 2024-2026 SoundCheck. All rights reserved.
 
 ## 📞 Support
 
