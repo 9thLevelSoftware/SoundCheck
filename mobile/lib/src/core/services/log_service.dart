@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart';
 /// Service for handling application logging
 /// Replaces direct print/debugPrint calls
 class LogService {
-  static const String _tag = '[PitPulse]';
+  static const String _tag = '[SoundCheck]';
 
   static void i(String message) {
     if (kDebugMode) {
