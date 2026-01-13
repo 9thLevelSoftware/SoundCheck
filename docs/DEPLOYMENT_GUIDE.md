@@ -1,6 +1,6 @@
-# 🚀 PitPulse Deployment Guide
+# 🚀 SoundCheck Deployment Guide
 
-This guide covers deploying the complete PitPulse application to production environments.
+This guide covers deploying the complete SoundCheck application to production environments.
 
 ## 📋 Prerequisites
 
@@ -128,7 +128,7 @@ curl https://your-app.vercel.app/api/users/check-email/test@example.com
 ### 1. Prepare for App Store Deployment
 
 ```bash
-cd mobile/PitPulseMobile
+cd mobile/SoundCheckMobile
 
 # Install EAS CLI
 npm install -g @expo/eas-cli
@@ -142,7 +142,7 @@ eas build:configure
 
 ### 2. Configure App for Production
 
-Update `mobile/PitPulseMobile/src/constants/index.ts`:
+Update `mobile/SoundCheckMobile/src/constants/index.ts`:
 ```typescript
 export const API_CONFIG = {
   BASE_URL: 'https://your-app.vercel.app/api', // Your deployed backend URL
@@ -151,12 +151,12 @@ export const API_CONFIG = {
 };
 ```
 
-Update `mobile/PitPulseMobile/app.json`:
+Update `mobile/SoundCheckMobile/app.json`:
 ```json
 {
   "expo": {
-    "name": "PitPulse",
-    "slug": "pitpulse",
+    "name": "SoundCheck",
+    "slug": "soundcheck",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -168,14 +168,14 @@ Update `mobile/PitPulseMobile/app.json`:
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.yourcompany.pitpulse"
+      "bundleIdentifier": "com.yourcompany.soundcheck"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#2196F3"
       },
-      "package": "com.yourcompany.pitpulse"
+      "package": "com.yourcompany.soundcheck"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -299,7 +299,7 @@ LIMIT 10;
 
 **Install Analytics:**
 ```bash
-cd mobile/PitPulseMobile
+cd mobile/SoundCheckMobile
 expo install expo-analytics-amplitude
 # or
 expo install @react-native-google-analytics/google-analytics
@@ -379,11 +379,11 @@ jobs:
           token: ${{ secrets.EXPO_TOKEN }}
           
       - name: Install dependencies
-        working-directory: mobile/PitPulseMobile
+        working-directory: mobile/SoundCheckMobile
         run: npm ci
         
       - name: Build Android
-        working-directory: mobile/PitPulseMobile
+        working-directory: mobile/SoundCheckMobile
         run: eas build --platform android --non-interactive
 ```
 
@@ -479,4 +479,4 @@ For deployment issues:
 
 ---
 
-**🎉 Congratulations! Your PitPulse application is now live in production!**
+**🎉 Congratulations! Your SoundCheck application is now live in production!**

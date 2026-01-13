@@ -1,4 +1,4 @@
-# PitPulse Screenshot Capture Guide
+# SoundCheck Screenshot Capture Guide
 
 ## 📸 **Requirements**
 
@@ -96,7 +96,7 @@ adb devices
 # Navigate to desired screen in app
 # Then capture:
 adb shell screencap -p /sdcard/screenshot.png
-adb pull /sdcard/screenshot.png C:\Users\dasbl\AndroidStudioProjects\PitPulse\docs\assets\screenshots\
+adb pull /sdcard/screenshot.png C:\Users\dasbl\AndroidStudioProjects\SoundCheck\docs\assets\screenshots\
 
 # Repeat for each screen
 ```
@@ -184,7 +184,7 @@ flutter screenshot
 **Navigation**: Launch app → Home/Venues tab
 
 **What to show**:
-- [ ] App bar/title: "Venues" or "PitPulse"
+- [ ] App bar/title: "Venues" or "SoundCheck"
 - [ ] Search bar (if implemented)
 - [ ] List of 3-4 venues visible:
   - Venue images/icons
@@ -203,7 +203,7 @@ flutter screenshot
 **Example Layout**:
 ```
 ┌─────────────────────┐
-│ ← PitPulse        ⚙️│ (App bar)
+│ ← SoundCheck        ⚙️│ (App bar)
 │ 🔍 Search venues... │ (Search bar)
 │                     │
 │ ┌───────────────┐  │
@@ -421,7 +421,7 @@ If screenshots are too dark:
 
 Save screenshots to:
 ```
-C:\Users\dasbl\AndroidStudioProjects\PitPulse\docs\assets\screenshots\
+C:\Users\dasbl\AndroidStudioProjects\SoundCheck\docs\assets\screenshots\
 
 ├── 01_venues_list.png
 ├── 02_venue_detail.png

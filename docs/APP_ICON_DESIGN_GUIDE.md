@@ -1,4 +1,4 @@
-# PitPulse App Icon Design Guide
+# SoundCheck App Icon Design Guide
 
 ## 📱 **Quick Reference**
 
@@ -12,7 +12,7 @@
 
 ---
 
-## 🎨 **Design Concept: PitPulse**
+## 🎨 **Design Concept: SoundCheck**
 
 ### Theme
 **Music + Pulse/Heartbeat**
@@ -192,7 +192,7 @@ The icon should convey:
 1. Search "app icon design"
 2. Filter: $10-25, 4+ star rating
 3. Provide brief:
-   - App name: PitPulse
+   - App name: SoundCheck
    - Theme: Music venue discovery
    - Colors: Purple (#6B46C1) and Blue (#3B82F6)
    - Style: Modern, minimal
@@ -305,7 +305,7 @@ For fastest, best results:
 3. **If want professional**: Fiverr ($15-25, 1-2 days)
 4. **If need inspiration**: AI generator → edit in Figma
 
-**For PitPulse specifically, I recommend Option 4 (Venue Pin + Sound Waves)** because:
+**For SoundCheck specifically, I recommend Option 4 (Venue Pin + Sound Waves)** because:
 - Clearly communicates "find venues"
 - Simple enough to be recognizable
 - Scalable to tiny sizes
@@ -327,4 +327,4 @@ If you get stuck:
 **Cost**: Free (DIY) or $10-25 (professional)
 **Priority**: High (required for Play Store submission)
 
-**Good luck! Your icon will be the face of PitPulse. Make it count! 🎨🎵**
+**Good luck! Your icon will be the face of SoundCheck. Make it count! 🎨🎵**

@@ -1,4 +1,4 @@
-# 🚀 PitPulse Beta Release Checklist
+# 🚀 SoundCheck Beta Release Checklist
 
 ## ✅ Completed Critical Fixes
 
@@ -158,7 +158,7 @@ curl -X POST $API_URL/api/users/login \
 
 #### Step 5: Update API Configuration
 ```kotlin
-// File: app/src/main/java/com/example/pitpulseandroid/data/network/ApiConfig.kt
+// File: app/src/main/java/com/example/soundcheckandroid/data/network/ApiConfig.kt
 // Line 7: Update PROD_BASE_URL with your deployed backend URL
 
 private const val PROD_BASE_URL = "https://your-api-url.com/api/"
@@ -169,7 +169,7 @@ private const val PROD_BASE_URL = "https://your-api-url.com/api/"
 
 Follow instructions in `PACKAGE_NAME_CHANGE.md`:
 1. Open project in Android Studio
-2. Refactor package from `com.example.pitpulseandroid` to `com.pitpulse.android`
+2. Refactor package from `com.example.soundcheckandroid` to `com.soundcheck.android`
 3. Update `applicationId` in `app/build.gradle.kts`
 4. Clean and rebuild
 
@@ -178,8 +178,8 @@ Follow instructions in `KEYSTORE_SETUP.md`:
 
 ```bash
 # In project root
-keytool -genkey -v -keystore pitpulse-release-key.keystore \
-  -alias pitpulse \
+keytool -genkey -v -keystore soundcheck-release-key.keystore \
+  -alias soundcheck \
   -keyalg RSA \
   -keysize 2048 \
   -validity 10000
@@ -187,8 +187,8 @@ keytool -genkey -v -keystore pitpulse-release-key.keystore \
 # Create keystore.properties
 echo "storePassword=YOUR_PASSWORD" > keystore.properties
 echo "keyPassword=YOUR_PASSWORD" >> keystore.properties
-echo "keyAlias=pitpulse" >> keystore.properties
-echo "storeFile=pitpulse-release-key.keystore" >> keystore.properties
+echo "keyAlias=soundcheck" >> keystore.properties
+echo "storeFile=soundcheck-release-key.keystore" >> keystore.properties
 ```
 
 **IMPORTANT:** Save your passwords securely! You cannot recover them!
@@ -229,10 +229,10 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 #### Step 10: Host Privacy Policy
 **Option 1: GitHub Pages (Free)**
 ```bash
-# Create a new GitHub repo "pitpulse-privacy"
+# Create a new GitHub repo "soundcheck-privacy"
 # Upload PRIVACY_POLICY.md as index.html
 # Enable GitHub Pages in repo settings
-# URL: https://yourusername.github.io/pitpulse-privacy/
+# URL: https://yourusername.github.io/soundcheck-privacy/
 ```
 
 **Option 2: Your website**
@@ -253,7 +253,7 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 
 2. **Create App**
    - Click "Create app"
-   - Enter app name: "PitPulse"
+   - Enter app name: "SoundCheck"
    - Choose "App" type
    - Select "Free"
    - Choose your country
@@ -367,7 +367,7 @@ Discover concert venues, review bands, and track your music experiences.
 
 ### Long Description (4000 chars max)
 ```
-🎵 PitPulse - Your Concert Companion
+🎵 SoundCheck - Your Concert Companion
 
 Discover the best concert venues and music bands in your area. Share your live music experiences, earn badges, and connect with fellow music enthusiasts.
 
@@ -425,7 +425,7 @@ We respect your privacy. Your data is encrypted and secure. See our privacy poli
 📧 SUPPORT
 Have questions or feedback? Contact us at [your-email]
 
-Download PitPulse today and never miss a great show! 🎤🎶
+Download SoundCheck today and never miss a great show! 🎤🎶
 ```
 
 ---

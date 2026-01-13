@@ -1,11 +1,11 @@
-# PitPulse APK Testing Checklist
+# SoundCheck APK Testing Checklist
 
 ## 📱 **APK Information**
 
 **File**: `mobile/build/app/outputs/flutter-apk/app-release.apk`
 **Size**: 51.6 MB
 **Version**: 0.1.0+1 (Beta)
-**Package**: com.pitpulse.app
+**Package**: com.soundcheck.app
 **Build Date**: November 13, 2025
 
 ---
@@ -44,7 +44,7 @@
 
 ### Method 1: ADB Install (Recommended)
 ```bash
-cd C:\Users\dasbl\AndroidStudioProjects\PitPulse\mobile
+cd C:\Users\dasbl\AndroidStudioProjects\SoundCheck\mobile
 
 # Install APK
 adb install build/app/outputs/flutter-apk/app-release.apk
@@ -83,14 +83,14 @@ Success
 
 ### 2. Network Connectivity
 - [ ] **App connects to backend**
-  - Backend URL: `https://pitpulsemobile-production.up.railway.app/api`
+  - Backend URL: `https://soundcheckmobile-production.up.railway.app/api`
 - [ ] **No "network error" on launch**
 - [ ] **Data loads on home screen**
 
 **Test Command**:
 ```bash
 # Check if backend is reachable from device
-adb shell ping -c 3 pitpulsemobile-production.up.railway.app
+adb shell ping -c 3 soundcheckmobile-production.up.railway.app
 ```
 
 **Pass Criteria**: Backend responds, data loads
@@ -101,7 +101,7 @@ adb shell ping -c 3 pitpulsemobile-production.up.railway.app
 - [ ] **Navigate to Register screen**
 - [ ] **Form fields visible**: Email, Username, Password
 - [ ] **Enter test credentials**:
-  - Email: `beta.test.{timestamp}@pitpulse.com`
+  - Email: `beta.test.{timestamp}@soundcheck.com`
   - Username: `betatester{random}`
   - Password: `TestBeta2024!`
 - [ ] **Tap "Register" button**
@@ -130,7 +130,7 @@ adb logcat | grep -i "error\|exception"
 **Verify Token Storage**:
 ```bash
 # Check secure storage (if using flutter_secure_storage)
-adb shell run-as com.pitpulse.app ls -la /data/data/com.pitpulse.app/files
+adb shell run-as com.soundcheck.app ls -la /data/data/com.soundcheck.app/files
 ```
 
 ---
@@ -298,7 +298,7 @@ adb shell run-as com.pitpulse.app ls -la /data/data/com.pitpulse.app/files
 **Measure Load Time**:
 ```bash
 # Measure app startup time
-adb shell am start -W -n com.pitpulse.app/.MainActivity
+adb shell am start -W -n com.soundcheck.app/.MainActivity
 # Look for "ThisTime" value in output
 ```
 
@@ -309,7 +309,7 @@ adb shell am start -W -n com.pitpulse.app/.MainActivity
 ### Memory Usage
 - [ ] **Check memory** while app running:
   ```bash
-  adb shell dumpsys meminfo com.pitpulse.app
+  adb shell dumpsys meminfo com.soundcheck.app
   ```
 - [ ] **Total PSS**: < 150 MB (acceptable for Flutter)
 - [ ] **No memory leaks** (memory doesn't grow continuously)
@@ -348,7 +348,7 @@ adb shell am start -W -n com.pitpulse.app/.MainActivity
 - [ ] **Open app**
 - [ ] **Press Home button**
 - [ ] **Open 2-3 other apps** (browser, messages, camera)
-- [ ] **Return to PitPulse via recent apps**
+- [ ] **Return to SoundCheck via recent apps**
 - [ ] **App still running** (not restarted)
 - [ ] **User remains logged in**
 
@@ -370,7 +370,7 @@ adb logcat | grep -i "flutter"
 adb logcat *:E
 
 # Save logs to file
-adb logcat > pitpulse_test_logs.txt
+adb logcat > soundcheck_test_logs.txt
 ```
 
 ### Check Crash Reports
@@ -391,13 +391,13 @@ adb logcat | grep -i "http\|api"
 ### App Info
 ```bash
 # Get package info
-adb shell dumpsys package com.pitpulse.app | grep "versionName\|versionCode"
+adb shell dumpsys package com.soundcheck.app | grep "versionName\|versionCode"
 
 # Get app permissions
-adb shell dumpsys package com.pitpulse.app | grep "permission"
+adb shell dumpsys package com.soundcheck.app | grep "permission"
 
 # Get storage usage
-adb shell dumpsys package com.pitpulse.app | grep "dataDir\|codeDir"
+adb shell dumpsys package com.soundcheck.app | grep "dataDir\|codeDir"
 ```
 
 ---
@@ -427,7 +427,7 @@ adb shell dumpsys package com.pitpulse.app | grep "dataDir\|codeDir"
 ## 📝 **Test Report Template**
 
 ```markdown
-# PitPulse Beta APK Test Report
+# SoundCheck Beta APK Test Report
 
 **Tester**: [Your Name]
 **Date**: November 13, 2025
@@ -496,7 +496,7 @@ adb shell dumpsys package com.pitpulse.app | grep "dataDir\|codeDir"
 4. Review those files in codebase
 
 **If networking fails**:
-1. Verify backend is up: `curl https://pitpulsemobile-production.up.railway.app/health`
+1. Verify backend is up: `curl https://soundcheckmobile-production.up.railway.app/health`
 2. Check device can reach internet
 3. Review INTERNET permission in AndroidManifest (already added)
 4. Check logcat for network errors
