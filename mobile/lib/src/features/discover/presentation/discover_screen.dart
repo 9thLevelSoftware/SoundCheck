@@ -458,7 +458,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 urlTemplate:
                     'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
                 subdomains: const ['a', 'b', 'c', 'd'],
-                userAgentPackageName: 'com.pitpulse.app',
+                userAgentPackageName: 'com.soundcheck.app',
                 maxZoom: 19,
               ),
               // Venue markers
