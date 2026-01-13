@@ -89,13 +89,13 @@ BEGIN
     BEGIN
         BLOCK "040904e4"
         BEGIN
-            VALUE "CompanyName", "com.pitpulse" "\0"
-            VALUE "FileDescription", "pitpulse_flutter" "\0"
+            VALUE "CompanyName", "com.soundcheck" "\0"
+            VALUE "FileDescription", "soundcheck_flutter" "\0"
             VALUE "FileVersion", VERSION_AS_STRING "\0"
-            VALUE "InternalName", "pitpulse_flutter" "\0"
-            VALUE "LegalCopyright", "Copyright (C) 2025 com.pitpulse. All rights reserved." "\0"
-            VALUE "OriginalFilename", "pitpulse_flutter.exe" "\0"
-            VALUE "ProductName", "pitpulse_flutter" "\0"
+            VALUE "InternalName", "soundcheck_flutter" "\0"
+            VALUE "LegalCopyright", "Copyright (C) 2025 com.soundcheck. All rights reserved." "\0"
+            VALUE "OriginalFilename", "soundcheck_flutter.exe" "\0"
+            VALUE "ProductName", "soundcheck_flutter" "\0"
             VALUE "ProductVersion", VERSION_AS_STRING "\0"
         END
     END
