@@ -103,7 +103,7 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.privacy_tip_outlined),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  _launchUrl('https://pitpulse.app/privacy');
+                  _launchUrl('https://soundcheck.app/privacy');
                 },
               ),
               _SettingsTile(
@@ -111,7 +111,7 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.description_outlined),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  _launchUrl('https://pitpulse.app/terms');
+                  _launchUrl('https://soundcheck.app/terms');
                 },
               ),
               const Divider(),
@@ -119,14 +119,14 @@ class SettingsScreen extends ConsumerWidget {
               // About Section
               const _SectionHeader(title: 'About'),
               _SettingsTile(
-                title: 'About PitPulse',
+                title: 'About SoundCheck',
                 subtitle: 'Version ${AppInfo.version}',
                 leading: const Icon(Icons.info_outline),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
                   showAboutDialog(
                     context: context,
-                    applicationName: 'PitPulse',
+                    applicationName: 'SoundCheck',
                     applicationVersion: AppInfo.version,
                     applicationIcon: const Icon(
                       Icons.music_note,
@@ -147,7 +147,7 @@ class SettingsScreen extends ConsumerWidget {
                 leading: const Icon(Icons.support_agent_outlined),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () {
-                  _launchUrl('mailto:support@pitpulse.app');
+                  _launchUrl('mailto:support@soundcheck.app');
                 },
               ),
               const Divider(),
