@@ -1,7 +1,7 @@
 {
-  "name": "pitpulse-backend",
+  "name": "soundcheck-backend",
   "version": "1.0.1",
-  "description": "Backend API for PitPulse mobile application",
+  "description": "Backend API for SoundCheck mobile application",
   "main": "dist/index.js",
   "scripts": {
     "start": "node dist/index.js",
