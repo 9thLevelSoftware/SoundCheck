@@ -7,7 +7,7 @@ class AppTheme {
   // Private constructor to prevent instantiation
   AppTheme._();
 
-  // PitPulse Brand Colors - "High Voltage" Style
+  // SoundCheck Brand Colors - "High Voltage" Style
   // 2025 Trend: Acid/Volt Greens are dominating dark mode interfaces for energetic brands
   static const Color voltLime = Color(0xFFD2FF00); // Primary Accent (High visibility)
   static const Color voltLimeLight = Color(0xFFE4FF5F);
