@@ -41,7 +41,7 @@ describe('SocialAuthService', () => {
   beforeEach(() => {
     // Set up environment variables
     process.env.GOOGLE_CLIENT_ID = 'test-google-client-id';
-    process.env.APPLE_BUNDLE_ID = 'com.test.pitpulse';
+    process.env.APPLE_BUNDLE_ID = 'com.test.soundcheck';
 
     socialAuthService = new SocialAuthService();
     mockGoogleClient = (socialAuthService as any).googleClient;
@@ -120,7 +120,7 @@ describe('SocialAuthService', () => {
   describe('verifyAppleToken', () => {
     beforeEach(() => {
       mockAppleVerify.mockReset();
-      process.env.APPLE_BUNDLE_ID = 'com.test.pitpulse';
+      process.env.APPLE_BUNDLE_ID = 'com.test.soundcheck';
     });
 
     it('should verify a valid Apple token and return profile', async () => {
@@ -142,7 +142,7 @@ describe('SocialAuthService', () => {
         lastName: 'User',
       });
       expect(mockAppleVerify).toHaveBeenCalledWith('valid-apple-token', {
-        audience: 'com.test.pitpulse',
+        audience: 'com.test.soundcheck',
         ignoreExpiration: false,
       });
     });
