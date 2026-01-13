@@ -1,4 +1,4 @@
-// TypeScript type definitions for PitPulse backend
+// TypeScript type definitions for SoundCheck backend
 
 export interface User {
   id: string;
