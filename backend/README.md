@@ -1,6 +1,6 @@
-# PitPulse Backend API
+# SoundCheck Backend API
 
-A comprehensive Node.js/Express/TypeScript API for the PitPulse mobile application, allowing users to discover and review concert venues and bands.
+A comprehensive Node.js/Express/TypeScript API for the SoundCheck mobile application, allowing users to discover and review concert venues and bands.
 
 ## 🚀 Features
 
@@ -39,12 +39,12 @@ A comprehensive Node.js/Express/TypeScript API for the PitPulse mobile applicati
 
 4. **Create PostgreSQL database:**
    ```bash
-   createdb pitpulse
+   createdb soundcheck
    ```
 
 5. **Run database schema:**
    ```bash
-   psql -d pitpulse -f database-schema.sql
+   psql -d soundcheck -f database-schema.sql
    ```
 
 6. **Start development server:**

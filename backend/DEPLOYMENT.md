@@ -1,6 +1,6 @@
 # 🚀 Backend Deployment Guide
 
-This guide covers deploying the PitPulse backend API to production.
+This guide covers deploying the SoundCheck backend API to production.
 
 ## Table of Contents
 1. [Choose a Hosting Platform](#hosting-platforms)
@@ -109,7 +109,7 @@ vercel env add NODE_ENV production
 2. **Create app:**
 ```bash
 cd backend
-heroku create pitpulse-api
+heroku create soundcheck-api
 ```
 
 3. **Add PostgreSQL:**
@@ -183,7 +183,7 @@ npm run build
 # Deploy to production
 vercel --prod
 
-# Your API will be at: https://pitpulse-api.vercel.app
+# Your API will be at: https://soundcheck-api.vercel.app
 ```
 
 ### Railway Deployment
@@ -215,7 +215,7 @@ export NODE_ENV="production"
 
 # Run with PM2 (process manager)
 npm install -g pm2
-pm2 start dist/index.js --name pitpulse-api
+pm2 start dist/index.js --name soundcheck-api
 
 # Setup PM2 to restart on reboot
 pm2 startup
@@ -254,7 +254,7 @@ JWT_EXPIRES_IN=7d
 # Separate database credentials (if not using DATABASE_URL)
 DB_HOST=your-host
 DB_PORT=5432
-DB_NAME=pitpulse
+DB_NAME=soundcheck
 DB_USER=your-user
 DB_PASSWORD=your-password
 ```

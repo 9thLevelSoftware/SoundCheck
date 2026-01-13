@@ -119,10 +119,10 @@ Create these in your production environment (Vercel, Railway, etc.):
 
 ```env
 # Database - Use production PostgreSQL URL
-DATABASE_URL=postgresql://user:password@production-host:5432/pitpulse
+DATABASE_URL=postgresql://user:password@production-host:5432/soundcheck
 DB_HOST=production-host
 DB_PORT=5432
-DB_NAME=pitpulse
+DB_NAME=soundcheck
 DB_USER=production_user
 DB_PASSWORD=strong_password_here
 
