@@ -55,7 +55,7 @@ extension BandSortByExtension on BandSortBy {
 
 /// Band filters state
 @freezed
-class BandFiltersState with _$BandFiltersState {
+sealed class BandFiltersState with _$BandFiltersState {
   const factory BandFiltersState({
     @Default([]) List<String> genres,
     @Default([]) List<String> hometowns,

@@ -5,7 +5,7 @@ part 'vibe_tag.g.dart';
 
 /// VibeTag - Descriptive tags for check-ins (like "Mosh Pit", "Acoustic", etc.)
 @freezed
-class VibeTag with _$VibeTag {
+sealed class VibeTag with _$VibeTag {
   const factory VibeTag({
     required String id,
     required String name, // e.g., 'mosh_pit'

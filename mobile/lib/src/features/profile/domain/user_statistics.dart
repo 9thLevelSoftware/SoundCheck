@@ -4,7 +4,7 @@ part 'user_statistics.freezed.dart';
 part 'user_statistics.g.dart';
 
 @freezed
-class UserStatistics with _$UserStatistics {
+sealed class UserStatistics with _$UserStatistics {
   const factory UserStatistics({
     @Default(0) int totalCheckins,
     @Default(0) int uniqueBands,

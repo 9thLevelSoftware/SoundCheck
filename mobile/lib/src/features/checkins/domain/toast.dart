@@ -6,7 +6,7 @@ part 'toast.g.dart';
 
 /// Toast - A "fist bump" or like on a check-in
 @freezed
-class Toast with _$Toast {
+sealed class Toast with _$Toast {
   const factory Toast({
     required String id,
     required String userId,
@@ -22,7 +22,7 @@ class Toast with _$Toast {
 
 /// Response after toasting a check-in
 @freezed
-class ToastResponse with _$ToastResponse {
+sealed class ToastResponse with _$ToastResponse {
   const factory ToastResponse({
     required bool success,
     required bool isToasted,

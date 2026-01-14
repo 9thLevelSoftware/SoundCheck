@@ -8,7 +8,7 @@ part 'checkin.g.dart';
 /// CheckIn - The core entity of SoundCheck
 /// A user checking in to a specific Band at a specific Venue at a specific Time
 @freezed
-class CheckIn with _$CheckIn {
+sealed class CheckIn with _$CheckIn {
   const CheckIn._();
 
   const factory CheckIn({
@@ -76,7 +76,7 @@ class CheckIn with _$CheckIn {
 
 /// Nested event data from backend check-in response
 @freezed
-class CheckInEvent with _$CheckInEvent {
+sealed class CheckInEvent with _$CheckInEvent {
   const factory CheckInEvent({
     required String id,
     String? eventDate,
@@ -91,7 +91,7 @@ class CheckInEvent with _$CheckInEvent {
 
 /// Simplified venue data nested in check-in event
 @freezed
-class CheckInVenue with _$CheckInVenue {
+sealed class CheckInVenue with _$CheckInVenue {
   const factory CheckInVenue({
     required String id,
     required String name,
@@ -106,7 +106,7 @@ class CheckInVenue with _$CheckInVenue {
 
 /// Simplified band data nested in check-in event
 @freezed
-class CheckInBand with _$CheckInBand {
+sealed class CheckInBand with _$CheckInBand {
   const factory CheckInBand({
     required String id,
     required String name,
@@ -120,7 +120,7 @@ class CheckInBand with _$CheckInBand {
 
 /// Request to create a new check-in
 @freezed
-class CreateCheckInRequest with _$CreateCheckInRequest {
+sealed class CreateCheckInRequest with _$CreateCheckInRequest {
   const factory CreateCheckInRequest({
     required String bandId,
     required String venueId,
@@ -138,7 +138,7 @@ class CreateCheckInRequest with _$CreateCheckInRequest {
 
 /// Badge earned from a check-in
 @freezed
-class EarnedBadge with _$EarnedBadge {
+sealed class EarnedBadge with _$EarnedBadge {
   const factory EarnedBadge({
     required String id,
     required String name,
@@ -153,7 +153,7 @@ class EarnedBadge with _$EarnedBadge {
 
 /// Check-in feed response with pagination
 @freezed
-class CheckInFeed with _$CheckInFeed {
+sealed class CheckInFeed with _$CheckInFeed {
   const factory CheckInFeed({
     required List<CheckIn> checkins,
     required int total,

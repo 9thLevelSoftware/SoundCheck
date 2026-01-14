@@ -4,7 +4,7 @@ part 'review.freezed.dart';
 part 'review.g.dart';
 
 @freezed
-class Review with _$Review {
+sealed class Review with _$Review {
   const factory Review({
     required String id,
     required String userId,

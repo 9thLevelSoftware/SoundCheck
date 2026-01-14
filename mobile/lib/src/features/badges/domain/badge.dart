@@ -17,7 +17,7 @@ enum BadgeType {
 }
 
 @freezed
-class Badge with _$Badge {
+sealed class Badge with _$Badge {
   const factory Badge({
     required String id,
     required String name,
@@ -31,7 +31,7 @@ class Badge with _$Badge {
 }
 
 @freezed
-class UserBadge with _$UserBadge {
+sealed class UserBadge with _$UserBadge {
   const factory UserBadge({
     required String id,
     required String userId,
@@ -45,7 +45,7 @@ class UserBadge with _$UserBadge {
 }
 
 @freezed
-class BadgeProgress with _$BadgeProgress {
+sealed class BadgeProgress with _$BadgeProgress {
   const factory BadgeProgress({
     required Badge badge,
     required int currentValue,

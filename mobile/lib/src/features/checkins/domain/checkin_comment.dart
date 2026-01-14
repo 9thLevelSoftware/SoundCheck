@@ -6,7 +6,7 @@ part 'checkin_comment.g.dart';
 
 /// CheckInComment - A comment on a check-in
 @freezed
-class CheckInComment with _$CheckInComment {
+sealed class CheckInComment with _$CheckInComment {
   const factory CheckInComment({
     required String id,
     required String checkinId,
@@ -24,7 +24,7 @@ class CheckInComment with _$CheckInComment {
 
 /// Request to create a comment
 @freezed
-class CreateCommentRequest with _$CreateCommentRequest {
+sealed class CreateCommentRequest with _$CreateCommentRequest {
   const factory CreateCommentRequest({
     required String checkinId,
     required String content,

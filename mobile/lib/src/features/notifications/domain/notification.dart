@@ -58,7 +58,7 @@ extension NotificationTypeExtension on NotificationType {
 /// AppNotification - Notification entity
 /// Named AppNotification to avoid conflict with Flutter's Notification class
 @freezed
-class AppNotification with _$AppNotification {
+sealed class AppNotification with _$AppNotification {
   const factory AppNotification({
     required String id,
     required String userId,
@@ -83,7 +83,7 @@ class AppNotification with _$AppNotification {
 
 /// Notification feed with pagination
 @freezed
-class NotificationFeed with _$NotificationFeed {
+sealed class NotificationFeed with _$NotificationFeed {
   const factory NotificationFeed({
     required List<AppNotification> notifications,
     required int unreadCount,

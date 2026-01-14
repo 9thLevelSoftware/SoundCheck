@@ -6,7 +6,7 @@ part 'band.g.dart';
 /// Band - The "Beer" equivalent in the Untappd model
 /// Users check in to bands at venues
 @freezed
-class Band with _$Band {
+sealed class Band with _$Band {
   const factory Band({
     required String id,
     required String name,
@@ -34,7 +34,7 @@ class Band with _$Band {
 }
 
 @freezed
-class CreateBandRequest with _$CreateBandRequest {
+sealed class CreateBandRequest with _$CreateBandRequest {
   const factory CreateBandRequest({
     required String name,
     String? description,
@@ -55,7 +55,7 @@ class CreateBandRequest with _$CreateBandRequest {
 
 /// Band stats for the detail page
 @freezed
-class BandStats with _$BandStats {
+sealed class BandStats with _$BandStats {
   const factory BandStats({
     required int totalCheckins,
     required int uniqueFans,

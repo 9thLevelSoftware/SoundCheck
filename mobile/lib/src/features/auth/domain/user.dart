@@ -4,7 +4,7 @@ part 'user.freezed.dart';
 part 'user.g.dart';
 
 @freezed
-class User with _$User {
+sealed class User with _$User {
   const factory User({
     required String id,
     required String email,
@@ -34,7 +34,7 @@ class User with _$User {
 }
 
 @freezed
-class AuthResponse with _$AuthResponse {
+sealed class AuthResponse with _$AuthResponse {
   const factory AuthResponse({
     required User user,
     required String token,
@@ -45,7 +45,7 @@ class AuthResponse with _$AuthResponse {
 }
 
 @freezed
-class LoginRequest with _$LoginRequest {
+sealed class LoginRequest with _$LoginRequest {
   const factory LoginRequest({
     required String email,
     required String password,
@@ -56,7 +56,7 @@ class LoginRequest with _$LoginRequest {
 }
 
 @freezed
-class RegisterRequest with _$RegisterRequest {
+sealed class RegisterRequest with _$RegisterRequest {
   const factory RegisterRequest({
     required String email,
     required String password,
@@ -71,7 +71,7 @@ class RegisterRequest with _$RegisterRequest {
 
 /// User profile with full stats and badges
 @freezed
-class UserProfile with _$UserProfile {
+sealed class UserProfile with _$UserProfile {
   const factory UserProfile({
     required User user,
     required List<UserBadgeInfo> badges,
@@ -85,7 +85,7 @@ class UserProfile with _$UserProfile {
 
 /// Badge info for user profile
 @freezed
-class UserBadgeInfo with _$UserBadgeInfo {
+sealed class UserBadgeInfo with _$UserBadgeInfo {
   const factory UserBadgeInfo({
     required String id,
     required String name,

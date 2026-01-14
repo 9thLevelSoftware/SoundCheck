@@ -8,7 +8,7 @@ part 'show.g.dart';
 /// Show - An upcoming concert/show at a venue
 /// This is the "Beer Menu" equivalent for venues
 @freezed
-class Show with _$Show {
+sealed class Show with _$Show {
   const factory Show({
     required String id,
     required String venueId,
@@ -33,7 +33,7 @@ class Show with _$Show {
 
 /// Request to create a show
 @freezed
-class CreateShowRequest with _$CreateShowRequest {
+sealed class CreateShowRequest with _$CreateShowRequest {
   const factory CreateShowRequest({
     required String venueId,
     required String bandId,
@@ -53,7 +53,7 @@ class CreateShowRequest with _$CreateShowRequest {
 
 /// User wishlist item - bands they want to see
 @freezed
-class WishlistItem with _$WishlistItem {
+sealed class WishlistItem with _$WishlistItem {
   const factory WishlistItem({
     required String id,
     required String userId,

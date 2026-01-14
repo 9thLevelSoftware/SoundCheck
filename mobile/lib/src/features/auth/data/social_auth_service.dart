@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:google_sign_in/google_sign_in.dart';
@@ -37,15 +38,30 @@ class SocialAuthResult {
 class SocialAuthService {
   final DioClient _dioClient;
   final FlutterSecureStorage _secureStorage;
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile'],
-  );
+  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  Completer<void>? _initCompleter;
 
   SocialAuthService({
     required DioClient dioClient,
     required FlutterSecureStorage secureStorage,
   })  : _dioClient = dioClient,
         _secureStorage = secureStorage;
+
+  /// Initialize Google Sign-In (required for google_sign_in 7.x)
+  /// Uses Completer pattern to avoid race conditions on concurrent calls.
+  Future<void> _ensureGoogleSignInInitialized() async {
+    if (_initCompleter != null) {
+      return _initCompleter!.future;
+    }
+    _initCompleter = Completer<void>();
+    try {
+      await _googleSignIn.initialize();
+      _initCompleter!.complete();
+    } catch (e) {
+      _initCompleter = null; // Allow retry on failure
+      rethrow;
+    }
+  }
 
   /// Sign in with Google.
   ///
@@ -56,39 +72,48 @@ class SocialAuthService {
   /// Returns [SocialAuthResult] with user data and tokens,
   /// or null if the user cancelled the sign-in flow.
   Future<SocialAuthResult?> signInWithGoogle() async {
-    try {
-      // Step 1: Get Google credentials from client SDK
-      final account = await _googleSignIn.signIn();
-      if (account == null) return null; // User cancelled
+    // Step 1: Ensure Google Sign-In is initialized (required for v7.x)
+    await _ensureGoogleSignInInitialized();
 
-      final auth = await account.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null || idToken.isEmpty) {
-        throw Exception('Failed to get Google ID token');
+    // Step 2: Try lightweight authentication first, then interactive
+    GoogleSignInAccount? account =
+        await _googleSignIn.attemptLightweightAuthentication();
+
+    // If lightweight auth fails, try interactive authentication
+    if (account == null) {
+      if (_googleSignIn.supportsAuthenticate()) {
+        account = await _googleSignIn.authenticate();
       }
-
-      // Step 2: Send token to backend for verification
-      final response = await _dioClient.post(
-        '/auth/social/google',
-        data: {'idToken': idToken},
-      );
-
-      // Step 3: Extract data from API wrapper: {success, data, message}
-      final data = response.data['data'] as Map<String, dynamic>;
-      final result = SocialAuthResult.fromJson(data);
-
-      // Step 4: Save tokens and user data locally
-      await _saveAuthData(result);
-
-      return result;
-    } catch (e) {
-      rethrow;
     }
+
+    if (account == null) return null; // User cancelled or not supported
+
+    // Step 3: Get the ID token from the account's authentication
+    final idToken = account.authentication.idToken;
+    if (idToken == null || idToken.isEmpty) {
+      throw Exception('Failed to get Google ID token');
+    }
+
+    // Step 4: Send token to backend for verification
+    final response = await _dioClient.post(
+      '/auth/social/google',
+      data: {'idToken': idToken},
+    );
+
+    // Step 5: Extract data from API wrapper: {success, data, message}
+    final data = response.data['data'] as Map<String, dynamic>;
+    final result = SocialAuthResult.fromJson(data);
+
+    // Step 6: Save tokens and user data locally
+    await _saveAuthData(result);
+
+    return result;
   }
 
   /// Sign out from Google.
   Future<void> signOutGoogle() async {
-    await _googleSignIn.signOut();
+    await _ensureGoogleSignInInitialized();
+    await _googleSignIn.disconnect();
   }
 
   /// Sign in with Apple.
@@ -103,51 +128,47 @@ class SocialAuthService {
   /// Returns [SocialAuthResult] with user data and tokens,
   /// or null if the user cancelled the sign-in flow.
   Future<SocialAuthResult?> signInWithApple() async {
-    try {
-      // Step 1: Get Apple credentials from client SDK
-      final credential = await SignInWithApple.getAppleIDCredential(
-        scopes: [
-          AppleIDAuthorizationScopes.email,
-          AppleIDAuthorizationScopes.fullName,
-        ],
-      );
+    // Step 1: Get Apple credentials from client SDK
+    final credential = await SignInWithApple.getAppleIDCredential(
+      scopes: [
+        AppleIDAuthorizationScopes.email,
+        AppleIDAuthorizationScopes.fullName,
+      ],
+    );
 
-      final identityToken = credential.identityToken;
-      if (identityToken == null || identityToken.isEmpty) {
-        throw Exception('Failed to get Apple identity token');
-      }
-
-      // Step 2: Prepare request data with optional name
-      // Apple only provides name on first sign-in
-      final requestData = <String, dynamic>{
-        'identityToken': identityToken,
-      };
-
-      // Include name if provided (first sign-in only)
-      if (credential.givenName != null || credential.familyName != null) {
-        requestData['fullName'] = {
-          'givenName': credential.givenName,
-          'familyName': credential.familyName,
-        };
-      }
-
-      // Step 3: Send token to backend for verification
-      final response = await _dioClient.post(
-        '/auth/social/apple',
-        data: requestData,
-      );
-
-      // Step 4: Extract data from API wrapper: {success, data, message}
-      final data = response.data['data'] as Map<String, dynamic>;
-      final result = SocialAuthResult.fromJson(data);
-
-      // Step 5: Save tokens and user data locally
-      await _saveAuthData(result);
-
-      return result;
-    } catch (e) {
-      rethrow;
+    final identityToken = credential.identityToken;
+    if (identityToken == null || identityToken.isEmpty) {
+      throw Exception('Failed to get Apple identity token');
     }
+
+    // Step 2: Prepare request data with optional name
+    // Apple only provides name on first sign-in
+    final requestData = <String, dynamic>{
+      'identityToken': identityToken,
+    };
+
+    // Include name if provided (first sign-in only)
+    if (credential.givenName != null || credential.familyName != null) {
+      requestData['fullName'] = {
+        'givenName': credential.givenName,
+        'familyName': credential.familyName,
+      };
+    }
+
+    // Step 3: Send token to backend for verification
+    final response = await _dioClient.post(
+      '/auth/social/apple',
+      data: requestData,
+    );
+
+    // Step 4: Extract data from API wrapper: {success, data, message}
+    final data = response.data['data'] as Map<String, dynamic>;
+    final result = SocialAuthResult.fromJson(data);
+
+    // Step 5: Save tokens and user data locally
+    await _saveAuthData(result);
+
+    return result;
   }
 
   /// Save authentication data to secure storage

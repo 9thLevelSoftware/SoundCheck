@@ -25,7 +25,7 @@ enum VenueType {
 /// Venue - The "Brewery/Bar" equivalent in the Untappd model
 /// Shows have "Beer Menus" (upcoming shows), users check in here
 @freezed
-class Venue with _$Venue {
+sealed class Venue with _$Venue {
   const factory Venue({
     required String id,
     required String name,
@@ -58,7 +58,7 @@ class Venue with _$Venue {
 }
 
 @freezed
-class CreateVenueRequest with _$CreateVenueRequest {
+sealed class CreateVenueRequest with _$CreateVenueRequest {
   const factory CreateVenueRequest({
     required String name,
     String? description,
@@ -84,7 +84,7 @@ class CreateVenueRequest with _$CreateVenueRequest {
 
 /// Venue stats for the detail page
 @freezed
-class VenueStats with _$VenueStats {
+sealed class VenueStats with _$VenueStats {
   const factory VenueStats({
     required int totalCheckins,
     required int uniqueVisitors,
@@ -99,7 +99,7 @@ class VenueStats with _$VenueStats {
 
 /// Loyal patron - users with most check-ins at a venue
 @freezed
-class LoyalPatron with _$LoyalPatron {
+sealed class LoyalPatron with _$LoyalPatron {
   const factory LoyalPatron({
     required String id,
     required String username,
@@ -112,7 +112,7 @@ class LoyalPatron with _$LoyalPatron {
 
 /// Trending band at a venue
 @freezed
-class TrendingBand with _$TrendingBand {
+sealed class TrendingBand with _$TrendingBand {
   const factory TrendingBand({
     required String id,
     required String name,

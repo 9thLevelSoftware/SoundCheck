@@ -51,7 +51,7 @@ extension VenueSortByExtension on VenueSortBy {
 
 /// Venue filters state
 @freezed
-class VenueFiltersState with _$VenueFiltersState {
+sealed class VenueFiltersState with _$VenueFiltersState {
   const factory VenueFiltersState({
     @Default([]) List<VenueType> venueTypes,
     @Default([]) List<String> cities,
