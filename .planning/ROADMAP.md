@@ -30,9 +30,9 @@ SoundCheck's v1 transforms a barebones concert app into the "Untappd of live mus
 **Plans**: 3 plans
 
 Plans:
-- [ ] 01-01: Schema design, migration system setup (node-pg-migrate), and expand phase (add new tables alongside old)
-- [ ] 01-02: Create events, event_lineup, checkin_band_ratings, and badge_criteria tables with triggers
-- [ ] 01-03: Data migration (shows -> events, old checkins -> new) and contract phase (remove old columns)
+- [ ] 01-01-PLAN.md -- Install node-pg-migrate, write and run 8 expand-phase DDL migrations (events, event_lineup, checkin_band_ratings, venue timezone, badge criteria, notifications event_id)
+- [ ] 01-02-PLAN.md -- Update triggers for dual-path schema, migrate shows to events, backfill checkins with event_id and split ratings
+- [ ] 01-03-PLAN.md -- Rewrite EventService for events+lineup tables, dual-write CheckinService, update NotificationService
 
 ### Phase 2: Event Data Pipeline
 **Goal**: Build a reliable event ingestion pipeline from Ticketmaster Discovery API with deduplication, band name matching, and user-created events to fill gaps. Events are the content that makes check-ins useful.
@@ -158,7 +158,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Model Foundation | 0/3 | Not started | - |
+| 1. Data Model Foundation | 0/3 | Planned | - |
 | 2. Event Data Pipeline | 0/3 | Not started | - |
 | 3. Core Check-in Flow | 0/3 | Not started | - |
 | 4. Badge Engine | 0/3 | Not started | - |
@@ -171,4 +171,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 after requirements definition*
+*Last updated: 2026-02-02 after Phase 1 planning*
