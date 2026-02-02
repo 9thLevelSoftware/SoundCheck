@@ -5,33 +5,33 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 1: Data Model Foundation
+**Current focus:** Phase 1: Data Model Foundation -- COMPLETE
 
 ## Current Position
 
-Phase: 1 of 8 (Data Model Foundation)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-02-02 -- Completed 01-02-PLAN.md (data migration: triggers, shows-to-events, checkins backfill)
+Phase: 1 of 8 (Data Model Foundation) -- COMPLETE
+Plan: 3 of 3 in current phase
+Status: Phase complete
+Last activity: 2026-02-02 -- Completed 01-03-PLAN.md (service layer migration: EventService, CheckinService, NotificationService)
 
-Progress: [##____________________] 9% (2/22 plans)
+Progress: [###___________________] 14% (3/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 2
+- Total plans completed: 3
 - Average duration: 6 min
-- Total execution time: 0.2 hours
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-data-model-foundation | 2/3 | 12 min | 6 min |
+| 01-data-model-foundation | 3/3 | 18 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 7m, 5m
-- Trend: improving
+- Last 5 plans: 7m, 5m, 6m
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -53,6 +53,10 @@ Recent decisions affecting current work:
 - [01-02]: Conditional column checks in data migrations to handle production DB without legacy checkin columns
 - [01-02]: Dual-path trigger function unions both legacy and new-style data paths for stats computation
 - [01-02]: Data migration down() functions are no-ops (original data preserved by expand phase)
+- [01-03]: NotificationService writes only event_id (production table has no show_id column)
+- [01-03]: CheckinService dual-write treats event creation failure as non-fatal
+- [01-03]: findOrCreateEvent adds band to existing venue+date event lineup rather than creating duplicates
+- [01-03]: Backward-compat response fields (bandId, band, showDate) populated from headliner in lineup
 
 ### Pending Todos
 
@@ -67,9 +71,10 @@ None yet.
 - [RESOLVED 01-02]: Production DB missing shows table and legacy checkin columns -- handled with conditional migration logic
 - [01-01]: checkins.band_rating INTEGER column from old migration still exists -- needs cleanup in contract phase
 - [01-02]: Production checkins table has minimal schema (no band_id/venue_id/rating/comment/photo_url/event_date) -- contract phase must handle this (nothing to remove for absent columns)
+- [RESOLVED 01-03]: Shows table now read-only -- nothing in service layer writes to it, safe for future contract phase removal
 
 ## Session Continuity
 
-Last session: 2026-02-02T23:47:13Z
-Stopped at: Completed 01-02-PLAN.md (data migration: triggers, shows-to-events, checkins backfill)
+Last session: 2026-02-02T23:57:10Z
+Stopped at: Completed 01-03-PLAN.md (service layer migration) -- Phase 1 COMPLETE
 Resume file: None
