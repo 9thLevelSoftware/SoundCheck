@@ -1,6 +1,7 @@
 import Database from '../config/database';
 import { VenueService } from './VenueService';
 import { BandService } from './BandService';
+import { EventService } from './EventService';
 
 interface CreateCheckinRequest {
   userId: string;
@@ -48,6 +49,13 @@ interface Checkin {
   commentCount?: number;
   hasUserToasted?: boolean;
   vibeTags?: VibeTag[];
+  // New event-model fields (dual-write)
+  eventId?: string;
+  venueRating?: number;
+  reviewText?: string;
+  imageUrls?: string[];
+  isVerified?: boolean;
+  event?: { id: string; eventDate?: Date; eventName?: string };
 }
 
 interface GetCheckinsOptions {
@@ -72,10 +80,14 @@ export class CheckinService {
   private db = Database.getInstance();
   private venueService = new VenueService();
   private bandService = new BandService();
+  private eventService = new EventService();
 
   /**
    * Create a new check-in
-   * Uses venue_id and band_id directly (matches database schema)
+   * Dual-write: populates BOTH old columns (band_id, venue_id, rating, comment,
+   * photo_url, event_date) AND new columns (event_id, venue_rating, review_text,
+   * image_urls, is_verified) in a single INSERT.
+   * Also writes to checkin_band_ratings for per-band rating tracking.
    */
   async createCheckin(data: CreateCheckinRequest): Promise<Checkin> {
     try {
@@ -92,13 +104,24 @@ export class CheckinService {
         vibeTagIds,
       } = data;
 
-      // Create check-in using venue_id and band_id (matching schema)
+      // Find or create the event for this venue+band+date (for event_id)
+      const resolvedEventDate = eventDate || new Date();
+      let eventId: string | null = null;
+      try {
+        eventId = await this.eventService.findOrCreateEvent(venueId, bandId, resolvedEventDate);
+      } catch (err) {
+        // Non-fatal: if event creation fails, still create the checkin without event_id
+        console.error('Warning: could not find/create event for checkin:', err);
+      }
+
+      // Dual-write: populate both old AND new columns
       const insertQuery = `
         INSERT INTO checkins (
           user_id, band_id, venue_id, rating, comment, photo_url,
-          event_date, checkin_latitude, checkin_longitude
+          event_date, checkin_latitude, checkin_longitude,
+          event_id, venue_rating, review_text, image_urls, is_verified
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
         RETURNING *
       `;
 
@@ -109,12 +132,30 @@ export class CheckinService {
         rating,
         comment || null,
         photoUrl || null,
-        eventDate || null,
+        resolvedEventDate,
         checkinLatitude || null,
         checkinLongitude || null,
+        eventId,                                    // event_id (new)
+        rating,                                     // venue_rating = same as rating (new)
+        comment || null,                            // review_text = same as comment (new)
+        photoUrl ? [photoUrl] : null,               // image_urls = array of photo (new)
+        false,                                      // is_verified = false (new, Phase 3)
       ]);
 
       const checkinId = result.rows[0].id;
+
+      // Write to checkin_band_ratings for per-band rating tracking
+      try {
+        await this.db.query(
+          `INSERT INTO checkin_band_ratings (checkin_id, band_id, rating)
+           VALUES ($1, $2, $3)
+           ON CONFLICT (checkin_id, band_id) DO NOTHING`,
+          [checkinId, bandId, rating]
+        );
+      } catch (err) {
+        // Non-fatal: band rating write failure should not block checkin creation
+        console.error('Warning: could not write checkin_band_rating:', err);
+      }
 
       // Add vibe tags if provided
       if (vibeTagIds && vibeTagIds.length > 0) {
@@ -150,6 +191,7 @@ export class CheckinService {
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
+          ev.event_date as ev_event_date, ev.event_name as ev_event_name,
           COUNT(DISTINCT t.id) as toast_count,
           COUNT(DISTINCT cm.id) as comment_count
           ${currentUserId ? `, EXISTS(
@@ -160,10 +202,11 @@ export class CheckinService {
         LEFT JOIN users u ON c.user_id = u.id
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
+        LEFT JOIN events ev ON c.event_id = ev.id
         LEFT JOIN toasts t ON c.id = t.checkin_id
         LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
         WHERE c.id = $1
-        GROUP BY c.id, u.id, v.id, b.id
+        GROUP BY c.id, u.id, v.id, b.id, ev.id
       `;
 
       const params = currentUserId ? [checkinId, currentUserId] : [checkinId];
@@ -693,6 +736,17 @@ export class CheckinService {
       toastCount: parseInt(row.toast_count || 0),
       commentCount: parseInt(row.comment_count || 0),
       hasUserToasted: row.has_user_toasted || false,
+      // New event-model fields
+      eventId: row.event_id || undefined,
+      venueRating: row.venue_rating ? parseFloat(row.venue_rating) : undefined,
+      reviewText: row.review_text || undefined,
+      imageUrls: row.image_urls || undefined,
+      isVerified: row.is_verified || false,
+      event: row.event_id ? {
+        id: row.event_id,
+        eventDate: row.ev_event_date,
+        eventName: row.ev_event_name,
+      } : undefined,
     };
   }
 }

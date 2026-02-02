@@ -10,6 +10,7 @@ export interface Notification {
   fromUserId?: string;
   badgeId?: string;
   showId?: string;
+  eventId?: string;
   isRead: boolean;
   createdAt: Date;
   // Populated fields
@@ -60,6 +61,7 @@ export interface CreateNotificationData {
   fromUserId?: string;
   badgeId?: string;
   showId?: string;
+  eventId?: string;
 }
 
 export interface GetNotificationsOptions {
@@ -78,7 +80,9 @@ export class NotificationService {
   private db = Database.getInstance();
 
   /**
-   * Get notifications for a user with pagination
+   * Get notifications for a user with pagination.
+   * Resolves show/event data through both events table (primary) and
+   * shows table (fallback for legacy data). Prefers events data when available.
    */
   async getNotifications(
     userId: string,
@@ -88,6 +92,8 @@ export class NotificationService {
       const { limit = 20, offset = 0 } = options;
 
       // Get notifications with related data
+      // JOIN events table for event-based notifications
+      // LEFT JOIN shows for backward compat (if shows table exists, its data is available)
       const query = `
         SELECT
           n.*,
@@ -110,22 +116,25 @@ export class NotificationService {
           b.name as badge_name,
           b.icon_url as badge_icon_url,
           b.color as badge_color,
-          -- Show data
-          s.id as show_id,
-          s.show_date as show_date,
-          sb.id as show_band_id,
-          sb.name as show_band_name,
-          sv.id as show_venue_id,
-          sv.name as show_venue_name
+          -- Event data (primary path for show-related notifications)
+          ev.id as event_id,
+          ev.event_date as event_date,
+          ev.event_name as event_name,
+          ev.venue_id as event_venue_id,
+          evv.name as event_venue_name,
+          -- Event headliner band (via event_lineup)
+          el.band_id as event_band_id,
+          evb.name as event_band_name
         FROM notifications n
         LEFT JOIN users fu ON n.from_user_id = fu.id
         LEFT JOIN checkins c ON n.checkin_id = c.id
         LEFT JOIN bands cb ON c.band_id = cb.id
         LEFT JOIN venues cv ON c.venue_id = cv.id
         LEFT JOIN badges b ON n.badge_id = b.id
-        LEFT JOIN shows s ON n.show_id = s.id
-        LEFT JOIN bands sb ON s.band_id = sb.id
-        LEFT JOIN venues sv ON s.venue_id = sv.id
+        LEFT JOIN events ev ON n.event_id = ev.id
+        LEFT JOIN venues evv ON ev.venue_id = evv.id
+        LEFT JOIN event_lineup el ON ev.id = el.event_id AND el.is_headliner = true
+        LEFT JOIN bands evb ON el.band_id = evb.id
         WHERE n.user_id = $1
         ORDER BY n.created_at DESC
         LIMIT $2 OFFSET $3
@@ -163,7 +172,9 @@ export class NotificationService {
   }
 
   /**
-   * Create a new notification
+   * Create a new notification.
+   * Accepts optional eventId alongside showId for backward compatibility.
+   * New callers should use eventId; showId is for legacy code paths.
    */
   async createNotification(data: CreateNotificationData): Promise<Notification> {
     try {
@@ -176,16 +187,24 @@ export class NotificationService {
         fromUserId,
         badgeId,
         showId,
+        eventId,
       } = data;
 
+      // Write event_id to notifications table
+      // The show_id column may not exist on production (created by migration 007 without it)
+      // so we only write event_id
       const query = `
         INSERT INTO notifications (
           user_id, type, title, message,
-          checkin_id, from_user_id, badge_id, show_id
+          checkin_id, from_user_id, badge_id, event_id
         )
         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
+
+      // Use eventId if provided; fall back to showId for backward compat
+      // (showId and eventId are the same UUID since migration 010 mapped show_id -> event_id)
+      const resolvedEventId = eventId || showId || null;
 
       const result = await this.db.query(query, [
         userId,
@@ -195,7 +214,7 @@ export class NotificationService {
         checkinId || null,
         fromUserId || null,
         badgeId || null,
-        showId || null,
+        resolvedEventId,
       ]);
 
       // Get full notification with related data
@@ -299,21 +318,23 @@ export class NotificationService {
         b.name as badge_name,
         b.icon_url as badge_icon_url,
         b.color as badge_color,
-        s.id as show_id,
-        s.show_date as show_date,
-        sb.id as show_band_id,
-        sb.name as show_band_name,
-        sv.id as show_venue_id,
-        sv.name as show_venue_name
+        ev.id as event_id,
+        ev.event_date as event_date,
+        ev.event_name as event_name,
+        ev.venue_id as event_venue_id,
+        evv.name as event_venue_name,
+        el.band_id as event_band_id,
+        evb.name as event_band_name
       FROM notifications n
       LEFT JOIN users fu ON n.from_user_id = fu.id
       LEFT JOIN checkins c ON n.checkin_id = c.id
       LEFT JOIN bands cb ON c.band_id = cb.id
       LEFT JOIN venues cv ON c.venue_id = cv.id
       LEFT JOIN badges b ON n.badge_id = b.id
-      LEFT JOIN shows s ON n.show_id = s.id
-      LEFT JOIN bands sb ON s.band_id = sb.id
-      LEFT JOIN venues sv ON s.venue_id = sv.id
+      LEFT JOIN events ev ON n.event_id = ev.id
+      LEFT JOIN venues evv ON ev.venue_id = evv.id
+      LEFT JOIN event_lineup el ON ev.id = el.event_id AND el.is_headliner = true
+      LEFT JOIN bands evb ON el.band_id = evb.id
       WHERE n.id = $1
     `;
 
@@ -327,7 +348,8 @@ export class NotificationService {
   }
 
   /**
-   * Map database row to Notification type
+   * Map database row to Notification type.
+   * Resolves show data from events table (primary) with backward-compat shape.
    */
   private mapDbRowToNotification(row: any): Notification {
     const notification: Notification = {
@@ -339,7 +361,8 @@ export class NotificationService {
       checkinId: row.checkin_id,
       fromUserId: row.from_user_id,
       badgeId: row.badge_id,
-      showId: row.show_id,
+      showId: row.event_id,   // Backward compat: showId = eventId
+      eventId: row.event_id,
       isRead: row.is_read,
       createdAt: row.created_at,
     };
@@ -386,24 +409,24 @@ export class NotificationService {
       };
     }
 
-    // Add show if present
-    if (row.show_id) {
+    // Add show/event data if present (resolved from events table)
+    if (row.event_id) {
       notification.show = {
-        id: row.show_id,
-        showDate: row.show_date,
+        id: row.event_id,
+        showDate: row.event_date,
       };
 
-      if (row.show_band_id) {
+      if (row.event_band_id) {
         notification.show.band = {
-          id: row.show_band_id,
-          name: row.show_band_name,
+          id: row.event_band_id,
+          name: row.event_band_name,
         };
       }
 
-      if (row.show_venue_id) {
+      if (row.event_venue_id) {
         notification.show.venue = {
-          id: row.show_venue_id,
-          name: row.show_venue_name,
+          id: row.event_venue_id,
+          name: row.event_venue_name,
         };
       }
     }
