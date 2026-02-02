@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 1 of 8 (Data Model Foundation)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-02-02 -- Completed 01-01-PLAN.md (migration tooling + expand-phase DDL)
+Last activity: 2026-02-02 -- Completed 01-02-PLAN.md (data migration: triggers, shows-to-events, checkins backfill)
 
-Progress: [#_____________________] 4% (1/22 plans)
+Progress: [##____________________] 9% (2/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 1
-- Average duration: 7 min
-- Total execution time: 0.1 hours
+- Total plans completed: 2
+- Average duration: 6 min
+- Total execution time: 0.2 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01-data-model-foundation | 1/3 | 7 min | 7 min |
+| 01-data-model-foundation | 2/3 | 12 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 7m
-- Trend: baseline
+- Last 5 plans: 7m, 5m
+- Trend: improving
 
 *Updated after each plan completion*
 
@@ -50,6 +50,9 @@ Recent decisions affecting current work:
 - [01-01]: Used conditional DDL in migrations to handle both fresh and pre-migrated database states
 - [01-01]: Created full notifications table in migration 007 (was missing from DB entirely)
 - [01-01]: Preserved old migration scripts as migrate:legacy and migrate:events-legacy
+- [01-02]: Conditional column checks in data migrations to handle production DB without legacy checkin columns
+- [01-02]: Dual-path trigger function unions both legacy and new-style data paths for stats computation
+- [01-02]: Data migration down() functions are no-ops (original data preserved by expand phase)
 
 ### Pending Todos
 
@@ -61,11 +64,12 @@ None yet.
 - [Research]: Bandsintown API requires approval -- build Ticketmaster first, add when approved
 - [RESOLVED 01-01]: Shows/events dual table in existing DB -- old events table dropped, new events table created with correct schema
 - [Research]: Badge service queries reviews table, not checkins -- must be rewritten in Phase 4
-- [01-01]: Production DB was set up from old migration script only -- many database-schema.sql tables are missing (shows, vibe_tags, toasts, checkin_vibes, user_wishlist, deletion_requests, user_consents, user_social_accounts, refresh_tokens). Plans 02/03 must account for this.
+- [RESOLVED 01-02]: Production DB missing shows table and legacy checkin columns -- handled with conditional migration logic
 - [01-01]: checkins.band_rating INTEGER column from old migration still exists -- needs cleanup in contract phase
+- [01-02]: Production checkins table has minimal schema (no band_id/venue_id/rating/comment/photo_url/event_date) -- contract phase must handle this (nothing to remove for absent columns)
 
 ## Session Continuity
 
-Last session: 2026-02-02T23:38:31Z
-Stopped at: Completed 01-01-PLAN.md (migration tooling + expand-phase DDL)
+Last session: 2026-02-02T23:47:13Z
+Stopped at: Completed 01-02-PLAN.md (data migration: triggers, shows-to-events, checkins backfill)
 Resume file: None
