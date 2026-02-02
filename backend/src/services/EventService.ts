@@ -1,395 +1,486 @@
 import Database from '../config/database';
-
-interface CreateShowRequest {
-  venueId: string;
-  bandId: string;
-  showDate: Date;
-  doorsTime?: string;
-  startTime?: string;
-  endTime?: string;
-  ticketUrl?: string;
-  ticketPriceMin?: number;
-  ticketPriceMax?: number;
-  description?: string;
-}
+import { Event, EventLineupEntry } from '../types';
 
 interface CreateEventRequest {
   venueId: string;
-  bandId: string;
+  bandId?: string;
   eventDate: Date;
   eventName?: string;
-  createdByUserId?: string;
-}
-
-interface Show {
-  id: string;
-  venueId: string;
-  bandId: string;
-  showDate: Date;
+  description?: string;
   doorsTime?: string;
   startTime?: string;
   endTime?: string;
   ticketUrl?: string;
   ticketPriceMin?: number;
   ticketPriceMax?: number;
-  isSoldOut: boolean;
-  isCancelled: boolean;
-  description?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  venue?: any;
-  band?: any;
-  checkinCount?: number;
+  createdByUserId?: string;
+  lineup?: { bandId: string; setOrder?: number; isHeadliner?: boolean; setTime?: string }[];
 }
 
 export class EventService {
   private db = Database.getInstance();
 
   /**
-   * Create a new show or return existing one
-   * Shows are unique by venue + band + date combination
+   * Create a new event with lineup entries, or return existing one.
+   * Events are unique by venue + band + date combination (for single-band compat).
+   * For multi-band events, uses venue + date + event_name for dedup.
+   *
+   * Accepts either:
+   * - { bandId } (old format): creates event + single lineup entry
+   * - { lineup } (new format): creates event + multiple lineup entries
    */
-  async createShow(data: CreateShowRequest): Promise<Show> {
+  async createEvent(data: CreateEventRequest): Promise<Event> {
     try {
       const {
         venueId,
         bandId,
-        showDate,
+        eventDate,
+        eventName,
+        description,
         doorsTime,
         startTime,
         endTime,
         ticketUrl,
         ticketPriceMin,
         ticketPriceMax,
-        description,
+        createdByUserId,
+        lineup,
       } = data;
 
-      // Check if show already exists
-      const existingShow = await this.db.query(
-        `SELECT * FROM shows
-         WHERE venue_id = $1 AND band_id = $2 AND show_date = $3`,
-        [venueId, bandId, showDate]
-      );
+      // Build lineup entries from either bandId or lineup array
+      const lineupEntries = lineup && lineup.length > 0
+        ? lineup
+        : bandId
+          ? [{ bandId, setOrder: 0, isHeadliner: true }]
+          : [];
 
-      if (existingShow.rows.length > 0) {
-        // Return existing show with venue and band details
-        return this.getShowById(existingShow.rows[0].id);
+      // For backward compat (single band): check existing event by venue+band+date
+      if (bandId && (!lineup || lineup.length === 0)) {
+        const existingEvent = await this.db.query(
+          `SELECT e.id FROM events e
+           JOIN event_lineup el ON e.id = el.event_id
+           WHERE e.venue_id = $1 AND el.band_id = $2 AND e.event_date = $3`,
+          [venueId, bandId, eventDate]
+        );
+
+        if (existingEvent.rows.length > 0) {
+          return this.getEventById(existingEvent.rows[0].id);
+        }
       }
 
-      // Create new show
-      const insertQuery = `
-        INSERT INTO shows (
-          venue_id, band_id, show_date, doors_time, start_time, end_time,
-          ticket_url, ticket_price_min, ticket_price_max, description
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        RETURNING *
-      `;
+      // Create event + lineup in a transaction
+      const client = await this.db.getClient();
+      try {
+        await client.query('BEGIN');
 
-      const result = await this.db.query(insertQuery, [
-        venueId,
-        bandId,
-        showDate,
-        doorsTime || null,
-        startTime || null,
-        endTime || null,
-        ticketUrl || null,
-        ticketPriceMin || null,
-        ticketPriceMax || null,
-        description || null,
-      ]);
+        const eventResult = await client.query(
+          `INSERT INTO events (
+            venue_id, event_date, event_name, description,
+            doors_time, start_time, end_time,
+            ticket_url, ticket_price_min, ticket_price_max,
+            created_by_user_id
+          )
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          RETURNING *`,
+          [
+            venueId,
+            eventDate,
+            eventName || null,
+            description || null,
+            doorsTime || null,
+            startTime || null,
+            endTime || null,
+            ticketUrl || null,
+            ticketPriceMin || null,
+            ticketPriceMax || null,
+            createdByUserId || null,
+          ]
+        );
 
-      // Return new show with venue and band details
-      return this.getShowById(result.rows[0].id);
+        const eventId = eventResult.rows[0].id;
+
+        // Insert lineup entries
+        for (const entry of lineupEntries) {
+          await client.query(
+            `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner, set_time)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT (event_id, band_id) DO NOTHING`,
+            [
+              eventId,
+              entry.bandId,
+              entry.setOrder ?? 0,
+              entry.isHeadliner ?? false,
+              entry.setTime || null,
+            ]
+          );
+        }
+
+        await client.query('COMMIT');
+
+        return this.getEventById(eventId);
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
     } catch (error) {
-      console.error('Create show error:', error);
+      console.error('Create event error:', error);
       throw error;
     }
   }
 
   /**
-   * Get show by ID with venue and band details
-   * Note: checkin_count is based on checkins for this venue+band+date, not show_id
+   * Get event by ID with full lineup, venue, and band details.
+   * Returns Event with lineup array containing band info for each entry.
    */
-  async getShowById(showId: string): Promise<Show> {
+  async getEventById(eventId: string): Promise<Event> {
     try {
-      const query = `
+      // Get event with venue
+      const eventQuery = `
         SELECT
-          s.*,
-          v.id as venue_id, v.name as venue_name, v.city as venue_city,
-          v.state as venue_state, v.image_url as venue_image,
-          b.id as band_id, b.name as band_name, b.genre as band_genre,
-          b.image_url as band_image,
-          (
-            SELECT COUNT(*) FROM checkins c
-            WHERE c.venue_id = s.venue_id
-              AND c.band_id = s.band_id
-              AND c.event_date = s.show_date
-          ) as checkin_count
-        FROM shows s
-        LEFT JOIN venues v ON s.venue_id = v.id
-        LEFT JOIN bands b ON s.band_id = b.id
-        WHERE s.id = $1
+          e.*,
+          v.id as v_id, v.name as venue_name, v.city as venue_city,
+          v.state as venue_state, v.image_url as venue_image
+        FROM events e
+        LEFT JOIN venues v ON e.venue_id = v.id
+        WHERE e.id = $1
       `;
 
-      const result = await this.db.query(query, [showId]);
+      const eventResult = await this.db.query(eventQuery, [eventId]);
 
-      if (result.rows.length === 0) {
-        throw new Error('Show not found');
+      if (eventResult.rows.length === 0) {
+        throw new Error('Event not found');
       }
 
-      return this.mapDbShowToShow(result.rows[0]);
+      // Get lineup entries with band details
+      const lineupQuery = `
+        SELECT
+          el.id, el.band_id, el.set_order, el.set_time, el.is_headliner,
+          b.id as b_id, b.name as band_name, b.genre as band_genre,
+          b.image_url as band_image
+        FROM event_lineup el
+        LEFT JOIN bands b ON el.band_id = b.id
+        WHERE el.event_id = $1
+        ORDER BY el.set_order ASC
+      `;
+
+      const lineupResult = await this.db.query(lineupQuery, [eventId]);
+
+      // Get checkin count
+      const countQuery = `
+        SELECT COUNT(*) as checkin_count FROM checkins
+        WHERE event_id = $1
+      `;
+      const countResult = await this.db.query(countQuery, [eventId]);
+
+      return this.mapDbEventToEvent(
+        eventResult.rows[0],
+        lineupResult.rows,
+        parseInt(countResult.rows[0].checkin_count || '0')
+      );
     } catch (error) {
-      console.error('Get show error:', error);
+      console.error('Get event error:', error);
       throw error;
     }
   }
 
   /**
-   * Get shows at a specific venue
+   * Get events at a specific venue
    */
-  async getShowsByVenue(
+  async getEventsByVenue(
     venueId: string,
     options: { upcoming?: boolean; limit?: number } = {}
-  ): Promise<Show[]> {
+  ): Promise<Event[]> {
     try {
       const { upcoming = true, limit = 50 } = options;
 
-      let whereClause = 'WHERE s.venue_id = $1';
+      let whereClause = 'WHERE e.venue_id = $1';
       if (upcoming) {
-        whereClause += ' AND s.show_date >= CURRENT_DATE';
+        whereClause += ' AND e.event_date >= CURRENT_DATE';
       }
 
       const query = `
         SELECT
-          s.*,
-          v.id as venue_id, v.name as venue_name, v.city as venue_city,
+          e.*,
+          v.id as v_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
-          b.id as band_id, b.name as band_name, b.genre as band_genre,
-          b.image_url as band_image,
-          (
-            SELECT COUNT(*) FROM checkins c
-            WHERE c.venue_id = s.venue_id
-              AND c.band_id = s.band_id
-              AND c.event_date = s.show_date
-          ) as checkin_count
-        FROM shows s
-        LEFT JOIN venues v ON s.venue_id = v.id
-        LEFT JOIN bands b ON s.band_id = b.id
+          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+        FROM events e
+        LEFT JOIN venues v ON e.venue_id = v.id
         ${whereClause}
-        ORDER BY s.show_date ${upcoming ? 'ASC' : 'DESC'}
+        ORDER BY e.event_date ${upcoming ? 'ASC' : 'DESC'}
         LIMIT $2
       `;
 
       const result = await this.db.query(query, [venueId, limit]);
 
-      return result.rows.map((row: any) => this.mapDbShowToShow(row));
+      return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get shows by venue error:', error);
+      console.error('Get events by venue error:', error);
       throw error;
     }
   }
 
   /**
-   * Get shows for a specific band
+   * Get events for a specific band
    */
-  async getShowsByBand(
+  async getEventsByBand(
     bandId: string,
     options: { upcoming?: boolean; limit?: number } = {}
-  ): Promise<Show[]> {
+  ): Promise<Event[]> {
     try {
       const { upcoming = true, limit = 50 } = options;
 
-      let whereClause = 'WHERE s.band_id = $1';
+      let whereClause = 'WHERE el.band_id = $1';
       if (upcoming) {
-        whereClause += ' AND s.show_date >= CURRENT_DATE';
+        whereClause += ' AND e.event_date >= CURRENT_DATE';
       }
 
       const query = `
         SELECT
-          s.*,
-          v.id as venue_id, v.name as venue_name, v.city as venue_city,
+          e.*,
+          v.id as v_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
-          b.id as band_id, b.name as band_name, b.genre as band_genre,
-          b.image_url as band_image,
-          (
-            SELECT COUNT(*) FROM checkins c
-            WHERE c.venue_id = s.venue_id
-              AND c.band_id = s.band_id
-              AND c.event_date = s.show_date
-          ) as checkin_count
-        FROM shows s
-        LEFT JOIN venues v ON s.venue_id = v.id
-        LEFT JOIN bands b ON s.band_id = b.id
+          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+        FROM events e
+        JOIN event_lineup el ON e.id = el.event_id
+        LEFT JOIN venues v ON e.venue_id = v.id
         ${whereClause}
-        ORDER BY s.show_date ${upcoming ? 'ASC' : 'DESC'}
+        ORDER BY e.event_date ${upcoming ? 'ASC' : 'DESC'}
         LIMIT $2
       `;
 
       const result = await this.db.query(query, [bandId, limit]);
 
-      return result.rows.map((row: any) => this.mapDbShowToShow(row));
+      return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get shows by band error:', error);
+      console.error('Get events by band error:', error);
       throw error;
     }
   }
 
   /**
-   * Get upcoming shows (across all venues/bands)
+   * Get upcoming events (across all venues/bands)
    */
-  async getUpcomingShows(limit: number = 50): Promise<Show[]> {
+  async getUpcomingEvents(limit: number = 50): Promise<Event[]> {
     try {
       const query = `
         SELECT
-          s.*,
-          v.id as venue_id, v.name as venue_name, v.city as venue_city,
+          e.*,
+          v.id as v_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
-          b.id as band_id, b.name as band_name, b.genre as band_genre,
-          b.image_url as band_image,
-          (
-            SELECT COUNT(*) FROM checkins c
-            WHERE c.venue_id = s.venue_id
-              AND c.band_id = s.band_id
-              AND c.event_date = s.show_date
-          ) as checkin_count
-        FROM shows s
-        LEFT JOIN venues v ON s.venue_id = v.id
-        LEFT JOIN bands b ON s.band_id = b.id
-        WHERE s.show_date >= CURRENT_DATE AND s.is_cancelled = FALSE
-        ORDER BY s.show_date ASC, s.created_at DESC
+          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+        FROM events e
+        LEFT JOIN venues v ON e.venue_id = v.id
+        WHERE e.event_date >= CURRENT_DATE AND e.is_cancelled = FALSE
+        ORDER BY e.event_date ASC, e.created_at DESC
         LIMIT $1
       `;
 
       const result = await this.db.query(query, [limit]);
 
-      return result.rows.map((row: any) => this.mapDbShowToShow(row));
+      return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get upcoming shows error:', error);
+      console.error('Get upcoming events error:', error);
       throw error;
     }
   }
 
   /**
-   * Get trending shows (most check-ins recently)
+   * Get trending events (most check-ins in last 30 days)
    */
-  async getTrendingShows(limit: number = 20): Promise<Show[]> {
+  async getTrendingEvents(limit: number = 20): Promise<Event[]> {
     try {
       const query = `
         SELECT
-          s.*,
-          v.id as venue_id, v.name as venue_name, v.city as venue_city,
+          e.*,
+          v.id as v_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
-          b.id as band_id, b.name as band_name, b.genre as band_genre,
-          b.image_url as band_image,
-          (
-            SELECT COUNT(*) FROM checkins c
-            WHERE c.venue_id = s.venue_id
-              AND c.band_id = s.band_id
-              AND c.event_date = s.show_date
-          ) as checkin_count
-        FROM shows s
-        LEFT JOIN venues v ON s.venue_id = v.id
-        LEFT JOIN bands b ON s.band_id = b.id
-        WHERE s.show_date >= CURRENT_DATE - INTERVAL '30 days'
-        ORDER BY checkin_count DESC, s.show_date DESC
+          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+        FROM events e
+        LEFT JOIN venues v ON e.venue_id = v.id
+        WHERE e.event_date >= CURRENT_DATE - INTERVAL '30 days'
+        ORDER BY checkin_count DESC, e.event_date DESC
         LIMIT $1
       `;
 
       const result = await this.db.query(query, [limit]);
 
-      return result.rows.map((row: any) => this.mapDbShowToShow(row));
+      return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get trending shows error:', error);
+      console.error('Get trending events error:', error);
       throw error;
     }
   }
 
   /**
-   * Delete a show
+   * Delete an event (CASCADE handles lineup entries)
    */
-  async deleteShow(showId: string): Promise<void> {
+  async deleteEvent(eventId: string): Promise<void> {
     try {
-      await this.db.query('DELETE FROM shows WHERE id = $1', [showId]);
+      await this.db.query('DELETE FROM events WHERE id = $1', [eventId]);
     } catch (error) {
-      console.error('Delete show error:', error);
+      console.error('Delete event error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Find or create an event for a given venue+band+date.
+   * Used by CheckinService during dual-write to ensure event_id is populated.
+   *
+   * If an event exists at this venue on this date with this band in the lineup,
+   * returns it. Otherwise creates a new event + lineup entry.
+   */
+  async findOrCreateEvent(venueId: string, bandId: string, eventDate: Date): Promise<string> {
+    try {
+      // Look for existing event at this venue on this date with this band
+      const existing = await this.db.query(
+        `SELECT e.id FROM events e
+         JOIN event_lineup el ON e.id = el.event_id
+         WHERE e.venue_id = $1 AND el.band_id = $2 AND e.event_date = $3`,
+        [venueId, bandId, eventDate]
+      );
+
+      if (existing.rows.length > 0) {
+        return existing.rows[0].id;
+      }
+
+      // Check if there's an event at this venue on this date (without this band)
+      // If so, add the band to the lineup
+      const eventAtVenueDate = await this.db.query(
+        `SELECT id FROM events
+         WHERE venue_id = $1 AND event_date = $2
+         LIMIT 1`,
+        [venueId, eventDate]
+      );
+
+      if (eventAtVenueDate.rows.length > 0) {
+        const eventId = eventAtVenueDate.rows[0].id;
+        // Add band to existing event's lineup
+        await this.db.query(
+          `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner)
+           VALUES ($1, $2, 0, false)
+           ON CONFLICT (event_id, band_id) DO NOTHING`,
+          [eventId, bandId]
+        );
+        return eventId;
+      }
+
+      // No event found -- create new event + lineup entry
+      const client = await this.db.getClient();
+      try {
+        await client.query('BEGIN');
+
+        const eventResult = await client.query(
+          `INSERT INTO events (venue_id, event_date, source)
+           VALUES ($1, $2, 'checkin_created')
+           RETURNING id`,
+          [venueId, eventDate]
+        );
+
+        const eventId = eventResult.rows[0].id;
+
+        await client.query(
+          `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner)
+           VALUES ($1, $2, 0, true)`,
+          [eventId, bandId]
+        );
+
+        await client.query('COMMIT');
+        return eventId;
+      } catch (err) {
+        await client.query('ROLLBACK');
+        throw err;
+      } finally {
+        client.release();
+      }
+    } catch (error) {
+      console.error('Find or create event error:', error);
       throw error;
     }
   }
 
   // ============================================
-  // Event API wrapper methods (for EventController)
+  // Private helper methods
   // ============================================
 
   /**
-   * Create a new event (wrapper for createShow)
+   * For list queries: fetch headliner band for each event and map to Event.
+   * This keeps list queries efficient (single query + one headliner fetch).
    */
-  async createEvent(data: CreateEventRequest): Promise<Show> {
-    return this.createShow({
-      venueId: data.venueId,
-      bandId: data.bandId,
-      showDate: data.eventDate,
-      description: data.eventName,
+  private async mapDbEventsWithHeadliner(rows: any[]): Promise<Event[]> {
+    if (rows.length === 0) return [];
+
+    const eventIds = rows.map((r: any) => r.id);
+
+    // Batch fetch headliner bands for all events
+    const lineupQuery = `
+      SELECT
+        el.event_id, el.id, el.band_id, el.set_order, el.set_time, el.is_headliner,
+        b.id as b_id, b.name as band_name, b.genre as band_genre,
+        b.image_url as band_image
+      FROM event_lineup el
+      LEFT JOIN bands b ON el.band_id = b.id
+      WHERE el.event_id = ANY($1)
+      ORDER BY el.set_order ASC
+    `;
+
+    const lineupResult = await this.db.query(lineupQuery, [eventIds]);
+
+    // Group lineup entries by event_id
+    const lineupByEvent: Record<string, any[]> = {};
+    for (const row of lineupResult.rows) {
+      if (!lineupByEvent[row.event_id]) {
+        lineupByEvent[row.event_id] = [];
+      }
+      lineupByEvent[row.event_id].push(row);
+    }
+
+    return rows.map((row: any) => {
+      const eventLineup = lineupByEvent[row.id] || [];
+      return this.mapDbEventToEvent(
+        row,
+        eventLineup,
+        parseInt(row.checkin_count || '0')
+      );
     });
   }
 
   /**
-   * Get event by ID (wrapper for getShowById)
+   * Map database event row + lineup rows to Event type.
+   * Includes backward-compat fields: bandId, band, showDate.
    */
-  async getEventById(eventId: string): Promise<Show> {
-    return this.getShowById(eventId);
-  }
+  private mapDbEventToEvent(
+    row: any,
+    lineupRows: any[],
+    checkinCount: number
+  ): Event {
+    // Build lineup entries
+    const lineup: EventLineupEntry[] = lineupRows.map((lr: any) => ({
+      id: lr.id,
+      bandId: lr.band_id,
+      setOrder: lr.set_order,
+      setTime: lr.set_time,
+      isHeadliner: lr.is_headliner || false,
+      band: lr.band_name ? {
+        id: lr.band_id,
+        name: lr.band_name,
+        genre: lr.band_genre,
+        imageUrl: lr.band_image,
+      } : undefined,
+    }));
 
-  /**
-   * Get events by venue (wrapper for getShowsByVenue)
-   */
-  async getEventsByVenue(
-    venueId: string,
-    options: { upcoming?: boolean; limit?: number } = {}
-  ): Promise<Show[]> {
-    return this.getShowsByVenue(venueId, options);
-  }
+    // Find headliner (or first band) for backward compat
+    const headliner = lineup.find(l => l.isHeadliner) || lineup[0];
 
-  /**
-   * Get events by band (wrapper for getShowsByBand)
-   */
-  async getEventsByBand(
-    bandId: string,
-    options: { upcoming?: boolean; limit?: number } = {}
-  ): Promise<Show[]> {
-    return this.getShowsByBand(bandId, options);
-  }
-
-  /**
-   * Get upcoming events (wrapper for getUpcomingShows)
-   */
-  async getUpcomingEvents(limit: number = 50): Promise<Show[]> {
-    return this.getUpcomingShows(limit);
-  }
-
-  /**
-   * Get trending events (wrapper for getTrendingShows)
-   */
-  async getTrendingEvents(limit: number = 20): Promise<Show[]> {
-    return this.getTrendingShows(limit);
-  }
-
-  /**
-   * Delete an event (wrapper for deleteShow)
-   */
-  async deleteEvent(eventId: string): Promise<void> {
-    return this.deleteShow(eventId);
-  }
-
-  /**
-   * Map database show row to Show type
-   */
-  private mapDbShowToShow(row: any): Show {
     return {
       id: row.id,
       venueId: row.venue_id,
-      bandId: row.band_id,
-      showDate: row.show_date,
+      eventDate: row.event_date,
+      eventName: row.event_name,
+      description: row.description,
       doorsTime: row.doors_time,
       startTime: row.start_time,
       endTime: row.end_time,
@@ -398,7 +489,12 @@ export class EventService {
       ticketPriceMax: row.ticket_price_max ? parseFloat(row.ticket_price_max) : undefined,
       isSoldOut: row.is_sold_out || false,
       isCancelled: row.is_cancelled || false,
-      description: row.description,
+      eventType: row.event_type || 'concert',
+      source: row.source || 'user_created',
+      externalId: row.external_id,
+      createdByUserId: row.created_by_user_id,
+      isVerified: row.is_verified || false,
+      totalCheckins: parseInt(row.total_checkins || '0'),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
       venue: row.venue_name ? {
@@ -408,13 +504,12 @@ export class EventService {
         state: row.venue_state,
         imageUrl: row.venue_image,
       } : undefined,
-      band: row.band_name ? {
-        id: row.band_id,
-        name: row.band_name,
-        genre: row.band_genre,
-        imageUrl: row.band_image,
-      } : undefined,
-      checkinCount: parseInt(row.checkin_count || 0),
+      lineup,
+      checkinCount,
+      // Backward-compat fields for mobile app
+      bandId: headliner?.bandId,
+      band: headliner?.band,
+      showDate: row.event_date,
     };
   }
 }

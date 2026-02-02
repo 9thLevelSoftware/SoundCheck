@@ -12,13 +12,14 @@ export class EventController {
    */
   createEvent = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { venueId, bandId, eventDate, eventName } = req.body;
+      const { venueId, bandId, eventDate, eventName, description, lineup } = req.body;
       const userId = (req as any).user?.id; // From auth middleware
 
-      if (!venueId || !bandId || !eventDate) {
+      // bandId is required for old format; lineup is required for new format
+      if (!venueId || !eventDate || (!bandId && (!lineup || lineup.length === 0))) {
         const response: ApiResponse = {
           success: false,
-          error: 'Venue ID, band ID, and event date are required',
+          error: 'Venue ID, event date, and at least one band (bandId or lineup) are required',
         };
         res.status(400).json(response);
         return;
@@ -29,7 +30,9 @@ export class EventController {
         bandId,
         eventDate: new Date(eventDate),
         eventName,
+        description,
         createdByUserId: userId,
+        lineup,
       });
 
       const response: ApiResponse = {

@@ -187,6 +187,64 @@ export interface ReviewHelpfulness {
   createdAt: string;
 }
 
+// Event types (events + event_lineup tables)
+export interface Event {
+  id: string;
+  venueId: string;
+  eventDate: Date;
+  eventName?: string;
+  description?: string;
+  doorsTime?: string;
+  startTime?: string;
+  endTime?: string;
+  ticketUrl?: string;
+  ticketPriceMin?: number;
+  ticketPriceMax?: number;
+  isSoldOut: boolean;
+  isCancelled: boolean;
+  eventType: string;
+  source: string;
+  externalId?: string;
+  createdByUserId?: string;
+  isVerified: boolean;
+  totalCheckins: number;
+  createdAt: Date;
+  updatedAt: Date;
+  // Populated fields
+  venue?: {
+    id: string;
+    name: string;
+    city?: string;
+    state?: string;
+    imageUrl?: string;
+  };
+  lineup?: EventLineupEntry[];
+  checkinCount?: number;
+  // Backward-compat fields for mobile app
+  bandId?: string;
+  band?: {
+    id: string;
+    name: string;
+    genre?: string;
+    imageUrl?: string;
+  };
+  showDate?: Date;
+}
+
+export interface EventLineupEntry {
+  id: string;
+  bandId: string;
+  setOrder: number;
+  setTime?: string;
+  isHeadliner: boolean;
+  band?: {
+    id: string;
+    name: string;
+    genre?: string;
+    imageUrl?: string;
+  };
+}
+
 // API Response types
 export interface ApiResponse<T = any> {
   success: boolean;
