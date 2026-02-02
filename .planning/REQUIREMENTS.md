@@ -1,0 +1,247 @@
+# Requirements: SoundCheck
+
+**Defined:** 2026-02-02
+**Core Value:** The live check-in moment: a user at a show can check in fast, rate what they're experiencing, and share it with friends -- and that single action feeds discovery, social proof, gamification, and their concert identity.
+
+## v1 Requirements
+
+Requirements for initial release (App Store ready). Each maps to roadmap phases.
+
+### Data Model Redesign
+
+- [ ] **DATA-01**: Events exist as first-class entities with name, venue, date, times, type, and ticket info
+- [ ] **DATA-02**: Events support multi-band lineups via junction table with set order and headliner flag
+- [ ] **DATA-03**: Check-ins reference events (not bands/venues directly)
+- [ ] **DATA-04**: Check-ins support dual ratings (band performance + venue experience) as independent optional fields
+- [ ] **DATA-05**: Per-set band ratings stored in separate table for multi-band events
+- [ ] **DATA-06**: Event timestamps use TIMESTAMPTZ; venues store IANA timezone identifier
+- [ ] **DATA-07**: Events track source API and external ID for cross-source deduplication
+- [ ] **DATA-08**: Badge criteria stored as JSONB for data-driven evaluation without code changes
+- [ ] **DATA-09**: Schema migration uses expand-contract pattern with backward compatibility
+- [ ] **DATA-10**: Existing shows/checkins data migrated to new event-based model without data loss
+
+### Event Data Pipeline
+
+- [ ] **PIPE-01**: Ticketmaster Discovery API adapter fetches events by configurable metro areas
+- [ ] **PIPE-02**: Events ingested on recurring schedule via BullMQ repeatable jobs (surviving deploys)
+- [ ] **PIPE-03**: Ingested events deduplicated by source+external_id and venue+date composite key
+- [ ] **PIPE-04**: Band names from APIs matched to existing bands table (exact + fuzzy via pg_trgm)
+- [ ] **PIPE-05**: Users can create events for shows not in API data
+- [ ] **PIPE-06**: User-created events start as unverified; promoted when multiple users check in
+- [ ] **PIPE-07**: Cancelled/rescheduled events detected on re-sync and flagged with user notification
+- [ ] **PIPE-08**: Ingestion respects Ticketmaster rate limits (5,000/day, 5/sec) with backoff
+
+### Check-in Experience
+
+- [ ] **CHKN-01**: User can check in to an event in under 10 seconds from app open
+- [ ] **CHKN-02**: Check-in auto-suggests nearby events based on GPS + current date/time
+- [ ] **CHKN-03**: Check-in is a single tap; all enrichment (ratings, photo) is optional afterward
+- [ ] **CHKN-04**: User can rate each band independently after checking in (per-set ratings)
+- [ ] **CHKN-05**: User can rate venue experience independently after checking in
+- [ ] **CHKN-06**: User can attach photo(s) to check-in (stored in cloud storage, not ephemeral filesystem)
+- [ ] **CHKN-07**: Location verified on check-in (configurable radius per venue type, non-blocking)
+- [ ] **CHKN-08**: Check-in limited to one per user per event
+- [ ] **CHKN-09**: Check-in validated within time window around event (doors to end + buffer)
+- [ ] **CHKN-10**: Ratings use half-star increments (0.5 to 5.0)
+
+### Gamification / Badges
+
+- [ ] **BDGE-01**: Badge engine evaluates check-ins asynchronously via BullMQ after each check-in
+- [ ] **BDGE-02**: Genre Explorer badges awarded for attending N shows in a genre (5/10/25 thresholds)
+- [ ] **BDGE-03**: Venue Collector badges awarded for checking in at N unique venues (10/25/50)
+- [ ] **BDGE-04**: Superfan badges awarded for seeing the same band N times (3/5/10)
+- [ ] **BDGE-05**: Festival Warrior badges awarded for N check-ins in one day (3/5)
+- [ ] **BDGE-06**: Milestone badges awarded at check-in counts (1/10/25/50/100/250/500)
+- [ ] **BDGE-07**: Road Warrior badges awarded for check-ins across N cities/states (5/10)
+- [ ] **BDGE-08**: Badge definitions use JSONB criteria; new badges addable without code changes
+- [ ] **BDGE-09**: Badge progress tracked and displayed (current count / target)
+- [ ] **BDGE-10**: Badge rarity shown as percentage of users who earned each badge
+- [ ] **BDGE-11**: User receives push notification when they earn a badge
+- [ ] **BDGE-12**: Anti-farming: location verification + daily check-in rate limit + delayed evaluation
+
+### Social & Feed
+
+- [ ] **FEED-01**: Friends feed shows real-time friend check-ins ordered by recency
+- [ ] **FEED-02**: "Happening Now" section shows friends currently at shows (auto-expires after event)
+- [ ] **FEED-03**: Event feed shows all check-ins for a specific event (shared experience discovery)
+- [ ] **FEED-04**: Toast reactions on check-ins (existing, preserved)
+- [ ] **FEED-05**: Comments on check-ins (existing, preserved)
+- [ ] **FEED-06**: WebSocket push for real-time friend check-in updates in feed
+- [ ] **FEED-07**: Redis Pub/Sub for multi-instance WebSocket fan-out
+- [ ] **FEED-08**: Push notification when friend checks in at a show near user
+- [ ] **FEED-09**: Feed cached in Redis with short TTL for performance
+- [ ] **FEED-10**: Cursor-based pagination on all feed endpoints
+
+### Discovery & Pages
+
+- [ ] **DISC-01**: Upcoming shows near user based on GPS location and event data
+- [ ] **DISC-02**: Band pages show aggregate live performance rating from all check-in ratings
+- [ ] **DISC-03**: Band pages show upcoming shows for that band
+- [ ] **DISC-04**: Venue pages show aggregate experience rating from all check-in ratings
+- [ ] **DISC-05**: Venue pages show upcoming events at that venue
+- [ ] **DISC-06**: Trending shows near user (most check-ins in recent window)
+- [ ] **DISC-07**: Search includes events in addition to existing bands, venues, and users
+- [ ] **DISC-08**: Genre-based event browsing (filter upcoming shows by genre)
+- [ ] **DISC-09**: SQL-based personalized recommendations using user's genre history and friend attendance
+
+### Profile & Stats
+
+- [ ] **PRFL-01**: Profile displays total shows attended
+- [ ] **PRFL-02**: Profile displays unique bands seen
+- [ ] **PRFL-03**: Profile displays unique venues visited
+- [ ] **PRFL-04**: Profile displays genre breakdown (top genres by check-in count)
+- [ ] **PRFL-05**: Profile displays badge collection with progress indicators
+- [ ] **PRFL-06**: Profile displays recent check-in history
+- [ ] **PRFL-07**: Profile displays top-rated bands and venues (personal favorites)
+- [ ] **PRFL-08**: Stats computed on demand and cached in Redis (10-min TTL)
+
+### Polish & App Store
+
+- [ ] **PLSH-01**: Check-in flow optimized for speed and one-handed mobile use
+- [ ] **PLSH-02**: Feed designed around live moments with visual check-in cards
+- [ ] **PLSH-03**: Badge showcase UI with collection grid and detail view
+- [ ] **PLSH-04**: Profile page styled as concert resume
+- [ ] **PLSH-05**: Check-in photos stored in Cloudflare R2 (not ephemeral Railway filesystem)
+- [ ] **PLSH-06**: Push notifications via Firebase Cloud Messaging for background delivery
+- [ ] **PLSH-07**: Account deletion flow works end-to-end (Apple requirement)
+- [ ] **PLSH-08**: Flutter version pinned to known-good release (avoid 3.24.3/3.24.4 App Store issues)
+- [ ] **PLSH-09**: Privacy manifests included for all third-party SDKs (Apple requirement)
+- [ ] **PLSH-10**: Demo account with test data prepared for App Store review
+
+## v2 Requirements
+
+Deferred to post-launch. Tracked but not in current roadmap.
+
+### Year in Review
+
+- **WRAP-01**: "Year in Shows" / SoundCheck Wrapped annual recap with stats and highlights
+- **WRAP-02**: Shareable recap cards optimized for Instagram/TikTok social media posting
+
+### Advanced Recommendations
+
+- **RECC-01**: Collaborative filtering via pgvector for "users like you also attended" recommendations
+- **RECC-02**: Cold-start genre preference onboarding for new users with no check-in history
+
+### Extended Gamification
+
+- **EXTG-01**: Concert streak tracking (weekly/monthly attendance streaks with Duolingo-style mechanics)
+- **EXTG-02**: Concert cred composite score (single number capturing concert-going depth)
+- **EXTG-03**: Seasonal/holiday badges (summer festival season, NYE show, etc.)
+
+### Additional Data Sources
+
+- **DSRC-01**: Bandsintown API integration for indie/DIY event coverage (pending approval)
+- **DSRC-02**: SetlistFM post-event enrichment (display setlist data on event pages)
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Ticket sales/purchasing | Bandsintown (95M users) and Ticketmaster own this space. Link out instead. |
+| Setlist tracking/wiki | Setlist.fm has 9.6M setlists with active community. Integrate their API, don't rebuild. |
+| Retroactive/backdated concert logging | "I'm here now" creates urgency and authenticity. Diary logging dilutes the social signal. |
+| Direct messaging/chat | Chat is a product in itself (moderation, abuse, spam). Social interaction via toasts + comments. |
+| Web frontend/profiles | Mobile is the platform for live concert check-ins. No web app for v1. |
+| Artist/venue management dashboard (B2B) | Consumer app only. B2B tools are a separate product with different users. |
+| Live streaming or audio features | SoundCheck is about being there, not watching remotely. Licensing/bandwidth complexity. |
+| Complex social graphs (groups, circles) | Follow/unfollow is sufficient. Groups add administration complexity without proportional value. |
+| Critic/professional reviews | All ratings from verified check-in users. Mixing critic reviews creates confusion. |
+| Concert buddy matching | Safety concerns, moderation nightmares, different user psychology. Show "who was there," not "who to meet." |
+| Overly granular rating dimensions | Two ratings (band + venue) per check-in max. 5+ dimensions kills completion rate at shows. |
+| Competitive leaderboards/rankings | Badges reward personal milestones, not competitive ranking. Prevents gaming incentives. |
+| OAuth beyond Google/Apple | Email + two social providers is sufficient for v1. |
+
+## Traceability
+
+Populated during roadmap creation. Each requirement maps to exactly one phase.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| DATA-01 | -- | Pending |
+| DATA-02 | -- | Pending |
+| DATA-03 | -- | Pending |
+| DATA-04 | -- | Pending |
+| DATA-05 | -- | Pending |
+| DATA-06 | -- | Pending |
+| DATA-07 | -- | Pending |
+| DATA-08 | -- | Pending |
+| DATA-09 | -- | Pending |
+| DATA-10 | -- | Pending |
+| PIPE-01 | -- | Pending |
+| PIPE-02 | -- | Pending |
+| PIPE-03 | -- | Pending |
+| PIPE-04 | -- | Pending |
+| PIPE-05 | -- | Pending |
+| PIPE-06 | -- | Pending |
+| PIPE-07 | -- | Pending |
+| PIPE-08 | -- | Pending |
+| CHKN-01 | -- | Pending |
+| CHKN-02 | -- | Pending |
+| CHKN-03 | -- | Pending |
+| CHKN-04 | -- | Pending |
+| CHKN-05 | -- | Pending |
+| CHKN-06 | -- | Pending |
+| CHKN-07 | -- | Pending |
+| CHKN-08 | -- | Pending |
+| CHKN-09 | -- | Pending |
+| CHKN-10 | -- | Pending |
+| BDGE-01 | -- | Pending |
+| BDGE-02 | -- | Pending |
+| BDGE-03 | -- | Pending |
+| BDGE-04 | -- | Pending |
+| BDGE-05 | -- | Pending |
+| BDGE-06 | -- | Pending |
+| BDGE-07 | -- | Pending |
+| BDGE-08 | -- | Pending |
+| BDGE-09 | -- | Pending |
+| BDGE-10 | -- | Pending |
+| BDGE-11 | -- | Pending |
+| BDGE-12 | -- | Pending |
+| FEED-01 | -- | Pending |
+| FEED-02 | -- | Pending |
+| FEED-03 | -- | Pending |
+| FEED-04 | -- | Pending |
+| FEED-05 | -- | Pending |
+| FEED-06 | -- | Pending |
+| FEED-07 | -- | Pending |
+| FEED-08 | -- | Pending |
+| FEED-09 | -- | Pending |
+| FEED-10 | -- | Pending |
+| DISC-01 | -- | Pending |
+| DISC-02 | -- | Pending |
+| DISC-03 | -- | Pending |
+| DISC-04 | -- | Pending |
+| DISC-05 | -- | Pending |
+| DISC-06 | -- | Pending |
+| DISC-07 | -- | Pending |
+| DISC-08 | -- | Pending |
+| DISC-09 | -- | Pending |
+| PRFL-01 | -- | Pending |
+| PRFL-02 | -- | Pending |
+| PRFL-03 | -- | Pending |
+| PRFL-04 | -- | Pending |
+| PRFL-05 | -- | Pending |
+| PRFL-06 | -- | Pending |
+| PRFL-07 | -- | Pending |
+| PRFL-08 | -- | Pending |
+| PLSH-01 | -- | Pending |
+| PLSH-02 | -- | Pending |
+| PLSH-03 | -- | Pending |
+| PLSH-04 | -- | Pending |
+| PLSH-05 | -- | Pending |
+| PLSH-06 | -- | Pending |
+| PLSH-07 | -- | Pending |
+| PLSH-08 | -- | Pending |
+| PLSH-09 | -- | Pending |
+| PLSH-10 | -- | Pending |
+
+**Coverage:**
+- v1 requirements: 77 total
+- Mapped to phases: 0 (pending roadmap creation)
+- Unmapped: 77
+
+---
+*Requirements defined: 2026-02-02*
+*Last updated: 2026-02-02 after research completion*
