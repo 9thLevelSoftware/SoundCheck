@@ -159,89 +159,89 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | -- | Pending |
-| DATA-02 | -- | Pending |
-| DATA-03 | -- | Pending |
-| DATA-04 | -- | Pending |
-| DATA-05 | -- | Pending |
-| DATA-06 | -- | Pending |
-| DATA-07 | -- | Pending |
-| DATA-08 | -- | Pending |
-| DATA-09 | -- | Pending |
-| DATA-10 | -- | Pending |
-| PIPE-01 | -- | Pending |
-| PIPE-02 | -- | Pending |
-| PIPE-03 | -- | Pending |
-| PIPE-04 | -- | Pending |
-| PIPE-05 | -- | Pending |
-| PIPE-06 | -- | Pending |
-| PIPE-07 | -- | Pending |
-| PIPE-08 | -- | Pending |
-| CHKN-01 | -- | Pending |
-| CHKN-02 | -- | Pending |
-| CHKN-03 | -- | Pending |
-| CHKN-04 | -- | Pending |
-| CHKN-05 | -- | Pending |
-| CHKN-06 | -- | Pending |
-| CHKN-07 | -- | Pending |
-| CHKN-08 | -- | Pending |
-| CHKN-09 | -- | Pending |
-| CHKN-10 | -- | Pending |
-| BDGE-01 | -- | Pending |
-| BDGE-02 | -- | Pending |
-| BDGE-03 | -- | Pending |
-| BDGE-04 | -- | Pending |
-| BDGE-05 | -- | Pending |
-| BDGE-06 | -- | Pending |
-| BDGE-07 | -- | Pending |
-| BDGE-08 | -- | Pending |
-| BDGE-09 | -- | Pending |
-| BDGE-10 | -- | Pending |
-| BDGE-11 | -- | Pending |
-| BDGE-12 | -- | Pending |
-| FEED-01 | -- | Pending |
-| FEED-02 | -- | Pending |
-| FEED-03 | -- | Pending |
-| FEED-04 | -- | Pending |
-| FEED-05 | -- | Pending |
-| FEED-06 | -- | Pending |
-| FEED-07 | -- | Pending |
-| FEED-08 | -- | Pending |
-| FEED-09 | -- | Pending |
-| FEED-10 | -- | Pending |
-| DISC-01 | -- | Pending |
-| DISC-02 | -- | Pending |
-| DISC-03 | -- | Pending |
-| DISC-04 | -- | Pending |
-| DISC-05 | -- | Pending |
-| DISC-06 | -- | Pending |
-| DISC-07 | -- | Pending |
-| DISC-08 | -- | Pending |
-| DISC-09 | -- | Pending |
-| PRFL-01 | -- | Pending |
-| PRFL-02 | -- | Pending |
-| PRFL-03 | -- | Pending |
-| PRFL-04 | -- | Pending |
-| PRFL-05 | -- | Pending |
-| PRFL-06 | -- | Pending |
-| PRFL-07 | -- | Pending |
-| PRFL-08 | -- | Pending |
-| PLSH-01 | -- | Pending |
-| PLSH-02 | -- | Pending |
-| PLSH-03 | -- | Pending |
-| PLSH-04 | -- | Pending |
-| PLSH-05 | -- | Pending |
-| PLSH-06 | -- | Pending |
-| PLSH-07 | -- | Pending |
-| PLSH-08 | -- | Pending |
-| PLSH-09 | -- | Pending |
-| PLSH-10 | -- | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| DATA-06 | Phase 1 | Pending |
+| DATA-07 | Phase 1 | Pending |
+| DATA-08 | Phase 1 | Pending |
+| DATA-09 | Phase 1 | Pending |
+| DATA-10 | Phase 1 | Pending |
+| PIPE-01 | Phase 2 | Pending |
+| PIPE-02 | Phase 2 | Pending |
+| PIPE-03 | Phase 2 | Pending |
+| PIPE-04 | Phase 2 | Pending |
+| PIPE-05 | Phase 2 | Pending |
+| PIPE-06 | Phase 2 | Pending |
+| PIPE-07 | Phase 2 | Pending |
+| PIPE-08 | Phase 2 | Pending |
+| CHKN-01 | Phase 3 | Pending |
+| CHKN-02 | Phase 3 | Pending |
+| CHKN-03 | Phase 3 | Pending |
+| CHKN-04 | Phase 3 | Pending |
+| CHKN-05 | Phase 3 | Pending |
+| CHKN-06 | Phase 3 | Pending |
+| CHKN-07 | Phase 3 | Pending |
+| CHKN-08 | Phase 3 | Pending |
+| CHKN-09 | Phase 3 | Pending |
+| CHKN-10 | Phase 3 | Pending |
+| BDGE-01 | Phase 4 | Pending |
+| BDGE-02 | Phase 4 | Pending |
+| BDGE-03 | Phase 4 | Pending |
+| BDGE-04 | Phase 4 | Pending |
+| BDGE-05 | Phase 4 | Pending |
+| BDGE-06 | Phase 4 | Pending |
+| BDGE-07 | Phase 4 | Pending |
+| BDGE-08 | Phase 4 | Pending |
+| BDGE-09 | Phase 4 | Pending |
+| BDGE-10 | Phase 4 | Pending |
+| BDGE-11 | Phase 4 | Pending |
+| BDGE-12 | Phase 4 | Pending |
+| FEED-01 | Phase 5 | Pending |
+| FEED-02 | Phase 5 | Pending |
+| FEED-03 | Phase 5 | Pending |
+| FEED-04 | Phase 5 | Pending |
+| FEED-05 | Phase 5 | Pending |
+| FEED-06 | Phase 5 | Pending |
+| FEED-07 | Phase 5 | Pending |
+| FEED-08 | Phase 5 | Pending |
+| FEED-09 | Phase 5 | Pending |
+| FEED-10 | Phase 5 | Pending |
+| DISC-01 | Phase 7 | Pending |
+| DISC-02 | Phase 7 | Pending |
+| DISC-03 | Phase 7 | Pending |
+| DISC-04 | Phase 7 | Pending |
+| DISC-05 | Phase 7 | Pending |
+| DISC-06 | Phase 7 | Pending |
+| DISC-07 | Phase 7 | Pending |
+| DISC-08 | Phase 7 | Pending |
+| DISC-09 | Phase 7 | Pending |
+| PRFL-01 | Phase 6 | Pending |
+| PRFL-02 | Phase 6 | Pending |
+| PRFL-03 | Phase 6 | Pending |
+| PRFL-04 | Phase 6 | Pending |
+| PRFL-05 | Phase 6 | Pending |
+| PRFL-06 | Phase 6 | Pending |
+| PRFL-07 | Phase 6 | Pending |
+| PRFL-08 | Phase 6 | Pending |
+| PLSH-01 | Phase 8 | Pending |
+| PLSH-02 | Phase 8 | Pending |
+| PLSH-03 | Phase 8 | Pending |
+| PLSH-04 | Phase 8 | Pending |
+| PLSH-05 | Phase 8 | Pending |
+| PLSH-06 | Phase 8 | Pending |
+| PLSH-07 | Phase 8 | Pending |
+| PLSH-08 | Phase 8 | Pending |
+| PLSH-09 | Phase 8 | Pending |
+| PLSH-10 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 77 total
-- Mapped to phases: 0 (pending roadmap creation)
-- Unmapped: 77
+- Mapped to phases: 77
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after research completion*
+*Last updated: 2026-02-02 after roadmap creation*
