@@ -107,7 +107,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
             child: _BandHeader(band: band),
           ),
 
-          // Stats Row
+          // Stats Row -- uses aggregate if available, falls back to legacy
           SliverToBoxAdapter(
             child: _StatsRow(band: band),
           ),
@@ -140,6 +140,11 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
                 );
               },
             ),
+          ),
+
+          // Upcoming Shows section (Phase 7)
+          SliverToBoxAdapter(
+            child: _UpcomingShowsSection(band: band),
           ),
 
           // Description (collapsible)
@@ -316,6 +321,15 @@ class _StatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use aggregate data if available; fall back to legacy averageRating
+    final aggregateRating = band.aggregate?.avgPerformanceRating ?? 0;
+    final displayRating = aggregateRating > 0
+        ? aggregateRating
+        : band.averageRating;
+    final ratingLabel = aggregateRating > 0 ? 'Live Performance' : 'Rating';
+    final fans = band.aggregate?.uniqueFans ?? band.uniqueFans;
+    final ratings = band.aggregate?.totalRatings ?? 0;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -332,18 +346,20 @@ class _StatsRow extends StatelessWidget {
           ),
           _StatDivider(),
           _StatItem(
-            value: _formatNumber(band.uniqueFans),
-            label: 'Unique Fans',
+            value: _formatNumber(fans),
+            label: 'Fans',
           ),
           _StatDivider(),
+          if (ratings > 0) ...[
+            _StatItem(
+              value: _formatNumber(ratings),
+              label: 'Ratings',
+            ),
+            _StatDivider(),
+          ],
           _StatItem(
-            value: _formatNumber(band.monthlyCheckins),
-            label: 'This Month',
-          ),
-          _StatDivider(),
-          _StatItem(
-            value: band.averageRating.toStringAsFixed(1),
-            label: 'Rating',
+            value: displayRating.toStringAsFixed(1),
+            label: ratingLabel,
             isRating: true,
           ),
         ],
@@ -386,7 +402,7 @@ class _StatItem extends StatelessWidget {
                 child: Icon(
                   Icons.star,
                   size: 16,
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.toastGold,
                 ),
               ),
             Text(
@@ -419,6 +435,202 @@ class _StatDivider extends StatelessWidget {
       height: 30,
       width: 1,
       color: AppTheme.surfaceVariantDark,
+    );
+  }
+}
+
+/// Upcoming Shows section -- displays upcoming events from backend aggregate
+class _UpcomingShowsSection extends StatelessWidget {
+  final Band band;
+
+  const _UpcomingShowsSection({required this.band});
+
+  @override
+  Widget build(BuildContext context) {
+    final shows = band.upcomingShows;
+    if (shows == null || shows.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardDark,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Row(
+            children: [
+              Icon(Icons.event_busy, color: AppTheme.textTertiary, size: 20),
+              SizedBox(width: 12),
+              Text(
+                'No upcoming shows',
+                style: TextStyle(
+                  color: AppTheme.textTertiary,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(
+            icon: Icons.event,
+            iconColor: AppTheme.liveGreen,
+            title: 'Upcoming Shows',
+          ),
+          const SizedBox(height: 8),
+          ...shows.map((show) => _UpcomingShowItem(show: show)),
+        ],
+      ),
+    );
+  }
+}
+
+class _UpcomingShowItem extends StatelessWidget {
+  final BandUpcomingShow show;
+
+  const _UpcomingShowItem({required this.show});
+
+  @override
+  Widget build(BuildContext context) {
+    final venueName = show.venue?.name ?? 'Unknown Venue';
+    final venueLocation = [show.venue?.city, show.venue?.state]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(', ');
+    final eventDate = show.eventDate ?? '';
+
+    // Parse date for display
+    String monthStr = '';
+    String dayStr = '';
+    if (eventDate.length >= 10) {
+      try {
+        final date = DateTime.parse(eventDate);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        monthStr = months[date.month - 1];
+        dayStr = date.day.toString();
+      } catch (_) {
+        monthStr = eventDate.substring(5, 7);
+        dayStr = eventDate.substring(8, 10);
+      }
+    }
+
+    return GestureDetector(
+      onTap: () => context.push('/events/${show.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Date badge
+            Container(
+              width: 50,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.electricPurple.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    monthStr,
+                    style: const TextStyle(
+                      color: AppTheme.electricPurple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  Text(
+                    dayStr,
+                    style: const TextStyle(
+                      color: AppTheme.electricPurple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Show info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    show.eventName ?? venueName,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    venueLocation.isNotEmpty
+                        ? '$venueName - $venueLocation'
+                        : venueName,
+                    style: const TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 12,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            // Chevron
+            const Icon(
+              Icons.chevron_right,
+              color: AppTheme.textTertiary,
+              size: 20,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+
+  const _SectionHeader({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: iconColor, size: 20),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
+            color: AppTheme.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -991,7 +1203,7 @@ class _CheckInPreviewCard extends StatelessWidget {
                             Icons.star,
                             size: 14,
                             color: i < rating.round()
-                                ? AppTheme.electricPurple
+                                ? AppTheme.toastGold
                                 : AppTheme.ratingInactive,
                           );
                         }),

@@ -52,9 +52,58 @@ sealed class Venue with _$Venue {
     @Default(0) int totalCheckins,
     @Default(0) int uniqueVisitors,
     @Default(false) bool isVerified,
+    // Discovery aggregate (Phase 7) -- from check-in venue_rating, not old reviews
+    VenueAggregate? aggregate,
+    // Upcoming events at this venue (Phase 7)
+    List<VenueUpcomingEvent>? upcomingEvents,
   }) = _Venue;
 
   factory Venue.fromJson(Map<String, dynamic> json) => _$VenueFromJson(json);
+}
+
+/// Aggregate experience rating for a venue, computed from checkins.venue_rating
+@freezed
+sealed class VenueAggregate with _$VenueAggregate {
+  const factory VenueAggregate({
+    @Default(0) double avgExperienceRating,
+    @Default(0) int totalRatings,
+    @Default(0) int uniqueVisitors,
+  }) = _VenueAggregate;
+
+  factory VenueAggregate.fromJson(Map<String, dynamic> json) =>
+      _$VenueAggregateFromJson(json);
+}
+
+/// Lightweight upcoming event for venue detail page
+@freezed
+sealed class VenueUpcomingEvent with _$VenueUpcomingEvent {
+  const factory VenueUpcomingEvent({
+    required String id,
+    String? eventName,
+    String? eventDate,
+    String? startTime,
+    String? doorsTime,
+    String? ticketUrl,
+    // Headliner band info
+    VenueEventBand? band,
+  }) = _VenueUpcomingEvent;
+
+  factory VenueUpcomingEvent.fromJson(Map<String, dynamic> json) =>
+      _$VenueUpcomingEventFromJson(json);
+}
+
+/// Band info nested in venue upcoming event
+@freezed
+sealed class VenueEventBand with _$VenueEventBand {
+  const factory VenueEventBand({
+    required String id,
+    required String name,
+    String? genre,
+    String? imageUrl,
+  }) = _VenueEventBand;
+
+  factory VenueEventBand.fromJson(Map<String, dynamic> json) =>
+      _$VenueEventBandFromJson(json);
 }
 
 @freezed

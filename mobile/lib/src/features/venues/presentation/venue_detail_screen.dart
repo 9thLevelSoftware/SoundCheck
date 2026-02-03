@@ -196,14 +196,14 @@ class _VenueContent extends StatelessWidget {
           child: _MapStrip(venue: venue),
         ),
 
-        // Stats Row
+        // Stats Row -- uses aggregate if available
         SliverToBoxAdapter(
           child: _VenueStatsRow(venue: venue),
         ),
 
-        // Upcoming Shows Section ("On Stage")
+        // Upcoming Events Section (Phase 7 -- real data from backend)
         SliverToBoxAdapter(
-          child: _UpcomingShowsSection(venueId: venueId),
+          child: _UpcomingEventsSection(venue: venue, venueId: venueId),
         ),
 
         // Loyal Patrons & Trending Bands
@@ -361,6 +361,15 @@ class _VenueStatsRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Use aggregate data if available; fall back to legacy averageRating
+    final aggregateRating = venue.aggregate?.avgExperienceRating ?? 0;
+    final displayRating = aggregateRating > 0
+        ? aggregateRating
+        : venue.averageRating;
+    final ratingLabel = aggregateRating > 0 ? 'Experience' : 'Rating';
+    final visitors = venue.aggregate?.uniqueVisitors ?? venue.uniqueVisitors;
+    final ratings = venue.aggregate?.totalRatings ?? 0;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -377,13 +386,20 @@ class _VenueStatsRow extends StatelessWidget {
           ),
           _StatDivider(),
           _StatItem(
-            value: _formatNumber(venue.uniqueVisitors),
+            value: _formatNumber(visitors),
             label: 'Visitors',
           ),
           _StatDivider(),
+          if (ratings > 0) ...[
+            _StatItem(
+              value: _formatNumber(ratings),
+              label: 'Ratings',
+            ),
+            _StatDivider(),
+          ],
           _StatItem(
-            value: venue.averageRating.toStringAsFixed(1),
-            label: 'Rating',
+            value: displayRating.toStringAsFixed(1),
+            label: ratingLabel,
             isRating: true,
           ),
           if (venue.capacity != null) ...[
@@ -433,7 +449,7 @@ class _StatItem extends StatelessWidget {
                 child: Icon(
                   Icons.star,
                   size: 16,
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.toastGold,
                 ),
               ),
             Text(
@@ -470,13 +486,17 @@ class _StatDivider extends StatelessWidget {
   }
 }
 
-class _UpcomingShowsSection extends StatelessWidget {
+/// Upcoming Events section -- uses real data from backend (Phase 7)
+class _UpcomingEventsSection extends StatelessWidget {
+  final Venue venue;
   final String venueId;
 
-  const _UpcomingShowsSection({required this.venueId});
+  const _UpcomingEventsSection({required this.venue, required this.venueId});
 
   @override
   Widget build(BuildContext context) {
+    final events = venue.upcomingEvents;
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
@@ -494,7 +514,7 @@ class _UpcomingShowsSection extends StatelessWidget {
                   ),
                   SizedBox(width: 8),
                   Text(
-                    'Upcoming Shows',
+                    'Upcoming Events',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -515,105 +535,169 @@ class _UpcomingShowsSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Upcoming shows list
-          ...List.generate(3, (index) => _ShowListItem(index: index)),
+          if (events == null || events.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.cardDark,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                children: [
+                  Icon(Icons.event_busy, color: AppTheme.textTertiary, size: 20),
+                  SizedBox(width: 12),
+                  Text(
+                    'No upcoming events',
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            ...events.map((event) => _UpcomingEventItem(event: event)),
         ],
       ),
     );
   }
 }
 
-class _ShowListItem extends StatelessWidget {
-  final int index;
+class _UpcomingEventItem extends StatelessWidget {
+  final VenueUpcomingEvent event;
 
-  const _ShowListItem({required this.index});
+  const _UpcomingEventItem({required this.event});
 
   @override
   Widget build(BuildContext context) {
-    final bands = ['Metallica', 'Gojira', 'Ghost'];
-    final dates = ['Dec 15', 'Dec 22', 'Jan 5'];
-    final times = ['8:00 PM', '7:30 PM', '9:00 PM'];
+    final bandName = event.band?.name ?? event.eventName ?? 'TBA';
+    final eventDate = event.eventDate ?? '';
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          // Date
-          Container(
-            width: 50,
-            padding: const EdgeInsets.symmetric(vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.electricPurple.withValues(alpha:0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Column(
-              children: [
-                Text(
-                  dates[index].split(' ')[0],
-                  style: const TextStyle(
-                    color: AppTheme.electricPurple,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 12,
+    // Parse date for display
+    String monthStr = '';
+    String dayStr = '';
+    if (eventDate.length >= 10) {
+      try {
+        final date = DateTime.parse(eventDate);
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        monthStr = months[date.month - 1];
+        dayStr = date.day.toString();
+      } catch (_) {
+        monthStr = eventDate.substring(5, 7);
+        dayStr = eventDate.substring(8, 10);
+      }
+    }
+
+    final timeInfo = event.doorsTime != null
+        ? 'Doors open ${event.doorsTime}'
+        : event.startTime != null
+            ? 'Starts ${event.startTime}'
+            : '';
+
+    return GestureDetector(
+      onTap: () => context.push('/events/${event.id}'),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Row(
+          children: [
+            // Date
+            Container(
+              width: 50,
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              decoration: BoxDecoration(
+                color: AppTheme.electricPurple.withValues(alpha:0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                children: [
+                  Text(
+                    monthStr,
+                    style: const TextStyle(
+                      color: AppTheme.electricPurple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
-                ),
-                Text(
-                  dates[index].split(' ')[1],
-                  style: const TextStyle(
-                    color: AppTheme.electricPurple,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 18,
+                  Text(
+                    dayStr,
+                    style: const TextStyle(
+                      color: AppTheme.electricPurple,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Band info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  bands[index],
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Doors open ${times[index]}',
-                  style: const TextStyle(
-                    color: AppTheme.textTertiary,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // Tickets button
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-            decoration: BoxDecoration(
-              color: AppTheme.electricPurple,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Text(
-              'Tickets',
-              style: TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.w600,
-                fontSize: 12,
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(width: 12),
+            // Event info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    bandName,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  if (timeInfo.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      timeInfo,
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Tickets button if URL available
+            if (event.ticketUrl != null)
+              GestureDetector(
+                onTap: () async {
+                  final uri = Uri.parse(event.ticketUrl!);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppTheme.electricPurple,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: const Text(
+                    'Tickets',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+              )
+            else
+              const Icon(
+                Icons.chevron_right,
+                color: AppTheme.textTertiary,
+                size: 20,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -905,7 +989,7 @@ class _CheckInPreviewCard extends StatelessWidget {
                         Icons.star,
                         size: 14,
                         color: i < ratings[index]
-                            ? AppTheme.electricPurple
+                            ? AppTheme.toastGold
                             : AppTheme.ratingInactive,
                       );
                     }),
