@@ -98,9 +98,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 05-01: FeedService redesign (pull-based with Redis cache, cursor pagination, feed types)
-- [ ] 05-02: Real-time layer (WebSocket overlay for FOMO, Redis Pub/Sub for multi-instance fan-out)
-- [ ] 05-03: Push notifications (Firebase Cloud Messaging setup, friend activity alert triggers)
+- [ ] 05-01-PLAN.md -- Backend FeedService with three feed queries (friends, event, happening now), Redis cache, cursor pagination, unseen counts, cache invalidation
+- [ ] 05-02-PLAN.md -- Real-time layer: Redis Pub/Sub for WebSocket fan-out, same-event detection, FCM push notifications with BullMQ batching, device token management
+- [ ] 05-03-PLAN.md -- Mobile feed UI: tabbed screen (Friends/Events/Happening Now), Untappd-style feed cards, real-time WebSocket banner, push notification service
 
 ### Phase 6: Profile & Concert Cred
 **Goal**: Build the concert resume profile with aggregate stats (shows, bands, venues, genres), badge showcase, recent check-ins, and top-rated favorites -- turning concert-going into an identity.
@@ -162,7 +162,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 2. Event Data Pipeline | 3/3 | Complete | 2026-02-03 |
 | 3. Core Check-in Flow | 3/3 | Complete | 2026-02-03 |
 | 4. Badge Engine | 3/3 | Complete | 2026-02-03 |
-| 5. Social Feed & Real-time | 0/3 | Not started | - |
+| 5. Social Feed & Real-time | 0/3 | Planned | - |
 | 6. Profile & Concert Cred | 0/2 | Not started | - |
 | 7. Discovery & Recommendations | 0/3 | Not started | - |
 | 8. Polish & App Store Readiness | 0/2 | Not started | - |
@@ -171,4 +171,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 4 execution complete*
+*Last updated: 2026-02-03 after Phase 5 planning complete*
