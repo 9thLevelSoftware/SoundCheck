@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
+import { StatsService } from '../services/StatsService';
 import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
 
 // UUID validation regex (supports UUID v1-5)
@@ -7,9 +8,11 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 
 export class UserController {
   private userService: UserService;
+  private statsService: StatsService;
 
   constructor(userService?: UserService) {
     this.userService = userService ?? new UserService();
+    this.statsService = new StatsService();
   }
 
   /**
@@ -351,6 +354,41 @@ export class UserController {
       const response: ApiResponse = {
         success: false,
         error: 'Failed to get user stats',
+      };
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get concert cred stats for a user
+   * GET /api/users/:userId/concert-cred
+   */
+  getConcertCred = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { userId } = req.params;
+
+      // Validate UUID format
+      if (!UUID_REGEX.test(userId)) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Invalid user ID format',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      const concertCred = await this.statsService.getConcertCred(userId);
+
+      const response: ApiResponse = {
+        success: true,
+        data: concertCred,
+      };
+      res.json(response);
+    } catch (error) {
+      console.error('Error getting concert cred:', error);
+      const response: ApiResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to get concert cred',
       };
       res.status(500).json(response);
     }

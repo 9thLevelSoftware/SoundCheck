@@ -111,6 +111,9 @@ router.get('/:userId/following', generalRateLimit, followController.getFollowing
 // GET /api/users/:userId/stats - get user stats by ID
 router.get('/:userId/stats', authenticateToken, userController.getUserStats);
 
+// GET /api/users/:userId/concert-cred - get concert cred stats
+router.get('/:userId/concert-cred', authenticateToken, userController.getConcertCred);
+
 // Public user profiles - MUST be last as it's a catch-all
 router.get('/:username', generalRateLimit, userController.getUserByUsername);
 
