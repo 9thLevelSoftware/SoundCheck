@@ -5,6 +5,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
+import '../domain/checkin.dart';
+import 'photo_upload_sheet.dart';
 import 'providers/checkin_providers.dart';
 
 /// Check-in Screen - The Core Feature
@@ -33,6 +35,10 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   bool _isSearchingBand = true;
   final List<XFile> _selectedImages = [];
   static const int _maxImages = 4;
+
+  // Check-in success state
+  CheckIn? _createdCheckIn;
+  bool _photosUploaded = false;
 
   final List<Map<String, String>> _vibeOptions = [
     {'id': 'mosh_pit', 'name': 'Mosh Pit', 'icon': '🤘'},
@@ -260,13 +266,10 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     if (!mounted) return;
 
     if (checkIn != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Check-in successful!'),
-          backgroundColor: AppTheme.liveGreen,
-        ),
-      );
-      context.pop();
+      // Show success state with photo upload option
+      setState(() {
+        _createdCheckIn = checkIn;
+      });
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -275,6 +278,37 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         ),
       );
     }
+  }
+
+  void _showPhotoUploadSheet() {
+    final checkin = _createdCheckIn;
+    if (checkin == null) return;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (context) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(context).viewInsets.bottom,
+        ),
+        child: PhotoUploadSheet(
+          checkinId: checkin.id,
+          existingPhotoCount: checkin.imageUrls?.length ?? 0,
+          onComplete: (updatedCheckIn) {
+            if (mounted) {
+              setState(() {
+                _createdCheckIn = updatedCheckIn;
+                _photosUploaded = true;
+              });
+            }
+          },
+        ),
+      ),
+    );
   }
 
   @override
@@ -293,9 +327,188 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         ),
         centerTitle: true,
       ),
-      body: _isSearchingBand
-          ? _buildBandSearch()
-          : _buildCheckInForm(),
+      body: _createdCheckIn != null
+          ? _buildSuccessState()
+          : _isSearchingBand
+              ? _buildBandSearch()
+              : _buildCheckInForm(),
+    );
+  }
+
+  Widget _buildSuccessState() {
+    final checkin = _createdCheckIn!;
+    final photoCount = checkin.imageUrls?.length ?? 0;
+
+    return Center(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Success icon
+            Container(
+              width: 80,
+              height: 80,
+              decoration: const BoxDecoration(
+                gradient: AppTheme.primaryGradient,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.check,
+                color: Colors.white,
+                size: 40,
+              ),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'Check-in Successful!',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              _selectedBandName ?? '',
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(height: 32),
+
+            // Enrichment cards
+            const Text(
+              'Enhance your check-in',
+              style: TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Add Photos card
+            GestureDetector(
+              onTap: _photosUploaded ? null : _showPhotoUploadSheet,
+              child: Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: AppTheme.surfaceVariantDark,
+                  borderRadius: BorderRadius.circular(12),
+                  border: _photosUploaded
+                      ? Border.all(color: AppTheme.liveGreen)
+                      : Border.all(color: AppTheme.textTertiary.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: _photosUploaded
+                            ? AppTheme.liveGreen.withValues(alpha: 0.2)
+                            : AppTheme.neonPink.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        _photosUploaded ? Icons.check_circle : Icons.camera_alt,
+                        color: _photosUploaded ? AppTheme.liveGreen : AppTheme.neonPink,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _photosUploaded ? 'Photos Added' : 'Add Photos',
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            _photosUploaded
+                                ? '$photoCount photo${photoCount != 1 ? 's' : ''} uploaded'
+                                : 'Share the moment (up to $_maxImages)',
+                            style: const TextStyle(
+                              color: AppTheme.textTertiary,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (!_photosUploaded)
+                      const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
+                  ],
+                ),
+              ),
+            ),
+
+            // Photo thumbnails preview (if uploaded)
+            if (_photosUploaded && checkin.imageUrls != null && checkin.imageUrls!.isNotEmpty) ...[
+              const SizedBox(height: 12),
+              SizedBox(
+                height: 80,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: checkin.imageUrls!.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 80,
+                      height: 80,
+                      margin: const EdgeInsets.only(right: 8),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          checkin.imageUrls![index],
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) =>
+                              Container(
+                            color: AppTheme.surfaceVariantDark,
+                            child: const Icon(
+                              Icons.broken_image,
+                              color: AppTheme.textTertiary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+
+            const SizedBox(height: 32),
+
+            // Done button
+            SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: () => context.pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.electricPurple,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Done',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 
