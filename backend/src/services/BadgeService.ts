@@ -1,5 +1,23 @@
+/**
+ * Badge Service -- Data-driven badge evaluation engine
+ *
+ * Replaces the old review-based badge system with a checkin-based,
+ * data-driven evaluation pipeline using the evaluator registry.
+ *
+ * Flow: evaluateAndAward(userId) ->
+ *   1. Load badge definitions with JSONB criteria
+ *   2. Load user's existing badges
+ *   3. Group unearned badges by criteria.type
+ *   4. Run each evaluator once per type (N+1 optimization)
+ *   5. Award newly earned badges
+ *   6. Send notification (DB row) + WebSocket event for each
+ */
+
 import Database from '../config/database';
 import { Badge, UserBadge, BadgeType } from '../types';
+import { evaluatorRegistry, EvalResult } from './BadgeEvaluators';
+import { NotificationService } from './NotificationService';
+import { sendToUser } from '../utils/websocket';
 
 export class BadgeService {
   private db = Database.getInstance();
@@ -9,7 +27,7 @@ export class BadgeService {
    */
   async getAllBadges(): Promise<Badge[]> {
     const query = `
-      SELECT id, name, description, icon_url, badge_type, requirement_value, color, created_at
+      SELECT id, name, description, icon_url, badge_type, requirement_value, color, criteria, created_at
       FROM badges
       ORDER BY requirement_value ASC, name ASC
     `;
@@ -24,7 +42,7 @@ export class BadgeService {
   async getUserBadges(userId: string): Promise<UserBadge[]> {
     const query = `
       SELECT ub.id, ub.user_id, ub.badge_id, ub.earned_at,
-             b.name, b.description, b.icon_url, b.badge_type, b.requirement_value, b.color, b.created_at
+             b.name, b.description, b.icon_url, b.badge_type, b.requirement_value, b.color, b.criteria, b.created_at
       FROM user_badges ub
       JOIN badges b ON ub.badge_id = b.id
       WHERE ub.user_id = $1
@@ -42,33 +60,123 @@ export class BadgeService {
   }
 
   /**
-   * Check and award badges to a user based on their activities
+   * Check and award badges to a user based on their activities.
+   * Delegates to evaluateAndAward().
    */
   async checkAndAwardBadges(userId: string): Promise<Badge[]> {
+    return this.evaluateAndAward(userId);
+  }
+
+  /**
+   * Evaluate all badge criteria for a user and award newly earned badges.
+   *
+   * N+1 optimization: Groups badges by criteria.type and runs each evaluator
+   * once per type (exception: genre_explorer runs once per genre).
+   *
+   * For each newly awarded badge, sends:
+   *   1. NotificationService.createNotification() -- persistent DB row
+   *   2. sendToUser() -- real-time WebSocket event for in-app toast
+   */
+  async evaluateAndAward(userId: string): Promise<Badge[]> {
     const newBadges: Badge[] = [];
 
-    // Get user's current stats
-    const stats = await this.getUserStats(userId);
-    
-    // Get user's existing badges
-    const existingBadges = await this.getUserBadges(userId);
-    const existingBadgeIds = existingBadges.map(ub => ub.badgeId);
+    // 1. Load all badge definitions with criteria
+    const badgeResult = await this.db.query(
+      `SELECT id, name, badge_type, requirement_value, criteria, description, icon_url, color
+       FROM badges
+       WHERE criteria IS NOT NULL AND criteria != '{}'::jsonb`
+    );
+    const allBadges: Badge[] = badgeResult.rows.map((row: any) => this.mapDbBadgeToBadge(row));
 
-    // Check each badge type
-    const badgeChecks = [
-      { type: 'review_count', count: stats.reviewCount },
-      { type: 'venue_explorer', count: stats.uniqueVenuesReviewed },
-      { type: 'music_lover', count: stats.uniqueBandsReviewed },
-      { type: 'event_attendance', count: stats.reviewsWithEventDate },
-      { type: 'helpful_count', count: stats.helpfulVotes },
-    ];
+    if (allBadges.length === 0) return newBadges;
 
-    for (const check of badgeChecks) {
-      const earnedBadges = await this.checkBadgeType(check.type as BadgeType, check.count, existingBadgeIds);
-      
-      for (const badge of earnedBadges) {
-        await this.awardBadge(userId, badge.id);
-        newBadges.push(badge);
+    // 2. Load user's existing badge IDs
+    const existingResult = await this.db.query(
+      'SELECT badge_id FROM user_badges WHERE user_id = $1',
+      [userId]
+    );
+    const earnedBadgeIds = new Set(existingResult.rows.map((r: any) => r.badge_id));
+
+    // 3. Filter to unearned badges only
+    const unearnedBadges = allBadges.filter(b => !earnedBadgeIds.has(b.id));
+    if (unearnedBadges.length === 0) return newBadges;
+
+    // 4. Group unearned badges by criteria.type
+    const typeGroups = new Map<string, Badge[]>();
+    for (const badge of unearnedBadges) {
+      const type = badge.criteria?.type;
+      if (!type) continue;
+
+      // For genre_explorer, group by type+genre to run one query per genre
+      const groupKey = type === 'genre_explorer'
+        ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
+        : type;
+
+      if (!typeGroups.has(groupKey)) {
+        typeGroups.set(groupKey, []);
+      }
+      typeGroups.get(groupKey)!.push(badge);
+    }
+
+    // 5. For each type group, run evaluator once and match against all badges
+    for (const [groupKey, badges] of typeGroups) {
+      const type = groupKey.includes(':') ? groupKey.split(':')[0] : groupKey;
+      const evaluator = evaluatorRegistry.get(type);
+      if (!evaluator) continue;
+
+      // Use criteria from the first badge in the group (they share the same type/genre)
+      const criteria = badges[0].criteria || {};
+
+      try {
+        const result: EvalResult = await evaluator(userId, criteria);
+
+        // Check each badge in this group against the evaluator result
+        for (const badge of badges) {
+          const threshold = badge.criteria?.threshold ?? badge.requirementValue ?? 0;
+          const earned = result.current >= threshold;
+
+          if (earned) {
+            await this.awardBadge(userId, badge.id);
+            newBadges.push(badge);
+          }
+        }
+      } catch (err) {
+        console.error(`[BadgeService] Evaluator error for type '${type}':`, err);
+        // Continue with other evaluators -- one failure should not block others
+      }
+    }
+
+    // 6. Send notifications for each newly awarded badge
+    if (newBadges.length > 0) {
+      const notificationService = new NotificationService();
+
+      for (const badge of newBadges) {
+        // a) Create persistent notification row in database
+        try {
+          await notificationService.createNotification({
+            userId,
+            type: 'badge_earned',
+            title: `Badge Earned: ${badge.name}`,
+            message: badge.description,
+            badgeId: badge.id,
+          });
+        } catch (err) {
+          console.error(`[BadgeService] Notification create failed for badge ${badge.id}:`, err);
+          // Non-fatal -- badge was already awarded
+        }
+
+        // b) Send real-time WebSocket event for in-app toast
+        try {
+          sendToUser(userId, 'badge_earned', {
+            badgeId: badge.id,
+            badgeName: badge.name,
+            badgeColor: badge.color,
+            badgeIconUrl: badge.iconUrl,
+          });
+        } catch (err) {
+          console.error(`[BadgeService] WebSocket send failed for badge ${badge.id}:`, err);
+          // Non-fatal -- badge was already awarded
+        }
       }
     }
 
@@ -76,27 +184,10 @@ export class BadgeService {
   }
 
   /**
-   * Check specific badge type and return badges that should be awarded
+   * Award a badge to a user.
+   * Uses ON CONFLICT DO NOTHING to prevent duplicate awards.
    */
-  private async checkBadgeType(badgeType: BadgeType, userCount: number, existingBadgeIds: string[]): Promise<Badge[]> {
-    const query = `
-      SELECT id, name, description, icon_url, badge_type, requirement_value, color, created_at
-      FROM badges
-      WHERE badge_type = $1 AND requirement_value <= $2
-      ORDER BY requirement_value DESC
-    `;
-
-    const result = await this.db.query(query, [badgeType, userCount]);
-    const eligibleBadges = result.rows.map((row: any) => this.mapDbBadgeToBadge(row));
-
-    // Filter out badges the user already has
-    return eligibleBadges.filter((badge: Badge) => !existingBadgeIds.includes(badge.id));
-  }
-
-  /**
-   * Award a badge to a user
-   */
-  private async awardBadge(userId: string, badgeId: string): Promise<void> {
+  async awardBadge(userId: string, badgeId: string): Promise<void> {
     const query = `
       INSERT INTO user_badges (user_id, badge_id)
       VALUES ($1, $2)
@@ -107,48 +198,17 @@ export class BadgeService {
   }
 
   /**
-   * Get user statistics for badge calculation
-   */
-  private async getUserStats(userId: string): Promise<{
-    reviewCount: number;
-    uniqueVenuesReviewed: number;
-    uniqueBandsReviewed: number;
-    reviewsWithEventDate: number;
-    helpfulVotes: number;
-  }> {
-    const statsQuery = `
-      SELECT 
-        (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
-        (SELECT COUNT(DISTINCT venue_id) FROM reviews WHERE user_id = $1 AND venue_id IS NOT NULL) as unique_venues,
-        (SELECT COUNT(DISTINCT band_id) FROM reviews WHERE user_id = $1 AND band_id IS NOT NULL) as unique_bands,
-        (SELECT COUNT(*) FROM reviews WHERE user_id = $1 AND event_date IS NOT NULL) as event_reviews,
-        (SELECT COALESCE(SUM(helpful_count), 0) FROM reviews WHERE user_id = $1) as helpful_votes
-    `;
-
-    const result = await this.db.query(statsQuery, [userId]);
-    const stats = result.rows[0];
-
-    return {
-      reviewCount: parseInt(stats.review_count) || 0,
-      uniqueVenuesReviewed: parseInt(stats.unique_venues) || 0,
-      uniqueBandsReviewed: parseInt(stats.unique_bands) || 0,
-      reviewsWithEventDate: parseInt(stats.event_reviews) || 0,
-      helpfulVotes: parseInt(stats.helpful_votes) || 0,
-    };
-  }
-
-  /**
    * Get badge by ID
    */
   async getBadgeById(badgeId: string): Promise<Badge | null> {
     const query = `
-      SELECT id, name, description, icon_url, badge_type, requirement_value, color, created_at
+      SELECT id, name, description, icon_url, badge_type, requirement_value, color, criteria, created_at
       FROM badges
       WHERE id = $1
     `;
 
     const result = await this.db.query(query, [badgeId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -183,12 +243,11 @@ export class BadgeService {
     `;
 
     const result = await this.db.query(query, [limit]);
-    
+
     const leaderboard = [];
     for (const row of result.rows) {
-      // Get recent badges for this user
       const recentBadgesQuery = `
-        SELECT b.id, b.name, b.description, b.icon_url, b.badge_type, b.requirement_value, b.color, b.created_at
+        SELECT b.id, b.name, b.description, b.icon_url, b.badge_type, b.requirement_value, b.color, b.criteria, b.created_at
         FROM user_badges ub
         JOIN badges b ON ub.badge_id = b.id
         WHERE ub.user_id = $1
@@ -229,49 +288,92 @@ export class BadgeService {
   }
 
   /**
-   * Get badge progress for a user (how close they are to earning badges)
+   * Get badge progress for a user (how close they are to earning badges).
+   *
+   * Uses evaluator registry for data-driven progress calculation.
+   * Groups badges by criteria.type and runs each evaluator once (N+1 optimization).
    */
   async getUserBadgeProgress(userId: string): Promise<Array<{
     badge: Badge;
     progress: number;
     isEarned: boolean;
   }>> {
-    const stats = await this.getUserStats(userId);
-    const userBadges = await this.getUserBadges(userId);
-    const earnedBadgeIds = userBadges.map(ub => ub.badgeId);
-    
+    // Load all badge definitions with criteria
     const allBadges = await this.getAllBadges();
-    
-    return allBadges.map(badge => {
-      let currentCount = 0;
-      
-      switch (badge.badgeType) {
-        case 'review_count':
-          currentCount = stats.reviewCount;
-          break;
-        case 'venue_explorer':
-          currentCount = stats.uniqueVenuesReviewed;
-          break;
-        case 'music_lover':
-          currentCount = stats.uniqueBandsReviewed;
-          break;
-        case 'event_attendance':
-          currentCount = stats.reviewsWithEventDate;
-          break;
-        case 'helpful_count':
-          currentCount = stats.helpfulVotes;
-          break;
+    const userBadges = await this.getUserBadges(userId);
+    const earnedBadgeIds = new Set(userBadges.map(ub => ub.badgeId));
+
+    // Group badges by criteria.type (genre_explorer grouped by genre)
+    const typeGroups = new Map<string, Badge[]>();
+    const badgesWithoutCriteria: Badge[] = [];
+
+    for (const badge of allBadges) {
+      const type = badge.criteria?.type;
+      if (!type) {
+        badgesWithoutCriteria.push(badge);
+        continue;
       }
 
-      const isEarned = earnedBadgeIds.includes(badge.id);
-      const progress = badge.requirementValue ? Math.min(100, (currentCount / badge.requirementValue) * 100) : 0;
+      const groupKey = type === 'genre_explorer'
+        ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
+        : type;
 
-      return {
+      if (!typeGroups.has(groupKey)) {
+        typeGroups.set(groupKey, []);
+      }
+      typeGroups.get(groupKey)!.push(badge);
+    }
+
+    // Run each evaluator once per type group
+    const evalCache = new Map<string, EvalResult>();
+
+    for (const [groupKey, badges] of typeGroups) {
+      const type = groupKey.includes(':') ? groupKey.split(':')[0] : groupKey;
+      const evaluator = evaluatorRegistry.get(type);
+      if (!evaluator) continue;
+
+      const criteria = badges[0].criteria || {};
+
+      try {
+        const result = await evaluator(userId, criteria);
+        evalCache.set(groupKey, result);
+      } catch (err) {
+        console.error(`[BadgeService] Progress evaluator error for '${type}':`, err);
+      }
+    }
+
+    // Build progress array
+    const progressList: Array<{ badge: Badge; progress: number; isEarned: boolean }> = [];
+
+    for (const [groupKey, badges] of typeGroups) {
+      const evalResult = evalCache.get(groupKey);
+
+      for (const badge of badges) {
+        const isEarned = earnedBadgeIds.has(badge.id);
+        const threshold = badge.criteria?.threshold ?? badge.requirementValue ?? 0;
+
+        let progress = 0;
+        if (evalResult && threshold > 0) {
+          progress = Math.min(100, Math.round((evalResult.current / threshold) * 100));
+        } else if (isEarned) {
+          progress = 100;
+        }
+
+        progressList.push({ badge, progress, isEarned });
+      }
+    }
+
+    // Include badges without criteria (progress = earned ? 100 : 0)
+    for (const badge of badgesWithoutCriteria) {
+      const isEarned = earnedBadgeIds.has(badge.id);
+      progressList.push({
         badge,
-        progress: Math.round(progress),
+        progress: isEarned ? 100 : 0,
         isEarned,
-      };
-    });
+      });
+    }
+
+    return progressList;
   }
 
   /**
@@ -286,6 +388,7 @@ export class BadgeService {
       badgeType: row.badge_type,
       requirementValue: row.requirement_value,
       color: row.color,
+      criteria: row.criteria || undefined,
       createdAt: row.created_at,
     };
   }
