@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 7: Discovery & Recommendations (next)
+**Current focus:** Phase 7: Discovery & Recommendations
 
 ## Current Position
 
-Phase: 6 of 8 (Profile & Concert Cred) -- VERIFIED COMPLETE
-Plan: 2 of 2 in Phase 6 (all complete)
-Status: Phase 6 verified, ready for Phase 7 planning
-Last activity: 2026-02-03 -- Phase 6 verified (5/5 must-haves passed)
+Phase: 7 of 8 (Discovery & Recommendations)
+Plan: 2 of 3 in Phase 7
+Status: In progress
+Last activity: 2026-02-03 -- Completed 07-02-PLAN.md
 
-Progress: [##################____] 77% (17/22 plans)
+Progress: [####################____] 86% (19/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 17
-- Average duration: 5.9 min
-- Total execution time: 1.73 hours
+- Total plans completed: 19
+- Average duration: 6.3 min
+- Total execution time: 1.98 hours
 
 **By Phase:**
 
@@ -33,10 +33,11 @@ Progress: [##################____] 77% (17/22 plans)
 | 04-badge-engine | 3/3 | 21 min | 7 min |
 | 05-social-feed-realtime | 3/3 | 23 min | 7.7 min |
 | 06-profile-concert-cred | 2/2 | 9 min | 4.5 min |
+| 07-discovery-recommendations | 2/3 | 19 min | 9.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 7m, 12m, 3m, 6m (06-02 concert cred mobile UI + Freezed codegen)
-- Trend: Full-stack plans with codegen ~6min; consistent velocity
+- Last 5 plans: 3m, 6m, 10m, 9m (07-02 event discovery full-stack)
+- Trend: Full-stack plans with codegen averaging ~9min
 
 *Updated after each plan completion*
 
@@ -114,6 +115,13 @@ Recent decisions affecting current work:
 - [06-02]: Deprecated userGenreStatsProvider instead of removing (backward compat for other screens)
 - [06-02]: Concert cred sections share single provider watch (one API call, Riverpod caches result)
 - [06-02]: profileRepositoryProvider added as keepAlive (stateless DioClient wrapper)
+- [07-01]: Aggregate ratings always from checkin_band_ratings (bands) and checkins.venue_rating (venues), never from old reviews
+- [07-01]: Mobile screens fall back to legacy averageRating when aggregate is null (graceful degradation)
+- [07-01]: Star ratings use AppTheme.toastGold; label changes to 'Live Performance'/'Experience' when aggregate present
+- [07-02]: ILIKE used for event search instead of pg_trgm similarity (simpler, sufficient at current scale)
+- [07-02]: DiscoverEvent.fromEventJson custom factory for nested backend Event response parsing
+- [07-02]: Genre events displayed in modal bottom sheet (better UX than inline expansion)
+- [07-02]: Events shown first in search results (event-first discovery priority)
 
 ### Pending Todos
 
@@ -138,5 +146,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Phase 6 verified and complete. Ready for Phase 7 planning.
+Stopped at: Completed 07-02-PLAN.md (event discovery endpoints + mobile UI)
 Resume file: None
