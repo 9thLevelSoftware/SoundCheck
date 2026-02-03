@@ -12,6 +12,7 @@ import {
   checkEmailSchema,
   checkUsernameSchema
 } from '../utils/validationSchemas';
+import { pushNotificationService } from '../services/PushNotificationService';
 
 // Multer error handler for profile image uploads
 const handleMulterError = (err: Error | null, req: Request, res: Response, next: NextFunction): void => {
@@ -54,6 +55,46 @@ router.post('/me/profile-image', authenticateToken, (req: Request, res: Response
   });
 }, userController.uploadProfileImage);
 router.delete('/me', authenticateToken, userController.deactivateAccount);
+
+// Device token management for push notifications - MUST come before /:username
+router.post('/device-token', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id;
+    const { token, platform } = req.body;
+
+    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+      res.status(400).json({ success: false, error: 'Token is required and must be a non-empty string' });
+      return;
+    }
+
+    if (!platform || !['android', 'ios'].includes(platform)) {
+      res.status(400).json({ success: false, error: 'Platform must be "android" or "ios"' });
+      return;
+    }
+
+    await pushNotificationService.registerDeviceToken(userId, token.trim(), platform);
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
+
+router.delete('/device-token', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id;
+    const { token } = req.body;
+
+    if (!token || typeof token !== 'string' || token.trim().length === 0) {
+      res.status(400).json({ success: false, error: 'Token is required and must be a non-empty string' });
+      return;
+    }
+
+    await pushNotificationService.removeDeviceToken(userId, token.trim());
+    res.json({ success: true });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Username and email availability check - MUST come before /:username
 router.get('/check-username/:username', generalRateLimit, validate(checkUsernameSchema), userController.checkUsername);

@@ -6,6 +6,7 @@ import { r2Service } from './R2Service';
 import { badgeEvalQueue } from '../jobs/badgeQueue';
 import { cache } from '../utils/cache';
 import { getRedis } from '../utils/redisRateLimiter';
+import { notificationQueue } from '../jobs/notificationQueue';
 
 // ============================================
 // Interfaces
@@ -262,7 +263,8 @@ export class CheckinService {
       );
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
-      this.publishCheckinEvent(
+      // and enqueue batched push notifications for followers
+      this.publishCheckinAndNotify(
         checkinId,
         userId,
         eventId,
@@ -270,8 +272,12 @@ export class CheckinService {
         event.venue_id,
         result.rows[0].created_at
       ).catch((err) =>
-        console.error('Warning: Pub/Sub publish failed:', err)
+        console.error('Warning: Pub/Sub publish or notification enqueue failed:', err)
       );
+
+      // TODO: Badge-earned push notifications should be triggered from the badge
+      // eval worker completion (badgeWorker.ts 'completed' event), not here,
+      // since badge evaluation is async with a 30s delay.
 
       // Return full check-in with details
       return this.getCheckinById(checkinId, userId);
@@ -630,8 +636,9 @@ export class CheckinService {
       );
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out (legacy path)
+      // and enqueue batched push notifications for followers
       if (eventId) {
-        this.publishCheckinEvent(
+        this.publishCheckinAndNotify(
           checkinId,
           userId,
           eventId,
@@ -639,7 +646,7 @@ export class CheckinService {
           venueId,
           result.rows[0].created_at
         ).catch((err) =>
-          console.error('Warning: Pub/Sub publish failed:', err)
+          console.error('Warning: Pub/Sub publish or notification enqueue failed:', err)
         );
       }
 
@@ -1315,15 +1322,21 @@ export class CheckinService {
   }
 
   // ============================================
-  // Real-time Pub/Sub publish (Phase 5, Plan 2)
+  // Real-time Pub/Sub publish + notification enqueue (Phase 5, Plan 2)
   // ============================================
 
   /**
-   * Publish a new check-in event to Redis Pub/Sub for WebSocket fan-out.
-   * Queries follower IDs and publishes a structured payload to 'checkin:new'.
+   * Publish a new check-in event to Redis Pub/Sub for WebSocket fan-out
+   * AND enqueue batched push notifications for each follower.
+   *
+   * Queries follower IDs once, then:
+   * 1. Publishes structured payload to 'checkin:new' Pub/Sub channel
+   * 2. For each follower, RPUSHes to their notification batch Redis list
+   *    and enqueues a delayed BullMQ job (2-minute batching window)
+   *
    * Fire-and-forget: errors are logged but never block check-in response.
    */
-  private async publishCheckinEvent(
+  private async publishCheckinAndNotify(
     checkinId: string,
     userId: string,
     eventId: string,
@@ -1358,7 +1371,8 @@ export class CheckinService {
       const userAvatarUrl = userResult.rows[0]?.profile_image_url || null;
       const venueName = venueResult.rows[0]?.name || '';
 
-      const payload = {
+      // 1. Publish to Redis Pub/Sub for WebSocket fan-out
+      const pubSubPayload = {
         type: 'new_checkin',
         checkin: {
           id: checkinId,
@@ -1380,9 +1394,35 @@ export class CheckinService {
         eventId,
       };
 
-      await redis.publish('checkin:new', JSON.stringify(payload));
+      await redis.publish('checkin:new', JSON.stringify(pubSubPayload));
+
+      // 2. Enqueue batched push notifications for each follower
+      const notifData = JSON.stringify({
+        username: username || 'Someone',
+        eventName: eventName || 'a show',
+        venueName: venueName || '',
+      });
+
+      for (const followerId of followerIds) {
+        try {
+          const listKey = `notif:batch:${followerId}`;
+          await redis.rpush(listKey, notifData);
+          await redis.expire(listKey, 300); // 5-minute safety TTL
+
+          // Enqueue delayed job with dedup (one per user per batching window)
+          if (notificationQueue) {
+            await notificationQueue.add('send-batch', { userId: followerId }, {
+              delay: 120_000, // 2-minute batching window
+              jobId: `notif-batch:${followerId}`, // dedup: one job per user per window
+            });
+          }
+        } catch (err) {
+          // Non-fatal per follower -- continue with others
+          console.error(`Warning: notification enqueue failed for follower ${followerId}:`, err);
+        }
+      }
     } catch (error) {
-      console.error('Pub/Sub publish error:', error);
+      console.error('Pub/Sub publish + notification enqueue error:', error);
       // Non-fatal: do not rethrow
     }
   }

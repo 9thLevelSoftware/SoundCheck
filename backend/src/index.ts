@@ -43,6 +43,7 @@ import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
 import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
+import { startNotificationWorker, stopNotificationWorker } from './jobs/notificationWorker';
 import { registerSyncJobs } from './jobs/syncScheduler';
 import { Worker } from 'bullmq';
 
@@ -269,6 +270,7 @@ const server = createServer(app);
 // BullMQ worker references (for graceful shutdown)
 let syncWorker: Worker | null = null;
 let badgeWorker: Worker | null = null;
+let notifWorker: Worker | null = null;
 
 // Start server
 const startServer = async () => {
@@ -311,6 +313,7 @@ const startServer = async () => {
     // Guarded by REDIS_URL -- returns null if Redis is not available
     syncWorker = startEventSyncWorker();
     badgeWorker = startBadgeEvalWorker();
+    notifWorker = startNotificationWorker();
     registerSyncJobs().catch(err =>
       logError('Failed to register sync jobs', { error: err.message || err }),
     );
@@ -326,6 +329,7 @@ process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
+  if (notifWorker) await stopNotificationWorker(notifWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
@@ -338,6 +342,7 @@ process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
+  if (notifWorker) await stopNotificationWorker(notifWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
