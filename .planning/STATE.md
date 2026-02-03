@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 3 of 8 (Core Check-in Flow)
-Plan: 1 of 3 in Phase 3 (complete)
-Status: In progress
-Last activity: 2026-02-03 -- Completed 03-01-PLAN.md
+Plan: 3 of 3 in Phase 3 (awaiting checkpoint verification)
+Status: In progress -- 03-03 paused at checkpoint (human-verify)
+Last activity: 2026-02-03 -- 03-03 Tasks 1-2 complete, awaiting photo upload verification
 
 Progress: [#######_______________] 32% (7/22 plans)
 
@@ -72,11 +72,15 @@ Recent decisions affecting current work:
 - [03-01]: Rating starts at 0 for event-first check-ins, set later via PATCH /ratings (two-step UX)
 - [03-01]: Headliner band_id populated from event_lineup for backward compat with old mobile clients
 - [03-01]: Legacy createCheckin delegates to createEventCheckin when eventId present
+- [03-03]: R2Service uses isConfigured flag and logs warning when credentials missing (graceful degradation)
+- [03-03]: Photo upload uses presigned URLs -- client PUTs directly to R2, never proxied through Railway
+- [03-03]: Fresh Dio instance for R2 upload (presigned URLs are self-authenticating, DioClient auth would interfere)
 
 ### Pending Todos
 
 - Set up TICKETMASTER_API_KEY environment variable (see .planning/phases/02-event-data-pipeline/02-USER-SETUP.md)
 - Configure sync_regions in database with lat/lon/radius for metro areas to sync
+- Set up Cloudflare R2 credentials for photo uploads (CLOUDFLARE_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME, R2_PUBLIC_URL)
 
 ### Blockers/Concerns
 
@@ -92,5 +96,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 03-01-PLAN.md (event-first check-in API)
-Resume file: None
+Stopped at: 03-03 checkpoint -- awaiting photo upload verification
+Resume file: .planning/phases/03-core-check-in-flow/03-03-PLAN.md
