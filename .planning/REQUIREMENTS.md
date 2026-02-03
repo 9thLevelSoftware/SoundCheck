@@ -46,18 +46,18 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Gamification / Badges
 
-- [ ] **BDGE-01**: Badge engine evaluates check-ins asynchronously via BullMQ after each check-in
-- [ ] **BDGE-02**: Genre Explorer badges awarded for attending N shows in a genre (5/10/25 thresholds)
-- [ ] **BDGE-03**: Venue Collector badges awarded for checking in at N unique venues (10/25/50)
-- [ ] **BDGE-04**: Superfan badges awarded for seeing the same band N times (3/5/10)
-- [ ] **BDGE-05**: Festival Warrior badges awarded for N check-ins in one day (3/5)
-- [ ] **BDGE-06**: Milestone badges awarded at check-in counts (1/10/25/50/100/250/500)
-- [ ] **BDGE-07**: Road Warrior badges awarded for check-ins across N cities/states (5/10)
-- [ ] **BDGE-08**: Badge definitions use JSONB criteria; new badges addable without code changes
-- [ ] **BDGE-09**: Badge progress tracked and displayed (current count / target)
-- [ ] **BDGE-10**: Badge rarity shown as percentage of users who earned each badge
-- [ ] **BDGE-11**: User receives push notification when they earn a badge
-- [ ] **BDGE-12**: Anti-farming: location verification + daily check-in rate limit + delayed evaluation
+- [x] **BDGE-01**: Badge engine evaluates check-ins asynchronously via BullMQ after each check-in
+- [x] **BDGE-02**: Genre Explorer badges awarded for attending N shows in a genre (5/10/25 thresholds)
+- [x] **BDGE-03**: Venue Collector badges awarded for checking in at N unique venues (10/25/50)
+- [x] **BDGE-04**: Superfan badges awarded for seeing the same band N times (3/5/10)
+- [x] **BDGE-05**: Festival Warrior badges awarded for N check-ins in one day (3/5)
+- [x] **BDGE-06**: Milestone badges awarded at check-in counts (1/10/25/50/100/250/500)
+- [x] **BDGE-07**: Road Warrior badges awarded for check-ins across N cities/states (5/10)
+- [x] **BDGE-08**: Badge definitions use JSONB criteria; new badges addable without code changes
+- [x] **BDGE-09**: Badge progress tracked and displayed (current count / target)
+- [x] **BDGE-10**: Badge rarity shown as percentage of users who earned each badge
+- [x] **BDGE-11**: User receives push notification when they earn a badge
+- [x] **BDGE-12**: Anti-farming: location verification + daily check-in rate limit + delayed evaluation
 
 ### Social & Feed
 
