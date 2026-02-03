@@ -22,14 +22,14 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Event Data Pipeline
 
-- [ ] **PIPE-01**: Ticketmaster Discovery API adapter fetches events by configurable metro areas
-- [ ] **PIPE-02**: Events ingested on recurring schedule via BullMQ repeatable jobs (surviving deploys)
-- [ ] **PIPE-03**: Ingested events deduplicated by source+external_id and venue+date composite key
-- [ ] **PIPE-04**: Band names from APIs matched to existing bands table (exact + fuzzy via pg_trgm)
-- [ ] **PIPE-05**: Users can create events for shows not in API data
-- [ ] **PIPE-06**: User-created events start as unverified; promoted when multiple users check in
-- [ ] **PIPE-07**: Cancelled/rescheduled events detected on re-sync and flagged with user notification
-- [ ] **PIPE-08**: Ingestion respects Ticketmaster rate limits (5,000/day, 5/sec) with backoff
+- [x] **PIPE-01**: Ticketmaster Discovery API adapter fetches events by configurable metro areas
+- [x] **PIPE-02**: Events ingested on recurring schedule via BullMQ repeatable jobs (surviving deploys)
+- [x] **PIPE-03**: Ingested events deduplicated by source+external_id and venue+date composite key
+- [x] **PIPE-04**: Band names from APIs matched to existing bands table (exact + fuzzy via pg_trgm)
+- [x] **PIPE-05**: Users can create events for shows not in API data
+- [x] **PIPE-06**: User-created events start as unverified; promoted when multiple users check in
+- [x] **PIPE-07**: Cancelled/rescheduled events detected on re-sync and flagged with user notification
+- [x] **PIPE-08**: Ingestion respects Ticketmaster rate limits (5,000/day, 5/sec) with backoff
 
 ### Check-in Experience
 
@@ -169,14 +169,14 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | DATA-08 | Phase 1 | Complete |
 | DATA-09 | Phase 1 | Complete |
 | DATA-10 | Phase 1 | Complete |
-| PIPE-01 | Phase 2 | Pending |
-| PIPE-02 | Phase 2 | Pending |
-| PIPE-03 | Phase 2 | Pending |
-| PIPE-04 | Phase 2 | Pending |
-| PIPE-05 | Phase 2 | Pending |
-| PIPE-06 | Phase 2 | Pending |
-| PIPE-07 | Phase 2 | Pending |
-| PIPE-08 | Phase 2 | Pending |
+| PIPE-01 | Phase 2 | Complete |
+| PIPE-02 | Phase 2 | Complete |
+| PIPE-03 | Phase 2 | Complete |
+| PIPE-04 | Phase 2 | Complete |
+| PIPE-05 | Phase 2 | Complete |
+| PIPE-06 | Phase 2 | Complete |
+| PIPE-07 | Phase 2 | Complete |
+| PIPE-08 | Phase 2 | Complete |
 | CHKN-01 | Phase 3 | Pending |
 | CHKN-02 | Phase 3 | Pending |
 | CHKN-03 | Phase 3 | Pending |
@@ -244,4 +244,4 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after Phase 1 complete (DATA-01 through DATA-10 verified)*
+*Last updated: 2026-02-03 after Phase 2 complete (PIPE-01 through PIPE-08 verified)*

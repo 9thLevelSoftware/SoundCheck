@@ -7,7 +7,7 @@ SoundCheck's v1 transforms a barebones concert app into the "Untappd of live mus
 ## Phases
 
 - [x] **Phase 1: Data Model Foundation** - Redesign schema around events with multi-band lineups, migrate existing data
-- [ ] **Phase 2: Event Data Pipeline** - Ticketmaster integration, event sync, deduplication, user-created events
+- [x] **Phase 2: Event Data Pipeline** - Ticketmaster integration, event sync, deduplication, user-created events
 - [ ] **Phase 3: Core Check-in Flow** - Event-based quick check-in with dual ratings, location verification, photos
 - [ ] **Phase 4: Badge Engine** - Data-driven gamification with concert-specific badges, progress tracking, anti-farming
 - [ ] **Phase 5: Social Feed & Real-time** - FOMO feed, happening now, WebSocket push, Firebase notifications
@@ -47,9 +47,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01-PLAN.md -- DB migrations (venue/band external_id, event status, trgm index, sync tables), BullMQ install, Redis config, TicketmasterAdapter, BandMatcher
-- [ ] 02-02-PLAN.md -- EventSyncService orchestrator (fetch->dedup->match->upsert->log), BullMQ queue/worker/scheduler, app startup integration
-- [ ] 02-03-PLAN.md -- User-created events (source tracking, verification), auto-merge with Ticketmaster data, on-demand lookup endpoint
+- [x] 02-01-PLAN.md -- DB migrations (venue/band external_id, event status, trgm index, sync tables), BullMQ install, Redis config, TicketmasterAdapter, BandMatcher
+- [x] 02-02-PLAN.md -- EventSyncService orchestrator (fetch->dedup->match->upsert->log), BullMQ queue/worker/scheduler, app startup integration
+- [x] 02-03-PLAN.md -- User-created events (source tracking, verification), auto-merge with Ticketmaster data, on-demand lookup endpoint
 
 ### Phase 3: Core Check-in Flow
 **Goal**: Redesign the check-in experience around events with a quick-tap flow, optional dual ratings (band + venue), per-set ratings for multi-band shows, location verification, and photo upload.
@@ -159,7 +159,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Model Foundation | 3/3 | Complete | 2026-02-02 |
-| 2. Event Data Pipeline | 0/3 | Not started | - |
+| 2. Event Data Pipeline | 3/3 | Complete | 2026-02-03 |
 | 3. Core Check-in Flow | 0/3 | Not started | - |
 | 4. Badge Engine | 0/3 | Not started | - |
 | 5. Social Feed & Real-time | 0/3 | Not started | - |
@@ -167,8 +167,8 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 7. Discovery & Recommendations | 0/3 | Not started | - |
 | 8. Polish & App Store Readiness | 0/2 | Not started | - |
 
-**Total: 3/22 plans complete**
+**Total: 6/22 plans complete**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 after Phase 2 planning complete*
+*Last updated: 2026-02-03 after Phase 2 execution complete*
