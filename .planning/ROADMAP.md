@@ -131,9 +131,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 07-01: Band and venue page enrichment (aggregate dual ratings, upcoming events, fan counts)
-- [ ] 07-02: Event discovery (nearby shows, genre browse, trending algorithm, event search)
-- [ ] 07-03: SQL-based recommendation engine (genre affinity, friend attendance, trending signals)
+- [ ] 07-01-PLAN.md -- DiscoveryService with aggregate band/venue ratings from check-in data, migration for search indexes, enhanced band/:id and venue/:id endpoints, mobile detail screen enrichment
+- [ ] 07-02-PLAN.md -- Event discovery endpoints (nearby upcoming, trending near user, genre browse, event search), mobile discover screen pivot to event-first with Nearby Shows, Genre Browse, Trending sections
+- [ ] 07-03-PLAN.md -- SQL recommendation engine (genre affinity 3x, friend attendance 5x, trending 1x), cold-start fallback to trending, mobile "For You" section on discover screen
 
 ### Phase 8: Polish & App Store Readiness
 **Goal**: Final UX refinement, cloud storage migration for production reliability, and full App Store compliance (account deletion, privacy manifests, demo account, Flutter version safety).
@@ -164,11 +164,11 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 4. Badge Engine | 3/3 | Complete | 2026-02-03 |
 | 5. Social Feed & Real-time | 3/3 | Complete | 2026-02-03 |
 | 6. Profile & Concert Cred | 2/2 | Complete | 2026-02-03 |
-| 7. Discovery & Recommendations | 0/3 | Not started | - |
+| 7. Discovery & Recommendations | 0/3 | Planned | - |
 | 8. Polish & App Store Readiness | 0/2 | Not started | - |
 
 **Total: 17/22 plans complete**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 6 execution complete*
+*Last updated: 2026-02-03 after Phase 7 planning complete*
