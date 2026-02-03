@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 5: Social Feed & Real-time (next)
+**Current focus:** Phase 5: Social Feed & Real-time (in progress)
 
 ## Current Position
 
-Phase: 4 of 8 (Badge Engine) -- VERIFIED COMPLETE
-Plan: 3 of 3 in Phase 4 (all complete)
-Status: Phase 4 verified, ready for Phase 5 planning
-Last activity: 2026-02-03 -- Phase 4 verified (5/5 must-haves passed)
+Phase: 5 of 8 (Social Feed & Real-time)
+Plan: 1 of 3 in Phase 5 (05-01 complete)
+Status: In progress
+Last activity: 2026-02-03 -- Completed 05-01-PLAN.md (Feed Backend Service)
 
-Progress: [############__________] 55% (12/22 plans)
+Progress: [#############_________] 59% (13/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
-- Average duration: 6.1 min
-- Total execution time: 1.2 hours
+- Total plans completed: 13
+- Average duration: 5.9 min
+- Total execution time: 1.27 hours
 
 **By Phase:**
 
@@ -31,10 +31,11 @@ Progress: [############__________] 55% (12/22 plans)
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
 | 04-badge-engine | 3/3 | 21 min | 7 min |
+| 05-social-feed-realtime | 1/3 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 16m, 8m, 5m, 4m, 12m
-- Trend: Badge engine mobile UI plan took longer due to Freezed codegen + screen build
+- Last 5 plans: 8m, 5m, 4m, 12m, 4m
+- Trend: Feed backend service was fast -- pure backend, no mobile/codegen overhead
 
 *Updated after each plan completion*
 
@@ -93,6 +94,10 @@ Recent decisions affecting current work:
 - [04-03]: Hide Flutter Material Badge in import to avoid name conflict with domain Badge model
 - [04-03]: WebSocket badge_earned listener on ConsumerStatefulWidget for SnackBar access via BuildContext
 - [04-03]: Badge earned toast invalidates all badge providers for immediate data refresh
+- [05-01]: Badge earned indicator uses time-proximity heuristic (earned_at within 1min-1hr of created_at)
+- [05-01]: Fire-and-forget cache invalidation after check-in creation (never blocks response)
+- [05-01]: GET /api/feed/ backward-compat forwards to friends feed
+- [05-01]: Happening Now expiry: COALESCE(end_time+1h, start_time+4h, event_date+1day)
 
 ### Pending Todos
 
@@ -115,5 +120,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Phase 4 verified and complete. Ready for Phase 5 planning.
+Stopped at: Completed 05-01-PLAN.md (Feed Backend Service). Ready for 05-02.
 Resume file: None
