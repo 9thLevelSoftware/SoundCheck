@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 6: Profile & Concert Cred (next)
+**Current focus:** Phase 6: Profile & Concert Cred (in progress)
 
 ## Current Position
 
-Phase: 5 of 8 (Social Feed & Real-time) -- VERIFIED COMPLETE
-Plan: 3 of 3 in Phase 5 (all complete)
-Status: Phase 5 verified, ready for Phase 6 planning
-Last activity: 2026-02-03 -- Phase 5 verified (5/5 must-haves passed)
+Phase: 6 of 8 (Profile & Concert Cred)
+Plan: 1 of 2 in Phase 6 (06-01 complete)
+Status: In progress
+Last activity: 2026-02-03 -- Completed 06-01-PLAN.md (StatsService & concert cred endpoint)
 
-Progress: [################______] 68% (15/22 plans)
+Progress: [#################_____] 73% (16/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 6.1 min
-- Total execution time: 1.58 hours
+- Total plans completed: 16
+- Average duration: 5.9 min
+- Total execution time: 1.63 hours
 
 **By Phase:**
 
@@ -32,10 +32,11 @@ Progress: [################______] 68% (15/22 plans)
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
 | 04-badge-engine | 3/3 | 21 min | 7 min |
 | 05-social-feed-realtime | 3/3 | 23 min | 7.7 min |
+| 06-profile-concert-cred | 1/2 | 3 min | 3 min |
 
 **Recent Trend:**
-- Last 5 plans: 12m, 4m, 7m, 12m (05-03 mobile UI with Freezed codegen + 3-tab screen + build fix)
-- Trend: Phase 5 used wave parallelism (plans 01+02 parallel, 03 sequential)
+- Last 5 plans: 4m, 7m, 12m, 3m (06-01 backend stats service + endpoint + cache invalidation)
+- Trend: Backend-only plans execute faster; no Flutter codegen overhead
 
 *Updated after each plan completion*
 
@@ -107,6 +108,9 @@ Recent decisions affecting current work:
 - [05-03]: FeedWebSocketListenerMixin pattern for reusable WebSocket subscription in ConsumerStatefulWidgets
 - [05-03]: ActiveEventIds provider for O(1) client-side same-event detection
 - [05-03]: Riverpod 3.1.0 AsyncValue uses .value not .valueOrNull
+- [06-01]: Genre/band queries join through event_lineup (not checkins.band_id) for multi-band event correctness
+- [06-01]: Concert cred cached with 600s TTL via cache.getOrSet; invalidated fire-and-forget on create/delete
+- [06-01]: Concert cred endpoint requires auth (consistent with /:userId/stats pattern)
 
 ### Pending Todos
 
@@ -131,5 +135,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Phase 5 verified and complete. Ready for Phase 6 planning.
+Stopped at: Completed 06-01-PLAN.md (StatsService & concert cred endpoint)
 Resume file: None
