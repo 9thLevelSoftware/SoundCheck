@@ -5,6 +5,7 @@ import { EventService } from './EventService';
 import { r2Service } from './R2Service';
 import { badgeEvalQueue } from '../jobs/badgeQueue';
 import { cache } from '../utils/cache';
+import { getRedis } from '../utils/redisRateLimiter';
 
 // ============================================
 // Interfaces
@@ -258,6 +259,18 @@ export class CheckinService {
       // Fire-and-forget: invalidate feed caches for followers and event
       this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
         console.error('Warning: feed cache invalidation failed:', err)
+      );
+
+      // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
+      this.publishCheckinEvent(
+        checkinId,
+        userId,
+        eventId,
+        event.event_name || '',
+        event.venue_id,
+        result.rows[0].created_at
+      ).catch((err) =>
+        console.error('Warning: Pub/Sub publish failed:', err)
       );
 
       // Return full check-in with details
@@ -615,6 +628,20 @@ export class CheckinService {
       this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
         console.error('Warning: feed cache invalidation failed:', err)
       );
+
+      // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out (legacy path)
+      if (eventId) {
+        this.publishCheckinEvent(
+          checkinId,
+          userId,
+          eventId,
+          '', // event name not readily available in legacy path
+          venueId,
+          result.rows[0].created_at
+        ).catch((err) =>
+          console.error('Warning: Pub/Sub publish failed:', err)
+        );
+      }
 
       // Return full check-in with details
       return this.getCheckinById(checkinId, userId);
@@ -1284,6 +1311,79 @@ export class CheckinService {
     } catch (error) {
       console.error('Add photos error:', error);
       throw error;
+    }
+  }
+
+  // ============================================
+  // Real-time Pub/Sub publish (Phase 5, Plan 2)
+  // ============================================
+
+  /**
+   * Publish a new check-in event to Redis Pub/Sub for WebSocket fan-out.
+   * Queries follower IDs and publishes a structured payload to 'checkin:new'.
+   * Fire-and-forget: errors are logged but never block check-in response.
+   */
+  private async publishCheckinEvent(
+    checkinId: string,
+    userId: string,
+    eventId: string,
+    eventName: string,
+    venueId: string,
+    createdAt: string
+  ): Promise<void> {
+    try {
+      const redis = getRedis();
+      if (!redis) return;
+
+      // Query follower IDs and user info in parallel
+      const [followerResult, userResult, venueResult] = await Promise.all([
+        this.db.query(
+          'SELECT follower_id FROM user_followers WHERE following_id = $1',
+          [userId]
+        ),
+        this.db.query(
+          'SELECT username, profile_image_url FROM users WHERE id = $1',
+          [userId]
+        ),
+        this.db.query(
+          'SELECT name FROM venues WHERE id = $1',
+          [venueId]
+        ),
+      ]);
+
+      const followerIds = followerResult.rows.map((r: any) => r.follower_id);
+      if (followerIds.length === 0) return;
+
+      const username = userResult.rows[0]?.username || '';
+      const userAvatarUrl = userResult.rows[0]?.profile_image_url || null;
+      const venueName = venueResult.rows[0]?.name || '';
+
+      const payload = {
+        type: 'new_checkin',
+        checkin: {
+          id: checkinId,
+          checkinId,
+          userId,
+          username,
+          userAvatarUrl,
+          eventId,
+          eventName: eventName || '',
+          venueName,
+          photoUrl: null,
+          createdAt,
+          hasBadgeEarned: false,
+          toastCount: 0,
+          commentCount: 0,
+          hasUserToasted: false,
+        },
+        followerIds,
+        eventId,
+      };
+
+      await redis.publish('checkin:new', JSON.stringify(payload));
+    } catch (error) {
+      console.error('Pub/Sub publish error:', error);
+      // Non-fatal: do not rethrow
     }
   }
 

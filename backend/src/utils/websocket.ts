@@ -30,6 +30,8 @@
 import { Server } from 'http';
 import { AuthUtils } from './auth';
 import WebSocket from 'ws';
+import IORedis from 'ioredis';
+import { createPubSubConnection } from '../config/redis';
 
 interface Client {
   ws: WebSocket;
@@ -45,6 +47,7 @@ class WebSocketServer {
   private clients: Map<string, Client> = new Map();
   private rooms: Map<string, Set<string>> = new Map();
   private heartbeatInterval?: NodeJS.Timeout;
+  private subscriber: IORedis | null = null;
 
   init(server: Server): void {
     if (!process.env.ENABLE_WEBSOCKET || process.env.ENABLE_WEBSOCKET !== 'true') {
@@ -98,7 +101,60 @@ class WebSocketServer {
     // Start heartbeat
     this.startHeartbeat();
 
+    // Subscribe to Redis Pub/Sub for multi-instance fan-out
+    try {
+      this.subscriber = createPubSubConnection();
+      this.subscriber.subscribe('checkin:new');
+      this.subscriber.on('message', (channel: string, message: string) => {
+        if (channel === 'checkin:new') {
+          try {
+            this.handleCheckinPubSub(JSON.parse(message));
+          } catch (err) {
+            console.error('Error handling checkin Pub/Sub message:', err);
+          }
+        }
+      });
+      console.log('Redis Pub/Sub subscriber connected for WebSocket fan-out');
+    } catch (err) {
+      console.warn('Redis Pub/Sub not available, WebSocket fan-out disabled:', (err as Error).message);
+      this.subscriber = null;
+    }
+
     console.log('WebSocket server initialized');
+  }
+
+  /**
+   * Handle a check-in event received via Redis Pub/Sub.
+   * Fans out 'new_checkin' events to follower WebSocket clients.
+   * Detects same-event attendance and sends 'same_event_checkin' events.
+   */
+  private handleCheckinPubSub(data: {
+    type: string;
+    checkin: any;
+    followerIds: string[];
+    eventId: string;
+  }): void {
+    const { checkin, followerIds, eventId } = data;
+
+    // Get users currently in the event room (for same-event detection)
+    const eventRoomUsers = eventId ? this.getRoomUsers(`event:${eventId}`) : [];
+    const eventRoomUserSet = new Set(eventRoomUsers);
+
+    for (const followerId of followerIds) {
+      // Same-event detection: if follower is in the event room, send special event
+      if (eventRoomUserSet.has(followerId)) {
+        this.sendToUser(followerId, 'same_event_checkin', {
+          ...checkin,
+          message: `${checkin.username} is here too!`,
+        });
+      } else {
+        this.sendToUser(followerId, 'new_checkin', checkin);
+      }
+    }
+
+    if (followerIds.length > 0) {
+      console.log(`Fan-out new_checkin to ${followerIds.length} followers`);
+    }
   }
 
   private handleMessage(clientId: string, data: any): void {
@@ -345,6 +401,9 @@ class WebSocketServer {
       clearInterval(this.heartbeatInterval);
     }
 
+    this.subscriber?.quit();
+    this.subscriber = null;
+
     this.wss?.close();
 
     console.log('WebSocket server closed');
@@ -377,6 +436,7 @@ export const WebSocketEvents = {
 
   // Real-time updates
   NEW_CHECKIN: 'new_checkin',
+  SAME_EVENT_CHECKIN: 'same_event_checkin',
   NEW_REVIEW: 'new_review',
   NEW_FOLLOWER: 'new_follower',
   NEW_COMMENT: 'new_comment',

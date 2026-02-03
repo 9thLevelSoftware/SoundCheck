@@ -45,3 +45,27 @@ export function createBullMQConnection(): IORedis {
     },
   });
 }
+
+/**
+ * Create a DEDICATED IORedis connection for Pub/Sub subscriber mode.
+ *
+ * Once a connection enters subscriber mode (via .subscribe()), it can ONLY
+ * run subscribe/unsubscribe/psubscribe/punsubscribe commands. This is why
+ * a separate connection is required -- reusing the cache or rate-limiter
+ * connection would break regular get/set commands.
+ *
+ * Uses the same config as BullMQ connections (maxRetriesPerRequest: null,
+ * enableReadyCheck: false) for resilient reconnection.
+ */
+export function createPubSubConnection(): IORedis {
+  const redisUrl = getRedisUrl();
+
+  return new IORedis(redisUrl, {
+    maxRetriesPerRequest: null,
+    enableReadyCheck: false,
+    retryStrategy(times: number) {
+      const delay = Math.min(times * 200, 5000);
+      return delay;
+    },
+  });
+}
