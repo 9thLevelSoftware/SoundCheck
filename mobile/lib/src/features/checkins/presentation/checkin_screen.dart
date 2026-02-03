@@ -10,6 +10,7 @@ import '../../../shared/services/location_service.dart';
 import '../domain/nearby_event.dart';
 import '../domain/checkin.dart';
 import 'providers/checkin_providers.dart';
+import 'photo_upload_sheet.dart';
 import 'rating_bottom_sheet.dart';
 
 /// Check-in Screen - Event-first quick-tap flow
@@ -33,6 +34,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   Position? _cachedPosition;
   bool _ratingsCompleted = false;
   bool _venueRatingCompleted = false;
+  bool _photosUploaded = false;
 
   // Manual check-in state (legacy fallback)
   final TextEditingController _bandSearchController = TextEditingController();
@@ -474,17 +476,29 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           ),
           const SizedBox(height: 8),
 
-          // Add photos (placeholder)
+          // Add photos
           _EnrichmentCard(
             icon: Icons.camera_alt,
             iconColor: AppTheme.electricBlue,
             label: 'Add photos',
-            completed: false,
+            completed: _photosUploaded,
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Photo uploads coming soon!'),
-                  backgroundColor: AppTheme.info,
+              if (_completedCheckIn == null) return;
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                backgroundColor: AppTheme.surfaceDark,
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                builder: (context) => PhotoUploadSheet(
+                  checkinId: _completedCheckIn!.id,
+                  onComplete: (updatedCheckIn) {
+                    setState(() {
+                      _completedCheckIn = updatedCheckIn;
+                      _photosUploaded = true;
+                    });
+                  },
                 ),
               );
             },
