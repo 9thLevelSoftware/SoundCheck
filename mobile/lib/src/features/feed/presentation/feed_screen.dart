@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
 import '../../../core/theme/app_theme.dart';
-import '../../checkins/presentation/providers/checkin_providers.dart';
-import '../../checkins/domain/checkin.dart';
+import 'providers/feed_providers.dart';
+import 'widgets/feed_card.dart';
+import 'widgets/happening_now_card.dart';
+import 'widgets/new_checkins_banner.dart';
 
 /// Social Activity Feed - The Home Screen
-/// Shows a vertical scroll of check-in cards from friends and global activity
+/// Three tabs: Friends, Events, Happening Now
+/// Real-time updates via WebSocket with "N new check-ins" banner
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
 
@@ -14,38 +18,60 @@ class FeedScreen extends ConsumerStatefulWidget {
   ConsumerState<FeedScreen> createState() => _FeedScreenState();
 }
 
-class _FeedScreenState extends ConsumerState<FeedScreen> {
-  final ScrollController _scrollController = ScrollController();
-  String _selectedFilter = 'friends';
+class _FeedScreenState extends ConsumerState<FeedScreen>
+    with SingleTickerProviderStateMixin {
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _tabController.addListener(_onTabChanged);
+  }
 
   @override
   void dispose() {
-    _scrollController.dispose();
+    _tabController.removeListener(_onTabChanged);
+    _tabController.dispose();
     super.dispose();
   }
 
-  void _changeFilter(String filter) {
-    if (_selectedFilter != filter) {
-      setState(() {
-        _selectedFilter = filter;
-      });
-      // Invalidate and refetch the feed
-      ref.invalidate(socialFeedProvider);
+  void _onTabChanged() {
+    if (!_tabController.indexIsChanging) {
+      // Mark the current tab as read when switching to it
+      _markTabRead(_tabController.index);
+    }
+  }
+
+  void _markTabRead(int tabIndex) {
+    final feedItems = ref.read(friendsFeedProvider).value;
+    if (feedItems == null || feedItems.isEmpty) return;
+
+    final feedTypes = ['friends', 'event', 'happening_now'];
+    if (tabIndex < feedTypes.length) {
+      ref.read(feedRepositoryProvider).markFeedRead(
+            feedTypes[tabIndex],
+            feedItems.first.createdAt,
+            lastSeenCheckinId: feedItems.first.id,
+          );
+      // Refresh unseen counts
+      ref.invalidate(unseenCountsProvider);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final feedAsync = ref.watch(socialFeedProvider);
+    final unseenAsync = ref.watch(unseenCountsProvider);
+    final newCheckinCount = ref.watch(newCheckinCountProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundDark,
-      body: CustomScrollView(
-        controller: _scrollController,
-        slivers: [
-          // App Bar
+      body: NestedScrollView(
+        headerSliverBuilder: (context, innerBoxIsScrolled) => [
+          // App Bar with SOUNDCHECK branding
           SliverAppBar(
             floating: true,
+            pinned: true,
             backgroundColor: AppTheme.backgroundDark,
             title: Row(
               children: [
@@ -63,7 +89,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppTheme.backgroundDark,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -76,182 +102,299 @@ class _FeedScreenState extends ConsumerState<FeedScreen> {
                 onPressed: () => context.push('/discover'),
               ),
             ],
-          ),
-
-          // Feed Tabs (Friends / Global)
-          SliverToBoxAdapter(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  _FeedTab(
-                    label: 'Friends',
-                    isSelected: _selectedFilter == 'friends',
-                    onTap: () => _changeFilter('friends'),
-                  ),
-                  const SizedBox(width: 12),
-                  _FeedTab(
-                    label: 'Global',
-                    isSelected: _selectedFilter == 'global',
-                    onTap: () => _changeFilter('global'),
-                  ),
-                ],
+            bottom: TabBar(
+              controller: _tabController,
+              indicatorColor: AppTheme.electricPurple,
+              labelColor: AppTheme.electricPurple,
+              unselectedLabelColor: AppTheme.textTertiary,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
               ),
+              unselectedLabelStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
+              tabs: [
+                _TabWithBadge(
+                  label: 'Friends',
+                  count: unseenAsync.value?.friends ?? 0,
+                ),
+                _TabWithBadge(
+                  label: 'Events',
+                  count: unseenAsync.value?.event ?? 0,
+                ),
+                _TabWithBadge(
+                  label: 'Happening Now',
+                  count: unseenAsync.value?.happeningNow ?? 0,
+                ),
+              ],
             ),
           ),
+        ],
+        body: TabBarView(
+          controller: _tabController,
+          children: [
+            // Friends tab
+            _FriendsTab(newCheckinCount: newCheckinCount),
+            // Events tab
+            const _EventsTab(),
+            // Happening Now tab
+            const _HappeningNowTab(),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-          // Check-in Cards - Using real data
-          feedAsync.when(
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(32.0),
-                child: Center(
-                  child: CircularProgressIndicator(
-                    color: AppTheme.electricPurple,
+/// Tab label with optional unseen count badge
+class _TabWithBadge extends StatelessWidget {
+  const _TabWithBadge({
+    required this.label,
+    required this.count,
+  });
+
+  final String label;
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tab(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(label),
+          if (count > 0) ...[
+            const SizedBox(width: 6),
+            AnimatedSwitcher(
+              duration: const Duration(milliseconds: 200),
+              child: Container(
+                key: ValueKey(count),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: AppTheme.neonPink,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  count > 99 ? '99+' : '$count',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
               ),
             ),
-            error: (error, stack) => SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.all(32.0),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: AppTheme.neonPink,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Failed to load feed',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () => ref.invalidate(socialFeedProvider),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.electricPurple,
-                        ),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-            data: (checkIns) {
-              if (checkIns.isEmpty) {
-                return const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.music_off,
-                            color: AppTheme.textTertiary,
-                            size: 64,
-                          ),
-                          SizedBox(height: 16),
-                          Text(
-                            'No check-ins yet',
-                            style: TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          SizedBox(height: 8),
-                          Text(
-                            'Start checking in to shows to see activity here!',
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 14,
-                            ),
-                            textAlign: TextAlign.center,
-                          ),
-                        ],
-                      ),
-                    ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+/// Friends feed tab with infinite scroll, pull-to-refresh, and new checkins banner
+class _FriendsTab extends ConsumerStatefulWidget {
+  const _FriendsTab({required this.newCheckinCount});
+
+  final int newCheckinCount;
+
+  @override
+  ConsumerState<_FriendsTab> createState() => _FriendsTabState();
+}
+
+class _FriendsTabState extends ConsumerState<_FriendsTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      // Near bottom: load more
+      ref.read(friendsFeedProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feedAsync = ref.watch(friendsFeedProvider);
+
+    return RefreshIndicator(
+      color: AppTheme.electricPurple,
+      backgroundColor: AppTheme.cardDark,
+      onRefresh: () async {
+        ref.invalidate(friendsFeedProvider);
+        ref.read(newCheckinCountProvider.notifier).reset();
+      },
+      child: feedAsync.when(
+        loading: () => const _FeedLoadingState(),
+        error: (error, stack) => _FeedErrorState(
+          error: error,
+          onRetry: () => ref.invalidate(friendsFeedProvider),
+        ),
+        data: (items) {
+          if (items.isEmpty) {
+            return const _FeedEmptyState(
+              icon: Icons.music_note,
+              title: 'No check-ins yet',
+              message: 'Follow friends to see their check-ins here!',
+            );
+          }
+
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(bottom: 100),
+            itemCount: items.length + 1, // +1 for banner
+            itemBuilder: (context, index) {
+              // New checkins banner at top
+              if (index == 0) {
+                return Center(
+                  child: NewCheckinsBanner(
+                    count: widget.newCheckinCount,
+                    onTap: () {
+                      ref.invalidate(friendsFeedProvider);
+                      ref.read(newCheckinCountProvider.notifier).reset();
+                      _scrollController.animateTo(
+                        0,
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeOut,
+                      );
+                    },
                   ),
                 );
               }
 
-              return SliverPadding(
-                padding: const EdgeInsets.only(bottom: 100), // Space for nav bar
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final checkIn = checkIns[index];
-                      return _CheckInCard(
-                        checkIn: checkIn,
-                        onTap: () {
-                          // Navigate to check-in detail
-                          context.push('/checkins/${checkIn.id}');
-                        },
-                        onToast: () async {
-                          await ref
-                              .read(toastCheckInProvider.notifier)
-                              .toggle(checkIn.id, checkIn.hasToasted);
-                        },
-                      );
-                    },
-                    childCount: checkIns.length,
-                  ),
-                ),
-              );
+              final item = items[index - 1];
+              return FeedCard(item: item);
             },
-          ),
-        ],
+          );
+        },
       ),
     );
   }
 }
 
-class _FeedTab extends StatelessWidget {
-  const _FeedTab({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-  });
+/// Events feed tab -- shows check-ins at events the user has attended
+class _EventsTab extends ConsumerWidget {
+  const _EventsTab();
 
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final feedAsync = ref.watch(eventsFeedProvider);
+
+    return RefreshIndicator(
+      color: AppTheme.electricPurple,
+      backgroundColor: AppTheme.cardDark,
+      onRefresh: () async {
+        ref.invalidate(eventsFeedProvider);
+      },
+      child: feedAsync.when(
+        loading: () => const _FeedLoadingState(),
+        error: (error, stack) => _FeedErrorState(
+          error: error,
+          onRetry: () => ref.invalidate(eventsFeedProvider),
+        ),
+        data: (items) {
+          if (items.isEmpty) {
+            return const _FeedEmptyState(
+              icon: Icons.event,
+              title: 'No event activity yet',
+              message: 'Check in to a show to see who else was there!',
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 100),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              return FeedCard(item: items[index]);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+/// Happening Now tab -- shows friends grouped by event
+class _HappeningNowTab extends ConsumerWidget {
+  const _HappeningNowTab();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final groupsAsync = ref.watch(happeningNowProvider);
+
+    return RefreshIndicator(
+      color: AppTheme.electricPurple,
+      backgroundColor: AppTheme.cardDark,
+      onRefresh: () async {
+        ref.invalidate(happeningNowProvider);
+      },
+      child: groupsAsync.when(
+        loading: () => const _FeedLoadingState(),
+        error: (error, stack) => _FeedErrorState(
+          error: error,
+          onRetry: () => ref.invalidate(happeningNowProvider),
+        ),
+        data: (groups) {
+          if (groups.isEmpty) {
+            return const _FeedEmptyState(
+              icon: Icons.nightlife,
+              title: 'No one is out right now',
+              message: 'None of your friends are at shows right now',
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.only(bottom: 100),
+            itemCount: groups.length,
+            itemBuilder: (context, index) {
+              return HappeningNowCard(group: groups[index]);
+            },
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ========== Shared state widgets ==========
+
+class _FeedLoadingState extends StatelessWidget {
+  const _FeedLoadingState();
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.electricPurple : AppTheme.surfaceVariantDark,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          label,
-          style: TextStyle(
-            color: isSelected ? Colors.white : AppTheme.textSecondary,
-            fontWeight: FontWeight.w600,
-            fontSize: 14,
+    return ListView(
+      children: List.generate(
+        3,
+        (index) => Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          height: 280,
+          decoration: BoxDecoration(
+            color: AppTheme.cardDark,
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: const Center(
+            child: CircularProgressIndicator(
+              color: AppTheme.electricPurple,
+            ),
           ),
         ),
       ),
@@ -259,395 +402,114 @@ class _FeedTab extends StatelessWidget {
   }
 }
 
-/// Check-in Card - The main feed item
-class _CheckInCard extends StatelessWidget {
-  const _CheckInCard({
-    required this.checkIn,
-    required this.onTap,
-    this.onToast,
+class _FeedErrorState extends StatelessWidget {
+  const _FeedErrorState({
+    required this.error,
+    required this.onRetry,
   });
 
-  final CheckIn checkIn;
-  final VoidCallback onTap;
-  final VoidCallback? onToast;
-
-  String _getTimeAgo(String createdAt) {
-    try {
-      final dateTime = DateTime.parse(createdAt);
-      final now = DateTime.now();
-      final difference = now.difference(dateTime);
-
-      if (difference.inMinutes < 1) {
-        return 'just now';
-      } else if (difference.inMinutes < 60) {
-        return '${difference.inMinutes}m ago';
-      } else if (difference.inHours < 24) {
-        return '${difference.inHours}h ago';
-      } else if (difference.inDays < 7) {
-        return '${difference.inDays}d ago';
-      } else {
-        return '${difference.inDays ~/ 7}w ago';
-      }
-    } catch (e) {
-      return '';
-    }
-  }
-
-  IconData _getVibeIcon(String vibeName) {
-    final lowerName = vibeName.toLowerCase();
-    if (lowerName.contains('sound') || lowerName.contains('audio')) {
-      return Icons.volume_up;
-    } else if (lowerName.contains('mosh') || lowerName.contains('pit') ||
-        lowerName.contains('energy')) {
-      return Icons.local_fire_department;
-    } else if (lowerName.contains('light') || lowerName.contains('visual')) {
-      return Icons.lightbulb;
-    } else if (lowerName.contains('crowd') || lowerName.contains('audience')) {
-      return Icons.people;
-    } else if (lowerName.contains('stage')) {
-      return Icons.theater_comedy;
-    } else {
-      return Icons.music_note;
-    }
-  }
+  final Object error;
+  final VoidCallback onRetry;
 
   @override
   Widget build(BuildContext context) {
-    final userName = checkIn.user?.username ?? 'Unknown';
-    final bandName = checkIn.band?.name ?? 'Unknown Band';
-    final venueName = checkIn.venue?.name ?? 'Unknown Venue';
-    final rating = checkIn.rating;
-    final time = _getTimeAgo(checkIn.createdAt);
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header: User info
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Row(
-              children: [
-                // User Avatar
-                Container(
-                  width: 40,
-                  height: 40,
-                  decoration: const BoxDecoration(
-                    shape: BoxShape.circle,
-                    gradient: AppTheme.primaryGradient,
-                  ),
-                  child: Center(
-                    child: Text(
-                      userName[0],
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                // User action text
-                Expanded(
-                  child: RichText(
-                    text: TextSpan(
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: AppTheme.textPrimary,
-                      ),
-                      children: [
-                        TextSpan(
-                          text: userName,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
-                        ),
-                        const TextSpan(text: ' is watching '),
-                        TextSpan(
-                          text: bandName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.electricPurple,
-                          ),
-                        ),
-                        const TextSpan(text: ' at '),
-                        TextSpan(
-                          text: venueName,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            color: AppTheme.electricPurple,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Concert Photo (placeholder)
-          Container(
-            height: 200,
-            width: double.infinity,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  AppTheme.electricPurple.withValues(alpha:0.3),
-                  AppTheme.neonPink.withValues(alpha:0.3),
-                ],
-              ),
-            ),
-            child: Stack(
-              children: [
-                // Placeholder pattern
-                Center(
-                  child: Icon(
-                    Icons.music_note,
-                    size: 64,
-                    color: Colors.white.withValues(alpha:0.3),
-                  ),
-                ),
-                // Gradient overlay at bottom
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Container(
-                    height: 60,
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          Colors.transparent,
-                          Colors.black.withValues(alpha:0.7),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Rating and Vibes
-          Padding(
-            padding: const EdgeInsets.all(12),
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Rating Row
-                Row(
-                  children: [
-                    ...List.generate(5, (i) {
-                      final isActive = i < rating;
-                      return Padding(
-                        padding: const EdgeInsets.only(right: 4),
-                        child: Icon(
-                          Icons.star,
-                          size: 20,
-                          color: isActive
-                              ? AppTheme.electricPurple
-                              : AppTheme.ratingInactive,
-                        ),
-                      );
-                    }),
-                    const Spacer(),
-                    // Badge indicator
-                    if (checkIn.earnedBadges != null &&
-                        checkIn.earnedBadges!.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: AppTheme.toastGold.withValues(alpha:0.2),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(
-                              Icons.emoji_events,
-                              size: 14,
-                              color: AppTheme.toastGold,
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              '${checkIn.earnedBadges!.length} Badge${checkIn.earnedBadges!.length > 1 ? 's' : ''} Earned!',
-                              style: const TextStyle(
-                                color: AppTheme.toastGold,
-                                fontSize: 12,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                  ],
+                const Icon(
+                  Icons.error_outline,
+                  color: AppTheme.neonPink,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Failed to load feed',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 const SizedBox(height: 8),
-
-                // Vibe Tags
-                if (checkIn.vibes != null && checkIn.vibes!.isNotEmpty)
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: checkIn.vibes!.map((vibe) {
-                      return _VibeChip(
-                        label: vibe.displayName,
-                        icon: _getVibeIcon(vibe.displayName),
-                      );
-                    }).toList(),
-                  ),
-
-                // Review text
-                if (checkIn.reviewText != null && checkIn.reviewText!.isNotEmpty) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    checkIn.reviewText!,
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-
-          // Footer Actions
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: AppTheme.surfaceVariantDark,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              children: [
-                // Toast Button
-                _ActionButton(
-                  icon: Icons.sports_bar,
-                  label: '${checkIn.toastCount}',
-                  isActive: checkIn.hasToasted,
-                  activeColor: AppTheme.toastGold,
-                  onTap: onToast ?? () {},
-                ),
-                const SizedBox(width: 24),
-                // Comment Button
-                _ActionButton(
-                  icon: Icons.chat_bubble_outline,
-                  label: '${checkIn.commentCount}',
-                  isActive: false,
-                  onTap: onTap,
-                ),
-                const Spacer(),
-                // Timestamp
                 Text(
-                  time,
+                  error.toString(),
                   style: const TextStyle(
-                    color: AppTheme.textTertiary,
-                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: onRetry,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppTheme.electricPurple,
+                  ),
+                  child: const Text('Retry'),
                 ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
 
-class _VibeChip extends StatelessWidget {
-  const _VibeChip({
-    required this.label,
+class _FeedEmptyState extends StatelessWidget {
+  const _FeedEmptyState({
     required this.icon,
-  });
-
-  final String label;
-  final IconData icon;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.surfaceVariantDark,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 14,
-            color: AppTheme.textSecondary,
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  const _ActionButton({
-    required this.icon,
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-    this.activeColor,
+    required this.title,
+    required this.message,
   });
 
   final IconData icon;
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-  final Color? activeColor;
+  final String title;
+  final String message;
 
   @override
   Widget build(BuildContext context) {
-    final color = isActive
-        ? (activeColor ?? AppTheme.electricPurple)
-        : AppTheme.textTertiary;
-
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+    return ListView(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  color: AppTheme.textTertiary,
+                  size: 64,
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  message,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 14,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }

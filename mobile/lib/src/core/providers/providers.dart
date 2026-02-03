@@ -12,6 +12,7 @@ import '../../features/venues/data/venue_repository.dart';
 import '../../features/bands/data/band_repository.dart';
 import '../../features/badges/data/badge_repository.dart';
 import '../../features/checkins/data/checkin_repository.dart';
+import '../../features/feed/data/feed_repository.dart';
 import '../../features/notifications/data/notification_repository.dart';
 
 part 'providers.g.dart';
@@ -77,6 +78,12 @@ CheckInRepository checkInRepository(Ref ref) {
 NotificationRepository notificationRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return NotificationRepository(dioClient: dioClient);
+}
+
+@Riverpod(keepAlive: true)
+FeedRepository feedRepository(Ref ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return FeedRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)
