@@ -41,6 +41,9 @@ import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
+import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
+import { registerSyncJobs } from './jobs/syncScheduler';
+import { Worker } from 'bullmq';
 
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
@@ -262,6 +265,9 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 // Create HTTP server
 const server = createServer(app);
 
+// BullMQ sync worker reference (for graceful shutdown)
+let syncWorker: Worker | null = null;
+
 // Start server
 const startServer = async () => {
   try {
@@ -299,6 +305,13 @@ const startServer = async () => {
       }
     });
 
+    // Start BullMQ event sync worker and register scheduled jobs
+    // Guarded by REDIS_URL -- returns null if Redis is not available
+    syncWorker = startEventSyncWorker();
+    registerSyncJobs().catch(err =>
+      logError('Failed to register sync jobs', { error: err.message || err }),
+    );
+
   } catch (error) {
     logError('Failed to start server', { error });
     process.exit(1);
@@ -308,6 +321,7 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
+  if (syncWorker) await stopEventSyncWorker(syncWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
@@ -318,6 +332,7 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
+  if (syncWorker) await stopEventSyncWorker(syncWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
