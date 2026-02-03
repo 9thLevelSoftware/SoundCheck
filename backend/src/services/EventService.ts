@@ -804,7 +804,7 @@ export class EventService {
    * For list queries: fetch headliner band for each event and map to Event.
    * This keeps list queries efficient (single query + one headliner fetch).
    */
-  private async mapDbEventsWithHeadliner(rows: any[]): Promise<Event[]> {
+  async mapDbEventsWithHeadliner(rows: any[]): Promise<Event[]> {
     if (rows.length === 0) return [];
 
     const eventIds = rows.map((r: any) => r.id);

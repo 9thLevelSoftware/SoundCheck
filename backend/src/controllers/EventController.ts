@@ -3,12 +3,14 @@ import { EventService } from '../services/EventService';
 import { EventSyncService } from '../services/EventSyncService';
 import { TicketmasterAdapter } from '../services/TicketmasterAdapter';
 import { BandMatcher } from '../services/BandMatcher';
+import { DiscoveryService } from '../services/DiscoveryService';
 import { ApiResponse } from '../types';
 
 export class EventController {
   private eventService = new EventService();
   private eventSyncService = new EventSyncService();
   private bandMatcher = new BandMatcher();
+  private discoveryService = new DiscoveryService();
 
   /**
    * Create a new event
@@ -504,6 +506,56 @@ export class EventController {
       const response: ApiResponse = {
         success: false,
         error: 'Failed to search events',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get personalized event recommendations
+   * GET /api/events/recommended?lat=&lon=&radius=&limit=
+   * Requires auth (userId from token).
+   *
+   * Returns events scored by: genre affinity (3x), friend attendance (5x),
+   * trending (1x). Already-attended events excluded. New users get trending fallback.
+   */
+  getRecommendedEvents = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req as any).user?.id;
+      if (!userId) {
+        res.status(401).json({
+          success: false,
+          error: 'Authentication required',
+        } as ApiResponse);
+        return;
+      }
+
+      const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+      const lon = req.query.lon ? parseFloat(req.query.lon as string) : undefined;
+      const radius = req.query.radius ? parseFloat(req.query.radius as string) : undefined;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+      const events = await this.discoveryService.getRecommendedEvents(
+        userId,
+        lat,
+        lon,
+        radius,
+        limit
+      );
+
+      const response: ApiResponse = {
+        success: true,
+        data: events,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get recommended events error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch recommended events',
       };
 
       res.status(500).json(response);

@@ -267,6 +267,11 @@ export class CheckinService {
         console.error('Warning: stats cache invalidation failed:', err)
       );
 
+      // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
+      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
+        console.error('Warning: recommendations cache invalidation failed:', err)
+      );
+
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
       // and enqueue batched push notifications for followers
       this.publishCheckinAndNotify(
@@ -666,6 +671,11 @@ export class CheckinService {
         console.error('Warning: stats cache invalidation failed:', err)
       );
 
+      // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
+      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
+        console.error('Warning: recommendations cache invalidation failed:', err)
+      );
+
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out (legacy path)
       // and enqueue batched push notifications for followers
       if (eventId) {
@@ -1002,6 +1012,11 @@ export class CheckinService {
       // Fire-and-forget: invalidate concert cred stats cache
       cache.del(`stats:concert-cred:${userId}`).catch((err) =>
         console.error('Warning: stats cache invalidation failed:', err)
+      );
+
+      // Fire-and-forget: invalidate recommendation cache (deleted check-in changes genre affinity)
+      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
+        console.error('Warning: recommendations cache invalidation failed:', err)
       );
 
       // Fire-and-forget: invalidate band aggregate caches

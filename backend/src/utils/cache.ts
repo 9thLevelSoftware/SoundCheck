@@ -304,6 +304,7 @@ export const CacheKeys = {
   nearbyEvents: (lat: number, lon: number, radius: number) => `events:nearby:${lat.toFixed(2)}:${lon.toFixed(2)}:${radius}`,
   trendingEvents: (lat: number, lon: number) => `events:trending:${lat.toFixed(2)}:${lon.toFixed(2)}`,
   genreEvents: (genre: string) => `events:genre:${genre.toLowerCase()}`,
+  recommendations: (userId: string) => `events:recs:${userId}`,
 };
 
 // Export TTL constants

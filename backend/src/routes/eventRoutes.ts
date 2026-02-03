@@ -20,6 +20,9 @@ router.get('/genre/:genre', eventController.getByGenre);
 // Discovery: event search (public)
 router.get('/search', eventController.searchEvents);
 
+// Personalized recommendations (requires auth for user-based scoring)
+router.get('/recommended', authenticateToken, eventController.getRecommendedEvents);
+
 // Get nearby events (requires auth) - check-in auto-suggest (today only)
 // MUST be before /:id to avoid param conflict
 router.get('/nearby', authenticateToken, eventController.getNearbyEvents);
