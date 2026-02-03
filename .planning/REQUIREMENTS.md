@@ -9,16 +9,16 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Data Model Redesign
 
-- [ ] **DATA-01**: Events exist as first-class entities with name, venue, date, times, type, and ticket info
-- [ ] **DATA-02**: Events support multi-band lineups via junction table with set order and headliner flag
-- [ ] **DATA-03**: Check-ins reference events (not bands/venues directly)
-- [ ] **DATA-04**: Check-ins support dual ratings (band performance + venue experience) as independent optional fields
-- [ ] **DATA-05**: Per-set band ratings stored in separate table for multi-band events
-- [ ] **DATA-06**: Event timestamps use TIMESTAMPTZ; venues store IANA timezone identifier
-- [ ] **DATA-07**: Events track source API and external ID for cross-source deduplication
-- [ ] **DATA-08**: Badge criteria stored as JSONB for data-driven evaluation without code changes
-- [ ] **DATA-09**: Schema migration uses expand-contract pattern with backward compatibility
-- [ ] **DATA-10**: Existing shows/checkins data migrated to new event-based model without data loss
+- [x] **DATA-01**: Events exist as first-class entities with name, venue, date, times, type, and ticket info
+- [x] **DATA-02**: Events support multi-band lineups via junction table with set order and headliner flag
+- [x] **DATA-03**: Check-ins reference events (not bands/venues directly)
+- [x] **DATA-04**: Check-ins support dual ratings (band performance + venue experience) as independent optional fields
+- [x] **DATA-05**: Per-set band ratings stored in separate table for multi-band events
+- [x] **DATA-06**: Event timestamps use TIMESTAMPTZ; venues store IANA timezone identifier
+- [x] **DATA-07**: Events track source API and external ID for cross-source deduplication
+- [x] **DATA-08**: Badge criteria stored as JSONB for data-driven evaluation without code changes
+- [x] **DATA-09**: Schema migration uses expand-contract pattern with backward compatibility
+- [x] **DATA-10**: Existing shows/checkins data migrated to new event-based model without data loss
 
 ### Event Data Pipeline
 
@@ -159,16 +159,16 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
-| DATA-06 | Phase 1 | Pending |
-| DATA-07 | Phase 1 | Pending |
-| DATA-08 | Phase 1 | Pending |
-| DATA-09 | Phase 1 | Pending |
-| DATA-10 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
+| DATA-05 | Phase 1 | Complete |
+| DATA-06 | Phase 1 | Complete |
+| DATA-07 | Phase 1 | Complete |
+| DATA-08 | Phase 1 | Complete |
+| DATA-09 | Phase 1 | Complete |
+| DATA-10 | Phase 1 | Complete |
 | PIPE-01 | Phase 2 | Pending |
 | PIPE-02 | Phase 2 | Pending |
 | PIPE-03 | Phase 2 | Pending |
@@ -244,4 +244,4 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-02 after roadmap creation*
+*Last updated: 2026-02-02 after Phase 1 complete (DATA-01 through DATA-10 verified)*
