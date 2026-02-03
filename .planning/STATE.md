@@ -10,28 +10,28 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 2 of 8 (Event Data Pipeline)
-Plan: 1 of 3 in Phase 2 (02-01 complete)
+Plan: 2 of 3 in Phase 2 (02-02 complete)
 Status: In progress
-Last activity: 2026-02-03 -- Completed 02-01-PLAN.md
+Last activity: 2026-02-03 -- Completed 02-02-PLAN.md
 
-Progress: [####__________________] 18% (4/22 plans)
+Progress: [#####_________________] 23% (5/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
-- Average duration: 6 min
-- Total execution time: 0.4 hours
+- Total plans completed: 5
+- Average duration: 5.6 min
+- Total execution time: 0.5 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
-| 02-event-data-pipeline | 1/3 | 4 min | 4 min |
+| 02-event-data-pipeline | 2/3 | 8 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 7m, 5m, 6m, 4m
+- Last 5 plans: 5m, 6m, 4m, 4m
 - Trend: stable/improving
 
 *Updated after each plan completion*
@@ -61,10 +61,13 @@ Recent decisions affecting current work:
 - [02-01]: Partial unique index (WHERE external_id IS NOT NULL) on venues and bands for source+external_id dedup
 - [02-01]: In-memory daily API call counter with midnight UTC reset for Ticketmaster quota tracking
 - [02-01]: 200ms inter-request delay for Ticketmaster per-second rate limiting (BullMQ limiter for job-level in 02-02)
+- [02-02]: EventSyncService uses graceful constructor flag (apiKeyConfigured) instead of throwing when TM key is missing
+- [02-02]: BullMQ queue exports null when REDIS_URL unavailable; all consumers guard against null
 
 ### Pending Todos
 
 - Set up TICKETMASTER_API_KEY environment variable (see .planning/phases/02-event-data-pipeline/02-USER-SETUP.md)
+- Configure sync_regions in database with lat/lon/radius for metro areas to sync
 
 ### Blockers/Concerns
 
@@ -80,5 +83,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 02-01-PLAN.md (schema extensions, TM adapter, band matcher)
+Stopped at: Completed 02-02-PLAN.md (EventSyncService orchestrator, BullMQ worker/scheduler, app startup)
 Resume file: None
