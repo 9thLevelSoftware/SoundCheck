@@ -8,10 +8,12 @@ import '../../../shared/utils/haptic_feedback.dart';
 import '../../../shared/utils/date_formatter.dart';
 import '../../badges/domain/badge.dart';
 import '../../checkins/domain/checkin.dart';
+import '../domain/concert_cred.dart';
 import 'providers/profile_providers.dart';
 
-/// Profile Screen - Gamification-focused user profile
-/// Modeled after Untappd's profile with stats emphasis
+/// Profile Screen - Concert resume / concert cred
+/// Modeled after Untappd's profile with stats emphasis.
+/// Consumes the concert cred endpoint for server-side aggregate stats.
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
 
@@ -28,6 +30,9 @@ class ProfileScreen extends ConsumerWidget {
                 color: AppTheme.electricPurple,
                 backgroundColor: AppTheme.cardDark,
                 onRefresh: () async {
+                  ref.invalidate(concertCredProvider(user.id));
+                  ref.invalidate(userRecentCheckinsProvider(user.id));
+                  ref.invalidate(userBadgesProvider(user.id));
                   await ref.read(authStateProvider.notifier).refreshUser();
                 },
                 child: CustomScrollView(
@@ -37,14 +42,61 @@ class ProfileScreen extends ConsumerWidget {
                       child: _ProfileHeader(user: user),
                     ),
 
-                    // Main Stats Row (Untappd-style)
+                    // Main Stats Row (from concert cred)
                     SliverToBoxAdapter(
-                      child: _MainStatsRow(user: user),
+                      child: _MainStatsRow(userId: user.id),
                     ),
 
                     // Level Progress
                     SliverToBoxAdapter(
                       child: _LevelProgress(totalCheckins: user.totalCheckins),
+                    ),
+
+                    // Section: Genre Breakdown
+                    const SliverToBoxAdapter(
+                      child: _SectionHeader(title: 'Top Genres'),
+                    ),
+
+                    // Genre Breakdown (from concert cred)
+                    SliverToBoxAdapter(
+                      child: _GenreBreakdown(userId: user.id),
+                    ),
+
+                    // Section: Top Rated Bands
+                    const SliverToBoxAdapter(
+                      child: _SectionHeader(title: 'Favorite Bands'),
+                    ),
+
+                    // Top Rated Bands
+                    SliverToBoxAdapter(
+                      child: _TopRatedBands(userId: user.id),
+                    ),
+
+                    // Section: Top Rated Venues
+                    const SliverToBoxAdapter(
+                      child: _SectionHeader(title: 'Favorite Venues'),
+                    ),
+
+                    // Top Rated Venues
+                    SliverToBoxAdapter(
+                      child: _TopRatedVenues(userId: user.id),
+                    ),
+
+                    // Section: Badges
+                    SliverToBoxAdapter(
+                      child: _SectionHeader(
+                        title: 'Badges',
+                        trailing: 'View All',
+                        onTrailingTap: () {
+                          HapticFeedbackUtil.selectionClick();
+                          context.push('/badges');
+                        },
+                      ),
+                    ),
+
+                    // Badges Showcase
+                    SliverToBoxAdapter(
+                      child: _BadgesShowcase(userId: user.id),
                     ),
 
                     // Section: Recent Activity
@@ -58,43 +110,6 @@ class ProfileScreen extends ConsumerWidget {
                     // Recent Check-ins
                     SliverToBoxAdapter(
                       child: _RecentCheckins(userId: user.id),
-                    ),
-
-                    // Section: Badges
-                    const SliverToBoxAdapter(
-                      child: _SectionHeader(
-                        title: 'Badges',
-                        trailing: 'View All',
-                      ),
-                    ),
-
-                    // Badges Grid
-                    SliverToBoxAdapter(
-                      child: _BadgesShowcase(userId: user.id),
-                    ),
-
-                    // Section: Wishlist
-                    const SliverToBoxAdapter(
-                      child: _SectionHeader(
-                        title: 'Wishlist',
-                        subtitle: 'Bands you want to see',
-                        trailing: 'View All',
-                      ),
-                    ),
-
-                    // Wishlist Preview
-                    SliverToBoxAdapter(
-                      child: _WishlistPreview(),
-                    ),
-
-                    // Section: Top Genres
-                    const SliverToBoxAdapter(
-                      child: _SectionHeader(title: 'Top Genres'),
-                    ),
-
-                    // Genre Stats
-                    SliverToBoxAdapter(
-                      child: _GenreStats(userId: user.id),
                     ),
 
                     // Bottom padding for nav bar
@@ -113,7 +128,10 @@ class ProfileScreen extends ConsumerWidget {
             children: [
               const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
               const SizedBox(height: 16),
-              const Text('Error loading profile', style: TextStyle(color: AppTheme.textSecondary)),
+              const Text(
+                'Error loading profile',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => ref.invalidate(authStateProvider),
@@ -147,8 +165,8 @@ class _ProfileHeader extends StatelessWidget {
               end: Alignment.bottomRight,
               colors: [
                 AppTheme.electricPurple,
-                AppTheme.electricPurple.withValues(alpha:0.6),
-                AppTheme.neonPink.withValues(alpha:0.4),
+                AppTheme.electricPurple.withValues(alpha: 0.6),
+                AppTheme.neonPink.withValues(alpha: 0.4),
               ],
             ),
           ),
@@ -230,8 +248,13 @@ class _ProfileHeader extends StatelessWidget {
                     label: const Text('Edit'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppTheme.textPrimary,
-                      side: BorderSide(color: AppTheme.textTertiary.withValues(alpha:0.3)),
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      side: BorderSide(
+                        color: AppTheme.textTertiary.withValues(alpha: 0.3),
+                      ),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
                     ),
                   ),
                 ],
@@ -302,61 +325,104 @@ class _ProfileHeader extends StatelessWidget {
   }
 }
 
-// Main Stats Row - Untappd style
-class _MainStatsRow extends StatelessWidget {
-  const _MainStatsRow({required this.user});
+// Main Stats Row - sourced from concert cred endpoint
+class _MainStatsRow extends ConsumerWidget {
+  const _MainStatsRow({required this.userId});
 
-  final dynamic user;
+  final String userId;
 
   @override
-  Widget build(BuildContext context) {
-    // Use real stats from user model
-    final totalCheckins = user.totalCheckins;
-    final uniqueBands = user.uniqueBands;
-    final uniqueVenues = user.uniqueVenues;
-    final badgesCount = user.badgesCount;
+  Widget build(BuildContext context, WidgetRef ref) {
+    final credAsync = ref.watch(concertCredProvider(userId));
 
-    return Container(
-      margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppTheme.electricPurple.withValues(alpha:0.2),
+    return credAsync.when(
+      loading: () => Container(
+        margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.electricPurple.withValues(alpha: 0.2),
+          ),
+        ),
+        child: const Center(
+          child: SizedBox(
+            height: 60,
+            child: CircularProgressIndicator(
+              color: AppTheme.electricPurple,
+              strokeWidth: 2,
+            ),
+          ),
         ),
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _StatItem(
-            value: totalCheckins.toString(),
-            label: 'Check-ins',
-            icon: Icons.music_note,
-            color: AppTheme.electricPurple,
+      error: (error, _) => Container(
+        margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppTheme.error, size: 24),
+              const SizedBox(height: 8),
+              const Text(
+                'Could not load stats',
+                style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(concertCredProvider(userId)),
+                child: const Text('Retry'),
+              ),
+            ],
           ),
-          _StatDivider(),
-          _StatItem(
-            value: uniqueBands.toString(),
-            label: 'Unique Bands',
-            icon: Icons.album,
-            color: AppTheme.neonPink,
+        ),
+      ),
+      data: (cred) => Container(
+        margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
+        padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: AppTheme.electricPurple.withValues(alpha: 0.2),
           ),
-          _StatDivider(),
-          _StatItem(
-            value: uniqueVenues.toString(),
-            label: 'Venues',
-            icon: Icons.location_on,
-            color: AppTheme.liveGreen,
-          ),
-          _StatDivider(),
-          _StatItem(
-            value: badgesCount.toString(),
-            label: 'Badges',
-            icon: Icons.emoji_events,
-            color: AppTheme.toastGold,
-          ),
-        ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+          children: [
+            _StatItem(
+              value: cred.totalShows.toString(),
+              label: 'Shows',
+              icon: Icons.music_note,
+              color: AppTheme.electricPurple,
+            ),
+            _StatDivider(),
+            _StatItem(
+              value: cred.uniqueBands.toString(),
+              label: 'Bands',
+              icon: Icons.album,
+              color: AppTheme.neonPink,
+            ),
+            _StatDivider(),
+            _StatItem(
+              value: cred.uniqueVenues.toString(),
+              label: 'Venues',
+              icon: Icons.location_on,
+              color: AppTheme.liveGreen,
+            ),
+            _StatDivider(),
+            _StatItem(
+              value: cred.badgesEarned.toString(),
+              label: 'Badges',
+              icon: Icons.emoji_events,
+              color: AppTheme.toastGold,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -409,7 +475,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       height: 40,
       width: 1,
-      color: AppTheme.textTertiary.withValues(alpha:0.2),
+      color: AppTheme.textTertiary.withValues(alpha: 0.2),
     );
   }
 }
@@ -420,14 +486,11 @@ class _LevelProgress extends StatelessWidget {
 
   const _LevelProgress({required this.totalCheckins});
 
-  // Calculate level from total checkins
-  // Each level requires more XP: Level 1 = 0 XP, Level 2 = 100 XP, Level 3 = 250 XP, etc.
-  static (int level, int currentXP, int nextLevelXP, String title) _calculateLevel(int checkins) {
-    // XP per checkin
+  static (int level, int currentXP, int nextLevelXP, String title)
+      _calculateLevel(int checkins) {
     const xpPerCheckin = 50;
     final totalXP = checkins * xpPerCheckin;
 
-    // Level thresholds (cumulative XP needed)
     const levels = [
       (1, 0, 'Newcomer'),
       (2, 100, 'Explorer'),
@@ -457,7 +520,8 @@ class _LevelProgress extends StatelessWidget {
         currentLevel = level;
         currentThreshold = threshold;
         title = levelTitle;
-        nextThreshold = i + 1 < levels.length ? levels[i + 1].$2 : threshold + 10000;
+        nextThreshold =
+            i + 1 < levels.length ? levels[i + 1].$2 : threshold + 10000;
       } else {
         break;
       }
@@ -471,8 +535,10 @@ class _LevelProgress extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final (currentLevel, currentXP, nextLevelXP, title) = _calculateLevel(totalCheckins);
-    final progress = nextLevelXP > 0 ? (currentXP / nextLevelXP).clamp(0.0, 1.0) : 1.0;
+    final (currentLevel, currentXP, nextLevelXP, title) =
+        _calculateLevel(totalCheckins);
+    final progress =
+        nextLevelXP > 0 ? (currentXP / nextLevelXP).clamp(0.0, 1.0) : 1.0;
 
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -490,7 +556,8 @@ class _LevelProgress extends StatelessWidget {
               Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       gradient: AppTheme.primaryGradient,
                       borderRadius: BorderRadius.circular(12),
@@ -525,14 +592,14 @@ class _LevelProgress extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 12),
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
               backgroundColor: AppTheme.surfaceDark,
-              valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.primary),
+              valueColor:
+                  const AlwaysStoppedAnimation<Color>(AppTheme.primary),
             ),
           ),
           const SizedBox(height: 8),
@@ -593,9 +660,10 @@ class _SectionHeader extends StatelessWidget {
           ),
           if (trailing != null)
             TextButton(
-              onPressed: onTrailingTap ?? () {
-                debugPrint('$title - $trailing tapped');
-              },
+              onPressed: onTrailingTap ??
+                  () {
+                    debugPrint('$title - $trailing tapped');
+                  },
               child: Text(
                 trailing!,
                 style: const TextStyle(
@@ -605,6 +673,491 @@ class _SectionHeader extends StatelessWidget {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+// Genre Breakdown from concert cred (server-side computed)
+class _GenreBreakdown extends ConsumerWidget {
+  const _GenreBreakdown({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final credAsync = ref.watch(concertCredProvider(userId));
+
+    return credAsync.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.electricPurple,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(Icons.error_outline, color: AppTheme.error, size: 32),
+              const SizedBox(height: 8),
+              const Text(
+                'Failed to load genre stats',
+                style: TextStyle(color: AppTheme.textSecondary),
+              ),
+              TextButton(
+                onPressed: () => ref.invalidate(concertCredProvider(userId)),
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        ),
+      ),
+      data: (cred) {
+        final genres = cred.genres;
+        if (genres.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.bar_chart, size: 48, color: AppTheme.textTertiary),
+                  SizedBox(height: 12),
+                  Text(
+                    'No genre data yet',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                  SizedBox(height: 4),
+                  Text(
+                    'Check in to concerts to see your genre stats!',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: AppTheme.textTertiary,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        final displayGenres = genres.take(5).toList();
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 16),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.cardDark,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            children: displayGenres.map((genre) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          genre.genre,
+                          style: const TextStyle(
+                            fontSize: 13,
+                            color: AppTheme.textSecondary,
+                          ),
+                        ),
+                        Text(
+                          '${genre.count} shows (${genre.percentage}%)',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppTheme.textTertiary,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(3),
+                      child: LinearProgressIndicator(
+                        value: (genre.percentage / 100).clamp(0.0, 1.0),
+                        minHeight: 6,
+                        backgroundColor: AppTheme.surfaceDark,
+                        valueColor: const AlwaysStoppedAnimation<Color>(
+                          AppTheme.electricPurple,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// Top Rated Bands - horizontal scrollable list
+class _TopRatedBands extends ConsumerWidget {
+  const _TopRatedBands({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final credAsync = ref.watch(concertCredProvider(userId));
+
+    return credAsync.when(
+      loading: () => const SizedBox(
+        height: 160,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.neonPink,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (error, _) => const SizedBox.shrink(),
+      data: (cred) {
+        final bands = cred.topBands;
+        if (bands.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.album, size: 40, color: AppTheme.textTertiary),
+                  SizedBox(height: 8),
+                  Text(
+                    'Rate bands to see your favorites',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 160,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: bands.length,
+            itemBuilder: (context, index) {
+              final band = bands[index];
+              return _TopBandCard(band: band);
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TopBandCard extends StatelessWidget {
+  const _TopBandCard({required this.band});
+
+  final TopRatedBand band;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: band.id.isNotEmpty
+          ? () {
+              HapticFeedbackUtil.selectionClick();
+              context.push('/bands/${band.id}');
+            }
+          : null,
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.neonPink.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Band image or icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: band.imageUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        band.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.album,
+                          color: AppTheme.neonPink,
+                        ),
+                      ),
+                    )
+                  : const Icon(Icons.album, color: AppTheme.neonPink),
+            ),
+            const SizedBox(height: 8),
+            // Band name
+            Text(
+              band.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // Genre tag
+            if (band.genre != null)
+              Text(
+                band.genre!,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textTertiary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            const Spacer(),
+            // Rating and times seen
+            Row(
+              children: [
+                const Icon(Icons.star, size: 14, color: AppTheme.neonPink),
+                const SizedBox(width: 2),
+                Text(
+                  band.avgRating.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.neonPink,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${band.timesSeen}x',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// Top Rated Venues - horizontal scrollable list
+class _TopRatedVenues extends ConsumerWidget {
+  const _TopRatedVenues({required this.userId});
+
+  final String userId;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final credAsync = ref.watch(concertCredProvider(userId));
+
+    return credAsync.when(
+      loading: () => const SizedBox(
+        height: 160,
+        child: Center(
+          child: CircularProgressIndicator(
+            color: AppTheme.toastGold,
+            strokeWidth: 2,
+          ),
+        ),
+      ),
+      error: (error, _) => const SizedBox.shrink(),
+      data: (cred) {
+        final venues = cred.topVenues;
+        if (venues.isEmpty) {
+          return Container(
+            margin: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.location_on,
+                    size: 40,
+                    color: AppTheme.textTertiary,
+                  ),
+                  SizedBox(height: 8),
+                  Text(
+                    'Rate venues to see your favorites',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: AppTheme.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return SizedBox(
+          height: 160,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: venues.length,
+            itemBuilder: (context, index) {
+              final venue = venues[index];
+              return _TopVenueCard(venue: venue);
+            },
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _TopVenueCard extends StatelessWidget {
+  const _TopVenueCard({required this.venue});
+
+  final TopRatedVenue venue;
+
+  @override
+  Widget build(BuildContext context) {
+    final location = [venue.city, venue.state]
+        .where((s) => s != null && s.isNotEmpty)
+        .join(', ');
+
+    return GestureDetector(
+      onTap: venue.id.isNotEmpty
+          ? () {
+              HapticFeedbackUtil.selectionClick();
+              context.push('/venues/${venue.id}');
+            }
+          : null,
+      child: Container(
+        width: 140,
+        margin: const EdgeInsets.only(right: 12),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: AppTheme.toastGold.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Venue image or icon
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceDark,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: venue.imageUrl != null
+                  ? ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.network(
+                        venue.imageUrl!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => const Icon(
+                          Icons.location_on,
+                          color: AppTheme.toastGold,
+                        ),
+                      ),
+                    )
+                  : const Icon(Icons.location_on, color: AppTheme.toastGold),
+            ),
+            const SizedBox(height: 8),
+            // Venue name
+            Text(
+              venue.name,
+              style: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: AppTheme.textPrimary,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            // City/State
+            if (location.isNotEmpty)
+              Text(
+                location,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppTheme.textTertiary,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            const Spacer(),
+            // Rating and times visited
+            Row(
+              children: [
+                const Icon(Icons.star, size: 14, color: AppTheme.toastGold),
+                const SizedBox(width: 2),
+                Text(
+                  venue.avgRating.toStringAsFixed(1),
+                  style: const TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: AppTheme.toastGold,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  '${venue.timesVisited}x',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppTheme.textTertiary,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -640,7 +1193,8 @@ class _RecentCheckins extends ConsumerWidget {
                 style: TextStyle(color: AppTheme.textSecondary),
               ),
               TextButton(
-                onPressed: () => ref.invalidate(userRecentCheckinsProvider(userId)),
+                onPressed: () =>
+                    ref.invalidate(userRecentCheckinsProvider(userId)),
                 child: const Text('Retry'),
               ),
             ],
@@ -743,9 +1297,11 @@ class _CheckinCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                // Band logo - tappable to navigate to band detail
+                // Band logo
                 GestureDetector(
-                  onTap: bandId != null ? () => _navigateToBand(context, bandId) : null,
+                  onTap: bandId != null
+                      ? () => _navigateToBand(context, bandId)
+                      : null,
                   child: Container(
                     width: 48,
                     height: 48,
@@ -772,13 +1328,15 @@ class _CheckinCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 12),
-                // Info - band name tappable to navigate to band detail
+                // Info
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       GestureDetector(
-                        onTap: bandId != null ? () => _navigateToBand(context, bandId) : null,
+                        onTap: bandId != null
+                            ? () => _navigateToBand(context, bandId)
+                            : null,
                         child: Text(
                           bandName,
                           style: const TextStyle(
@@ -798,10 +1356,11 @@ class _CheckinCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                // Rating (only show if rating > 0)
+                // Rating
                 if (rating > 0)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
                       color: _getRatingColor(rating).withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
@@ -828,7 +1387,7 @@ class _CheckinCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 12),
-            // Footer with social stats
+            // Footer
             Row(
               children: [
                 Text(
@@ -898,7 +1457,6 @@ class _BadgesShowcase extends ConsumerWidget {
 
   final String userId;
 
-  // Map badge categories to icons and colors
   static IconData _getBadgeIcon(BadgeCategory category) {
     switch (category) {
       case BadgeCategory.checkinCount:
@@ -978,7 +1536,11 @@ class _BadgesShowcase extends ConsumerWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.emoji_events_outlined, size: 32, color: AppTheme.textTertiary),
+                  Icon(
+                    Icons.emoji_events_outlined,
+                    size: 32,
+                    color: AppTheme.textTertiary,
+                  ),
                   SizedBox(height: 8),
                   Text(
                     'No badges earned yet',
@@ -1012,7 +1574,9 @@ class _BadgesShowcase extends ConsumerWidget {
               final badgeName = badge?.name ?? 'Badge';
               final badgeType = badge?.category ?? BadgeCategory.checkinCount;
               final badgeColor = badge?.color != null
-                  ? Color(int.parse(badge!.color!.replaceFirst('#', '0xFF')))
+                  ? Color(
+                      int.parse(badge!.color!.replaceFirst('#', '0xFF')),
+                    )
                   : _getBadgeColor(badgeType);
               final badgeIcon = _getBadgeIcon(badgeType);
 
@@ -1062,220 +1626,6 @@ class _BadgesShowcase extends ConsumerWidget {
                 ),
               );
             },
-          ),
-        );
-      },
-    );
-  }
-}
-
-// Wishlist Preview
-class _WishlistPreview extends StatelessWidget {
-  void _navigateToBand(BuildContext context, String bandId) {
-    HapticFeedbackUtil.selectionClick();
-    context.push('/bands/$bandId');
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    // Mock wishlist - when real data is available, each item should have a bandId
-    final wishlist = [
-      {'id': 'mock-tool-id', 'band': 'Tool', 'genre': 'Progressive Metal'},
-      {'id': 'mock-rammstein-id', 'band': 'Rammstein', 'genre': 'Industrial Metal'},
-      {'id': 'mock-slipknot-id', 'band': 'Slipknot', 'genre': 'Nu Metal'},
-    ];
-
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardDark,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        children: wishlist.asMap().entries.map((entry) {
-          final index = entry.key;
-          final item = entry.value;
-          final bandId = item['id'];
-          return Column(
-            children: [
-              ListTile(
-                leading: Container(
-                  width: 44,
-                  height: 44,
-                  decoration: BoxDecoration(
-                    color: AppTheme.surfaceDark,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.album, color: AppTheme.textTertiary),
-                ),
-                title: Text(
-                  item['band']!,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textPrimary,
-                  ),
-                ),
-                subtitle: Text(
-                  item['genre']!,
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppTheme.textTertiary,
-                  ),
-                ),
-                trailing: const Icon(
-                  Icons.bookmark,
-                  color: AppTheme.electricPurple,
-                ),
-                onTap: bandId != null ? () => _navigateToBand(context, bandId) : null,
-              ),
-              if (index < wishlist.length - 1)
-                Divider(
-                  height: 1,
-                  indent: 70,
-                  color: AppTheme.textTertiary.withValues(alpha:0.1),
-                ),
-            ],
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// Genre Stats
-class _GenreStats extends ConsumerWidget {
-  const _GenreStats({required this.userId});
-
-  final String userId;
-
-  static const _colors = [
-    AppTheme.electricPurple,
-    AppTheme.neonPink,
-    AppTheme.liveGreen,
-    AppTheme.toastGold,
-    AppTheme.textTertiary,
-  ];
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final genreStatsAsync = ref.watch(userGenreStatsProvider(userId));
-
-    return genreStatsAsync.when(
-      loading: () => const Padding(
-        padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Center(
-          child: CircularProgressIndicator(color: AppTheme.electricPurple),
-        ),
-      ),
-      error: (error, _) => Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.error_outline, color: AppTheme.error, size: 32),
-              const SizedBox(height: 8),
-              const Text(
-                'Failed to load genre stats',
-                style: TextStyle(color: AppTheme.textSecondary),
-              ),
-              TextButton(
-                onPressed: () => ref.invalidate(userGenreStatsProvider(userId)),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      ),
-      data: (genres) {
-        if (genres.isEmpty) {
-          return Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              color: AppTheme.cardDark,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: const Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.bar_chart, size: 48, color: AppTheme.textTertiary),
-                  SizedBox(height: 12),
-                  Text(
-                    'No genre data yet',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: AppTheme.textSecondary,
-                    ),
-                  ),
-                  SizedBox(height: 4),
-                  Text(
-                    'Check in to concerts to see your genre stats!',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppTheme.textTertiary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          );
-        }
-
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: 16),
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.cardDark,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Column(
-            children: genres.asMap().entries.map((entry) {
-              final index = entry.key;
-              final genre = entry.value;
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          genre['name'] as String,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            color: AppTheme.textSecondary,
-                          ),
-                        ),
-                        Text(
-                          '${genre['count']} check-ins',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: AppTheme.textTertiary,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 6),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(3),
-                      child: LinearProgressIndicator(
-                        value: (genre['percent'] as double).clamp(0.0, 1.0),
-                        minHeight: 6,
-                        backgroundColor: AppTheme.surfaceDark,
-                        valueColor: AlwaysStoppedAnimation<Color>(
-                          _colors[index % _colors.length],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
           ),
         );
       },
