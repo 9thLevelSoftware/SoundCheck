@@ -2,16 +2,20 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/services/location_service.dart';
+import '../domain/nearby_event.dart';
 import '../domain/checkin.dart';
-import 'photo_upload_sheet.dart';
 import 'providers/checkin_providers.dart';
+import 'rating_bottom_sheet.dart';
 
-/// Check-in Screen - The Core Feature
-/// Step 1: Search for a band
-/// Step 2: Fill in the check-in form (venue, rating, photo, vibes)
+/// Check-in Screen - Event-first quick-tap flow
+///
+/// Flow: GPS auto-suggest nearby events -> single tap check-in -> optional rating enrichment
+/// Fallback: manual band+venue search for backward compat
 class CheckInScreen extends ConsumerStatefulWidget {
   const CheckInScreen({super.key});
 
@@ -19,13 +23,22 @@ class CheckInScreen extends ConsumerStatefulWidget {
   ConsumerState<CheckInScreen> createState() => _CheckInScreenState();
 }
 
+enum _ScreenState { events, success, manual }
+
 class _CheckInScreenState extends ConsumerState<CheckInScreen> {
+  _ScreenState _screenState = _ScreenState.events;
+  String? _checkingInEventId;
+  CheckIn? _completedCheckIn;
+  NearbyEvent? _checkedInEvent;
+  Position? _cachedPosition;
+  bool _ratingsCompleted = false;
+  bool _venueRatingCompleted = false;
+
+  // Manual check-in state (legacy fallback)
   final TextEditingController _bandSearchController = TextEditingController();
   final TextEditingController _venueSearchController = TextEditingController();
   final TextEditingController _commentController = TextEditingController();
   final ImagePicker _imagePicker = ImagePicker();
-
-  // State
   String? _selectedBandId;
   String? _selectedBandName;
   String? _selectedVenueId;
@@ -36,22 +49,28 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   final List<XFile> _selectedImages = [];
   static const int _maxImages = 4;
 
-  // Check-in success state
-  CheckIn? _createdCheckIn;
-  bool _photosUploaded = false;
-
   final List<Map<String, String>> _vibeOptions = [
-    {'id': 'mosh_pit', 'name': 'Mosh Pit', 'icon': '🤘'},
-    {'id': 'crowd_surfing', 'name': 'Crowd Surfing', 'icon': '🏄'},
-    {'id': 'great_sound', 'name': 'Great Sound', 'icon': '🔊'},
-    {'id': 'epic_lighting', 'name': 'Epic Lighting', 'icon': '✨'},
-    {'id': 'intimate', 'name': 'Intimate', 'icon': '🕯️'},
-    {'id': 'packed', 'name': 'Packed House', 'icon': '👥'},
-    {'id': 'good_vibes', 'name': 'Good Vibes', 'icon': '✌️'},
-    {'id': 'singing_along', 'name': 'Singing Along', 'icon': '🎤'},
-    {'id': 'headbanging', 'name': 'Headbanging', 'icon': '🎸'},
-    {'id': 'pyro', 'name': 'Pyro', 'icon': '🔥'},
+    {'id': 'mosh_pit', 'name': 'Mosh Pit', 'icon': '\u{1F918}'},
+    {'id': 'crowd_surfing', 'name': 'Crowd Surfing', 'icon': '\u{1F3C4}'},
+    {'id': 'great_sound', 'name': 'Great Sound', 'icon': '\u{1F50A}'},
+    {'id': 'epic_lighting', 'name': 'Epic Lighting', 'icon': '\u{2728}'},
+    {'id': 'intimate', 'name': 'Intimate', 'icon': '\u{1F56F}'},
+    {'id': 'packed', 'name': 'Packed House', 'icon': '\u{1F465}'},
+    {'id': 'good_vibes', 'name': 'Good Vibes', 'icon': '\u{270C}'},
+    {'id': 'singing_along', 'name': 'Singing Along', 'icon': '\u{1F3A4}'},
+    {'id': 'headbanging', 'name': 'Headbanging', 'icon': '\u{1F3B8}'},
+    {'id': 'pyro', 'name': 'Pyro', 'icon': '\u{1F525}'},
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    _cachePosition();
+  }
+
+  Future<void> _cachePosition() async {
+    _cachedPosition = await LocationService.getCurrentPosition();
+  }
 
   @override
   void dispose() {
@@ -60,6 +79,447 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     _commentController.dispose();
     super.dispose();
   }
+
+  Future<void> _checkInToEvent(NearbyEvent event) async {
+    setState(() => _checkingInEventId = event.id);
+
+    // Use cached position or fetch fresh
+    final position = _cachedPosition ?? await LocationService.getCurrentPosition();
+
+    final notifier = ref.read(createEventCheckInProvider.notifier);
+    final checkIn = await notifier.submit(
+      eventId: event.id,
+      locationLat: position?.latitude,
+      locationLon: position?.longitude,
+    );
+
+    if (!mounted) return;
+
+    if (checkIn != null) {
+      setState(() {
+        _completedCheckIn = checkIn;
+        _checkedInEvent = event;
+        _screenState = _ScreenState.success;
+        _checkingInEventId = null;
+      });
+    } else {
+      // Check for duplicate check-in (409)
+      final error = ref.read(createEventCheckInProvider);
+      final errorMsg = error.error?.toString() ?? '';
+      final isDuplicate = errorMsg.contains('already') ||
+          errorMsg.contains('duplicate') ||
+          errorMsg.contains('409');
+
+      setState(() => _checkingInEventId = null);
+
+      if (isDuplicate) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("You've already checked in to this event"),
+            backgroundColor: AppTheme.warning,
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              errorMsg.isNotEmpty
+                  ? errorMsg
+                  : 'Failed to check in. Please try again.',
+            ),
+            backgroundColor: AppTheme.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _openBandRatings() async {
+    if (_completedCheckIn == null || _checkedInEvent == null) return;
+
+    final result = await RatingBottomSheet.show(
+      context,
+      checkinId: _completedCheckIn!.id,
+      eventId: _checkedInEvent!.id,
+      lineup: _checkedInEvent!.lineup,
+      venueName: _checkedInEvent!.venue?.name,
+      initialTab: 0,
+    );
+
+    if (result == true && mounted) {
+      setState(() => _ratingsCompleted = true);
+    }
+  }
+
+  Future<void> _openVenueRating() async {
+    if (_completedCheckIn == null || _checkedInEvent == null) return;
+
+    final result = await RatingBottomSheet.show(
+      context,
+      checkinId: _completedCheckIn!.id,
+      eventId: _checkedInEvent!.id,
+      lineup: _checkedInEvent!.lineup,
+      venueName: _checkedInEvent!.venue?.name,
+      initialTab: 1,
+    );
+
+    if (result == true && mounted) {
+      setState(() => _venueRatingCompleted = true);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppTheme.backgroundDark,
+      appBar: AppBar(
+        backgroundColor: AppTheme.backgroundDark,
+        leading: IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: () => context.pop(),
+        ),
+        title: const Text(
+          'Check In',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+      ),
+      body: switch (_screenState) {
+        _ScreenState.events => _buildEventList(),
+        _ScreenState.success => _buildSuccessState(),
+        _ScreenState.manual => _isSearchingBand
+            ? _buildBandSearch()
+            : _buildCheckInForm(),
+      },
+    );
+  }
+
+  // ======== EVENT-FIRST FLOW ========
+
+  Widget _buildEventList() {
+    final nearbyEventsAsync = ref.watch(nearbyEventsProvider);
+
+    return nearbyEventsAsync.when(
+      data: (events) {
+        if (events.isEmpty) {
+          return _buildNoEventsState();
+        }
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.liveGreen,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Text(
+                    'Shows near you',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Event list
+            Expanded(
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  return _EventCard(
+                    event: events[index],
+                    isCheckingIn: _checkingInEventId == events[index].id,
+                    onCheckIn: () => _checkInToEvent(events[index]),
+                  );
+                },
+              ),
+            ),
+
+            // Manual check-in fallback
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Center(
+                child: TextButton(
+                  onPressed: () {
+                    setState(() {
+                      _screenState = _ScreenState.manual;
+                      _isSearchingBand = true;
+                    });
+                  },
+                  child: const Text(
+                    "Can't find your show? Check in manually",
+                    style: TextStyle(
+                      color: AppTheme.textTertiary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: AppTheme.electricPurple),
+            SizedBox(height: 16),
+            Text(
+              'Finding shows near you...',
+              style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+            ),
+          ],
+        ),
+      ),
+      error: (error, stack) => _buildNoEventsState(),
+    );
+  }
+
+  Widget _buildNoEventsState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.location_off,
+              size: 64,
+              color: AppTheme.textTertiary.withValues(alpha: 0.5),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No shows near you right now',
+              style: TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Try checking in manually or make sure location services are enabled.',
+              style: TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: () async {
+                final perm = await LocationService.requestPermission();
+                if (LocationService.hasPermission(perm) && mounted) {
+                  ref.invalidate(nearbyEventsProvider);
+                }
+              },
+              icon: const Icon(Icons.my_location),
+              label: const Text('Grant location access'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.electricPurple,
+                foregroundColor: AppTheme.backgroundDark,
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _screenState = _ScreenState.manual;
+                  _isSearchingBand = true;
+                });
+              },
+              child: const Text(
+                'Check in manually',
+                style: TextStyle(color: AppTheme.electricPurple),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ======== SUCCESS STATE ========
+
+  Widget _buildSuccessState() {
+    final event = _checkedInEvent;
+    final eventName = event?.eventName ??
+        event?.band?.name ??
+        event?.lineup?.firstOrNull?.band?.name ??
+        'Event';
+    final isVerified = _completedCheckIn?.isVerified ?? false;
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          const SizedBox(height: 24),
+
+          // Success header
+          Container(
+            width: 80,
+            height: 80,
+            decoration: const BoxDecoration(
+              gradient: AppTheme.primaryGradient,
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check,
+              color: AppTheme.backgroundDark,
+              size: 48,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            "You're checked in!",
+            style: TextStyle(
+              color: AppTheme.textPrimary,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            eventName,
+            style: const TextStyle(
+              color: AppTheme.electricPurple,
+              fontSize: 18,
+              fontWeight: FontWeight.w600,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          if (event?.venue?.name != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              event!.venue!.name,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ],
+          if (isVerified) ...[
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: AppTheme.liveGreen.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.verified, color: AppTheme.liveGreen, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'Location verified',
+                    style: TextStyle(
+                      color: AppTheme.liveGreen,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+          const SizedBox(height: 32),
+
+          // Enrichment options
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Text(
+              'Add to your check-in',
+              style: TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 14,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Rate bands
+          _EnrichmentCard(
+            icon: Icons.star,
+            iconColor: AppTheme.electricPurple,
+            label: 'Rate the bands',
+            completed: _ratingsCompleted,
+            onTap: _openBandRatings,
+          ),
+          const SizedBox(height: 8),
+
+          // Rate venue
+          _EnrichmentCard(
+            icon: Icons.location_on,
+            iconColor: AppTheme.neonPink,
+            label: 'Rate the venue',
+            completed: _venueRatingCompleted,
+            onTap: _openVenueRating,
+          ),
+          const SizedBox(height: 8),
+
+          // Add photos (placeholder)
+          _EnrichmentCard(
+            icon: Icons.camera_alt,
+            iconColor: AppTheme.electricBlue,
+            label: 'Add photos',
+            completed: false,
+            onTap: () {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Photo uploads coming soon!'),
+                  backgroundColor: AppTheme.info,
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 32),
+
+          // Done button
+          SizedBox(
+            width: double.infinity,
+            height: 56,
+            child: ElevatedButton(
+              onPressed: () => context.pop(),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.electricPurple,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              child: const Text(
+                'Done',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.backgroundDark,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+
+  // ======== MANUAL CHECK-IN (LEGACY FALLBACK) ========
 
   void _selectBand(String id, String name) {
     setState(() {
@@ -251,7 +711,6 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
       return;
     }
 
-    // Submit check-in via API with new fields
     final createCheckInNotifier = ref.read(createCheckInProvider.notifier);
     final checkIn = await createCheckInNotifier.submit(
       bandId: _selectedBandId!,
@@ -259,17 +718,21 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
       eventDate: DateTime.now().toIso8601String(),
       venueRating: _rating > 0 ? _rating : null,
       bandRating: _rating > 0 ? _rating : null,
-      reviewText: _commentController.text.isNotEmpty ? _commentController.text : null,
+      reviewText:
+          _commentController.text.isNotEmpty ? _commentController.text : null,
       vibeTagIds: _selectedVibes.isNotEmpty ? _selectedVibes.toList() : null,
     );
 
     if (!mounted) return;
 
     if (checkIn != null) {
-      // Show success state with photo upload option
-      setState(() {
-        _createdCheckIn = checkIn;
-      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Check-in successful!'),
+          backgroundColor: AppTheme.liveGreen,
+        ),
+      );
+      context.pop();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -280,241 +743,28 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     }
   }
 
-  void _showPhotoUploadSheet() {
-    final checkin = _createdCheckIn;
-    if (checkin == null) return;
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: AppTheme.surfaceDark,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: PhotoUploadSheet(
-          checkinId: checkin.id,
-          existingPhotoCount: checkin.imageUrls?.length ?? 0,
-          onComplete: (updatedCheckIn) {
-            if (mounted) {
-              setState(() {
-                _createdCheckIn = updatedCheckIn;
-                _photosUploaded = true;
-              });
-            }
-          },
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
-      appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
-        leading: IconButton(
-          icon: const Icon(Icons.close),
-          onPressed: () => context.pop(),
-        ),
-        title: const Text(
-          'Check In',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-      body: _createdCheckIn != null
-          ? _buildSuccessState()
-          : _isSearchingBand
-              ? _buildBandSearch()
-              : _buildCheckInForm(),
-    );
-  }
-
-  Widget _buildSuccessState() {
-    final checkin = _createdCheckIn!;
-    final photoCount = checkin.imageUrls?.length ?? 0;
-
-    return Center(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Success icon
-            Container(
-              width: 80,
-              height: 80,
-              decoration: const BoxDecoration(
-                gradient: AppTheme.primaryGradient,
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.check,
-                color: Colors.white,
-                size: 40,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Check-in Successful!',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _selectedBandName ?? '',
-              style: const TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 16,
-              ),
-            ),
-            const SizedBox(height: 32),
-
-            // Enrichment cards
-            const Text(
-              'Enhance your check-in',
-              style: TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Add Photos card
-            GestureDetector(
-              onTap: _photosUploaded ? null : _showPhotoUploadSheet,
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppTheme.surfaceVariantDark,
-                  borderRadius: BorderRadius.circular(12),
-                  border: _photosUploaded
-                      ? Border.all(color: AppTheme.liveGreen)
-                      : Border.all(color: AppTheme.textTertiary.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: _photosUploaded
-                            ? AppTheme.liveGreen.withValues(alpha: 0.2)
-                            : AppTheme.neonPink.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        _photosUploaded ? Icons.check_circle : Icons.camera_alt,
-                        color: _photosUploaded ? AppTheme.liveGreen : AppTheme.neonPink,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _photosUploaded ? 'Photos Added' : 'Add Photos',
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 16,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            _photosUploaded
-                                ? '$photoCount photo${photoCount != 1 ? 's' : ''} uploaded'
-                                : 'Share the moment (up to $_maxImages)',
-                            style: const TextStyle(
-                              color: AppTheme.textTertiary,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    if (!_photosUploaded)
-                      const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
-                  ],
-                ),
-              ),
-            ),
-
-            // Photo thumbnails preview (if uploaded)
-            if (_photosUploaded && checkin.imageUrls != null && checkin.imageUrls!.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                height: 80,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: checkin.imageUrls!.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      width: 80,
-                      height: 80,
-                      margin: const EdgeInsets.only(right: 8),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(8),
-                        child: Image.network(
-                          checkin.imageUrls![index],
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) =>
-                              Container(
-                            color: AppTheme.surfaceVariantDark,
-                            child: const Icon(
-                              Icons.broken_image,
-                              color: AppTheme.textTertiary,
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-            ],
-
-            const SizedBox(height: 32),
-
-            // Done button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: () => context.pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.electricPurple,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Done',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBandSearch() {
     return Column(
       children: [
+        // Back to event flow
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _screenState = _ScreenState.events;
+                });
+              },
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: const Text('Back to nearby events'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.textTertiary,
+              ),
+            ),
+          ),
+        ),
         // Search Bar
         Container(
           padding: const EdgeInsets.all(16),
@@ -542,7 +792,8 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                   decoration: const InputDecoration(
                     hintText: 'Search for a band...',
                     hintStyle: TextStyle(color: AppTheme.textTertiary),
-                    prefixIcon: Icon(Icons.search, color: AppTheme.textTertiary),
+                    prefixIcon:
+                        Icon(Icons.search, color: AppTheme.textTertiary),
                     border: InputBorder.none,
                     contentPadding: EdgeInsets.symmetric(
                       horizontal: 16,
@@ -557,11 +808,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             ],
           ),
         ),
-
-        // Search Results
-        Expanded(
-          child: _buildBandSearchResults(),
-        ),
+        Expanded(child: _buildBandSearchResults()),
       ],
     );
   }
@@ -570,7 +817,6 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     final searchQuery = ref.watch(bandSearchQueryProvider);
     final searchResults = ref.watch(searchBandsForCheckinProvider);
 
-    // Show empty state when no search query
     if (searchQuery.isEmpty) {
       return Center(
         child: Padding(
@@ -650,7 +896,6 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         ),
       ),
       error: (error, stack) {
-        // Ignore debounce cancellation errors
         if (error.toString().contains('Query changed')) {
           return const Center(
             child: Padding(
@@ -684,7 +929,8 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                 ),
                 const SizedBox(height: 16),
                 TextButton(
-                  onPressed: () => ref.invalidate(searchBandsForCheckinProvider),
+                  onPressed: () =>
+                      ref.invalidate(searchBandsForCheckinProvider),
                   child: const Text(
                     'Retry',
                     style: TextStyle(color: AppTheme.electricPurple),
@@ -704,6 +950,24 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Back to event flow
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton.icon(
+              onPressed: () {
+                setState(() {
+                  _screenState = _ScreenState.events;
+                });
+              },
+              icon: const Icon(Icons.arrow_back, size: 18),
+              label: const Text('Back to nearby events'),
+              style: TextButton.styleFrom(
+                foregroundColor: AppTheme.textTertiary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+
           // Selected Band Header
           _SelectedBandCard(
             bandName: _selectedBandName ?? '',
@@ -793,14 +1057,14 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, color: Colors.white),
+                  Icon(Icons.check_circle, color: AppTheme.backgroundDark),
                   SizedBox(width: 8),
                   Text(
                     'Check In',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: Colors.white,
+                      color: AppTheme.backgroundDark,
                     ),
                   ),
                 ],
@@ -835,6 +1099,289 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   }
 }
 
+// ======== EVENT CARD WIDGET ========
+
+class _EventCard extends StatelessWidget {
+  const _EventCard({
+    required this.event,
+    required this.isCheckingIn,
+    required this.onCheckIn,
+  });
+
+  final NearbyEvent event;
+  final bool isCheckingIn;
+  final VoidCallback onCheckIn;
+
+  @override
+  Widget build(BuildContext context) {
+    final eventName = event.eventName ??
+        event.band?.name ??
+        event.lineup?.firstOrNull?.band?.name ??
+        'Live Music';
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: AppTheme.surfaceVariantDark,
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Event name + distance
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      eventName,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (event.venue?.name != null) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on,
+                              color: AppTheme.textTertiary, size: 14),
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              [
+                                event.venue!.name,
+                                if (event.venue?.city != null)
+                                  event.venue!.city,
+                              ].join(', '),
+                              style: const TextStyle(
+                                color: AppTheme.textSecondary,
+                                fontSize: 14,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Distance badge
+              if (event.distanceKm != null)
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.liveGreen.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    '${event.distanceKm!.toStringAsFixed(1)} km',
+                    style: const TextStyle(
+                      color: AppTheme.liveGreen,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+
+          // Time info
+          if (event.doorsTime != null || event.startTime != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.schedule,
+                    color: AppTheme.textTertiary, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  [
+                    if (event.doorsTime != null) 'Doors: ${event.doorsTime}',
+                    if (event.startTime != null) 'Starts: ${event.startTime}',
+                  ].join(' | '),
+                  style: const TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          // Lineup chips (first 3)
+          if (event.lineup != null && event.lineup!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: event.lineup!.take(3).map((entry) {
+                final name = entry.band?.name ?? 'TBA';
+                return Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: AppTheme.surfaceVariantDark,
+                    borderRadius: BorderRadius.circular(8),
+                    border: entry.isHeadliner
+                        ? Border.all(
+                            color:
+                                AppTheme.electricPurple.withValues(alpha: 0.5))
+                        : null,
+                  ),
+                  child: Text(
+                    name,
+                    style: TextStyle(
+                      color: entry.isHeadliner
+                          ? AppTheme.electricPurple
+                          : AppTheme.textSecondary,
+                      fontSize: 12,
+                      fontWeight:
+                          entry.isHeadliner ? FontWeight.w600 : FontWeight.w500,
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+          ],
+
+          // Check-in count
+          if (event.checkinCount != null && event.checkinCount! > 0) ...[
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                const Icon(Icons.people, color: AppTheme.textTertiary, size: 14),
+                const SizedBox(width: 4),
+                Text(
+                  '${event.checkinCount} checked in',
+                  style: const TextStyle(
+                    color: AppTheme.textTertiary,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ],
+
+          const SizedBox(height: 12),
+
+          // CHECK IN button
+          SizedBox(
+            width: double.infinity,
+            height: 44,
+            child: ElevatedButton(
+              onPressed: isCheckingIn ? null : onCheckIn,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppTheme.electricPurple,
+                disabledBackgroundColor:
+                    AppTheme.electricPurple.withValues(alpha: 0.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                padding: EdgeInsets.zero,
+              ),
+              child: isCheckingIn
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(
+                        color: AppTheme.backgroundDark,
+                        strokeWidth: 2,
+                      ),
+                    )
+                  : const Text(
+                      'CHECK IN',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.backgroundDark,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ======== ENRICHMENT CARD WIDGET ========
+
+class _EnrichmentCard extends StatelessWidget {
+  const _EnrichmentCard({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.completed,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final bool completed;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceDark,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: completed
+                ? AppTheme.liveGreen.withValues(alpha: 0.5)
+                : AppTheme.surfaceVariantDark,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: iconColor, size: 24),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (completed)
+              const Icon(Icons.check_circle, color: AppTheme.liveGreen, size: 24)
+            else
+              const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ======== LEGACY WIDGETS (preserved for manual check-in fallback) ========
+
 class _BandSearchResult extends StatelessWidget {
   const _BandSearchResult({
     required this.name,
@@ -867,7 +1414,7 @@ class _BandSearchResult extends StatelessWidget {
               : null,
         ),
         child: imageUrl == null
-            ? const Icon(Icons.music_note, color: Colors.white, size: 28)
+            ? const Icon(Icons.music_note, color: AppTheme.backgroundDark, size: 28)
             : null,
       ),
       title: Text(
@@ -910,20 +1457,21 @@ class _SelectedBandCard extends StatelessWidget {
             width: 64,
             height: 64,
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha:0.2),
+              color: Colors.white.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.music_note, color: Colors.white, size: 32),
+            child:
+                const Icon(Icons.music_note, color: AppTheme.backgroundDark, size: 32),
           ),
           const SizedBox(width: 16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Checking in to',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: AppTheme.backgroundDark.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -931,7 +1479,7 @@ class _SelectedBandCard extends StatelessWidget {
                 Text(
                   bandName,
                   style: const TextStyle(
-                    color: Colors.white,
+                    color: AppTheme.backgroundDark,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -941,7 +1489,8 @@ class _SelectedBandCard extends StatelessWidget {
           ),
           IconButton(
             onPressed: onClear,
-            icon: const Icon(Icons.close, color: Colors.white70),
+            icon: Icon(Icons.close,
+                color: AppTheme.backgroundDark.withValues(alpha: 0.7)),
           ),
         ],
       ),
@@ -994,7 +1543,7 @@ class _VenueSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.electricPurple.withValues(alpha:0.2),
+                color: AppTheme.electricPurple.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
@@ -1079,7 +1628,6 @@ class _PhotoSelector extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (selectedImages.isEmpty) {
-      // Show empty state placeholder
       return GestureDetector(
         onTap: onAddPhoto,
         child: Container(
@@ -1113,14 +1661,13 @@ class _PhotoSelector extends StatelessWidget {
       );
     }
 
-    // Show selected images in horizontal scroll
     return SizedBox(
       height: 120,
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        itemCount: selectedImages.length + (selectedImages.length < maxImages ? 1 : 0),
+        itemCount:
+            selectedImages.length + (selectedImages.length < maxImages ? 1 : 0),
         itemBuilder: (context, index) {
-          // Add button at the end
           if (index == selectedImages.length) {
             return GestureDetector(
               onTap: onAddPhoto,
@@ -1157,14 +1704,12 @@ class _PhotoSelector extends StatelessWidget {
             );
           }
 
-          // Image thumbnail
           return Container(
             width: 100,
             height: 120,
             margin: const EdgeInsets.only(right: 12),
             child: Stack(
               children: [
-                // Image
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.file(
@@ -1174,7 +1719,6 @@ class _PhotoSelector extends StatelessWidget {
                     fit: BoxFit.cover,
                   ),
                 ),
-                // Remove button
                 Positioned(
                   top: 4,
                   right: 4,
@@ -1232,7 +1776,8 @@ class _VibeSelector extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
               border: isSelected
                   ? null
-                  : Border.all(color: AppTheme.textTertiary.withValues(alpha:0.3)),
+                  : Border.all(
+                      color: AppTheme.textTertiary.withValues(alpha: 0.3)),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1242,8 +1787,11 @@ class _VibeSelector extends StatelessWidget {
                 Text(
                   vibe['name']!,
                   style: TextStyle(
-                    color: isSelected ? Colors.white : AppTheme.textSecondary,
-                    fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                    color: isSelected
+                        ? AppTheme.backgroundDark
+                        : AppTheme.textSecondary,
+                    fontWeight:
+                        isSelected ? FontWeight.w600 : FontWeight.w500,
                     fontSize: 13,
                   ),
                 ),
@@ -1269,7 +1817,6 @@ class _VenueSearchSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // Handle
         Container(
           margin: const EdgeInsets.only(top: 12),
           width: 40,
@@ -1279,7 +1826,6 @@ class _VenueSearchSheet extends StatelessWidget {
             borderRadius: BorderRadius.circular(2),
           ),
         ),
-        // Search Bar
         Padding(
           padding: const EdgeInsets.all(16),
           child: Container(
@@ -1292,7 +1838,8 @@ class _VenueSearchSheet extends StatelessWidget {
               decoration: InputDecoration(
                 hintText: 'Search venues nearby...',
                 hintStyle: TextStyle(color: AppTheme.textTertiary),
-                prefixIcon: Icon(Icons.search, color: AppTheme.textTertiary),
+                prefixIcon:
+                    Icon(Icons.search, color: AppTheme.textTertiary),
                 border: InputBorder.none,
                 contentPadding: EdgeInsets.symmetric(
                   horizontal: 16,
@@ -1302,7 +1849,6 @@ class _VenueSearchSheet extends StatelessWidget {
             ),
           ),
         ),
-        // Venue List
         Expanded(
           child: ListView.builder(
             controller: scrollController,
@@ -1339,7 +1885,7 @@ class _VenueSearchSheet extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonPink.withValues(alpha:0.2),
+                    color: AppTheme.neonPink.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
