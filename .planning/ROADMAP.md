@@ -47,9 +47,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 02-01: Ticketmaster API adapter service and event normalizer
-- [ ] 02-02: Event deduplication, band name matching (pg_trgm), and BullMQ sync scheduling
-- [ ] 02-03: User-created events, event lifecycle management (cancel/reschedule detection)
+- [ ] 02-01-PLAN.md -- DB migrations (venue/band external_id, event status, trgm index, sync tables), BullMQ install, Redis config, TicketmasterAdapter, BandMatcher
+- [ ] 02-02-PLAN.md -- EventSyncService orchestrator (fetch->dedup->match->upsert->log), BullMQ queue/worker/scheduler, app startup integration
+- [ ] 02-03-PLAN.md -- User-created events (source tracking, verification), auto-merge with Ticketmaster data, on-demand lookup endpoint
 
 ### Phase 3: Core Check-in Flow
 **Goal**: Redesign the check-in experience around events with a quick-tap flow, optional dual ratings (band + venue), per-set ratings for multi-band shows, location verification, and photo upload.
@@ -171,4 +171,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-02 after Phase 1 execution complete*
+*Last updated: 2026-02-02 after Phase 2 planning complete*
