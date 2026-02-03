@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 8: Polish & App Store Readiness (next)
+**Current focus:** Phase 8: Polish & App Store Readiness (in progress)
 
 ## Current Position
 
-Phase: 7 of 8 (Discovery & Recommendations) -- VERIFIED COMPLETE
-Plan: 3 of 3 in Phase 7 (all complete)
-Status: Phase 7 verified, ready for Phase 8 planning
-Last activity: 2026-02-03 -- Phase 7 verified (5/5 must-haves passed)
+Phase: 8 of 8 (Polish & App Store Readiness)
+Plan: 1 of 2 in Phase 8 (08-01 complete)
+Status: In progress
+Last activity: 2026-02-03 -- Completed 08-01-PLAN.md (check-in polish + feed card enhancement)
 
-Progress: [#######################_] 91% (20/22 plans)
+Progress: [########################] 95% (21/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 20
+- Total plans completed: 21
 - Average duration: 6.2 min
-- Total execution time: 2.08 hours
+- Total execution time: 2.18 hours
 
 **By Phase:**
 
@@ -34,10 +34,11 @@ Progress: [#######################_] 91% (20/22 plans)
 | 05-social-feed-realtime | 3/3 | 23 min | 7.7 min |
 | 06-profile-concert-cred | 2/2 | 9 min | 4.5 min |
 | 07-discovery-recommendations | 3/3 | 25 min | 8.3 min |
+| 08-polish-app-store-readiness | 1/2 | 6 min | 6 min |
 
 **Recent Trend:**
-- Last 5 plans: 6m, 10m, 9m, 6m (07-03 personalized recommendations)
-- Trend: Full-stack plans averaging ~8min
+- Last 5 plans: 10m, 9m, 6m, 6m (08-01 check-in polish + feed cards)
+- Trend: Polish plans faster than full-stack (~6min)
 
 *Updated after each plan completion*
 
@@ -126,6 +127,9 @@ Recent decisions affecting current work:
 - [07-03]: Cold start fallback to trending events when personalized query returns zero results
 - [07-03]: For You section auto-hides when recommendations empty (no empty state for clean UX)
 - [07-03]: EventService.mapDbEventsWithHeadliner made public for lineup hydration reuse
+- [08-01]: PhotoUploadSheet invoked via showModalBottomSheet with isScrollControlled for expandable photo grid
+- [08-01]: eventDate and commentPreview added as optional nullable fields to FeedItem (backward compat)
+- [08-01]: Comment preview placed above action buttons in feed card footer (Column wrapping Row)
 
 ### Pending Todos
 
@@ -150,5 +154,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Phase 7 verified and complete. Ready for Phase 8 planning.
+Stopped at: Completed 08-01-PLAN.md (check-in polish + feed card enhancement)
 Resume file: None
