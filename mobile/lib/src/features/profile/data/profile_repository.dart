@@ -1,5 +1,6 @@
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
+import '../domain/concert_cred.dart';
 import '../domain/user_statistics.dart';
 
 class ProfileRepository {
@@ -13,6 +14,17 @@ class ProfileRepository {
       final response = await _dioClient.get('${ApiConfig.auth}/me/statistics');
       final statisticsData = response.data['data'] as Map<String, dynamic>;
       return UserStatistics.fromJson(statisticsData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Get concert cred aggregate stats for a user
+  Future<ConcertCred> getConcertCred(String userId) async {
+    try {
+      final response = await _dioClient.get(ApiConfig.concertCred(userId));
+      final data = response.data['data'] as Map<String, dynamic>;
+      return ConcertCred.fromJson(data);
     } catch (e) {
       rethrow;
     }

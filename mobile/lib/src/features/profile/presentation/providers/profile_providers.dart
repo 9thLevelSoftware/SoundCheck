@@ -2,6 +2,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../badges/domain/badge.dart';
 import '../../../checkins/domain/checkin.dart';
+import '../../domain/concert_cred.dart';
 
 part 'profile_providers.g.dart';
 
@@ -13,6 +14,7 @@ Future<List<CheckIn>> userRecentCheckins(Ref ref, String userId) async {
 }
 
 /// Provider for user's genre stats (computed from check-ins)
+/// @deprecated Use concertCredProvider instead for server-side genre stats.
 @riverpod
 Future<List<Map<String, dynamic>>> userGenreStats(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
@@ -42,4 +44,11 @@ Future<List<Map<String, dynamic>>> userGenreStats(Ref ref, String userId) async 
 Future<List<UserBadge>> userBadges(Ref ref, String userId) async {
   final repository = ref.watch(badgeRepositoryProvider);
   return repository.getMyBadges();
+}
+
+/// Provider for concert cred aggregate stats from server
+@riverpod
+Future<ConcertCred> concertCred(Ref ref, String userId) async {
+  final repository = ref.watch(profileRepositoryProvider);
+  return repository.getConcertCred(userId);
 }

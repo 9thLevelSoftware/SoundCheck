@@ -83,6 +83,9 @@ class ApiConfig {
   static const String notifications = '/notifications';
   static const String feed = '/checkins/feed';
 
+  // Dynamic endpoints
+  static String concertCred(String userId) => '/users/$userId/concert-cred';
+
   // Storage Keys
   static const String tokenKey = 'auth_token';
   static const String userKey = 'user_data';

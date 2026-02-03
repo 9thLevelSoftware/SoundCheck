@@ -14,6 +14,7 @@ import '../../features/badges/data/badge_repository.dart';
 import '../../features/checkins/data/checkin_repository.dart';
 import '../../features/feed/data/feed_repository.dart';
 import '../../features/notifications/data/notification_repository.dart';
+import '../../features/profile/data/profile_repository.dart';
 
 part 'providers.g.dart';
 
@@ -84,6 +85,12 @@ NotificationRepository notificationRepository(Ref ref) {
 FeedRepository feedRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return FeedRepository(dioClient: dioClient);
+}
+
+@Riverpod(keepAlive: true)
+ProfileRepository profileRepository(Ref ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return ProfileRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)
