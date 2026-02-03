@@ -20,6 +20,9 @@ router.get('/', checkinController.getCheckins);
 // Create a check-in
 router.post('/', checkinController.createCheckin);
 
+// Update ratings for a check-in (per-band + venue)
+router.patch('/:id/ratings', checkinController.updateRatings);
+
 // Get check-in by ID
 router.get('/:id', checkinController.getCheckinById);
 

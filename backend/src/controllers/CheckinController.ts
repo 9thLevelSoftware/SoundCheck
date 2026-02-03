@@ -9,7 +9,10 @@ export class CheckinController {
   /**
    * Create a new check-in
    * POST /api/checkins
-   * Body: { venueId, bandId, rating, comment?, photoUrl?, eventDate?, vibeTagIds? }
+   *
+   * Supports two request formats:
+   * - New (event-first): { eventId, locationLat?, locationLon?, comment?, vibeTagIds? }
+   * - Legacy: { venueId, bandId, rating, comment?, photoUrl?, eventDate?, vibeTagIds? }
    */
   createCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -25,6 +28,7 @@ export class CheckinController {
       }
 
       const {
+        eventId,
         venueId,
         bandId,
         rating,
@@ -33,47 +37,75 @@ export class CheckinController {
         eventDate,
         checkinLatitude,
         checkinLongitude,
+        locationLat,
+        locationLon,
         vibeTagIds,
       } = req.body;
 
-      if (!venueId || !bandId || rating === undefined) {
+      // Detect request format: event-first vs legacy
+      if (eventId) {
+        // New event-first flow
+        const checkin = await this.checkinService.createEventCheckin({
+          userId,
+          eventId,
+          locationLat: locationLat ?? checkinLatitude,
+          locationLon: locationLon ?? checkinLongitude,
+          comment,
+          vibeTagIds,
+        });
+
         const response: ApiResponse = {
-          success: false,
-          error: 'Venue ID, band ID, and rating are required',
+          success: true,
+          data: checkin,
+          message: 'Check-in created successfully',
         };
-        res.status(400).json(response);
-        return;
+
+        res.status(201).json(response);
+      } else {
+        // Legacy flow: bandId + venueId required
+        if (!venueId || !bandId || rating === undefined) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Venue ID, band ID, and rating are required',
+          };
+          res.status(400).json(response);
+          return;
+        }
+
+        const checkin = await this.checkinService.createCheckin({
+          userId,
+          venueId,
+          bandId,
+          rating,
+          comment,
+          photoUrl,
+          eventDate: eventDate ? new Date(eventDate) : undefined,
+          checkinLatitude,
+          checkinLongitude,
+          vibeTagIds,
+        });
+
+        const response: ApiResponse = {
+          success: true,
+          data: checkin,
+          message: 'Check-in created successfully',
+        };
+
+        res.status(201).json(response);
       }
-
-      const checkin = await this.checkinService.createCheckin({
-        userId,
-        venueId,
-        bandId,
-        rating,
-        comment,
-        photoUrl,
-        eventDate: eventDate ? new Date(eventDate) : undefined,
-        checkinLatitude,
-        checkinLongitude,
-        vibeTagIds,
-      });
-
-      const response: ApiResponse = {
-        success: true,
-        data: checkin,
-        message: 'Check-in created successfully',
-      };
-
-      res.status(201).json(response);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Create check-in error:', error);
+
+      // Determine appropriate status code from error
+      const statusCode = error.statusCode || 400;
+      const message = error instanceof Error ? error.message : 'Failed to create check-in';
 
       const response: ApiResponse = {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create check-in',
+        error: message,
       };
 
-      res.status(400).json(response);
+      res.status(statusCode).json(response);
     }
   };
 
@@ -518,6 +550,107 @@ export class CheckinController {
       };
 
       res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Update ratings for a check-in
+   * PATCH /api/checkins/:id/ratings
+   * Body: { bandRatings?: [{ bandId, rating }], venueRating?: number }
+   *
+   * Ratings must be 0.5-5.0 in 0.5 increments.
+   * At least one of bandRatings or venueRating must be provided.
+   */
+  updateRatings = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Authentication required',
+        };
+        res.status(401).json(response);
+        return;
+      }
+
+      const { id } = req.params;
+      const { bandRatings, venueRating } = req.body;
+
+      // Validate: at least one rating type must be present
+      if (!bandRatings && venueRating === undefined) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'At least one of bandRatings or venueRating is required',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      // Validate bandRatings format
+      if (bandRatings) {
+        if (!Array.isArray(bandRatings)) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'bandRatings must be an array of { bandId, rating }',
+          };
+          res.status(400).json(response);
+          return;
+        }
+
+        for (const br of bandRatings) {
+          if (!br.bandId || typeof br.rating !== 'number') {
+            const response: ApiResponse = {
+              success: false,
+              error: 'Each band rating must have bandId (string) and rating (number)',
+            };
+            res.status(400).json(response);
+            return;
+          }
+          if (br.rating < 0.5 || br.rating > 5.0 || br.rating % 0.5 !== 0) {
+            const response: ApiResponse = {
+              success: false,
+              error: 'Band ratings must be 0.5-5.0 in 0.5 increments',
+            };
+            res.status(400).json(response);
+            return;
+          }
+        }
+      }
+
+      // Validate venueRating format
+      if (venueRating !== undefined) {
+        if (typeof venueRating !== 'number' || venueRating < 0.5 || venueRating > 5.0 || venueRating % 0.5 !== 0) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Venue rating must be 0.5-5.0 in 0.5 increments',
+          };
+          res.status(400).json(response);
+          return;
+        }
+      }
+
+      const checkin = await this.checkinService.addRatings(id, userId, {
+        bandRatings,
+        venueRating,
+      });
+
+      const response: ApiResponse = {
+        success: true,
+        data: checkin,
+        message: 'Ratings updated successfully',
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Update ratings error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to update ratings',
+      };
+
+      res.status(400).json(response);
     }
   };
 }

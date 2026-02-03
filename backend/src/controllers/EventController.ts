@@ -331,6 +331,49 @@ export class EventController {
   };
 
   /**
+   * Get nearby events
+   * GET /api/events/nearby?lat=X&lng=Y&radius=10&limit=20
+   *
+   * Returns today's events sorted by distance from the given GPS coordinates.
+   * Requires lat and lng query parameters.
+   */
+  getNearbyEvents = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+      const lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
+
+      if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
+        res.status(400).json({
+          success: false,
+          error: 'lat and lng query parameters are required and must be numeric',
+        } as ApiResponse);
+        return;
+      }
+
+      const radius = req.query.radius ? parseFloat(req.query.radius as string) : 10;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+      const events = await this.eventService.getNearbyEvents(lat, lng, radius, limit);
+
+      const response: ApiResponse = {
+        success: true,
+        data: events,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get nearby events error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch nearby events',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
    * Delete an event
    * DELETE /api/events/:id
    */

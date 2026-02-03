@@ -11,6 +11,10 @@ router.get('/upcoming', eventController.getUpcomingEvents);
 // Get trending events (public)
 router.get('/trending', eventController.getTrendingEvents);
 
+// Get nearby events (requires auth)
+// MUST be before /:id to avoid param conflict
+router.get('/nearby', authenticateToken, eventController.getNearbyEvents);
+
 // On-demand Ticketmaster event lookup (requires auth)
 // MUST be before /:id to avoid param conflict
 router.get('/lookup/:ticketmasterId', authenticateToken, eventController.lookupEvent);
