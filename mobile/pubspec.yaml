@@ -73,6 +73,7 @@ dependencies:
   # Analytics
   firebase_core: ^4.3.0
   firebase_analytics: ^12.1.0
+  percent_indicator: ^4.2.5
 
 dev_dependencies:
   flutter_test:

@@ -3,17 +3,19 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 part 'badge.freezed.dart';
 part 'badge.g.dart';
 
-enum BadgeType {
-  @JsonValue('review_count')
-  reviewCount,
-  @JsonValue('venue_explorer')
-  venueExplorer,
-  @JsonValue('music_lover')
-  musicLover,
-  @JsonValue('event_attendance')
-  eventAttendance,
-  @JsonValue('helpful_count')
-  helpfulCount,
+enum BadgeCategory {
+  @JsonValue('checkin_count')
+  checkinCount,
+  @JsonValue('genre_explorer')
+  genreExplorer,
+  @JsonValue('unique_venues')
+  uniqueVenues,
+  @JsonValue('superfan')
+  superfan,
+  @JsonValue('festival_warrior')
+  festivalWarrior,
+  @JsonValue('road_warrior')
+  roadWarrior,
 }
 
 @freezed
@@ -21,10 +23,13 @@ sealed class Badge with _$Badge {
   const factory Badge({
     required String id,
     required String name,
-    required BadgeType badgeType, required String createdAt, String? description,
+    required String createdAt,
+    @JsonKey(name: 'badgeType') required BadgeCategory category,
+    String? description,
     String? iconUrl,
     int? requirementValue,
     String? color,
+    Map<String, dynamic>? criteria,
   }) = _Badge;
 
   factory Badge.fromJson(Map<String, dynamic> json) => _$BadgeFromJson(json);
@@ -38,6 +43,7 @@ sealed class UserBadge with _$UserBadge {
     required String badgeId,
     required String earnedAt,
     Badge? badge,
+    Map<String, dynamic>? metadata,
   }) = _UserBadge;
 
   factory UserBadge.fromJson(Map<String, dynamic> json) =>
@@ -55,4 +61,20 @@ sealed class BadgeProgress with _$BadgeProgress {
 
   factory BadgeProgress.fromJson(Map<String, dynamic> json) =>
       _$BadgeProgressFromJson(json);
+}
+
+@freezed
+sealed class BadgeRarity with _$BadgeRarity {
+  const factory BadgeRarity({
+    required String badgeId,
+    required String name,
+    required String category,
+    required int threshold,
+    required int earnedCount,
+    required int totalUsers,
+    required double rarityPct,
+  }) = _BadgeRarity;
+
+  factory BadgeRarity.fromJson(Map<String, dynamic> json) =>
+      _$BadgeRarityFromJson(json);
 }

@@ -898,34 +898,38 @@ class _BadgesShowcase extends ConsumerWidget {
 
   final String userId;
 
-  // Map badge types to icons and colors
-  static IconData _getBadgeIcon(BadgeType type) {
-    switch (type) {
-      case BadgeType.reviewCount:
-        return Icons.rate_review;
-      case BadgeType.venueExplorer:
-        return Icons.explore;
-      case BadgeType.musicLover:
-        return Icons.music_note;
-      case BadgeType.eventAttendance:
+  // Map badge categories to icons and colors
+  static IconData _getBadgeIcon(BadgeCategory category) {
+    switch (category) {
+      case BadgeCategory.checkinCount:
         return Icons.celebration;
-      case BadgeType.helpfulCount:
-        return Icons.thumb_up;
+      case BadgeCategory.genreExplorer:
+        return Icons.music_note;
+      case BadgeCategory.uniqueVenues:
+        return Icons.explore;
+      case BadgeCategory.superfan:
+        return Icons.star;
+      case BadgeCategory.festivalWarrior:
+        return Icons.festival;
+      case BadgeCategory.roadWarrior:
+        return Icons.directions_car;
     }
   }
 
-  static Color _getBadgeColor(BadgeType type) {
-    switch (type) {
-      case BadgeType.reviewCount:
-        return AppTheme.neonPink;
-      case BadgeType.venueExplorer:
-        return AppTheme.info;
-      case BadgeType.musicLover:
-        return AppTheme.toastGold;
-      case BadgeType.eventAttendance:
+  static Color _getBadgeColor(BadgeCategory category) {
+    switch (category) {
+      case BadgeCategory.checkinCount:
         return AppTheme.liveGreen;
-      case BadgeType.helpfulCount:
+      case BadgeCategory.genreExplorer:
+        return AppTheme.toastGold;
+      case BadgeCategory.uniqueVenues:
+        return AppTheme.info;
+      case BadgeCategory.superfan:
+        return AppTheme.neonPink;
+      case BadgeCategory.festivalWarrior:
         return AppTheme.electricPurple;
+      case BadgeCategory.roadWarrior:
+        return AppTheme.neonPink;
     }
   }
 
@@ -1006,7 +1010,7 @@ class _BadgesShowcase extends ConsumerWidget {
               final userBadge = userBadges[index];
               final badge = userBadge.badge;
               final badgeName = badge?.name ?? 'Badge';
-              final badgeType = badge?.badgeType ?? BadgeType.eventAttendance;
+              final badgeType = badge?.category ?? BadgeCategory.checkinCount;
               final badgeColor = badge?.color != null
                   ? Color(int.parse(badge!.color!.replaceFirst('#', '0xFF')))
                   : _getBadgeColor(badgeType);
