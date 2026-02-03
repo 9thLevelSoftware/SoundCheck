@@ -26,6 +26,7 @@ class WebSocketEvents {
   static const String userOnline = 'user_online';
   static const String userOffline = 'user_offline';
   static const String badgeEarned = 'badge_earned';
+  static const String sameEventCheckin = 'same_event_checkin';
   static const String error = 'error';
   static const String pong = 'pong';
 }
@@ -73,6 +74,8 @@ class WebSocketService {
   final _connectionController = StreamController<bool>.broadcast();
   final _toastController = StreamController<Map<String, dynamic>>.broadcast();
   final _commentController = StreamController<Map<String, dynamic>>.broadcast();
+  final _newCheckinController = StreamController<Map<String, dynamic>>.broadcast();
+  final _sameEventController = StreamController<Map<String, dynamic>>.broadcast();
 
   /// Stream of all WebSocket messages
   Stream<WebSocketMessage> get messageStream => _messageController.stream;
@@ -85,6 +88,12 @@ class WebSocketService {
 
   /// Stream of new comment notifications
   Stream<Map<String, dynamic>> get commentStream => _commentController.stream;
+
+  /// Stream of new check-in events (friend checked in)
+  Stream<Map<String, dynamic>> get newCheckinStream => _newCheckinController.stream;
+
+  /// Stream of same-event check-in events ("Alex is here too!")
+  Stream<Map<String, dynamic>> get sameEventCheckinStream => _sameEventController.stream;
 
   /// Whether the WebSocket is connected
   bool get isConnected => _isConnected;
@@ -284,6 +293,14 @@ class WebSocketService {
           _commentController.add(message.payload);
           break;
 
+        case WebSocketEvents.newCheckin:
+          _newCheckinController.add(message.payload);
+          break;
+
+        case WebSocketEvents.sameEventCheckin:
+          _sameEventController.add(message.payload);
+          break;
+
         default:
           break;
       }
@@ -344,5 +361,7 @@ class WebSocketService {
     _connectionController.close();
     _toastController.close();
     _commentController.close();
+    _newCheckinController.close();
+    _sameEventController.close();
   }
 }
