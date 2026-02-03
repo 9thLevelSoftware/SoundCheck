@@ -148,8 +148,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01: UX polish (check-in flow speed optimization, feed card design, profile layout tuning)
-- [ ] 08-02: App Store compliance (account deletion, privacy manifests, Flutter version pin, demo account)
+- [ ] 08-01-PLAN.md -- Wire photo upload in check-in success state (replace placeholder), enhance feed cards with event date and comment preview
+- [ ] 08-02-PLAN.md -- Account deletion API + mobile UI (wiring DataRetentionService), PrivacyInfo.xcprivacy, Flutter version pin, demo account seed script
 
 ## Progress
 
@@ -171,4 +171,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 7 execution complete*
+*Last updated: 2026-02-03 after Phase 8 planning complete*
