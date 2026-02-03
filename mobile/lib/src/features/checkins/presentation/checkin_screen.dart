@@ -325,9 +325,29 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () async {
+                // Check current permission first
+                final currentPerm = await LocationService.checkPermission();
+                if (currentPerm == LocationPermission.deniedForever) {
+                  // Must open app settings — Android won't show dialog again
+                  await LocationService.openAppSettings();
+                  // After returning from settings, re-check
+                  if (mounted) {
+                    final newPerm = await LocationService.checkPermission();
+                    if (LocationService.hasPermission(newPerm)) {
+                      ref.invalidate(nearbyEventsProvider);
+                    }
+                  }
+                  return;
+                }
                 final perm = await LocationService.requestPermission();
                 if (LocationService.hasPermission(perm) && mounted) {
                   ref.invalidate(nearbyEventsProvider);
+                } else if (perm == LocationPermission.deniedForever && mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Location permission denied. Please enable it in app settings.'),
+                    ),
+                  );
                 }
               },
               icon: const Icon(Icons.my_location),
