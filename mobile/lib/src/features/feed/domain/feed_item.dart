@@ -21,6 +21,8 @@ sealed class FeedItem with _$FeedItem {
     @JsonKey(name: 'toast_count') @Default(0) int toastCount,
     @JsonKey(name: 'comment_count') @Default(0) int commentCount,
     @JsonKey(name: 'has_user_toasted') @Default(false) bool hasUserToasted,
+    @JsonKey(name: 'event_date') String? eventDate,
+    @JsonKey(name: 'comment_preview') String? commentPreview,
   }) = _FeedItem;
 
   factory FeedItem.fromJson(Map<String, dynamic> json) =>

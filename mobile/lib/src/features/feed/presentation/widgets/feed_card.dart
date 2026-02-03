@@ -65,35 +65,51 @@ class FeedCard extends StatelessWidget {
                   ),
                   const SizedBox(width: 12),
                   Expanded(
-                    child: RichText(
-                      text: TextSpan(
-                        style: const TextStyle(
-                          fontSize: 14,
-                          color: AppTheme.textPrimary,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        RichText(
+                          text: TextSpan(
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: AppTheme.textPrimary,
+                            ),
+                            children: [
+                              TextSpan(
+                                text: item.username,
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                              const TextSpan(text: ' checked in at '),
+                              TextSpan(
+                                text: item.eventName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.electricPurple,
+                                ),
+                              ),
+                              const TextSpan(text: ' @ '),
+                              TextSpan(
+                                text: item.venueName,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  color: AppTheme.electricPurple,
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                        children: [
-                          TextSpan(
-                            text: item.username,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          const TextSpan(text: ' checked in at '),
-                          TextSpan(
-                            text: item.eventName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.electricPurple,
+                        if (item.eventDate != null)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4),
+                            child: Text(
+                              item.eventDate!,
+                              style: const TextStyle(
+                                color: AppTheme.textTertiary,
+                                fontSize: 12,
+                              ),
                             ),
                           ),
-                          const TextSpan(text: ' @ '),
-                          TextSpan(
-                            text: item.venueName,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: AppTheme.electricPurple,
-                            ),
-                          ),
-                        ],
-                      ),
+                      ],
                     ),
                   ),
                 ],
@@ -106,7 +122,7 @@ class FeedCard extends StatelessWidget {
               hasBadgeEarned: item.hasBadgeEarned,
             ),
 
-            // Footer: Toast + Comment + Timestamp
+            // Footer: Comment preview + Toast + Comment + Timestamp
             Container(
               padding: const EdgeInsets.all(12),
               decoration: const BoxDecoration(
@@ -117,32 +133,50 @@ class FeedCard extends StatelessWidget {
                   ),
                 ),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Toast button
-                  _ActionButton(
-                    icon: Icons.sports_bar,
-                    label: '${item.toastCount}',
-                    isActive: item.hasUserToasted,
-                    activeColor: AppTheme.toastGold,
-                    onTap: onToast ?? () {},
-                  ),
-                  const SizedBox(width: 24),
-                  // Comment button
-                  _ActionButton(
-                    icon: Icons.chat_bubble_outline,
-                    label: '${item.commentCount}',
-                    isActive: false,
-                    onTap: () => context.push('/checkins/${item.checkinId}'),
-                  ),
-                  const Spacer(),
-                  // Timestamp
-                  Text(
-                    timeAgo,
-                    style: const TextStyle(
-                      color: AppTheme.textTertiary,
-                      fontSize: 12,
+                  if (item.commentPreview != null)
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Text(
+                        item.commentPreview!,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
                     ),
+                  Row(
+                    children: [
+                      // Toast button
+                      _ActionButton(
+                        icon: Icons.sports_bar,
+                        label: '${item.toastCount}',
+                        isActive: item.hasUserToasted,
+                        activeColor: AppTheme.toastGold,
+                        onTap: onToast ?? () {},
+                      ),
+                      const SizedBox(width: 24),
+                      // Comment button
+                      _ActionButton(
+                        icon: Icons.chat_bubble_outline,
+                        label: '${item.commentCount}',
+                        isActive: false,
+                        onTap: () => context.push('/checkins/${item.checkinId}'),
+                      ),
+                      const Spacer(),
+                      // Timestamp
+                      Text(
+                        timeAgo,
+                        style: const TextStyle(
+                          color: AppTheme.textTertiary,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
