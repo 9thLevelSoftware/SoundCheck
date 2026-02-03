@@ -86,14 +86,14 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Profile & Stats
 
-- [ ] **PRFL-01**: Profile displays total shows attended
-- [ ] **PRFL-02**: Profile displays unique bands seen
-- [ ] **PRFL-03**: Profile displays unique venues visited
-- [ ] **PRFL-04**: Profile displays genre breakdown (top genres by check-in count)
-- [ ] **PRFL-05**: Profile displays badge collection with progress indicators
-- [ ] **PRFL-06**: Profile displays recent check-in history
-- [ ] **PRFL-07**: Profile displays top-rated bands and venues (personal favorites)
-- [ ] **PRFL-08**: Stats computed on demand and cached in Redis (10-min TTL)
+- [x] **PRFL-01**: Profile displays total shows attended
+- [x] **PRFL-02**: Profile displays unique bands seen
+- [x] **PRFL-03**: Profile displays unique venues visited
+- [x] **PRFL-04**: Profile displays genre breakdown (top genres by check-in count)
+- [x] **PRFL-05**: Profile displays badge collection with progress indicators
+- [x] **PRFL-06**: Profile displays recent check-in history
+- [x] **PRFL-07**: Profile displays top-rated bands and venues (personal favorites)
+- [x] **PRFL-08**: Stats computed on demand and cached in Redis (10-min TTL)
 
 ### Polish & App Store
 
@@ -187,28 +187,28 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | CHKN-08 | Phase 3 | Complete |
 | CHKN-09 | Phase 3 | Complete |
 | CHKN-10 | Phase 3 | Complete |
-| BDGE-01 | Phase 4 | Pending |
-| BDGE-02 | Phase 4 | Pending |
-| BDGE-03 | Phase 4 | Pending |
-| BDGE-04 | Phase 4 | Pending |
-| BDGE-05 | Phase 4 | Pending |
-| BDGE-06 | Phase 4 | Pending |
-| BDGE-07 | Phase 4 | Pending |
-| BDGE-08 | Phase 4 | Pending |
-| BDGE-09 | Phase 4 | Pending |
-| BDGE-10 | Phase 4 | Pending |
-| BDGE-11 | Phase 4 | Pending |
-| BDGE-12 | Phase 4 | Pending |
-| FEED-01 | Phase 5 | Pending |
-| FEED-02 | Phase 5 | Pending |
-| FEED-03 | Phase 5 | Pending |
-| FEED-04 | Phase 5 | Pending |
-| FEED-05 | Phase 5 | Pending |
-| FEED-06 | Phase 5 | Pending |
-| FEED-07 | Phase 5 | Pending |
-| FEED-08 | Phase 5 | Pending |
-| FEED-09 | Phase 5 | Pending |
-| FEED-10 | Phase 5 | Pending |
+| BDGE-01 | Phase 4 | Complete |
+| BDGE-02 | Phase 4 | Complete |
+| BDGE-03 | Phase 4 | Complete |
+| BDGE-04 | Phase 4 | Complete |
+| BDGE-05 | Phase 4 | Complete |
+| BDGE-06 | Phase 4 | Complete |
+| BDGE-07 | Phase 4 | Complete |
+| BDGE-08 | Phase 4 | Complete |
+| BDGE-09 | Phase 4 | Complete |
+| BDGE-10 | Phase 4 | Complete |
+| BDGE-11 | Phase 4 | Complete |
+| BDGE-12 | Phase 4 | Complete |
+| FEED-01 | Phase 5 | Complete |
+| FEED-02 | Phase 5 | Complete |
+| FEED-03 | Phase 5 | Complete |
+| FEED-04 | Phase 5 | Complete |
+| FEED-05 | Phase 5 | Complete |
+| FEED-06 | Phase 5 | Complete |
+| FEED-07 | Phase 5 | Complete |
+| FEED-08 | Phase 5 | Complete |
+| FEED-09 | Phase 5 | Complete |
+| FEED-10 | Phase 5 | Complete |
 | DISC-01 | Phase 7 | Pending |
 | DISC-02 | Phase 7 | Pending |
 | DISC-03 | Phase 7 | Pending |
@@ -218,14 +218,14 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | DISC-07 | Phase 7 | Pending |
 | DISC-08 | Phase 7 | Pending |
 | DISC-09 | Phase 7 | Pending |
-| PRFL-01 | Phase 6 | Pending |
-| PRFL-02 | Phase 6 | Pending |
-| PRFL-03 | Phase 6 | Pending |
-| PRFL-04 | Phase 6 | Pending |
-| PRFL-05 | Phase 6 | Pending |
-| PRFL-06 | Phase 6 | Pending |
-| PRFL-07 | Phase 6 | Pending |
-| PRFL-08 | Phase 6 | Pending |
+| PRFL-01 | Phase 6 | Complete |
+| PRFL-02 | Phase 6 | Complete |
+| PRFL-03 | Phase 6 | Complete |
+| PRFL-04 | Phase 6 | Complete |
+| PRFL-05 | Phase 6 | Complete |
+| PRFL-06 | Phase 6 | Complete |
+| PRFL-07 | Phase 6 | Complete |
+| PRFL-08 | Phase 6 | Complete |
 | PLSH-01 | Phase 8 | Pending |
 | PLSH-02 | Phase 8 | Pending |
 | PLSH-03 | Phase 8 | Pending |
@@ -244,4 +244,4 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 3 complete (CHKN-01 through CHKN-10 verified)*
+*Last updated: 2026-02-03 after Phase 6 complete (PRFL-01 through PRFL-08 verified)*

@@ -11,7 +11,7 @@ SoundCheck's v1 transforms a barebones concert app into the "Untappd of live mus
 - [x] **Phase 3: Core Check-in Flow** - Event-based quick check-in with dual ratings, location verification, photos
 - [x] **Phase 4: Badge Engine** - Data-driven gamification with concert-specific badges, progress tracking, anti-farming
 - [x] **Phase 5: Social Feed & Real-time** - FOMO feed, happening now, WebSocket push, Firebase notifications
-- [ ] **Phase 6: Profile & Concert Cred** - Stats aggregation, concert resume, badge showcase
+- [x] **Phase 6: Profile & Concert Cred** - Stats aggregation, concert resume, badge showcase
 - [ ] **Phase 7: Discovery & Recommendations** - Band/venue pages, upcoming shows, trending, genre-based recommendations
 - [ ] **Phase 8: Polish & App Store Readiness** - UX refinement, cloud storage migration, App Store compliance
 
@@ -115,8 +115,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01-PLAN.md -- StatsService with aggregate queries (genre breakdown, top-rated bands/venues), Redis cache-aside (10-min TTL), concert-cred endpoint, fire-and-forget cache invalidation in CheckinService
-- [ ] 06-02-PLAN.md -- ConcertCred Freezed model, profile repository + provider, redesigned ProfileScreen with concert resume (stats, genre bars, top bands, top venues, badge showcase, recent check-ins)
+- [x] 06-01-PLAN.md -- StatsService with aggregate queries (genre breakdown, top-rated bands/venues), Redis cache-aside (10-min TTL), concert-cred endpoint, fire-and-forget cache invalidation in CheckinService
+- [x] 06-02-PLAN.md -- ConcertCred Freezed model, profile repository + provider, redesigned ProfileScreen with concert resume (stats, genre bars, top bands, top venues, badge showcase, recent check-ins)
 
 ### Phase 7: Discovery & Recommendations
 **Goal**: Enrich band and venue pages with aggregate ratings and event calendars. Build event discovery with nearby shows, genre browsing, trending, and SQL-based personalized recommendations.
@@ -163,12 +163,12 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 3. Core Check-in Flow | 3/3 | Complete | 2026-02-03 |
 | 4. Badge Engine | 3/3 | Complete | 2026-02-03 |
 | 5. Social Feed & Real-time | 3/3 | Complete | 2026-02-03 |
-| 6. Profile & Concert Cred | 0/2 | Not started | - |
+| 6. Profile & Concert Cred | 2/2 | Complete | 2026-02-03 |
 | 7. Discovery & Recommendations | 0/3 | Not started | - |
 | 8. Polish & App Store Readiness | 0/2 | Not started | - |
 
-**Total: 15/22 plans complete**
+**Total: 17/22 plans complete**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 5 execution complete*
+*Last updated: 2026-02-03 after Phase 6 execution complete*
