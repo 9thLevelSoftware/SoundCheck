@@ -74,15 +74,15 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Discovery & Pages
 
-- [ ] **DISC-01**: Upcoming shows near user based on GPS location and event data
-- [ ] **DISC-02**: Band pages show aggregate live performance rating from all check-in ratings
-- [ ] **DISC-03**: Band pages show upcoming shows for that band
-- [ ] **DISC-04**: Venue pages show aggregate experience rating from all check-in ratings
-- [ ] **DISC-05**: Venue pages show upcoming events at that venue
-- [ ] **DISC-06**: Trending shows near user (most check-ins in recent window)
-- [ ] **DISC-07**: Search includes events in addition to existing bands, venues, and users
-- [ ] **DISC-08**: Genre-based event browsing (filter upcoming shows by genre)
-- [ ] **DISC-09**: SQL-based personalized recommendations using user's genre history and friend attendance
+- [x] **DISC-01**: Upcoming shows near user based on GPS location and event data
+- [x] **DISC-02**: Band pages show aggregate live performance rating from all check-in ratings
+- [x] **DISC-03**: Band pages show upcoming shows for that band
+- [x] **DISC-04**: Venue pages show aggregate experience rating from all check-in ratings
+- [x] **DISC-05**: Venue pages show upcoming events at that venue
+- [x] **DISC-06**: Trending shows near user (most check-ins in recent window)
+- [x] **DISC-07**: Search includes events in addition to existing bands, venues, and users
+- [x] **DISC-08**: Genre-based event browsing (filter upcoming shows by genre)
+- [x] **DISC-09**: SQL-based personalized recommendations using user's genre history and friend attendance
 
 ### Profile & Stats
 
@@ -209,15 +209,15 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | FEED-08 | Phase 5 | Complete |
 | FEED-09 | Phase 5 | Complete |
 | FEED-10 | Phase 5 | Complete |
-| DISC-01 | Phase 7 | Pending |
-| DISC-02 | Phase 7 | Pending |
-| DISC-03 | Phase 7 | Pending |
-| DISC-04 | Phase 7 | Pending |
-| DISC-05 | Phase 7 | Pending |
-| DISC-06 | Phase 7 | Pending |
-| DISC-07 | Phase 7 | Pending |
-| DISC-08 | Phase 7 | Pending |
-| DISC-09 | Phase 7 | Pending |
+| DISC-01 | Phase 7 | Complete |
+| DISC-02 | Phase 7 | Complete |
+| DISC-03 | Phase 7 | Complete |
+| DISC-04 | Phase 7 | Complete |
+| DISC-05 | Phase 7 | Complete |
+| DISC-06 | Phase 7 | Complete |
+| DISC-07 | Phase 7 | Complete |
+| DISC-08 | Phase 7 | Complete |
+| DISC-09 | Phase 7 | Complete |
 | PRFL-01 | Phase 6 | Complete |
 | PRFL-02 | Phase 6 | Complete |
 | PRFL-03 | Phase 6 | Complete |
@@ -244,4 +244,4 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 6 complete (PRFL-01 through PRFL-08 verified)*
+*Last updated: 2026-02-03 after Phase 7 complete (DISC-01 through DISC-09 verified)*
