@@ -2,6 +2,7 @@ import Database from '../config/database';
 import { VenueService } from './VenueService';
 import { BandService } from './BandService';
 import { EventService } from './EventService';
+import { r2Service } from './R2Service';
 
 // ============================================
 // Interfaces
@@ -1133,6 +1134,128 @@ export class CheckinService {
         profileImageUrl: row.profile_image_url,
       },
     };
+  }
+
+  // ============================================
+  // Photo upload management (Phase 3, Plan 3)
+  // ============================================
+
+  /**
+   * Request presigned upload URLs for photos.
+   * Client uses these to PUT directly to R2 (never proxied through Railway).
+   *
+   * @param checkinId - Check-in to attach photos to
+   * @param userId - Must match check-in owner
+   * @param contentTypes - Array of MIME types for each photo
+   * @returns Array of { uploadUrl, objectKey, publicUrl }
+   */
+  async requestPhotoUploadUrls(
+    checkinId: string,
+    userId: string,
+    contentTypes: string[]
+  ): Promise<{ uploadUrl: string; objectKey: string; publicUrl: string }[]> {
+    try {
+      // Verify checkin belongs to user
+      const checkinResult = await this.db.query(
+        'SELECT user_id, image_urls FROM checkins WHERE id = $1',
+        [checkinId]
+      );
+
+      if (checkinResult.rows.length === 0) {
+        const err = new Error('Check-in not found');
+        (err as any).statusCode = 404;
+        throw err;
+      }
+
+      if (checkinResult.rows[0].user_id !== userId) {
+        const err = new Error('Unauthorized to modify this check-in');
+        (err as any).statusCode = 403;
+        throw err;
+      }
+
+      // Check existing photo count + requested count <= 4
+      const existingUrls: string[] = checkinResult.rows[0].image_urls || [];
+      const totalAfter = existingUrls.length + contentTypes.length;
+      if (totalAfter > 4) {
+        const err = new Error(
+          `Maximum 4 photos per check-in. Currently ${existingUrls.length}, requesting ${contentTypes.length}.`
+        );
+        (err as any).statusCode = 400;
+        throw err;
+      }
+
+      // Generate presigned URLs for each content type
+      const results = await Promise.all(
+        contentTypes.map((ct) =>
+          r2Service.getPresignedUploadUrl(ct, `checkins/${checkinId}`)
+        )
+      );
+
+      return results;
+    } catch (error) {
+      console.error('Request photo upload URLs error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Confirm photo uploads and store their public URLs in the check-in.
+   * Called after client has successfully PUT files to R2 via presigned URLs.
+   *
+   * @param checkinId - Check-in to attach photos to
+   * @param userId - Must match check-in owner
+   * @param photoKeys - Array of R2 object keys that were uploaded
+   * @returns Updated check-in
+   */
+  async addPhotos(
+    checkinId: string,
+    userId: string,
+    photoKeys: string[]
+  ): Promise<Checkin> {
+    try {
+      // Verify checkin belongs to user
+      const checkinResult = await this.db.query(
+        'SELECT user_id, image_urls FROM checkins WHERE id = $1',
+        [checkinId]
+      );
+
+      if (checkinResult.rows.length === 0) {
+        const err = new Error('Check-in not found');
+        (err as any).statusCode = 404;
+        throw err;
+      }
+
+      if (checkinResult.rows[0].user_id !== userId) {
+        const err = new Error('Unauthorized to modify this check-in');
+        (err as any).statusCode = 403;
+        throw err;
+      }
+
+      // Combine existing URLs with new ones, enforce max 4
+      const existingUrls: string[] = checkinResult.rows[0].image_urls || [];
+      const publicUrl = process.env.R2_PUBLIC_URL || '';
+      const newUrls = photoKeys.map((key) => `${publicUrl}/${key}`);
+      const combinedUrls = [...existingUrls, ...newUrls];
+
+      if (combinedUrls.length > 4) {
+        const err = new Error(
+          `Maximum 4 photos per check-in. Would have ${combinedUrls.length}.`
+        );
+        (err as any).statusCode = 400;
+        throw err;
+      }
+
+      // Update the check-in with combined URLs
+      await this.db.query(
+        'UPDATE checkins SET image_urls = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+        [combinedUrls, checkinId]
+      );
+
+      return this.getCheckinById(checkinId, userId);
+    } catch (error) {
+      console.error('Add photos error:', error);
+      throw error;
+    }
   }
 
   /**

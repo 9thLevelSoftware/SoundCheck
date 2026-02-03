@@ -23,6 +23,12 @@ router.post('/', checkinController.createCheckin);
 // Update ratings for a check-in (per-band + venue)
 router.patch('/:id/ratings', checkinController.updateRatings);
 
+// Request presigned upload URLs for photos (client uploads directly to R2)
+router.post('/:id/photos', checkinController.requestPhotoUpload);
+
+// Confirm photo uploads and store URLs in check-in
+router.patch('/:id/photos', checkinController.confirmPhotoUpload);
+
 // Get check-in by ID
 router.get('/:id', checkinController.getCheckinById);
 

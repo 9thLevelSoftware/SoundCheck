@@ -30,6 +30,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.981.0",
+    "@aws-sdk/s3-request-presigner": "^3.981.0",
     "@sentry/node": "^10.32.1",
     "@types/multer": "^2.0.0",
     "apple-signin-auth": "^2.0.0",

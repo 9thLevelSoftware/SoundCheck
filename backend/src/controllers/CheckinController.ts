@@ -554,6 +554,155 @@ export class CheckinController {
   };
 
   /**
+   * Request presigned upload URLs for photos
+   * POST /api/checkins/:id/photos
+   * Body: { contentTypes: ['image/jpeg', 'image/png', ...] }
+   *
+   * Returns presigned URLs for client to PUT directly to R2.
+   * Photos never touch the Railway server filesystem.
+   */
+  requestPhotoUpload = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Authentication required',
+        };
+        res.status(401).json(response);
+        return;
+      }
+
+      const { id } = req.params;
+      const { contentTypes } = req.body;
+
+      // Validate contentTypes
+      if (!contentTypes || !Array.isArray(contentTypes) || contentTypes.length === 0) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'contentTypes must be a non-empty array of MIME types',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      if (contentTypes.length > 4) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Maximum 4 photos per request',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      // Validate each content type is an image type
+      const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/heic'];
+      for (const ct of contentTypes) {
+        if (!validTypes.includes(ct)) {
+          const response: ApiResponse = {
+            success: false,
+            error: `Invalid content type: ${ct}. Allowed: ${validTypes.join(', ')}`,
+          };
+          res.status(400).json(response);
+          return;
+        }
+      }
+
+      const presignedUrls = await this.checkinService.requestPhotoUploadUrls(
+        id,
+        userId,
+        contentTypes
+      );
+
+      const response: ApiResponse = {
+        success: true,
+        data: presignedUrls,
+      };
+
+      res.status(200).json(response);
+    } catch (error: any) {
+      console.error('Request photo upload error:', error);
+
+      const statusCode = error.statusCode || 400;
+      const message = error instanceof Error ? error.message : 'Failed to generate upload URLs';
+
+      const response: ApiResponse = {
+        success: false,
+        error: message,
+      };
+
+      res.status(statusCode).json(response);
+    }
+  };
+
+  /**
+   * Confirm photo uploads and store URLs in check-in
+   * PATCH /api/checkins/:id/photos
+   * Body: { photoKeys: ['checkins/abc123/random.jpg', ...] }
+   *
+   * Called after client has successfully uploaded to R2 via presigned URLs.
+   */
+  confirmPhotoUpload = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = (req as any).user?.id;
+
+      if (!userId) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Authentication required',
+        };
+        res.status(401).json(response);
+        return;
+      }
+
+      const { id } = req.params;
+      const { photoKeys } = req.body;
+
+      // Validate photoKeys
+      if (!photoKeys || !Array.isArray(photoKeys) || photoKeys.length === 0) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'photoKeys must be a non-empty array of object keys',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      if (photoKeys.length > 4) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Maximum 4 photos per request',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
+      const checkin = await this.checkinService.addPhotos(id, userId, photoKeys);
+
+      const response: ApiResponse = {
+        success: true,
+        data: checkin,
+        message: 'Photos added successfully',
+      };
+
+      res.status(200).json(response);
+    } catch (error: any) {
+      console.error('Confirm photo upload error:', error);
+
+      const statusCode = error.statusCode || 400;
+      const message = error instanceof Error ? error.message : 'Failed to confirm photo uploads';
+
+      const response: ApiResponse = {
+        success: false,
+        error: message,
+      };
+
+      res.status(statusCode).json(response);
+    }
+  };
+
+  /**
    * Update ratings for a check-in
    * PATCH /api/checkins/:id/ratings
    * Body: { bandRatings?: [{ bandId, rating }], venueRating?: number }
