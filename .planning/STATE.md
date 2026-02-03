@@ -10,9 +10,9 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 3 of 8 (Core Check-in Flow)
-Plan: 3 of 3 in Phase 3 (awaiting checkpoint verification)
-Status: In progress -- 03-03 paused at checkpoint (human-verify)
-Last activity: 2026-02-03 -- 03-03 Tasks 1-2 complete, awaiting photo upload verification
+Plan: 2 of 3 in Phase 3 (awaiting checkpoint verification)
+Status: In progress -- 03-02 paused at checkpoint (human-verify), 03-03 also awaiting checkpoint
+Last activity: 2026-02-03 -- 03-02 Tasks 1-2 complete, awaiting event-first check-in verification
 
 Progress: [#######_______________] 32% (7/22 plans)
 
@@ -72,6 +72,9 @@ Recent decisions affecting current work:
 - [03-01]: Rating starts at 0 for event-first check-ins, set later via PATCH /ratings (two-step UX)
 - [03-01]: Headliner band_id populated from event_lineup for backward compat with old mobile clients
 - [03-01]: Legacy createCheckin delegates to createEventCheckin when eventId present
+- [03-02]: Event-first check-in screen defaults to GPS auto-suggest, manual check-in is fallback via text link
+- [03-02]: Rating bottom sheet uses two tabs (bands/venue) with partial submission allowed
+- [03-02]: CreateCheckInRequest fields now all optional to support both event-first and legacy flows
 - [03-03]: R2Service uses isConfigured flag and logs warning when credentials missing (graceful degradation)
 - [03-03]: Photo upload uses presigned URLs -- client PUTs directly to R2, never proxied through Railway
 - [03-03]: Fresh Dio instance for R2 upload (presigned URLs are self-authenticating, DioClient auth would interfere)
@@ -96,5 +99,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: 03-03 checkpoint -- awaiting photo upload verification
-Resume file: .planning/phases/03-core-check-in-flow/03-03-PLAN.md
+Stopped at: 03-02 checkpoint -- awaiting event-first check-in flow verification
+Resume file: .planning/phases/03-core-check-in-flow/03-02-PLAN.md
