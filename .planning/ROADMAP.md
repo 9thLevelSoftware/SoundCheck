@@ -115,8 +115,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 06-01: StatsService backend (concert cred computation, Redis caching, aggregate queries)
-- [ ] 06-02: Mobile profile redesign (concert resume layout, stats section, badge showcase, favorites)
+- [ ] 06-01-PLAN.md -- StatsService with aggregate queries (genre breakdown, top-rated bands/venues), Redis cache-aside (10-min TTL), concert-cred endpoint, fire-and-forget cache invalidation in CheckinService
+- [ ] 06-02-PLAN.md -- ConcertCred Freezed model, profile repository + provider, redesigned ProfileScreen with concert resume (stats, genre bars, top bands, top venues, badge showcase, recent check-ins)
 
 ### Phase 7: Discovery & Recommendations
 **Goal**: Enrich band and venue pages with aggregate ratings and event calendars. Build event discovery with nearby shows, genre browsing, trending, and SQL-based personalized recommendations.
