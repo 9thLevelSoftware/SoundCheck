@@ -13,6 +13,7 @@ import {
   checkUsernameSchema
 } from '../utils/validationSchemas';
 import { pushNotificationService } from '../services/PushNotificationService';
+import { DataRetentionService } from '../services/DataRetentionService';
 
 // Multer error handler for profile image uploads
 const handleMulterError = (err: Error | null, req: Request, res: Response, next: NextFunction): void => {
@@ -34,6 +35,7 @@ const handleMulterError = (err: Error | null, req: Request, res: Response, next:
 const router = Router();
 const userController = new UserController();
 const followController = new FollowController();
+const dataRetentionService = new DataRetentionService();
 
 // Rate limiting for auth endpoints
 const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
@@ -55,6 +57,46 @@ router.post('/me/profile-image', authenticateToken, (req: Request, res: Response
   });
 }, userController.uploadProfileImage);
 router.delete('/me', authenticateToken, userController.deactivateAccount);
+
+// Account deletion routes (GDPR-compliant with 30-day grace period)
+router.post('/me/delete-account', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id;
+    const result = await dataRetentionService.requestAccountDeletion(userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    if (error instanceof Error &&
+        (error.message === 'User not found' || error.message.includes('pending deletion request'))) {
+      res.status(400).json({ success: false, error: error.message });
+      return;
+    }
+    next(error);
+  }
+});
+
+router.post('/me/cancel-deletion', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id;
+    const result = await dataRetentionService.cancelDeletionRequest(userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    if (error instanceof Error && error.message === 'No pending deletion request found') {
+      res.status(400).json({ success: false, error: error.message });
+      return;
+    }
+    next(error);
+  }
+});
+
+router.get('/me/deletion-status', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const userId = (req as any).user?.id;
+    const result = await dataRetentionService.getDeletionRequestStatus(userId);
+    res.json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Device token management for push notifications - MUST come before /:username
 router.post('/device-token', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {

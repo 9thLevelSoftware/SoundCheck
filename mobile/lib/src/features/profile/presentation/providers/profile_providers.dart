@@ -2,9 +2,16 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../badges/domain/badge.dart';
 import '../../../checkins/domain/checkin.dart';
+import '../../data/account_repository.dart';
 import '../../domain/concert_cred.dart';
 
 part 'profile_providers.g.dart';
+
+/// Provider for account repository (deletion, cancellation)
+@Riverpod(keepAlive: true)
+AccountRepository accountRepository(Ref ref) {
+  return AccountRepository(ref.watch(dioClientProvider));
+}
 
 /// Provider for user's recent check-ins
 @riverpod

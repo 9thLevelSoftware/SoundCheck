@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'settings_provider.dart';
+import 'providers/profile_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/theme/theme_provider.dart' as theme_provider;
 import '../../../core/providers/providers.dart';
@@ -155,6 +156,13 @@ class SettingsScreen extends ConsumerWidget {
               // Account Section
               const _SectionHeader(title: 'Account'),
               _SettingsTile(
+                title: 'Delete Account',
+                subtitle: 'Permanently remove your account and data',
+                leading: const Icon(Icons.delete_forever, color: AppTheme.error),
+                textColor: AppTheme.error,
+                onTap: () => _showDeleteAccountDialog(context, ref),
+              ),
+              _SettingsTile(
                 title: 'Logout',
                 leading: const Icon(Icons.logout, color: AppTheme.error),
                 textColor: AppTheme.error,
@@ -194,6 +202,53 @@ class SettingsScreen extends ConsumerWidget {
         },
       ),
     );
+  }
+
+  Future<void> _showDeleteAccountDialog(BuildContext context, WidgetRef ref) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Account?'),
+        content: const Text(
+          'Your account will be deactivated immediately and permanently '
+          'deleted after 30 days. During this period, you can cancel by '
+          'logging back in.\n\nThis action cannot be undone after 30 days.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text(
+              'Delete My Account',
+              style: TextStyle(color: AppTheme.error),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete == true && context.mounted) {
+      try {
+        final accountRepo = ref.read(accountRepositoryProvider);
+        await accountRepo.requestAccountDeletion();
+        await ref.read(authStateProvider.notifier).logout();
+        if (context.mounted) {
+          context.go('/login');
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Failed to delete account: $e'),
+              backgroundColor: AppTheme.error,
+            ),
+          );
+        }
+      }
+    }
   }
 
   String _getThemeModeLabel(theme_provider.AppThemeMode mode) {
