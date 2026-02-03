@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 8: Polish & App Store Readiness (in progress)
+**Current focus:** Phase 8: Polish & App Store Readiness -- COMPLETE
 
 ## Current Position
 
-Phase: 8 of 8 (Polish & App Store Readiness)
-Plan: 1 of 2 in Phase 8 (08-01 complete)
-Status: In progress
-Last activity: 2026-02-03 -- Completed 08-01-PLAN.md (check-in polish + feed card enhancement)
+Phase: 8 of 8 (Polish & App Store Readiness) -- COMPLETE
+Plan: 2 of 2 in Phase 8 (all complete)
+Status: All phases complete
+Last activity: 2026-02-03 -- Completed 08-02-PLAN.md (App Store compliance)
 
-Progress: [########################] 95% (21/22 plans)
+Progress: [########################] 100% (22/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 21
-- Average duration: 6.2 min
-- Total execution time: 2.18 hours
+- Total plans completed: 22
+- Average duration: 6.3 min
+- Total execution time: 2.32 hours
 
 **By Phase:**
 
@@ -34,11 +34,11 @@ Progress: [########################] 95% (21/22 plans)
 | 05-social-feed-realtime | 3/3 | 23 min | 7.7 min |
 | 06-profile-concert-cred | 2/2 | 9 min | 4.5 min |
 | 07-discovery-recommendations | 3/3 | 25 min | 8.3 min |
-| 08-polish-app-store-readiness | 1/2 | 6 min | 6 min |
+| 08-polish-app-store-readiness | 2/2 | 15 min | 7.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 10m, 9m, 6m, 6m (08-01 check-in polish + feed cards)
-- Trend: Polish plans faster than full-stack (~6min)
+- Last 5 plans: 9m, 6m, 6m, 9m (08-02 App Store compliance)
+- Trend: Full project completed in ~2.3 hours across 22 plans
 
 *Updated after each plan completion*
 
@@ -130,6 +130,9 @@ Recent decisions affecting current work:
 - [08-01]: PhotoUploadSheet invoked via showModalBottomSheet with isScrollControlled for expandable photo grid
 - [08-01]: eventDate and commentPreview added as optional nullable fields to FeedItem (backward compat)
 - [08-01]: Comment preview placed above action buttons in feed card footer (Column wrapping Row)
+- [08-02]: Wire DataRetentionService to new routes, keep existing DELETE /me for backward compat
+- [08-02]: Pin Flutter 3.27.4 via .fvmrc without FVM install (documents minimum safe version)
+- [08-02]: Use is_demo column flag for demo account protection (simple, queryable guard)
 
 ### Pending Todos
 
@@ -138,6 +141,9 @@ Recent decisions affecting current work:
 - Set up Cloudflare R2 credentials for photo uploads (see .planning/phases/03-core-check-in-flow/03-USER-SETUP.md)
 - Set up FIREBASE_SERVICE_ACCOUNT_JSON environment variable for push notifications (see .planning/phases/05-social-feed-realtime/05-USER-SETUP.md)
 - Add google-services.json (Android) and GoogleService-Info.plist (iOS) for Firebase
+- Run `npm run seed:demo` against production DB before App Store submission
+- Include demo credentials (demo@soundcheck.app / SoundCheck2026!) in App Review Notes
+- Upload to TestFlight to verify privacy manifest declarations
 
 ### Blockers/Concerns
 
@@ -154,5 +160,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 08-01-PLAN.md (check-in polish + feed card enhancement)
+Stopped at: All 22 plans complete. Project build finished.
 Resume file: None
