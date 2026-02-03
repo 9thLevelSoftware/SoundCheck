@@ -4,6 +4,7 @@ import { BandService } from './BandService';
 import { EventService } from './EventService';
 import { r2Service } from './R2Service';
 import { badgeEvalQueue } from '../jobs/badgeQueue';
+import { cache } from '../utils/cache';
 
 // ============================================
 // Interfaces
@@ -253,6 +254,11 @@ export class CheckinService {
           // Non-fatal -- check-in succeeds even if badge queue fails
         }
       }
+
+      // Fire-and-forget: invalidate feed caches for followers and event
+      this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
+        console.error('Warning: feed cache invalidation failed:', err)
+      );
 
       // Return full check-in with details
       return this.getCheckinById(checkinId, userId);
@@ -603,6 +609,11 @@ export class CheckinService {
       );
       this.bandService.updateBandRating(bandId).catch(err =>
         console.error('Error updating band rating:', err)
+      );
+
+      // Fire-and-forget: invalidate feed caches for followers and event
+      this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
+        console.error('Warning: feed cache invalidation failed:', err)
       );
 
       // Return full check-in with details
@@ -1273,6 +1284,49 @@ export class CheckinService {
     } catch (error) {
       console.error('Add photos error:', error);
       throw error;
+    }
+  }
+
+  // ============================================
+  // Feed cache invalidation (Phase 5)
+  // ============================================
+
+  /**
+   * Invalidate feed caches after a check-in is created.
+   * Clears friends feed cache for all followers of the creator,
+   * event feed cache, and happening-now cache.
+   * Fire-and-forget: errors are logged but never block check-in response.
+   */
+  private async invalidateFeedCachesForCheckin(userId: string, eventId: string | null): Promise<void> {
+    try {
+      // Get follower IDs of the check-in creator
+      const followerResult = await this.db.query(
+        'SELECT follower_id FROM user_followers WHERE following_id = $1',
+        [userId]
+      );
+
+      const followerIds: string[] = followerResult.rows.map((r: any) => r.follower_id);
+
+      // Invalidate friends feed + happening_now cache for each follower
+      const invalidations: Promise<void>[] = [];
+      for (const followerId of followerIds) {
+        invalidations.push(cache.delPattern(`feed:friends:${followerId}:*`));
+        invalidations.push(cache.del(`feed:happening:${followerId}`));
+      }
+
+      // Invalidate event feed cache
+      if (eventId) {
+        invalidations.push(cache.delPattern(`feed:event:${eventId}:*`));
+      }
+
+      // Invalidate the creator's own caches (they may see their own check-in in event feed)
+      invalidations.push(cache.delPattern(`feed:friends:${userId}:*`));
+      invalidations.push(cache.del(`feed:happening:${userId}`));
+
+      await Promise.all(invalidations);
+    } catch (error) {
+      console.error('Feed cache invalidation error:', error);
+      // Non-fatal: do not rethrow
     }
   }
 
