@@ -20,6 +20,7 @@
 import Database from '../config/database';
 import { TicketmasterAdapter } from './TicketmasterAdapter';
 import { BandMatcher } from './BandMatcher';
+import { EventService } from './EventService';
 import { NormalizedEvent, TicketmasterEvent } from '../types/ticketmaster';
 
 const logger = {
@@ -52,6 +53,7 @@ interface SyncRegion {
 export class EventSyncService {
   private db = Database.getInstance();
   private bandMatcher = new BandMatcher();
+  private eventService = new EventService();
   private adapter: TicketmasterAdapter | null = null;
   private apiKeyConfigured: boolean;
 
@@ -290,14 +292,53 @@ export class EventSyncService {
       }
     }
 
-    // Step 3: Check existing event status before upsert (for status change detection)
+    // Step 3: Auto-merge check -- if a user-created event exists at the same
+    // venue+date, merge Ticketmaster data into it rather than creating a duplicate
+    const existingUserEvent = await this.eventService.findUserCreatedEventAtVenueDate(
+      venueResult.venueId,
+      event.date,
+    );
+    if (existingUserEvent) {
+      await this.eventService.mergeTicketmasterIntoUserEvent(existingUserEvent, {
+        externalId: event.externalId,
+        eventName: event.name,
+        ticketUrl: event.ticketUrl,
+        priceMin: event.priceMin,
+        priceMax: event.priceMax,
+        status: event.status,
+      });
+
+      // Upsert lineup entries for the merged event
+      for (let i = 0; i < bandIds.length; i++) {
+        await this.db.query(
+          `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner)
+           VALUES ($1, $2, $3, $4)
+           ON CONFLICT (event_id, band_id) DO NOTHING`,
+          [existingUserEvent, bandIds[i].bandId, i, i === 0],
+        );
+      }
+
+      if (counters) {
+        counters.events_updated++;
+      }
+
+      logger.info('Auto-merged Ticketmaster data into user-created event', {
+        userEventId: existingUserEvent,
+        externalId: event.externalId,
+        eventName: event.name,
+      });
+
+      return existingUserEvent;
+    }
+
+    // Step 4: Check existing event status before upsert (for status change detection)
     const existingResult = await this.db.query(
       `SELECT id, status FROM events WHERE source = 'ticketmaster' AND external_id = $1`,
       [event.externalId],
     );
     const oldStatus = existingResult.rows.length > 0 ? existingResult.rows[0].status : null;
 
-    // Step 4: Upsert event
+    // Step 5: Upsert event
     const upsertResult = await this.db.query(
       `INSERT INTO events (
         venue_id, event_date, event_name, start_time,
@@ -337,7 +378,7 @@ export class EventSyncService {
       }
     }
 
-    // Step 5: Upsert lineup entries
+    // Step 6: Upsert lineup entries
     for (let i = 0; i < bandIds.length; i++) {
       await this.db.query(
         `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner)
@@ -347,7 +388,7 @@ export class EventSyncService {
       );
     }
 
-    // Step 6: Detect status changes and notify users
+    // Step 7: Detect status changes and notify users
     if (oldStatus && oldStatus !== event.status) {
       await this.handleStatusChange(eventId, event.status, oldStatus);
     }

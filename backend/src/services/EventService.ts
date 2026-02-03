@@ -14,6 +14,7 @@ interface CreateEventRequest {
   ticketPriceMin?: number;
   ticketPriceMax?: number;
   createdByUserId?: string;
+  source?: string;
   lineup?: { bandId: string; setOrder?: number; isHeadliner?: boolean; setTime?: string }[];
 }
 
@@ -44,8 +45,13 @@ export class EventService {
         ticketPriceMin,
         ticketPriceMax,
         createdByUserId,
+        source,
         lineup,
       } = data;
+
+      // Determine event source: explicit source, or 'user_created' when a user creates it
+      const eventSource = source || (createdByUserId ? 'user_created' : undefined);
+      const eventIsVerified = eventSource === 'user_created' ? false : undefined;
 
       // Build lineup entries from either bandId or lineup array
       const lineupEntries = lineup && lineup.length > 0
@@ -78,9 +84,9 @@ export class EventService {
             venue_id, event_date, event_name, description,
             doors_time, start_time, end_time,
             ticket_url, ticket_price_min, ticket_price_max,
-            created_by_user_id
+            created_by_user_id, source, is_verified
           )
-          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
           RETURNING *`,
           [
             venueId,
@@ -94,6 +100,8 @@ export class EventService {
             ticketPriceMin || null,
             ticketPriceMax || null,
             createdByUserId || null,
+            eventSource || null,
+            eventIsVerified !== undefined ? eventIsVerified : null,
           ]
         );
 
@@ -403,6 +411,117 @@ export class EventService {
   }
 
   // ============================================
+  // User event enrichment methods
+  // ============================================
+
+  /**
+   * Find a user-created event at a specific venue+date that hasn't been
+   * matched to a Ticketmaster event yet.
+   *
+   * Used by EventSyncService to check for auto-merge candidates before
+   * creating a new event from Ticketmaster data.
+   */
+  async findUserCreatedEventAtVenueDate(
+    venueId: string,
+    eventDate: string,
+  ): Promise<string | null> {
+    try {
+      const result = await this.db.query(
+        `SELECT id FROM events
+         WHERE venue_id = $1
+           AND event_date::date = $2::date
+           AND source = 'user_created'
+           AND external_id IS NULL
+         LIMIT 1`,
+        [venueId, eventDate],
+      );
+      return result.rows.length > 0 ? result.rows[0].id : null;
+    } catch (error) {
+      console.error('Find user-created event at venue+date error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Promote a user-created event to verified if 2+ unique users have
+   * checked in. Implements PIPE-06 organic verification.
+   *
+   * Called by CheckinService (Phase 3) after each check-in to a
+   * user-created event. The method is idempotent: once verified,
+   * subsequent calls are no-ops (the WHERE clause filters out
+   * already-verified events).
+   *
+   * Returns the event ID if promoted, null if not yet eligible.
+   */
+  async promoteIfVerified(eventId: string): Promise<string | null> {
+    try {
+      const result = await this.db.query(
+        `UPDATE events SET is_verified = true, updated_at = CURRENT_TIMESTAMP
+         WHERE id = $1
+           AND source = 'user_created'
+           AND is_verified = false
+           AND (SELECT COUNT(DISTINCT user_id) FROM checkins WHERE event_id = $1) >= 2
+         RETURNING id`,
+        [eventId],
+      );
+      return result.rows.length > 0 ? result.rows[0].id : null;
+    } catch (error) {
+      console.error('Promote if verified error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Merge Ticketmaster data into an existing user-created event.
+   *
+   * Auto-merge: when the sync pipeline finds a Ticketmaster event at
+   * the same venue+date as a user-created event, it enriches the user
+   * record with TM data (external_id, name, ticket URL, prices, status)
+   * and promotes it to source='ticketmaster' + is_verified=true.
+   *
+   * This prevents duplication and rewards users who created events early.
+   */
+  async mergeTicketmasterIntoUserEvent(
+    userEventId: string,
+    tmData: {
+      externalId: string;
+      eventName?: string;
+      ticketUrl?: string;
+      priceMin?: number | null;
+      priceMax?: number | null;
+      status?: string;
+    },
+  ): Promise<void> {
+    try {
+      await this.db.query(
+        `UPDATE events SET
+          external_id = $2,
+          source = 'ticketmaster',
+          event_name = COALESCE($3, event_name),
+          ticket_url = COALESCE($4, ticket_url),
+          ticket_price_min = COALESCE($5, ticket_price_min),
+          ticket_price_max = COALESCE($6, ticket_price_max),
+          status = COALESCE($7, status),
+          is_verified = true,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $1`,
+        [
+          userEventId,
+          tmData.externalId,
+          tmData.eventName || null,
+          tmData.ticketUrl || null,
+          tmData.priceMin ?? null,
+          tmData.priceMax ?? null,
+          tmData.status || null,
+        ],
+      );
+    } catch (error) {
+      console.error('Merge Ticketmaster into user event error:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
   // Private helper methods
   // ============================================
 
@@ -491,6 +610,7 @@ export class EventService {
       isCancelled: row.is_cancelled || false,
       eventType: row.event_type || 'concert',
       source: row.source || 'user_created',
+      status: row.status || 'active',
       externalId: row.external_id,
       createdByUserId: row.created_by_user_id,
       isVerified: row.is_verified || false,

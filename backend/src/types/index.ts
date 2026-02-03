@@ -204,6 +204,7 @@ export interface Event {
   isCancelled: boolean;
   eventType: string;
   source: string;
+  status?: string;
   externalId?: string;
   createdByUserId?: string;
   isVerified: boolean;
@@ -229,6 +230,26 @@ export interface Event {
     imageUrl?: string;
   };
   showDate?: Date;
+}
+
+/**
+ * Request body for creating a user-submitted event.
+ * Users provide venue, date, and lineup (either existing band IDs or band names to resolve).
+ */
+export interface CreateUserEventRequest {
+  venueId: string;
+  eventDate: string;
+  eventName?: string;
+  description?: string;
+  doorsTime?: string;
+  startTime?: string;
+  ticketUrl?: string;
+  lineup: Array<{
+    bandId?: string;
+    bandName?: string;
+    setOrder?: number;
+    isHeadliner?: boolean;
+  }>;
 }
 
 export interface EventLineupEntry {
