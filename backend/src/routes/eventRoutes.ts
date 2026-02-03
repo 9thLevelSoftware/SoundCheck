@@ -11,6 +11,10 @@ router.get('/upcoming', eventController.getUpcomingEvents);
 // Get trending events (public)
 router.get('/trending', eventController.getTrendingEvents);
 
+// On-demand Ticketmaster event lookup (requires auth)
+// MUST be before /:id to avoid param conflict
+router.get('/lookup/:ticketmasterId', authenticateToken, eventController.lookupEvent);
+
 // Create a new event (requires auth)
 router.post('/', authenticateToken, eventController.createEvent);
 

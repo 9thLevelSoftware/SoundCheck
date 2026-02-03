@@ -1,28 +1,82 @@
 import { Request, Response } from 'express';
 import { EventService } from '../services/EventService';
+import { EventSyncService } from '../services/EventSyncService';
+import { TicketmasterAdapter } from '../services/TicketmasterAdapter';
+import { BandMatcher } from '../services/BandMatcher';
 import { ApiResponse } from '../types';
 
 export class EventController {
   private eventService = new EventService();
+  private eventSyncService = new EventSyncService();
+  private bandMatcher = new BandMatcher();
 
   /**
    * Create a new event
    * POST /api/events
-   * Body: { venueId, bandId, eventDate, eventName? }
+   * Body: { venueId, bandId, eventDate, eventName?, description?, doorsTime?, startTime?, ticketUrl?, lineup? }
+   *
+   * Lineup entries support either:
+   *   - { bandId } -- existing band by UUID
+   *   - { bandName } -- resolve or create band by name via BandMatcher
+   *   - { bandId, bandName } -- bandId takes priority
    */
   createEvent = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { venueId, bandId, eventDate, eventName, description, lineup } = req.body;
+      const {
+        venueId, bandId, eventDate, eventName, description,
+        doorsTime, startTime, ticketUrl, lineup,
+      } = req.body;
       const userId = (req as any).user?.id; // From auth middleware
 
-      // bandId is required for old format; lineup is required for new format
-      if (!venueId || !eventDate || (!bandId && (!lineup || lineup.length === 0))) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Venue ID, event date, and at least one band (bandId or lineup) are required',
-        };
-        res.status(400).json(response);
+      // Validate required fields
+      if (!venueId) {
+        res.status(400).json({ success: false, error: 'venueId is required' } as ApiResponse);
         return;
+      }
+
+      if (!eventDate || isNaN(new Date(eventDate).getTime())) {
+        res.status(400).json({ success: false, error: 'A valid eventDate is required' } as ApiResponse);
+        return;
+      }
+
+      // Require at least one band (via bandId or lineup)
+      const hasLineup = lineup && Array.isArray(lineup) && lineup.length > 0;
+      if (!bandId && !hasLineup) {
+        res.status(400).json({
+          success: false,
+          error: 'At least one band is required (bandId or lineup with bandId/bandName)',
+        } as ApiResponse);
+        return;
+      }
+
+      // Resolve lineup: convert bandName entries to bandId via BandMatcher
+      let resolvedLineup: { bandId: string; setOrder?: number; isHeadliner?: boolean }[] | undefined;
+
+      if (hasLineup) {
+        resolvedLineup = [];
+        for (const entry of lineup) {
+          let resolvedBandId = entry.bandId;
+
+          // If no bandId but bandName provided, resolve via BandMatcher
+          if (!resolvedBandId && entry.bandName) {
+            const matchResult = await this.bandMatcher.matchOrCreateBand(entry.bandName);
+            resolvedBandId = matchResult.bandId;
+          }
+
+          if (!resolvedBandId) {
+            res.status(400).json({
+              success: false,
+              error: 'Each lineup entry must have either bandId or bandName',
+            } as ApiResponse);
+            return;
+          }
+
+          resolvedLineup.push({
+            bandId: resolvedBandId,
+            setOrder: entry.setOrder,
+            isHeadliner: entry.isHeadliner,
+          });
+        }
       }
 
       const event = await this.eventService.createEvent({
@@ -31,8 +85,11 @@ export class EventController {
         eventDate: new Date(eventDate),
         eventName,
         description,
+        doorsTime,
+        startTime,
+        ticketUrl,
         createdByUserId: userId,
-        lineup,
+        lineup: resolvedLineup,
       });
 
       const response: ApiResponse = {
@@ -195,6 +252,81 @@ export class EventController {
       };
 
       res.status(500).json(response);
+    }
+  };
+
+  /**
+   * On-demand Ticketmaster event lookup
+   * GET /api/events/lookup/:ticketmasterId
+   *
+   * Fetches a specific event from the Ticketmaster API by its TM event ID,
+   * normalizes it, matches/creates venue and bands, and stores it in the DB.
+   * Returns the full event record.
+   *
+   * Use case: mobile app encounters a Ticketmaster event ID (e.g., from a
+   * deep link or search) that is outside the synced coverage area. This
+   * endpoint fetches and ingests it on demand.
+   */
+  lookupEvent = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { ticketmasterId } = req.params;
+
+      // Guard: if TICKETMASTER_API_KEY not configured, lookup is unavailable
+      if (!process.env.TICKETMASTER_API_KEY) {
+        res.status(503).json({
+          success: false,
+          error: 'Event lookup not available: Ticketmaster API key not configured',
+        } as ApiResponse);
+        return;
+      }
+
+      // Fetch from Ticketmaster API
+      let adapter: TicketmasterAdapter;
+      try {
+        adapter = new TicketmasterAdapter();
+      } catch {
+        res.status(503).json({
+          success: false,
+          error: 'Event lookup not available',
+        } as ApiResponse);
+        return;
+      }
+
+      const tmEvent = await adapter.getEventById(ticketmasterId);
+
+      if (!tmEvent) {
+        res.status(404).json({
+          success: false,
+          error: 'Ticketmaster event not found',
+        } as ApiResponse);
+        return;
+      }
+
+      // Ingest via EventSyncService (normalizes, matches entities, upserts)
+      const eventId = await this.eventSyncService.ingestSingleEvent(tmEvent);
+
+      if (!eventId) {
+        res.status(422).json({
+          success: false,
+          error: 'Event could not be ingested (missing venue data)',
+        } as ApiResponse);
+        return;
+      }
+
+      // Return the full event record
+      const event = await this.eventService.getEventById(eventId);
+
+      res.status(200).json({
+        success: true,
+        data: event,
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Lookup event error:', error);
+
+      res.status(500).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to look up event',
+      } as ApiResponse);
     }
   };
 
