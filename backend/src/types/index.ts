@@ -313,6 +313,44 @@ export interface DatabaseConfig {
   password: string;
 }
 
+// Concert Cred types (Phase 6)
+export interface ConcertCred {
+  totalShows: number;
+  uniqueBands: number;
+  uniqueVenues: number;
+  badgesEarned: number;
+  followersCount: number;
+  followingCount: number;
+  genres: GenreStat[];
+  topBands: TopRatedBand[];
+  topVenues: TopRatedVenue[];
+}
+
+export interface GenreStat {
+  genre: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopRatedBand {
+  id: string;
+  name: string;
+  genre: string | null;
+  imageUrl: string | null;
+  avgRating: number;
+  timesSeen: number;
+}
+
+export interface TopRatedVenue {
+  id: string;
+  name: string;
+  city: string | null;
+  state: string | null;
+  imageUrl: string | null;
+  avgRating: number;
+  timesVisited: number;
+}
+
 // Express Request with user
 declare global {
   namespace Express {

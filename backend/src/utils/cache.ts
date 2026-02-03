@@ -298,6 +298,7 @@ export const CacheKeys = {
   userReviews: (userId: string) => `user:${userId}:reviews`,
   searchVenues: (query: string) => `search:venues:${query}`,
   searchBands: (query: string) => `search:bands:${query}`,
+  concertCred: (userId: string) => `stats:concert-cred:${userId}`,
 };
 
 // Export TTL constants
