@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 4: Badge Engine (in progress)
+**Current focus:** Phase 4: Badge Engine -- COMPLETE. Ready for Phase 5.
 
 ## Current Position
 
-Phase: 4 of 8 (Badge Engine)
-Plan: 2 of 3 in Phase 4
-Status: In progress
-Last activity: 2026-02-03 -- Completed 04-02-PLAN.md
+Phase: 4 of 8 (Badge Engine) -- COMPLETE
+Plan: 3 of 3 in Phase 4 (all complete)
+Status: Phase complete
+Last activity: 2026-02-03 -- Completed 04-03-PLAN.md
 
-Progress: [###########___________] 50% (11/22 plans)
+Progress: [############__________] 55% (12/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
-- Average duration: 5.9 min
-- Total execution time: 1.1 hours
+- Total plans completed: 12
+- Average duration: 6.1 min
+- Total execution time: 1.2 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [###########___________] 50% (11/22 plans)
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
-| 04-badge-engine | 2/3 | 9 min | 4.5 min |
+| 04-badge-engine | 3/3 | 21 min | 7 min |
 
 **Recent Trend:**
-- Last 5 plans: 5m, 16m, 8m, 5m, 4m
-- Trend: Badge engine plans executing fast, straightforward backend work
+- Last 5 plans: 16m, 8m, 5m, 4m, 12m
+- Trend: Badge engine mobile UI plan took longer due to Freezed codegen + screen build
 
 *Updated after each plan completion*
 
@@ -89,6 +89,10 @@ Recent decisions affecting current work:
 - [04-02]: Rarity endpoint is public (no auth) for discovery/marketing use
 - [04-02]: Badge route reorder: named routes before parameterized /:id to prevent path conflicts
 - [04-02]: awardBadge stores evaluator metadata in user_badges.metadata JSONB column
+- [04-03]: @JsonKey(name: 'badgeType') maps backend JSON key to Dart category field
+- [04-03]: Hide Flutter Material Badge in import to avoid name conflict with domain Badge model
+- [04-03]: WebSocket badge_earned listener on ConsumerStatefulWidget for SnackBar access via BuildContext
+- [04-03]: Badge earned toast invalidates all badge providers for immediate data refresh
 
 ### Pending Todos
 
@@ -111,5 +115,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 04-02-PLAN.md. Ready for 04-03 (mobile badge UI).
+Stopped at: Completed 04-03-PLAN.md. Phase 4 (Badge Engine) complete. Ready for Phase 5.
 Resume file: None
