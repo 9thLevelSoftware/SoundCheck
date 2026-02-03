@@ -19,7 +19,7 @@ class FeedScreen extends ConsumerStatefulWidget {
 }
 
 class _FeedScreenState extends ConsumerState<FeedScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, FeedWebSocketListenerMixin {
   late TabController _tabController;
 
   @override
@@ -27,10 +27,13 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
+    // Start WebSocket listeners for real-time feed updates
+    initFeedWebSocketListeners();
   }
 
   @override
   void dispose() {
+    disposeFeedWebSocketListeners();
     _tabController.removeListener(_onTabChanged);
     _tabController.dispose();
     super.dispose();
