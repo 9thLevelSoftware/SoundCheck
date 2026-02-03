@@ -1188,7 +1188,7 @@ class _EventCard extends StatelessWidget {
                       Row(
                         children: [
                           const Icon(Icons.location_on,
-                              color: AppTheme.textTertiary, size: 14),
+                              color: AppTheme.textTertiary, size: 14,),
                           const SizedBox(width: 4),
                           Expanded(
                             child: Text(
@@ -1237,7 +1237,7 @@ class _EventCard extends StatelessWidget {
             Row(
               children: [
                 const Icon(Icons.schedule,
-                    color: AppTheme.textTertiary, size: 14),
+                    color: AppTheme.textTertiary, size: 14,),
                 const SizedBox(width: 4),
                 Text(
                   [
@@ -1270,7 +1270,7 @@ class _EventCard extends StatelessWidget {
                     border: entry.isHeadliner
                         ? Border.all(
                             color:
-                                AppTheme.electricPurple.withValues(alpha: 0.5))
+                                AppTheme.electricPurple.withValues(alpha: 0.5),)
                         : null,
                   ),
                   child: Text(
@@ -1524,7 +1524,7 @@ class _SelectedBandCard extends StatelessWidget {
           IconButton(
             onPressed: onClear,
             icon: Icon(Icons.close,
-                color: AppTheme.backgroundDark.withValues(alpha: 0.7)),
+                color: AppTheme.backgroundDark.withValues(alpha: 0.7),),
           ),
         ],
       ),
@@ -1811,7 +1811,7 @@ class _VibeSelector extends StatelessWidget {
               border: isSelected
                   ? null
                   : Border.all(
-                      color: AppTheme.textTertiary.withValues(alpha: 0.3)),
+                      color: AppTheme.textTertiary.withValues(alpha: 0.3),),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
