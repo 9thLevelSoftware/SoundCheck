@@ -25,6 +25,7 @@ class WebSocketEvents {
   static const String userStoppedTyping = 'user_stopped_typing';
   static const String userOnline = 'user_online';
   static const String userOffline = 'user_offline';
+  static const String badgeEarned = 'badge_earned';
   static const String error = 'error';
   static const String pong = 'pong';
 }
