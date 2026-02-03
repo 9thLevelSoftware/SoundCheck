@@ -61,16 +61,16 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Social & Feed
 
-- [ ] **FEED-01**: Friends feed shows real-time friend check-ins ordered by recency
-- [ ] **FEED-02**: "Happening Now" section shows friends currently at shows (auto-expires after event)
-- [ ] **FEED-03**: Event feed shows all check-ins for a specific event (shared experience discovery)
-- [ ] **FEED-04**: Toast reactions on check-ins (existing, preserved)
-- [ ] **FEED-05**: Comments on check-ins (existing, preserved)
-- [ ] **FEED-06**: WebSocket push for real-time friend check-in updates in feed
-- [ ] **FEED-07**: Redis Pub/Sub for multi-instance WebSocket fan-out
-- [ ] **FEED-08**: Push notification when friend checks in at a show near user
-- [ ] **FEED-09**: Feed cached in Redis with short TTL for performance
-- [ ] **FEED-10**: Cursor-based pagination on all feed endpoints
+- [x] **FEED-01**: Friends feed shows real-time friend check-ins ordered by recency
+- [x] **FEED-02**: "Happening Now" section shows friends currently at shows (auto-expires after event)
+- [x] **FEED-03**: Event feed shows all check-ins for a specific event (shared experience discovery)
+- [x] **FEED-04**: Toast reactions on check-ins (existing, preserved)
+- [x] **FEED-05**: Comments on check-ins (existing, preserved)
+- [x] **FEED-06**: WebSocket push for real-time friend check-in updates in feed
+- [x] **FEED-07**: Redis Pub/Sub for multi-instance WebSocket fan-out
+- [x] **FEED-08**: Push notification when friend checks in at a show near user
+- [x] **FEED-09**: Feed cached in Redis with short TTL for performance
+- [x] **FEED-10**: Cursor-based pagination on all feed endpoints
 
 ### Discovery & Pages
 

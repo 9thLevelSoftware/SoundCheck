@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 5: Social Feed & Real-time (in progress)
+**Current focus:** Phase 6: Profile & Concert Cred (next)
 
 ## Current Position
 
-Phase: 5 of 8 (Social Feed & Real-time)
-Plan: 2 of 3 in Phase 5 (05-01, 05-02 complete)
-Status: In progress
-Last activity: 2026-02-03 -- Completed 05-02-PLAN.md (Real-time Notifications & WebSocket Fan-out)
+Phase: 5 of 8 (Social Feed & Real-time) -- VERIFIED COMPLETE
+Plan: 3 of 3 in Phase 5 (all complete)
+Status: Phase 5 verified, ready for Phase 6 planning
+Last activity: 2026-02-03 -- Phase 5 verified (5/5 must-haves passed)
 
-Progress: [##############________] 64% (14/22 plans)
+Progress: [################______] 68% (15/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
-- Average duration: 5.9 min
-- Total execution time: 1.38 hours
+- Total plans completed: 15
+- Average duration: 6.1 min
+- Total execution time: 1.58 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [##############________] 64% (14/22 plans)
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
 | 04-badge-engine | 3/3 | 21 min | 7 min |
-| 05-social-feed-realtime | 2/3 | 11 min | 5.5 min |
+| 05-social-feed-realtime | 3/3 | 23 min | 7.7 min |
 
 **Recent Trend:**
-- Last 5 plans: 5m, 4m, 12m, 4m, 7m
-- Trend: Real-time plan was moderately fast -- parallel Plan 01 changes merged cleanly
+- Last 5 plans: 12m, 4m, 7m, 12m (05-03 mobile UI with Freezed codegen + 3-tab screen + build fix)
+- Trend: Phase 5 used wave parallelism (plans 01+02 parallel, 03 sequential)
 
 *Updated after each plan completion*
 
@@ -103,13 +103,18 @@ Recent decisions affecting current work:
 - [05-02]: Notification batching uses Redis lists + BullMQ delayed jobs with jobId dedup
 - [05-02]: PushNotificationService uses dynamic require for firebase-admin (graceful degradation)
 - [05-02]: publishCheckinAndNotify combines Pub/Sub + notification enqueue in single method
+- [05-03]: flutter_local_notifications v20 requires core library desugaring in build.gradle.kts
+- [05-03]: FeedWebSocketListenerMixin pattern for reusable WebSocket subscription in ConsumerStatefulWidgets
+- [05-03]: ActiveEventIds provider for O(1) client-side same-event detection
+- [05-03]: Riverpod 3.1.0 AsyncValue uses .value not .valueOrNull
 
 ### Pending Todos
 
 - Set up TICKETMASTER_API_KEY environment variable (see .planning/phases/02-event-data-pipeline/02-USER-SETUP.md)
 - Configure sync_regions in database with lat/lon/radius for metro areas to sync
 - Set up Cloudflare R2 credentials for photo uploads (see .planning/phases/03-core-check-in-flow/03-USER-SETUP.md)
-- Set up FIREBASE_SERVICE_ACCOUNT_JSON environment variable for push notifications
+- Set up FIREBASE_SERVICE_ACCOUNT_JSON environment variable for push notifications (see .planning/phases/05-social-feed-realtime/05-USER-SETUP.md)
+- Add google-services.json (Android) and GoogleService-Info.plist (iOS) for Firebase
 
 ### Blockers/Concerns
 
@@ -126,5 +131,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 05-02-PLAN.md (Real-time Notifications & WebSocket Fan-out). Ready for 05-03.
+Stopped at: Phase 5 verified and complete. Ready for Phase 6 planning.
 Resume file: None
