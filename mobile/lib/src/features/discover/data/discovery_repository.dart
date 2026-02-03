@@ -93,6 +93,37 @@ class DiscoveryRepository {
     }
   }
 
+  /// Get personalized event recommendations.
+  /// GET /api/events/recommended?lat=&lon=&radius=&limit=
+  Future<List<DiscoverEvent>> getRecommendations({
+    double? lat,
+    double? lon,
+    double? radiusKm,
+    int limit = 20,
+  }) async {
+    try {
+      final queryParams = <String, dynamic>{
+        'limit': limit,
+      };
+      if (lat != null) queryParams['lat'] = lat;
+      if (lon != null) queryParams['lon'] = lon;
+      if (radiusKm != null) queryParams['radius'] = radiusKm;
+
+      final response = await _dioClient.get(
+        '${ApiConfig.events}/recommended',
+        queryParameters: queryParams,
+      );
+
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data
+          .map((json) =>
+              DiscoverEvent.fromEventJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Search events by name, band, venue, or genre.
   /// GET /api/events/search?q=&limit=
   Future<List<DiscoverEvent>> searchEvents({

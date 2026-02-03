@@ -212,6 +212,30 @@ DiscoverSearchResults discoverSearchResults(Ref ref) {
 // Event Discovery Providers (Phase 7)
 // ============================================
 
+/// Personalized event recommendations based on genre affinity + friend attendance + trending.
+/// Falls back to trending events for new users (cold start handled server-side).
+@riverpod
+Future<List<DiscoverEvent>> recommendedEvents(Ref ref) async {
+  final position = await ref.watch(currentLocationProvider.future);
+  final repository = ref.watch(discoveryRepositoryProvider);
+
+  try {
+    if (position != null) {
+      return await repository.getRecommendations(
+        lat: position.latitude,
+        lon: position.longitude,
+        radiusKm: 50,
+        limit: 15,
+      );
+    } else {
+      return await repository.getRecommendations(limit: 15);
+    }
+  } catch (e) {
+    // Graceful degradation: return empty list on error (section hides itself)
+    return [];
+  }
+}
+
 /// Nearby upcoming events based on user GPS location
 @riverpod
 Future<List<DiscoverEvent>> nearbyUpcomingEvents(Ref ref) async {

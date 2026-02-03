@@ -825,6 +825,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 
   Widget _buildTrendingContent() {
+    final recommendedEventsAsync = ref.watch(recommendedEventsProvider);
     final nearbyEventsAsync = ref.watch(nearbyUpcomingEventsProvider);
     final trendingEventsAsync = ref.watch(trendingNearbyEventsProvider);
     final genreListAsync = ref.watch(genreListProvider);
@@ -835,6 +836,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       padding: const EdgeInsets.only(bottom: 100),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
+          // For You (personalized recommendations, hidden if empty)
+          _buildForYouSection(recommendedEventsAsync),
+
           // Nearby Shows (event-first, GPS-based)
           _buildNearbyShowsSection(nearbyEventsAsync, locationStatusAsync),
           const SizedBox(height: 24),
@@ -896,6 +900,67 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           ),
         ]),
       ),
+    );
+  }
+
+  /// "For You" section: personalized recommendations based on genre history + friend activity.
+  /// Hidden entirely when recommendations are empty (no empty state shown).
+  Widget _buildForYouSection(AsyncValue<List<DiscoverEvent>> recommendedEventsAsync) {
+    return recommendedEventsAsync.when(
+      data: (events) {
+        if (events.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const _SectionHeader(
+              title: 'For You',
+              subtitle: 'Based on your concert taste',
+            ),
+            SizedBox(
+              height: 200,
+              child: ListView.builder(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                itemCount: events.length,
+                itemBuilder: (context, index) {
+                  return _ForYouCard(
+                    event: events[index],
+                    onTap: () {
+                      context.push('/events/${events[index].id}');
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 24),
+          ],
+        );
+      },
+      loading: () => const Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _SectionHeader(
+            title: 'For You',
+            subtitle: 'Based on your concert taste',
+          ),
+          SizedBox(
+            height: 200,
+            child: Center(
+              child: SizedBox(
+                width: 24,
+                height: 24,
+                child: CircularProgressIndicator(
+                  color: AppTheme.electricPurple,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
+      error: (_, __) => const SizedBox.shrink(), // Hide on error
     );
   }
 
@@ -1702,6 +1767,156 @@ class _TrendingEventCard extends StatelessWidget {
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 3),
+                  if (event.venueName != null)
+                    Text(
+                      '${event.venueName!}${event.venueCity != null ? ' - ${event.venueCity}' : ''}',
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// "For You" recommendation card -- wider than standard event cards
+/// to show more info (genre tag pill, date in voltLime).
+class _ForYouCard extends StatelessWidget {
+  const _ForYouCard({
+    required this.event,
+    required this.onTap,
+  });
+
+  final DiscoverEvent event;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    String dateDisplay = '';
+    try {
+      final date = DateTime.parse(event.eventDate);
+      dateDisplay = DateFormat('MMM d').format(date);
+    } catch (_) {}
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 200,
+        margin: const EdgeInsets.only(right: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.cardDark,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Image / gradient header
+            Container(
+              height: 100,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    AppTheme.electricPurple.withValues(alpha: 0.6),
+                    AppTheme.neonPink.withValues(alpha: 0.4),
+                  ],
+                ),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+              ),
+              child: Stack(
+                children: [
+                  if (event.bandImageUrl != null)
+                    ClipRRect(
+                      borderRadius: const BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                      child: Image.network(
+                        event.bandImageUrl!,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  // Date badge (voltLime)
+                  if (dateDisplay.isNotEmpty)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          dateDisplay,
+                          style: const TextStyle(
+                            color: AppTheme.voltLime,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+                  // Genre tag pill
+                  if (event.bandGenre != null)
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.electricPurple,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          event.bandGenre!,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+            // Info
+            Padding(
+              padding: const EdgeInsets.all(10),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    event.eventName ?? event.bandName ?? 'Event',
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
