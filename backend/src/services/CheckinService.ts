@@ -3,6 +3,7 @@ import { VenueService } from './VenueService';
 import { BandService } from './BandService';
 import { EventService } from './EventService';
 import { r2Service } from './R2Service';
+import { badgeEvalQueue } from '../jobs/badgeQueue';
 
 // ============================================
 // Interfaces
@@ -234,6 +235,23 @@ export class CheckinService {
         await this.eventService.promoteIfVerified(eventId);
       } catch (err) {
         console.error('Warning: could not check organic verification:', err);
+      }
+
+      // Enqueue async badge evaluation (30-second delay for anti-farming)
+      if (badgeEvalQueue) {
+        try {
+          await badgeEvalQueue.add(
+            'evaluate',
+            { userId, checkinId },
+            {
+              delay: 30000,
+              jobId: `badge-eval-${userId}-${checkinId}`,
+            }
+          );
+        } catch (err) {
+          console.error('Warning: failed to enqueue badge evaluation:', err);
+          // Non-fatal -- check-in succeeds even if badge queue fails
+        }
       }
 
       // Return full check-in with details

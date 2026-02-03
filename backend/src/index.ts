@@ -42,6 +42,7 @@ import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
+import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
 import { registerSyncJobs } from './jobs/syncScheduler';
 import { Worker } from 'bullmq';
 
@@ -265,8 +266,9 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
 // Create HTTP server
 const server = createServer(app);
 
-// BullMQ sync worker reference (for graceful shutdown)
+// BullMQ worker references (for graceful shutdown)
 let syncWorker: Worker | null = null;
+let badgeWorker: Worker | null = null;
 
 // Start server
 const startServer = async () => {
@@ -305,9 +307,10 @@ const startServer = async () => {
       }
     });
 
-    // Start BullMQ event sync worker and register scheduled jobs
+    // Start BullMQ workers and register scheduled jobs
     // Guarded by REDIS_URL -- returns null if Redis is not available
     syncWorker = startEventSyncWorker();
+    badgeWorker = startBadgeEvalWorker();
     registerSyncJobs().catch(err =>
       logError('Failed to register sync jobs', { error: err.message || err }),
     );
@@ -322,6 +325,7 @@ const startServer = async () => {
 process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
   if (syncWorker) await stopEventSyncWorker(syncWorker);
+  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
@@ -333,6 +337,7 @@ process.on('SIGTERM', async () => {
 process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
   if (syncWorker) await stopEventSyncWorker(syncWorker);
+  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
