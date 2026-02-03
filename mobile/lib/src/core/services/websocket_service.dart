@@ -65,6 +65,8 @@ class WebSocketService {
   bool _isAuthenticated = false;
   String? _clientId;
   String? _authToken;
+  int _reconnectAttempts = 0;
+  static const int _maxReconnectAttempts = 5;
   String? _userId;
 
   final Set<String> _joinedRooms = {};
@@ -132,6 +134,7 @@ class WebSocketService {
       await _channel!.ready;
 
       _isConnected = true;
+      _reconnectAttempts = 0;
       _connectionController.add(true);
       LogService.i('WebSocket connected');
 
@@ -343,12 +346,22 @@ class WebSocketService {
     });
   }
 
-  /// Schedule a reconnection attempt
+  /// Schedule a reconnection attempt with exponential backoff
   void _scheduleReconnect() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(const Duration(seconds: 5), () {
+
+    if (_reconnectAttempts >= _maxReconnectAttempts) {
+      LogService.w('WebSocket max reconnect attempts reached ($_maxReconnectAttempts). Giving up.');
+      return;
+    }
+
+    // Exponential backoff: 5s, 10s, 20s, 40s, 80s
+    final delay = Duration(seconds: 5 * (1 << _reconnectAttempts));
+    _reconnectAttempts++;
+
+    _reconnectTimer = Timer(delay, () {
       if (!_isConnected && _authToken != null) {
-        LogService.i('Attempting WebSocket reconnection...');
+        LogService.i('Attempting WebSocket reconnection (attempt $_reconnectAttempts/$_maxReconnectAttempts)...');
         connect(authToken: _authToken, userId: _userId);
       }
     });
