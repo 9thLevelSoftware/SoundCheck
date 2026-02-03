@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 5 of 8 (Social Feed & Real-time)
-Plan: 1 of 3 in Phase 5 (05-01 complete)
+Plan: 2 of 3 in Phase 5 (05-01, 05-02 complete)
 Status: In progress
-Last activity: 2026-02-03 -- Completed 05-01-PLAN.md (Feed Backend Service)
+Last activity: 2026-02-03 -- Completed 05-02-PLAN.md (Real-time Notifications & WebSocket Fan-out)
 
-Progress: [#############_________] 59% (13/22 plans)
+Progress: [##############________] 64% (14/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 5.9 min
-- Total execution time: 1.27 hours
+- Total execution time: 1.38 hours
 
 **By Phase:**
 
@@ -31,11 +31,11 @@ Progress: [#############_________] 59% (13/22 plans)
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
 | 04-badge-engine | 3/3 | 21 min | 7 min |
-| 05-social-feed-realtime | 1/3 | 4 min | 4 min |
+| 05-social-feed-realtime | 2/3 | 11 min | 5.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 8m, 5m, 4m, 12m, 4m
-- Trend: Feed backend service was fast -- pure backend, no mobile/codegen overhead
+- Last 5 plans: 5m, 4m, 12m, 4m, 7m
+- Trend: Real-time plan was moderately fast -- parallel Plan 01 changes merged cleanly
 
 *Updated after each plan completion*
 
@@ -98,12 +98,18 @@ Recent decisions affecting current work:
 - [05-01]: Fire-and-forget cache invalidation after check-in creation (never blocks response)
 - [05-01]: GET /api/feed/ backward-compat forwards to friends feed
 - [05-01]: Happening Now expiry: COALESCE(end_time+1h, start_time+4h, event_date+1day)
+- [05-02]: Dedicated Pub/Sub subscriber connection (ioredis subscriber mode blocks regular commands)
+- [05-02]: Same-event detection uses WebSocket room membership (event:${eventId})
+- [05-02]: Notification batching uses Redis lists + BullMQ delayed jobs with jobId dedup
+- [05-02]: PushNotificationService uses dynamic require for firebase-admin (graceful degradation)
+- [05-02]: publishCheckinAndNotify combines Pub/Sub + notification enqueue in single method
 
 ### Pending Todos
 
 - Set up TICKETMASTER_API_KEY environment variable (see .planning/phases/02-event-data-pipeline/02-USER-SETUP.md)
 - Configure sync_regions in database with lat/lon/radius for metro areas to sync
 - Set up Cloudflare R2 credentials for photo uploads (see .planning/phases/03-core-check-in-flow/03-USER-SETUP.md)
+- Set up FIREBASE_SERVICE_ACCOUNT_JSON environment variable for push notifications
 
 ### Blockers/Concerns
 
@@ -120,5 +126,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 05-01-PLAN.md (Feed Backend Service). Ready for 05-02.
+Stopped at: Completed 05-02-PLAN.md (Real-time Notifications & WebSocket Fan-out). Ready for 05-03.
 Resume file: None
