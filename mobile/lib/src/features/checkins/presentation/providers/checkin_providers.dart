@@ -1,13 +1,23 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../shared/services/location_service.dart';
 import '../../../bands/domain/band.dart';
+import '../../data/upload_repository.dart';
 import '../../domain/checkin.dart';
+import '../../domain/nearby_event.dart';
 import '../../domain/vibe_tag.dart';
 import '../../domain/toast.dart';
 import '../../domain/checkin_comment.dart';
 
 part 'checkin_providers.g.dart';
+
+/// Provider for the upload repository (photo uploads to R2)
+@Riverpod(keepAlive: true)
+UploadRepository uploadRepository(Ref ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return UploadRepository(dioClient: dioClient);
+}
 
 /// Provider for tracking band search query during check-in
 @riverpod
@@ -260,4 +270,86 @@ Future<List<CheckInBand>> venueRecentBands(Ref ref, String venueId) async {
   }
 
   return bands;
+}
+
+// ======== EVENT-FIRST CHECK-IN PROVIDERS ========
+
+/// Provider for nearby events based on GPS location
+/// Auto-fetches GPS position and calls getNearbyEvents
+@riverpod
+Future<List<NearbyEvent>> nearbyEvents(Ref ref) async {
+  final position = await LocationService.getCurrentPosition();
+  if (position == null) return [];
+
+  final repository = ref.watch(checkInRepositoryProvider);
+  return repository.getNearbyEvents(position.latitude, position.longitude);
+}
+
+/// Notifier for creating event-first check-ins (single tap)
+@riverpod
+class CreateEventCheckIn extends _$CreateEventCheckIn {
+  @override
+  Future<void> build() async {}
+
+  Future<CheckIn?> submit({
+    required String eventId,
+    double? locationLat,
+    double? locationLon,
+  }) async {
+    state = const AsyncValue.loading();
+
+    final repository = ref.read(checkInRepositoryProvider);
+
+    try {
+      final checkIn = await repository.createEventCheckIn(
+        eventId: eventId,
+        locationLat: locationLat,
+        locationLon: locationLon,
+      );
+
+      // Invalidate feed and nearby events to refresh
+      ref.invalidate(socialFeedProvider);
+      ref.invalidate(nearbyEventsProvider);
+
+      state = const AsyncValue.data(null);
+      return checkIn;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return null;
+    }
+  }
+}
+
+/// Notifier for submitting per-band and venue ratings
+@riverpod
+class SubmitRatings extends _$SubmitRatings {
+  @override
+  Future<void> build() async {}
+
+  Future<CheckIn?> submit(
+    String checkinId, {
+    List<Map<String, dynamic>>? bandRatings,
+    double? venueRating,
+  }) async {
+    state = const AsyncValue.loading();
+
+    final repository = ref.read(checkInRepositoryProvider);
+
+    try {
+      final checkIn = await repository.submitRatings(
+        checkinId,
+        bandRatings: bandRatings,
+        venueRating: venueRating,
+      );
+
+      // Invalidate check-in detail to refresh with new ratings
+      ref.invalidate(checkInDetailProvider(checkinId));
+
+      state = const AsyncValue.data(null);
+      return checkIn;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return null;
+    }
+  }
 }

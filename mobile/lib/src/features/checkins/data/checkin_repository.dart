@@ -1,6 +1,7 @@
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
 import '../domain/checkin.dart';
+import '../domain/nearby_event.dart';
 import '../domain/toast.dart';
 import '../domain/checkin_comment.dart';
 import '../domain/vibe_tag.dart';
@@ -104,6 +105,81 @@ class CheckInRepository {
       final response = await _dioClient.get('${ApiConfig.checkins}/vibe-tags');
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data.map((json) => VibeTag.fromJson(json)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  // ======== EVENT-FIRST CHECK-IN OPERATIONS ========
+
+  /// Get nearby events based on GPS coordinates
+  Future<List<NearbyEvent>> getNearbyEvents(
+    double lat,
+    double lng, {
+    double radius = 10,
+    int limit = 20,
+  }) async {
+    try {
+      final response = await _dioClient.get(
+        ApiConfig.nearbyEvents,
+        queryParameters: {
+          'lat': lat,
+          'lng': lng,
+          'radius': radius,
+          'limit': limit,
+        },
+      );
+
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data
+          .map((json) => NearbyEvent.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Create event-first check-in (single tap on event card)
+  Future<CheckIn> createEventCheckIn({
+    required String eventId,
+    double? locationLat,
+    double? locationLon,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'eventId': eventId,
+      };
+      if (locationLat != null) body['locationLat'] = locationLat;
+      if (locationLon != null) body['locationLon'] = locationLon;
+
+      final response = await _dioClient.post(
+        ApiConfig.checkins,
+        data: body,
+      );
+      final checkinData = response.data['data'] as Map<String, dynamic>;
+      return CheckIn.fromJson(checkinData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
+  /// Submit per-band ratings and/or venue rating for a check-in
+  Future<CheckIn> submitRatings(
+    String checkinId, {
+    List<Map<String, dynamic>>? bandRatings,
+    double? venueRating,
+  }) async {
+    try {
+      final body = <String, dynamic>{};
+      if (bandRatings != null) body['bandRatings'] = bandRatings;
+      if (venueRating != null) body['venueRating'] = venueRating;
+
+      final response = await _dioClient.patch(
+        '${ApiConfig.checkins}/$checkinId/ratings',
+        data: body,
+      );
+      final checkinData = response.data['data'] as Map<String, dynamic>;
+      return CheckIn.fromJson(checkinData);
     } catch (e) {
       rethrow;
     }

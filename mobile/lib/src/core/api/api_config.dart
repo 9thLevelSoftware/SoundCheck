@@ -77,6 +77,8 @@ class ApiConfig {
   static const String badges = '/badges';
   static const String checkins = '/checkins';
   static const String toasts = '/toasts';
+  static const String events = '/events';
+  static const String nearbyEvents = '/events/nearby';
   static const String shows = '/shows';
   static const String notifications = '/notifications';
   static const String feed = '/checkins/feed';

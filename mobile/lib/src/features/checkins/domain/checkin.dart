@@ -35,8 +35,12 @@ sealed class CheckIn with _$CheckIn {
     List<VibeTag>? vibeTags,
     // Indicates if current user has toasted this check-in (backend field name)
     @Default(false) bool hasUserToasted,
+    // Per-band ratings from event check-in
+    List<CheckInBandRating>? bandRatings,
     // Badges earned from this check-in
     List<EarnedBadge>? earnedBadges,
+    // Whether location was verified during check-in
+    @Default(false) bool isVerified,
   }) = _CheckIn;
 
   factory CheckIn.fromJson(Map<String, dynamic> json) =>
@@ -119,12 +123,18 @@ sealed class CheckInBand with _$CheckInBand {
 }
 
 /// Request to create a new check-in
+/// Supports both event-first (eventId) and legacy (bandId + venueId) flows
 @freezed
 sealed class CreateCheckInRequest with _$CreateCheckInRequest {
   const factory CreateCheckInRequest({
-    required String bandId,
-    required String venueId,
-    required String eventDate,
+    // Event-first flow fields
+    String? eventId,
+    double? locationLat,
+    double? locationLon,
+    // Legacy flow fields (now optional for backward compat)
+    String? bandId,
+    String? venueId,
+    String? eventDate,
     double? venueRating,
     double? bandRating,
     String? reviewText,
@@ -149,6 +159,19 @@ sealed class EarnedBadge with _$EarnedBadge {
 
   factory EarnedBadge.fromJson(Map<String, dynamic> json) =>
       _$EarnedBadgeFromJson(json);
+}
+
+/// Per-band rating stored on a check-in
+@freezed
+sealed class CheckInBandRating with _$CheckInBandRating {
+  const factory CheckInBandRating({
+    required String bandId,
+    required double rating,
+    String? bandName,
+  }) = _CheckInBandRating;
+
+  factory CheckInBandRating.fromJson(Map<String, dynamic> json) =>
+      _$CheckInBandRatingFromJson(json);
 }
 
 /// Check-in feed response with pagination
