@@ -3,6 +3,10 @@ import { VenueService } from './VenueService';
 import { BandService } from './BandService';
 import { EventService } from './EventService';
 
+// ============================================
+// Interfaces
+// ============================================
+
 interface CreateCheckinRequest {
   userId: string;
   venueId: string;
@@ -14,6 +18,30 @@ interface CreateCheckinRequest {
   checkinLatitude?: number;
   checkinLongitude?: number;
   vibeTagIds?: string[];
+  // Optional: if eventId is present, delegate to createEventCheckin
+  eventId?: string;
+  locationLat?: number;
+  locationLon?: number;
+}
+
+interface CreateEventCheckinRequest {
+  userId: string;
+  eventId: string;
+  locationLat?: number;
+  locationLon?: number;
+  comment?: string;
+  vibeTagIds?: string[];
+}
+
+interface AddRatingsRequest {
+  bandRatings?: { bandId: string; rating: number }[];
+  venueRating?: number;
+}
+
+interface BandRating {
+  bandId: string;
+  rating: number;
+  bandName?: string;
 }
 
 interface VibeTag {
@@ -56,6 +84,7 @@ interface Checkin {
   imageUrls?: string[];
   isVerified?: boolean;
   event?: { id: string; eventDate?: Date; eventName?: string };
+  bandRatings?: BandRating[];
 }
 
 interface GetCheckinsOptions {
@@ -76,14 +105,389 @@ interface Comment {
   ownerId?: string; // Check-in owner for WebSocket notifications
 }
 
+// ============================================
+// Venue type radius mapping for location verification
+// ============================================
+
+const VENUE_TYPE_RADIUS_KM: Record<string, number> = {
+  stadium: 2.0,
+  arena: 2.0,
+  outdoor: 1.5,
+  concert_hall: 0.5,
+  theater: 0.5,
+  club: 0.3,
+  bar: 0.3,
+};
+
+const DEFAULT_VENUE_RADIUS_KM = 1.0;
+
 export class CheckinService {
   private db = Database.getInstance();
   private venueService = new VenueService();
   private bandService = new BandService();
   private eventService = new EventService();
 
+  // ============================================
+  // Event-first check-in creation (Phase 3)
+  // ============================================
+
   /**
-   * Create a new check-in
+   * Create an event-first check-in.
+   * Requires eventId. Performs location verification (non-blocking)
+   * and time window validation (with venue timezone).
+   * Enforces one check-in per user per event via unique constraint.
+   */
+  async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
+    try {
+      const { userId, eventId, locationLat, locationLon, comment, vibeTagIds } = data;
+
+      // Validate event exists and is not cancelled, get venue info
+      const eventResult = await this.db.query(
+        `SELECT e.*, v.latitude as venue_lat, v.longitude as venue_lon,
+                v.venue_type, v.timezone, v.id as v_id
+         FROM events e
+         JOIN venues v ON e.venue_id = v.id
+         WHERE e.id = $1 AND e.is_cancelled = FALSE`,
+        [eventId]
+      );
+
+      if (eventResult.rows.length === 0) {
+        const err = new Error('Event not found or cancelled');
+        (err as any).statusCode = 404;
+        throw err;
+      }
+
+      const event = eventResult.rows[0];
+
+      // Validate time window using venue timezone
+      if (!this.isWithinTimeWindow(event)) {
+        throw new Error('Check-in is not within the event time window');
+      }
+
+      // Non-blocking location verification
+      const isVerified = this.verifyLocation(
+        locationLat,
+        locationLon,
+        event.venue_lat ? parseFloat(event.venue_lat) : null,
+        event.venue_lon ? parseFloat(event.venue_lon) : null,
+        event.venue_type
+      );
+
+      // Get headliner band_id from event_lineup for backward compat
+      const headlinerResult = await this.db.query(
+        `SELECT band_id FROM event_lineup
+         WHERE event_id = $1
+         ORDER BY is_headliner DESC, set_order ASC
+         LIMIT 1`,
+        [eventId]
+      );
+      const headlinerBandId = headlinerResult.rows.length > 0
+        ? headlinerResult.rows[0].band_id
+        : null;
+
+      // INSERT the check-in
+      const insertQuery = `
+        INSERT INTO checkins (
+          user_id, event_id, venue_id, band_id,
+          is_verified, review_text, checkin_latitude, checkin_longitude,
+          event_date, rating, comment
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        RETURNING *
+      `;
+
+      let result;
+      try {
+        result = await this.db.query(insertQuery, [
+          userId,
+          eventId,
+          event.venue_id,
+          headlinerBandId,
+          isVerified,
+          comment || null,
+          locationLat || null,
+          locationLon || null,
+          event.event_date,
+          0,                      // rating starts at 0, set via PATCH /ratings
+          comment || null,
+        ]);
+      } catch (error: any) {
+        // Catch unique constraint violation for user+event
+        if (error.code === '23505' && error.constraint && error.constraint.includes('user_event')) {
+          const dupErr = new Error('You have already checked in to this event');
+          (dupErr as any).statusCode = 409;
+          throw dupErr;
+        }
+        throw error;
+      }
+
+      const checkinId = result.rows[0].id;
+
+      // Add vibe tags if provided
+      if (vibeTagIds && vibeTagIds.length > 0) {
+        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
+      }
+
+      // Promote user-created events if organic verification threshold met
+      try {
+        await this.eventService.promoteIfVerified(eventId);
+      } catch (err) {
+        console.error('Warning: could not check organic verification:', err);
+      }
+
+      // Return full check-in with details
+      return this.getCheckinById(checkinId, userId);
+    } catch (error) {
+      console.error('Create event check-in error:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // Location verification (non-blocking helper)
+  // ============================================
+
+  /**
+   * Verify user is near the venue using Haversine formula.
+   * Returns boolean. Never throws -- non-blocking.
+   * Radius varies by venue type (stadiums get larger radius).
+   */
+  private verifyLocation(
+    userLat: number | undefined | null,
+    userLon: number | undefined | null,
+    venueLat: number | null,
+    venueLon: number | null,
+    venueType: string | null
+  ): boolean {
+    // If user didn't share location, can't verify
+    if (userLat == null || userLon == null) return false;
+    // If venue has no coordinates, can't verify
+    if (venueLat == null || venueLon == null) return false;
+
+    const radiusKm = venueType
+      ? (VENUE_TYPE_RADIUS_KM[venueType] || DEFAULT_VENUE_RADIUS_KM)
+      : DEFAULT_VENUE_RADIUS_KM;
+
+    const distanceKm = this.haversineDistance(userLat, userLon, venueLat, venueLon);
+    return distanceKm <= radiusKm;
+  }
+
+  /**
+   * Haversine distance in kilometers between two lat/lon points.
+   * Same formula used by VenueService.getVenuesNear().
+   */
+  private haversineDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
+    const R = 6371; // Earth radius in km
+    const dLat = toRad(lat2 - lat1);
+    const dLon = toRad(lon2 - lon1);
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c;
+  }
+
+  // ============================================
+  // Time window validation
+  // ============================================
+
+  /**
+   * Check if current time is within the event's check-in window.
+   * Uses venue timezone when available for correct local-time comparison.
+   *
+   * Window logic:
+   *   start: doors_time or (start_time - 2h) or 16:00 (default)
+   *   end: (end_time + 1h buffer) or (start_time + 6h) or 23:59
+   *
+   * If no timezone: allow all day on event_date (generous fallback).
+   * If no times at all: allow all day on event_date.
+   */
+  private isWithinTimeWindow(event: any): boolean {
+    try {
+      const eventDate = event.event_date; // DATE type from Postgres
+      if (!eventDate) return false;
+
+      // Normalize event_date to YYYY-MM-DD string
+      const eventDateStr = typeof eventDate === 'string'
+        ? eventDate.substring(0, 10)
+        : new Date(eventDate).toISOString().substring(0, 10);
+
+      const timezone = event.timezone;
+
+      // Get "now" in the venue's timezone (or UTC if no timezone)
+      let nowLocal: Date;
+      let todayStr: string;
+
+      if (timezone) {
+        try {
+          const nowInTz = new Date().toLocaleString('en-US', { timeZone: timezone });
+          nowLocal = new Date(nowInTz);
+          // Get today's date string in venue timezone
+          const parts = new Date().toLocaleDateString('en-CA', { timeZone: timezone }).split('-');
+          todayStr = parts.join('-');
+        } catch {
+          // Invalid timezone -- fall back to UTC
+          nowLocal = new Date();
+          todayStr = nowLocal.toISOString().substring(0, 10);
+        }
+      } else {
+        nowLocal = new Date();
+        todayStr = nowLocal.toISOString().substring(0, 10);
+      }
+
+      // If today's date doesn't match event date, disallow
+      if (todayStr !== eventDateStr) return false;
+
+      // If no time information at all, allow all-day window
+      const doorsTime = event.doors_time;
+      const startTime = event.start_time;
+      const endTime = event.end_time;
+
+      if (!doorsTime && !startTime && !endTime) {
+        return true; // All-day window
+      }
+
+      // Parse time helper: converts "HH:MM:SS" or "HH:MM" to minutes since midnight
+      const parseTimeToMinutes = (timeStr: string): number => {
+        const parts = timeStr.split(':');
+        return parseInt(parts[0]) * 60 + parseInt(parts[1] || '0');
+      };
+
+      // Current time in minutes since midnight (in venue timezone)
+      const nowMinutes = nowLocal.getHours() * 60 + nowLocal.getMinutes();
+
+      // Calculate window start
+      let windowStartMinutes: number;
+      if (doorsTime) {
+        windowStartMinutes = parseTimeToMinutes(doorsTime);
+      } else if (startTime) {
+        windowStartMinutes = Math.max(0, parseTimeToMinutes(startTime) - 120); // 2 hours before
+      } else {
+        windowStartMinutes = 16 * 60; // 4:00 PM default
+      }
+
+      // Calculate window end
+      let windowEndMinutes: number;
+      if (endTime) {
+        windowEndMinutes = Math.min(24 * 60 - 1, parseTimeToMinutes(endTime) + 60); // 1 hour after
+      } else if (startTime) {
+        windowEndMinutes = Math.min(24 * 60 - 1, parseTimeToMinutes(startTime) + 360); // 6 hours after
+      } else {
+        windowEndMinutes = 23 * 60 + 59; // 11:59 PM
+      }
+
+      return nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes;
+    } catch (error) {
+      // On any error, be permissive -- allow the check-in
+      console.error('Time window validation error, allowing check-in:', error);
+      return true;
+    }
+  }
+
+  // ============================================
+  // Per-set band ratings + venue rating (Phase 3)
+  // ============================================
+
+  /**
+   * Add ratings to an existing check-in.
+   * Supports per-set band ratings and venue rating independently.
+   * Ratings must be 0.5-5.0 in 0.5 steps.
+   */
+  async addRatings(checkinId: string, userId: string, ratings: AddRatingsRequest): Promise<Checkin> {
+    try {
+      // Verify checkin belongs to userId
+      const checkinResult = await this.db.query(
+        'SELECT user_id, event_id FROM checkins WHERE id = $1',
+        [checkinId]
+      );
+
+      if (checkinResult.rows.length === 0) {
+        throw new Error('Check-in not found');
+      }
+
+      if (checkinResult.rows[0].user_id !== userId) {
+        throw new Error('Unauthorized to rate this check-in');
+      }
+
+      const eventId = checkinResult.rows[0].event_id;
+
+      // Handle venue rating
+      if (ratings.venueRating !== undefined) {
+        this.validateRating(ratings.venueRating);
+        await this.db.query(
+          'UPDATE checkins SET venue_rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [ratings.venueRating, checkinId]
+        );
+      }
+
+      // Handle per-set band ratings
+      if (ratings.bandRatings && ratings.bandRatings.length > 0) {
+        for (const br of ratings.bandRatings) {
+          this.validateRating(br.rating);
+
+          // Verify band is in event lineup (if event-based check-in)
+          if (eventId) {
+            const lineupCheck = await this.db.query(
+              'SELECT 1 FROM event_lineup WHERE event_id = $1 AND band_id = $2',
+              [eventId, br.bandId]
+            );
+            if (lineupCheck.rows.length === 0) {
+              throw new Error(`Band ${br.bandId} is not in the event lineup`);
+            }
+          }
+
+          // Upsert band rating
+          await this.db.query(
+            `INSERT INTO checkin_band_ratings (checkin_id, band_id, rating)
+             VALUES ($1, $2, $3)
+             ON CONFLICT (checkin_id, band_id) DO UPDATE SET rating = $3`,
+            [checkinId, br.bandId, br.rating]
+          );
+        }
+
+        // Update the legacy rating column to average of all band ratings for backward compat
+        const avgResult = await this.db.query(
+          `SELECT AVG(rating) as avg_rating FROM checkin_band_ratings WHERE checkin_id = $1`,
+          [checkinId]
+        );
+        const avgRating = avgResult.rows[0]?.avg_rating
+          ? parseFloat(avgResult.rows[0].avg_rating)
+          : 0;
+        await this.db.query(
+          'UPDATE checkins SET rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+          [avgRating, checkinId]
+        );
+      }
+
+      return this.getCheckinById(checkinId, userId);
+    } catch (error) {
+      console.error('Add ratings error:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Validate a rating value: must be 0.5-5.0 in 0.5 steps.
+   */
+  private validateRating(rating: number): void {
+    if (rating < 0.5 || rating > 5.0) {
+      throw new Error('Rating must be between 0.5 and 5.0');
+    }
+    if (rating % 0.5 !== 0) {
+      throw new Error('Rating must be in 0.5 increments');
+    }
+  }
+
+  // ============================================
+  // Legacy check-in creation (backward compatibility)
+  // ============================================
+
+  /**
+   * Create a new check-in (legacy format: bandId + venueId).
+   * If eventId is present in the request, delegates to createEventCheckin.
+   *
    * Dual-write: populates BOTH old columns (band_id, venue_id, rating, comment,
    * photo_url, event_date) AND new columns (event_id, venue_rating, review_text,
    * image_urls, is_verified) in a single INSERT.
@@ -91,6 +495,18 @@ export class CheckinService {
    */
   async createCheckin(data: CreateCheckinRequest): Promise<Checkin> {
     try {
+      // If eventId is present, delegate to event-first flow
+      if (data.eventId) {
+        return this.createEventCheckin({
+          userId: data.userId,
+          eventId: data.eventId,
+          locationLat: data.locationLat ?? data.checkinLatitude,
+          locationLon: data.locationLon ?? data.checkinLongitude,
+          comment: data.comment,
+          vibeTagIds: data.vibeTagIds,
+        });
+      }
+
       const {
         userId,
         venueId,
@@ -179,7 +595,8 @@ export class CheckinService {
   }
 
   /**
-   * Get check-in by ID with full details
+   * Get check-in by ID with full details.
+   * Also fetches per-band ratings from checkin_band_ratings.
    */
   async getCheckinById(checkinId: string, currentUserId?: string): Promise<Checkin> {
     try {
@@ -216,7 +633,25 @@ export class CheckinService {
         throw new Error('Check-in not found');
       }
 
-      return this.mapDbCheckinToCheckin(result.rows[0]);
+      // Fetch per-band ratings for this check-in
+      const bandRatingsResult = await this.db.query(
+        `SELECT cbr.band_id, cbr.rating, b.name as band_name
+         FROM checkin_band_ratings cbr
+         JOIN bands b ON cbr.band_id = b.id
+         WHERE cbr.checkin_id = $1`,
+        [checkinId]
+      );
+
+      const bandRatings: BandRating[] = bandRatingsResult.rows.map((r: any) => ({
+        bandId: r.band_id,
+        rating: parseFloat(r.rating),
+        bandName: r.band_name,
+      }));
+
+      const checkin = this.mapDbCheckinToCheckin(result.rows[0]);
+      checkin.bandRatings = bandRatings.length > 0 ? bandRatings : undefined;
+
+      return checkin;
     } catch (error) {
       console.error('Get check-in error:', error);
       throw error;

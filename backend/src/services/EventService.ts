@@ -522,6 +522,63 @@ export class EventService {
   }
 
   // ============================================
+  // Nearby events (Phase 3)
+  // ============================================
+
+  /**
+   * Get events happening today near given GPS coordinates.
+   * Uses Haversine formula (same pattern as VenueService.getVenuesNear).
+   * Returns events sorted by distance with distanceKm attached.
+   */
+  async getNearbyEvents(
+    lat: number,
+    lon: number,
+    radiusKm: number = 10,
+    limit: number = 20
+  ): Promise<(Event & { distanceKm: number })[]> {
+    try {
+      const query = `
+        SELECT * FROM (
+          SELECT e.*,
+                 v.id as v_id, v.name as venue_name, v.city as venue_city,
+                 v.state as venue_state, v.image_url as venue_image,
+                 (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
+                 (6371 * acos(
+                   cos(radians($1)) * cos(radians(v.latitude)) *
+                   cos(radians(v.longitude) - radians($2)) +
+                   sin(radians($1)) * sin(radians(v.latitude))
+                 )) AS distance_km
+          FROM events e
+          JOIN venues v ON e.venue_id = v.id
+          WHERE e.event_date = CURRENT_DATE
+            AND e.is_cancelled = FALSE
+            AND v.latitude IS NOT NULL
+            AND v.longitude IS NOT NULL
+        ) sub
+        WHERE distance_km <= $3
+        ORDER BY distance_km ASC
+        LIMIT $4
+      `;
+
+      const result = await this.db.query(query, [lat, lon, radiusKm, limit]);
+
+      if (result.rows.length === 0) return [];
+
+      // Hydrate with lineup data using existing helper
+      const events = await this.mapDbEventsWithHeadliner(result.rows);
+
+      // Attach distanceKm from the subquery results
+      return events.map((event, index) => ({
+        ...event,
+        distanceKm: parseFloat(result.rows[index].distance_km),
+      }));
+    } catch (error) {
+      console.error('Get nearby events error:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
   // Private helper methods
   // ============================================
 
