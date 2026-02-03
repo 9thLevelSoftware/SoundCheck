@@ -5,33 +5,34 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 2: Event Data Pipeline (next)
+**Current focus:** Phase 2: Event Data Pipeline (in progress)
 
 ## Current Position
 
-Phase: 1 of 8 (Data Model Foundation) -- VERIFIED COMPLETE
-Plan: 3 of 3 in Phase 1 (all complete)
-Status: Phase 1 verified, ready for Phase 2 planning
-Last activity: 2026-02-02 -- Phase 1 verified (5/5 must-haves passed)
+Phase: 2 of 8 (Event Data Pipeline)
+Plan: 1 of 3 in Phase 2 (02-01 complete)
+Status: In progress
+Last activity: 2026-02-03 -- Completed 02-01-PLAN.md
 
-Progress: [###___________________] 14% (3/22 plans)
+Progress: [####__________________] 18% (4/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 3
+- Total plans completed: 4
 - Average duration: 6 min
-- Total execution time: 0.3 hours
+- Total execution time: 0.4 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
+| 02-event-data-pipeline | 1/3 | 4 min | 4 min |
 
 **Recent Trend:**
-- Last 5 plans: 7m, 5m, 6m
-- Trend: stable
+- Last 5 plans: 7m, 5m, 6m, 4m
+- Trend: stable/improving
 
 *Updated after each plan completion*
 
@@ -57,10 +58,13 @@ Recent decisions affecting current work:
 - [01-03]: CheckinService dual-write treats event creation failure as non-fatal
 - [01-03]: findOrCreateEvent adds band to existing venue+date event lineup rather than creating duplicates
 - [01-03]: Backward-compat response fields (bandId, band, showDate) populated from headliner in lineup
+- [02-01]: Partial unique index (WHERE external_id IS NOT NULL) on venues and bands for source+external_id dedup
+- [02-01]: In-memory daily API call counter with midnight UTC reset for Ticketmaster quota tracking
+- [02-01]: 200ms inter-request delay for Ticketmaster per-second rate limiting (BullMQ limiter for job-level in 02-02)
 
 ### Pending Todos
 
-None yet.
+- Set up TICKETMASTER_API_KEY environment variable (see .planning/phases/02-event-data-pipeline/02-USER-SETUP.md)
 
 ### Blockers/Concerns
 
@@ -75,6 +79,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-02-02
-Stopped at: Phase 1 verified and complete. Ready for Phase 2 planning.
+Last session: 2026-02-03
+Stopped at: Completed 02-01-PLAN.md (schema extensions, TM adapter, band matcher)
 Resume file: None
