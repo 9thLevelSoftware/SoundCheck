@@ -8,10 +8,19 @@ const eventController = new EventController();
 // Get upcoming events (public)
 router.get('/upcoming', eventController.getUpcomingEvents);
 
-// Get trending events (public)
+// Get trending events (public, enhanced with optional lat/lon)
 router.get('/trending', eventController.getTrendingEvents);
 
-// Get nearby events (requires auth)
+// Discovery: nearby upcoming events (requires auth for GPS-based queries)
+router.get('/discover', authenticateToken, eventController.getNearbyUpcoming);
+
+// Discovery: events by genre (public)
+router.get('/genre/:genre', eventController.getByGenre);
+
+// Discovery: event search (public)
+router.get('/search', eventController.searchEvents);
+
+// Get nearby events (requires auth) - check-in auto-suggest (today only)
 // MUST be before /:id to avoid param conflict
 router.get('/nearby', authenticateToken, eventController.getNearbyEvents);
 

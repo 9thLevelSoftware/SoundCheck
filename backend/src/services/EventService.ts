@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import { Event, EventLineupEntry } from '../types';
+import { cache, CacheKeys, CacheTTL } from '../utils/cache';
 
 interface CreateEventRequest {
   venueId: string;
@@ -574,6 +575,223 @@ export class EventService {
       }));
     } catch (error) {
       console.error('Get nearby events error:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // Event Discovery methods (Phase 7)
+  // ============================================
+
+  /**
+   * Get upcoming events near given GPS coordinates within a date range.
+   * Uses Haversine formula with bounding box pre-filter for performance.
+   * Cached with 300s TTL.
+   */
+  async getNearbyUpcoming(
+    lat: number,
+    lon: number,
+    radiusKm: number = 50,
+    days: number = 30,
+    limit: number = 20
+  ): Promise<(Event & { distanceKm: number })[]> {
+    const cacheKey = CacheKeys.nearbyEvents(lat, lon, radiusKm);
+
+    return cache.getOrSet(cacheKey, async () => {
+      try {
+        const query = `
+          SELECT * FROM (
+            SELECT e.*,
+                   v.id as v_id, v.name as venue_name, v.city as venue_city,
+                   v.state as venue_state, v.image_url as venue_image,
+                   (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
+                   (6371 * acos(
+                     cos(radians($1)) * cos(radians(v.latitude)) *
+                     cos(radians(v.longitude) - radians($2)) +
+                     sin(radians($1)) * sin(radians(v.latitude))
+                   )) AS distance_km
+            FROM events e
+            JOIN venues v ON e.venue_id = v.id
+            WHERE e.event_date BETWEEN CURRENT_DATE AND CURRENT_DATE + ($3 || ' days')::INTERVAL
+              AND e.is_cancelled = FALSE
+              AND v.latitude IS NOT NULL
+              AND v.longitude IS NOT NULL
+              AND v.latitude BETWEEN ($1 - $4 / 111.0) AND ($1 + $4 / 111.0)
+              AND v.longitude BETWEEN ($2 - $4 / (111.0 * cos(radians($1)))) AND ($2 + $4 / (111.0 * cos(radians($1))))
+          ) sub
+          WHERE distance_km <= $4
+          ORDER BY sub.event_date ASC, distance_km ASC
+          LIMIT $5
+        `;
+
+        const result = await this.db.query(query, [lat, lon, days, radiusKm, limit]);
+
+        if (result.rows.length === 0) return [];
+
+        const events = await this.mapDbEventsWithHeadliner(result.rows);
+
+        return events.map((event, index) => ({
+          ...event,
+          distanceKm: parseFloat(result.rows[index].distance_km),
+        }));
+      } catch (error) {
+        console.error('Get nearby upcoming events error:', error);
+        throw error;
+      }
+    }, CacheTTL.MEDIUM);
+  }
+
+  /**
+   * Get trending events near user based on recent check-in activity.
+   * Sorts by recent check-in count within the specified radius.
+   * Cached with 300s TTL.
+   */
+  async getTrendingNearby(
+    lat: number,
+    lon: number,
+    radiusKm: number = 50,
+    days: number = 7,
+    limit: number = 20
+  ): Promise<(Event & { distanceKm: number })[]> {
+    const cacheKey = CacheKeys.trendingEvents(lat, lon);
+
+    return cache.getOrSet(cacheKey, async () => {
+      try {
+        const query = `
+          SELECT * FROM (
+            SELECT e.*,
+                   v.id as v_id, v.name as venue_name, v.city as venue_city,
+                   v.state as venue_state, v.image_url as venue_image,
+                   (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
+                   (SELECT COUNT(*) FROM checkins c
+                    WHERE c.event_id = e.id
+                      AND c.created_at >= CURRENT_DATE - ($3 || ' days')::INTERVAL
+                   ) as recent_checkins,
+                   (6371 * acos(
+                     cos(radians($1)) * cos(radians(v.latitude)) *
+                     cos(radians(v.longitude) - radians($2)) +
+                     sin(radians($1)) * sin(radians(v.latitude))
+                   )) AS distance_km
+            FROM events e
+            JOIN venues v ON e.venue_id = v.id
+            WHERE e.event_date >= CURRENT_DATE
+              AND e.event_date <= CURRENT_DATE + INTERVAL '30 days'
+              AND e.is_cancelled = FALSE
+              AND v.latitude IS NOT NULL
+              AND v.longitude IS NOT NULL
+              AND v.latitude BETWEEN ($1 - $4 / 111.0) AND ($1 + $4 / 111.0)
+              AND v.longitude BETWEEN ($2 - $4 / (111.0 * cos(radians($1)))) AND ($2 + $4 / (111.0 * cos(radians($1))))
+          ) sub
+          WHERE distance_km <= $4
+          ORDER BY recent_checkins DESC, distance_km ASC
+          LIMIT $5
+        `;
+
+        const result = await this.db.query(query, [lat, lon, days, radiusKm, limit]);
+
+        if (result.rows.length === 0) return [];
+
+        const events = await this.mapDbEventsWithHeadliner(result.rows);
+
+        return events.map((event, index) => ({
+          ...event,
+          distanceKm: parseFloat(result.rows[index].distance_km),
+        }));
+      } catch (error) {
+        console.error('Get trending nearby events error:', error);
+        throw error;
+      }
+    }, CacheTTL.MEDIUM);
+  }
+
+  /**
+   * Get upcoming events filtered by genre.
+   * Joins through event_lineup -> bands to match genre.
+   * Cached with 300s TTL.
+   */
+  async getByGenre(
+    genre: string,
+    limit: number = 20,
+    offset: number = 0
+  ): Promise<Event[]> {
+    const cacheKey = CacheKeys.genreEvents(genre);
+
+    return cache.getOrSet(cacheKey, async () => {
+      try {
+        const query = `
+          SELECT DISTINCT ON (e.id) e.*,
+                 v.id as v_id, v.name as venue_name, v.city as venue_city,
+                 v.state as venue_state, v.image_url as venue_image,
+                 (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+          FROM events e
+          JOIN venues v ON e.venue_id = v.id
+          JOIN event_lineup el ON e.id = el.event_id
+          JOIN bands b ON el.band_id = b.id
+          WHERE b.genre ILIKE '%' || $1 || '%'
+            AND e.event_date >= CURRENT_DATE
+            AND e.is_cancelled = FALSE
+          ORDER BY e.id, e.event_date ASC
+          LIMIT $2 OFFSET $3
+        `;
+
+        const result = await this.db.query(query, [genre, limit, offset]);
+
+        // Re-sort by event_date since DISTINCT ON requires ORDER BY e.id first
+        result.rows.sort((a: any, b: any) => {
+          const dateA = new Date(a.event_date).getTime();
+          const dateB = new Date(b.event_date).getTime();
+          return dateA - dateB;
+        });
+
+        return this.mapDbEventsWithHeadliner(result.rows);
+      } catch (error) {
+        console.error('Get events by genre error:', error);
+        throw error;
+      }
+    }, CacheTTL.MEDIUM);
+  }
+
+  /**
+   * Search events by event name, band name, venue name, or genre.
+   * Uses pg_trgm similarity matching for fuzzy search.
+   */
+  async searchEvents(
+    query: string,
+    limit: number = 20
+  ): Promise<Event[]> {
+    try {
+      const sql = `
+        SELECT * FROM (
+          SELECT DISTINCT ON (e.id) e.*,
+                 v.id as v_id, v.name as venue_name, v.city as venue_city,
+                 v.state as venue_state, v.image_url as venue_image,
+                 (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
+                 GREATEST(
+                   similarity(COALESCE(e.event_name, ''), $1),
+                   similarity(v.name, $1)
+                 ) as relevance
+          FROM events e
+          JOIN venues v ON e.venue_id = v.id
+          LEFT JOIN event_lineup el ON e.id = el.event_id
+          LEFT JOIN bands b ON el.band_id = b.id
+          WHERE e.event_date >= CURRENT_DATE AND e.is_cancelled = FALSE
+            AND (
+              COALESCE(e.event_name, '') ILIKE '%' || $1 || '%'
+              OR v.name ILIKE '%' || $1 || '%'
+              OR b.name ILIKE '%' || $1 || '%'
+              OR b.genre ILIKE '%' || $1 || '%'
+            )
+          ORDER BY e.id, relevance DESC
+        ) sub
+        ORDER BY relevance DESC
+        LIMIT $2
+      `;
+
+      const result = await this.db.query(sql, [query, limit]);
+
+      return this.mapDbEventsWithHeadliner(result.rows);
+    } catch (error) {
+      console.error('Search events error:', error);
       throw error;
     }
   }

@@ -229,12 +229,31 @@ export class EventController {
 
   /**
    * Get trending events
-   * GET /api/events/trending?limit=20
+   * GET /api/events/trending?limit=20&lat=&lon=&radius=
+   * Enhanced: if lat/lon provided, returns trending near user.
+   * Without lat/lon, falls back to global trending (backward compat).
    */
   getTrendingEvents = async (req: Request, res: Response): Promise<void> => {
     try {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+      const lon = req.query.lon ? parseFloat(req.query.lon as string) : undefined;
+      const radius = req.query.radius ? parseFloat(req.query.radius as string) : 50;
 
+      // If lat/lon provided, use location-aware trending
+      if (lat !== undefined && lon !== undefined && !isNaN(lat) && !isNaN(lon)) {
+        const events = await this.eventService.getTrendingNearby(lat, lon, radius, 7, limit);
+
+        const response: ApiResponse = {
+          success: true,
+          data: events,
+        };
+
+        res.status(200).json(response);
+        return;
+      }
+
+      // Fallback: global trending (backward compat)
       const events = await this.eventService.getTrendingEvents(limit);
 
       const response: ApiResponse = {
@@ -367,6 +386,124 @@ export class EventController {
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch nearby events',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get nearby upcoming events
+   * GET /api/events/discover?lat=&lon=&radius=50&days=30&limit=20
+   */
+  getNearbyUpcoming = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
+      const lon = req.query.lon ? parseFloat(req.query.lon as string) : undefined;
+
+      if (lat === undefined || lon === undefined || isNaN(lat) || isNaN(lon)) {
+        res.status(400).json({
+          success: false,
+          error: 'lat and lon query parameters are required and must be numeric',
+        } as ApiResponse);
+        return;
+      }
+
+      const radius = req.query.radius ? parseFloat(req.query.radius as string) : 50;
+      const days = req.query.days ? parseInt(req.query.days as string) : 30;
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+      const events = await this.eventService.getNearbyUpcoming(lat, lon, radius, days, limit);
+
+      const response: ApiResponse = {
+        success: true,
+        data: events,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get nearby upcoming events error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch nearby upcoming events',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get events by genre
+   * GET /api/events/genre/:genre?limit=20&offset=0
+   */
+  getByGenre = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const { genre } = req.params;
+
+      if (!genre) {
+        res.status(400).json({
+          success: false,
+          error: 'genre parameter is required',
+        } as ApiResponse);
+        return;
+      }
+
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+      const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+
+      const events = await this.eventService.getByGenre(genre, limit, offset);
+
+      const response: ApiResponse = {
+        success: true,
+        data: events,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get events by genre error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch events by genre',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Search events
+   * GET /api/events/search?q=&limit=20
+   */
+  searchEvents = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const q = req.query.q as string;
+
+      if (!q || q.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'q query parameter is required',
+        } as ApiResponse);
+        return;
+      }
+
+      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
+
+      const events = await this.eventService.searchEvents(q.trim(), limit);
+
+      const response: ApiResponse = {
+        success: true,
+        data: events,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Search events error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to search events',
       };
 
       res.status(500).json(response);
