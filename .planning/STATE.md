@@ -10,18 +10,18 @@ See: .planning/PROJECT.md (updated 2026-02-02)
 ## Current Position
 
 Phase: 4 of 8 (Badge Engine)
-Plan: 1 of 3 in Phase 4
+Plan: 2 of 3 in Phase 4
 Status: In progress
-Last activity: 2026-02-03 -- Completed 04-01-PLAN.md
+Last activity: 2026-02-03 -- Completed 04-02-PLAN.md
 
-Progress: [##########____________] 45% (10/22 plans)
+Progress: [###########___________] 50% (11/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 10
-- Average duration: 6.1 min
-- Total execution time: 1.0 hours
+- Total plans completed: 11
+- Average duration: 5.9 min
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
@@ -30,11 +30,11 @@ Progress: [##########____________] 45% (10/22 plans)
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
-| 04-badge-engine | 1/3 | 5 min | 5 min |
+| 04-badge-engine | 2/3 | 9 min | 4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 5m, 5m, 16m, 8m, 5m
-- Trend: 04-01 fast execution, straightforward backend pipeline
+- Last 5 plans: 5m, 16m, 8m, 5m, 4m
+- Trend: Badge engine plans executing fast, straightforward backend work
 
 *Updated after each plan completion*
 
@@ -84,7 +84,11 @@ Recent decisions affecting current work:
 - [04-01]: road_warrior uses safe column mapping (whitelist) instead of string interpolation for SQL safety
 - [04-01]: Badge eval job has 30s delay for anti-farming and jobId dedup per user+checkin
 - [04-01]: Notification failure is non-fatal: badge award persists even if notification/WebSocket fails
-- [04-01]: user_badges metadata column deferred to plan 02 migration
+- [04-02]: Daily check-in rate limit applied to POST /api/checkins (covers both event-first and legacy flows)
+- [04-02]: Rate limit middleware fails open on error (allows request rather than blocking)
+- [04-02]: Rarity endpoint is public (no auth) for discovery/marketing use
+- [04-02]: Badge route reorder: named routes before parameterized /:id to prevent path conflicts
+- [04-02]: awardBadge stores evaluator metadata in user_badges.metadata JSONB column
 
 ### Pending Todos
 
@@ -102,9 +106,10 @@ Recent decisions affecting current work:
 - [01-01]: checkins.band_rating INTEGER column from old migration still exists -- needs cleanup in contract phase
 - [01-02]: Production checkins table has minimal schema (no band_id/venue_id/rating/comment/photo_url/event_date) -- contract phase must handle this (nothing to remove for absent columns)
 - [RESOLVED 01-03]: Shows table now read-only -- nothing in service layer writes to it, safe for future contract phase removal
+- [RESOLVED 04-01]: user_badges metadata column deferred to plan 02 migration -- completed in 04-02
 
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 04-01-PLAN.md. Ready for 04-02 (badge seed data migration).
+Stopped at: Completed 04-02-PLAN.md. Ready for 04-03 (mobile badge UI).
 Resume file: None
