@@ -33,16 +33,16 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Check-in Experience
 
-- [ ] **CHKN-01**: User can check in to an event in under 10 seconds from app open
-- [ ] **CHKN-02**: Check-in auto-suggests nearby events based on GPS + current date/time
-- [ ] **CHKN-03**: Check-in is a single tap; all enrichment (ratings, photo) is optional afterward
-- [ ] **CHKN-04**: User can rate each band independently after checking in (per-set ratings)
-- [ ] **CHKN-05**: User can rate venue experience independently after checking in
-- [ ] **CHKN-06**: User can attach photo(s) to check-in (stored in cloud storage, not ephemeral filesystem)
-- [ ] **CHKN-07**: Location verified on check-in (configurable radius per venue type, non-blocking)
-- [ ] **CHKN-08**: Check-in limited to one per user per event
-- [ ] **CHKN-09**: Check-in validated within time window around event (doors to end + buffer)
-- [ ] **CHKN-10**: Ratings use half-star increments (0.5 to 5.0)
+- [x] **CHKN-01**: User can check in to an event in under 10 seconds from app open
+- [x] **CHKN-02**: Check-in auto-suggests nearby events based on GPS + current date/time
+- [x] **CHKN-03**: Check-in is a single tap; all enrichment (ratings, photo) is optional afterward
+- [x] **CHKN-04**: User can rate each band independently after checking in (per-set ratings)
+- [x] **CHKN-05**: User can rate venue experience independently after checking in
+- [x] **CHKN-06**: User can attach photo(s) to check-in (stored in cloud storage, not ephemeral filesystem)
+- [x] **CHKN-07**: Location verified on check-in (configurable radius per venue type, non-blocking)
+- [x] **CHKN-08**: Check-in limited to one per user per event
+- [x] **CHKN-09**: Check-in validated within time window around event (doors to end + buffer)
+- [x] **CHKN-10**: Ratings use half-star increments (0.5 to 5.0)
 
 ### Gamification / Badges
 
@@ -177,16 +177,16 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | PIPE-06 | Phase 2 | Complete |
 | PIPE-07 | Phase 2 | Complete |
 | PIPE-08 | Phase 2 | Complete |
-| CHKN-01 | Phase 3 | Pending |
-| CHKN-02 | Phase 3 | Pending |
-| CHKN-03 | Phase 3 | Pending |
-| CHKN-04 | Phase 3 | Pending |
-| CHKN-05 | Phase 3 | Pending |
-| CHKN-06 | Phase 3 | Pending |
-| CHKN-07 | Phase 3 | Pending |
-| CHKN-08 | Phase 3 | Pending |
-| CHKN-09 | Phase 3 | Pending |
-| CHKN-10 | Phase 3 | Pending |
+| CHKN-01 | Phase 3 | Complete |
+| CHKN-02 | Phase 3 | Complete |
+| CHKN-03 | Phase 3 | Complete |
+| CHKN-04 | Phase 3 | Complete |
+| CHKN-05 | Phase 3 | Complete |
+| CHKN-06 | Phase 3 | Complete |
+| CHKN-07 | Phase 3 | Complete |
+| CHKN-08 | Phase 3 | Complete |
+| CHKN-09 | Phase 3 | Complete |
+| CHKN-10 | Phase 3 | Complete |
 | BDGE-01 | Phase 4 | Pending |
 | BDGE-02 | Phase 4 | Pending |
 | BDGE-03 | Phase 4 | Pending |
@@ -244,4 +244,4 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 2 complete (PIPE-01 through PIPE-08 verified)*
+*Last updated: 2026-02-03 after Phase 3 complete (CHKN-01 through CHKN-10 verified)*

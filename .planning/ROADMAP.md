@@ -8,7 +8,7 @@ SoundCheck's v1 transforms a barebones concert app into the "Untappd of live mus
 
 - [x] **Phase 1: Data Model Foundation** - Redesign schema around events with multi-band lineups, migrate existing data
 - [x] **Phase 2: Event Data Pipeline** - Ticketmaster integration, event sync, deduplication, user-created events
-- [ ] **Phase 3: Core Check-in Flow** - Event-based quick check-in with dual ratings, location verification, photos
+- [x] **Phase 3: Core Check-in Flow** - Event-based quick check-in with dual ratings, location verification, photos
 - [ ] **Phase 4: Badge Engine** - Data-driven gamification with concert-specific badges, progress tracking, anti-farming
 - [ ] **Phase 5: Social Feed & Real-time** - FOMO feed, happening now, WebSocket push, Firebase notifications
 - [ ] **Phase 6: Profile & Concert Cred** - Stats aggregation, concert resume, badge showcase
@@ -64,9 +64,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01-PLAN.md -- Backend CheckinService redesign (event-first creation, location verification, time window validation, per-set ratings endpoint, nearby events)
-- [ ] 03-02-PLAN.md -- Mobile check-in flow (GPS event auto-suggest, single-tap check-in, rating bottom sheets with half-star increments)
-- [ ] 03-03-PLAN.md -- Photo upload pipeline (Cloudflare R2 presigned URLs, mobile camera/gallery picker, direct upload, max 4 photos)
+- [x] 03-01-PLAN.md -- Backend CheckinService redesign (event-first creation, location verification, time window validation, per-set ratings endpoint, nearby events)
+- [x] 03-02-PLAN.md -- Mobile check-in flow (GPS event auto-suggest, single-tap check-in, rating bottom sheets with half-star increments)
+- [x] 03-03-PLAN.md -- Photo upload pipeline (Cloudflare R2 presigned URLs, mobile camera/gallery picker, direct upload, max 4 photos)
 
 ### Phase 4: Badge Engine
 **Goal**: Build a data-driven badge evaluation engine with JSONB criteria, async BullMQ processing, all 7 concert-specific badge categories, progress tracking, rarity indicators, and anti-farming measures.
@@ -160,15 +160,15 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Data Model Foundation | 3/3 | Complete | 2026-02-02 |
 | 2. Event Data Pipeline | 3/3 | Complete | 2026-02-03 |
-| 3. Core Check-in Flow | 0/3 | Planned | - |
+| 3. Core Check-in Flow | 3/3 | Complete | 2026-02-03 |
 | 4. Badge Engine | 0/3 | Not started | - |
 | 5. Social Feed & Real-time | 0/3 | Not started | - |
 | 6. Profile & Concert Cred | 0/2 | Not started | - |
 | 7. Discovery & Recommendations | 0/3 | Not started | - |
 | 8. Polish & App Store Readiness | 0/2 | Not started | - |
 
-**Total: 6/22 plans complete**
+**Total: 9/22 plans complete**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 3 planning complete*
+*Last updated: 2026-02-03 after Phase 3 execution complete*
