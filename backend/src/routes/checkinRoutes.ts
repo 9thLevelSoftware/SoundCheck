@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { CheckinController } from '../controllers/CheckinController';
 import { authenticateToken } from '../middleware/auth';
+import { dailyCheckinRateLimit } from '../middleware/checkinRateLimit';
 
 const router = Router();
 const checkinController = new CheckinController();
@@ -17,8 +18,8 @@ router.get('/vibe-tags', checkinController.getVibeTags);
 // Get check-ins with filters
 router.get('/', checkinController.getCheckins);
 
-// Create a check-in
-router.post('/', checkinController.createCheckin);
+// Create a check-in (daily rate limit: 10/day anti-farming)
+router.post('/', dailyCheckinRateLimit, checkinController.createCheckin);
 
 // Update ratings for a check-in (per-band + venue)
 router.patch('/:id/ratings', checkinController.updateRatings);

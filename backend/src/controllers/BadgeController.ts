@@ -136,6 +136,32 @@ export class BadgeController {
   };
 
   /**
+   * Get badge rarity data
+   * GET /api/badges/rarity
+   */
+  getBadgeRarity = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const rarity = await this.badgeService.getBadgeRarity();
+
+      const response: ApiResponse = {
+        success: true,
+        data: rarity,
+      };
+
+      res.status(200).json(response);
+    } catch (error) {
+      console.error('Get badge rarity error:', error);
+
+      const response: ApiResponse = {
+        success: false,
+        error: 'Failed to fetch badge rarity',
+      };
+
+      res.status(500).json(response);
+    }
+  };
+
+  /**
    * Get badge leaderboard
    * GET /api/badges/leaderboard
    */

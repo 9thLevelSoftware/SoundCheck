@@ -136,7 +136,7 @@ export class BadgeService {
           const earned = result.current >= threshold;
 
           if (earned) {
-            await this.awardBadge(userId, badge.id);
+            await this.awardBadge(userId, badge.id, result.metadata);
             newBadges.push(badge);
           }
         }
@@ -186,15 +186,60 @@ export class BadgeService {
   /**
    * Award a badge to a user.
    * Uses ON CONFLICT DO NOTHING to prevent duplicate awards.
+   * Optionally stores metadata (e.g. superfan band info) in the metadata JSONB column.
    */
-  async awardBadge(userId: string, badgeId: string): Promise<void> {
+  async awardBadge(userId: string, badgeId: string, metadata?: Record<string, any>): Promise<void> {
     const query = `
-      INSERT INTO user_badges (user_id, badge_id)
-      VALUES ($1, $2)
+      INSERT INTO user_badges (user_id, badge_id, metadata)
+      VALUES ($1, $2, $3)
       ON CONFLICT (user_id, badge_id) DO NOTHING
     `;
 
-    await this.db.query(query, [userId, badgeId]);
+    await this.db.query(query, [userId, badgeId, metadata ? JSON.stringify(metadata) : '{}']);
+  }
+
+  /**
+   * Get badge rarity: for each badge, how many users earned it vs total active users.
+   * Returns earned_count and rarity_pct (percentage of users who have the badge).
+   */
+  async getBadgeRarity(): Promise<Array<{
+    badgeId: string;
+    name: string;
+    category: string;
+    threshold: number;
+    earnedCount: number;
+    totalUsers: number;
+    rarityPct: number;
+  }>> {
+    const query = `
+      SELECT
+        b.id, b.name, b.badge_type as category, b.requirement_value,
+        COALESCE(ub_counts.earned_count, 0)::int as earned_count,
+        u_total.total_users::int as total_users,
+        CASE WHEN u_total.total_users > 0
+          THEN ROUND(COALESCE(ub_counts.earned_count, 0)::numeric / u_total.total_users * 100, 1)
+          ELSE 0
+        END as rarity_pct
+      FROM badges b
+      CROSS JOIN (SELECT COUNT(*) as total_users FROM users WHERE is_active = true) u_total
+      LEFT JOIN (
+        SELECT badge_id, COUNT(*) as earned_count
+        FROM user_badges
+        GROUP BY badge_id
+      ) ub_counts ON b.id = ub_counts.badge_id
+      ORDER BY b.badge_type, b.requirement_value
+    `;
+
+    const result = await this.db.query(query);
+    return result.rows.map((row: any) => ({
+      badgeId: row.id,
+      name: row.name,
+      category: row.category,
+      threshold: row.requirement_value,
+      earnedCount: parseInt(row.earned_count),
+      totalUsers: parseInt(row.total_users),
+      rarityPct: parseFloat(row.rarity_pct),
+    }));
   }
 
   /**
