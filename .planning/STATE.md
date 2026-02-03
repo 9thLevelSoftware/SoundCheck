@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 3: Core Check-in Flow (next)
+**Current focus:** Phase 3: Core Check-in Flow (in progress)
 
 ## Current Position
 
-Phase: 2 of 8 (Event Data Pipeline) -- VERIFIED COMPLETE
-Plan: 3 of 3 in Phase 2 (all complete)
-Status: Phase 2 verified, ready for Phase 3 planning
-Last activity: 2026-02-03 -- Phase 2 verified (5/5 must-haves passed)
+Phase: 3 of 8 (Core Check-in Flow)
+Plan: 1 of 3 in Phase 3 (complete)
+Status: In progress
+Last activity: 2026-02-03 -- Completed 03-01-PLAN.md
 
-Progress: [######________________] 27% (6/22 plans)
+Progress: [#######_______________] 32% (7/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 5.3 min
-- Total execution time: 0.5 hours
+- Total execution time: 0.6 hours
 
 **By Phase:**
 
@@ -29,10 +29,11 @@ Progress: [######________________] 27% (6/22 plans)
 |-------|-------|-------|----------|
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
+| 03-core-check-in-flow | 1/3 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 6m, 4m, 4m, 5m
-- Trend: stable/improving
+- Last 5 plans: 4m, 4m, 5m, 5m
+- Trend: stable
 
 *Updated after each plan completion*
 
@@ -66,6 +67,11 @@ Recent decisions affecting current work:
 - [02-03]: User-created events auto-set source='user_created' and is_verified=false when createdByUserId present
 - [02-03]: Auto-merge runs before standard upsert in sync pipeline to prevent user-event duplication
 - [02-03]: On-demand lookup creates fresh TicketmasterAdapter per request for clean API key validation
+- [03-01]: Location verification is non-blocking (returns boolean, never throws)
+- [03-01]: Time window validation is permissive on error (allows check-in rather than blocking)
+- [03-01]: Rating starts at 0 for event-first check-ins, set later via PATCH /ratings (two-step UX)
+- [03-01]: Headliner band_id populated from event_lineup for backward compat with old mobile clients
+- [03-01]: Legacy createCheckin delegates to createEventCheckin when eventId present
 
 ### Pending Todos
 
@@ -86,5 +92,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Phase 2 verified and complete. Ready for Phase 3 planning.
+Stopped at: Completed 03-01-PLAN.md (event-first check-in API)
 Resume file: None
