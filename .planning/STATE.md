@@ -5,22 +5,22 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 2: Event Data Pipeline (in progress)
+**Current focus:** Phase 2: Event Data Pipeline (complete)
 
 ## Current Position
 
 Phase: 2 of 8 (Event Data Pipeline)
-Plan: 2 of 3 in Phase 2 (02-02 complete)
-Status: In progress
-Last activity: 2026-02-03 -- Completed 02-02-PLAN.md
+Plan: 3 of 3 in Phase 2 (02-03 complete -- Phase 2 complete)
+Status: Phase complete
+Last activity: 2026-02-03 -- Completed 02-03-PLAN.md
 
-Progress: [#####_________________] 23% (5/22 plans)
+Progress: [######________________] 27% (6/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 5
-- Average duration: 5.6 min
+- Total plans completed: 6
+- Average duration: 5.3 min
 - Total execution time: 0.5 hours
 
 **By Phase:**
@@ -28,10 +28,10 @@ Progress: [#####_________________] 23% (5/22 plans)
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
-| 02-event-data-pipeline | 2/3 | 8 min | 4 min |
+| 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 
 **Recent Trend:**
-- Last 5 plans: 5m, 6m, 4m, 4m
+- Last 5 plans: 6m, 4m, 4m, 5m
 - Trend: stable/improving
 
 *Updated after each plan completion*
@@ -63,6 +63,9 @@ Recent decisions affecting current work:
 - [02-01]: 200ms inter-request delay for Ticketmaster per-second rate limiting (BullMQ limiter for job-level in 02-02)
 - [02-02]: EventSyncService uses graceful constructor flag (apiKeyConfigured) instead of throwing when TM key is missing
 - [02-02]: BullMQ queue exports null when REDIS_URL unavailable; all consumers guard against null
+- [02-03]: User-created events auto-set source='user_created' and is_verified=false when createdByUserId present
+- [02-03]: Auto-merge runs before standard upsert in sync pipeline to prevent user-event duplication
+- [02-03]: On-demand lookup creates fresh TicketmasterAdapter per request for clean API key validation
 
 ### Pending Todos
 
@@ -83,5 +86,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 02-02-PLAN.md (EventSyncService orchestrator, BullMQ worker/scheduler, app startup)
+Stopped at: Completed 02-03-PLAN.md (Phase 2 complete -- user events, auto-merge, on-demand lookup)
 Resume file: None
