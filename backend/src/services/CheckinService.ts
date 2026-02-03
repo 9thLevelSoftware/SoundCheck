@@ -4,7 +4,7 @@ import { BandService } from './BandService';
 import { EventService } from './EventService';
 import { r2Service } from './R2Service';
 import { badgeEvalQueue } from '../jobs/badgeQueue';
-import { cache } from '../utils/cache';
+import { cache, CacheKeys } from '../utils/cache';
 import { getRedis } from '../utils/redisRateLimiter';
 import { notificationQueue } from '../jobs/notificationQueue';
 
@@ -508,6 +508,27 @@ export class CheckinService {
           'UPDATE checkins SET rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [avgRating, checkinId]
         );
+
+        // Fire-and-forget: invalidate band aggregate cache for each rated band
+        for (const br of ratings.bandRatings) {
+          cache.del(CacheKeys.bandAggregate(br.bandId)).catch((err) =>
+            console.error('Warning: band aggregate cache invalidation failed:', err)
+          );
+        }
+      }
+
+      // Fire-and-forget: invalidate venue aggregate cache if venue was rated
+      if (ratings.venueRating !== undefined) {
+        const checkinForVenue = await this.db.query(
+          'SELECT venue_id FROM checkins WHERE id = $1',
+          [checkinId]
+        );
+        const venueId = checkinForVenue.rows[0]?.venue_id;
+        if (venueId) {
+          cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
+            console.error('Warning: venue aggregate cache invalidation failed:', err)
+          );
+        }
       }
 
       return this.getCheckinById(checkinId, userId);
@@ -952,9 +973,9 @@ export class CheckinService {
    */
   async deleteCheckin(userId: string, checkinId: string): Promise<void> {
     try {
-      // Verify user owns the check-in
+      // Verify user owns the check-in and get venue/band info for cache invalidation
       const checkin = await this.db.query(
-        'SELECT user_id FROM checkins WHERE id = $1',
+        'SELECT user_id, venue_id FROM checkins WHERE id = $1',
         [checkinId]
       );
 
@@ -966,6 +987,15 @@ export class CheckinService {
         throw new Error('Unauthorized to delete this check-in');
       }
 
+      const venueId = checkin.rows[0].venue_id;
+
+      // Get band IDs from band ratings for cache invalidation before deletion
+      const bandRatingsResult = await this.db.query(
+        'SELECT DISTINCT band_id FROM checkin_band_ratings WHERE checkin_id = $1',
+        [checkinId]
+      );
+      const bandIds: string[] = bandRatingsResult.rows.map((r: any) => r.band_id);
+
       // Delete check-in (cascades to toasts and comments)
       await this.db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
 
@@ -973,6 +1003,20 @@ export class CheckinService {
       cache.del(`stats:concert-cred:${userId}`).catch((err) =>
         console.error('Warning: stats cache invalidation failed:', err)
       );
+
+      // Fire-and-forget: invalidate band aggregate caches
+      for (const bandId of bandIds) {
+        cache.del(CacheKeys.bandAggregate(bandId)).catch((err) =>
+          console.error('Warning: band aggregate cache invalidation failed:', err)
+        );
+      }
+
+      // Fire-and-forget: invalidate venue aggregate cache
+      if (venueId) {
+        cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
+          console.error('Warning: venue aggregate cache invalidation failed:', err)
+        );
+      }
     } catch (error) {
       console.error('Delete check-in error:', error);
       throw error;

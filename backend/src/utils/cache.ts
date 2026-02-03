@@ -299,6 +299,11 @@ export const CacheKeys = {
   searchVenues: (query: string) => `search:venues:${query}`,
   searchBands: (query: string) => `search:bands:${query}`,
   concertCred: (userId: string) => `stats:concert-cred:${userId}`,
+  bandAggregate: (bandId: string) => `band:aggregate:${bandId}`,
+  venueAggregate: (venueId: string) => `venue:aggregate:${venueId}`,
+  nearbyEvents: (lat: number, lon: number, radius: number) => `events:nearby:${lat.toFixed(2)}:${lon.toFixed(2)}:${radius}`,
+  trendingEvents: (lat: number, lon: number) => `events:trending:${lat.toFixed(2)}:${lon.toFixed(2)}`,
+  genreEvents: (genre: string) => `events:genre:${genre.toLowerCase()}`,
 };
 
 // Export TTL constants

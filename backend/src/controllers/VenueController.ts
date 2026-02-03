@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import { VenueService } from '../services/VenueService';
 import { SetlistFmService } from '../services/SetlistFmService';
+import { DiscoveryService } from '../services/DiscoveryService';
+import { EventService } from '../services/EventService';
 import { CreateVenueRequest, SearchQuery, ApiResponse } from '../types';
 
 export class VenueController {
   private venueService = new VenueService();
   private setlistFmService = new SetlistFmService();
+  private discoveryService = new DiscoveryService();
+  private eventService = new EventService();
 
   /**
    * Create a new venue
@@ -102,15 +106,21 @@ export class VenueController {
         return;
       }
 
+      // Fetch aggregate rating and upcoming events in parallel
+      const [aggregate, upcomingEvents] = await Promise.all([
+        this.discoveryService.getVenueAggregateRating(id),
+        this.eventService.getEventsByVenue(id, { upcoming: true, limit: 5 }),
+      ]);
+
       const response: ApiResponse = {
         success: true,
-        data: venue,
+        data: { ...venue, aggregate, upcomingEvents },
       };
 
       res.status(200).json(response);
     } catch (error) {
       console.error('Get venue by ID error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch venue',

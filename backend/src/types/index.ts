@@ -351,6 +351,19 @@ export interface TopRatedVenue {
   timesVisited: number;
 }
 
+// Discovery aggregate types (Phase 7)
+export interface BandAggregate {
+  avgPerformanceRating: number;
+  totalRatings: number;
+  uniqueFans: number;
+}
+
+export interface VenueAggregate {
+  avgExperienceRating: number;
+  totalRatings: number;
+  uniqueVisitors: number;
+}
+
 // Express Request with user
 declare global {
   namespace Express {

@@ -1,11 +1,15 @@
 import { Request, Response } from 'express';
 import { BandService } from '../services/BandService';
 import { MusicBrainzService } from '../services/MusicBrainzService';
+import { DiscoveryService } from '../services/DiscoveryService';
+import { EventService } from '../services/EventService';
 import { CreateBandRequest, SearchQuery, ApiResponse } from '../types';
 
 export class BandController {
   private bandService = new BandService();
   private musicBrainzService = new MusicBrainzService();
+  private discoveryService = new DiscoveryService();
+  private eventService = new EventService();
 
   /**
    * Create a new band
@@ -101,15 +105,21 @@ export class BandController {
         return;
       }
 
+      // Fetch aggregate rating and upcoming shows in parallel
+      const [aggregate, upcomingShows] = await Promise.all([
+        this.discoveryService.getBandAggregateRating(id),
+        this.eventService.getEventsByBand(id, { upcoming: true, limit: 5 }),
+      ]);
+
       const response: ApiResponse = {
         success: true,
-        data: band,
+        data: { ...band, aggregate, upcomingShows },
       };
 
       res.status(200).json(response);
     } catch (error) {
       console.error('Get band by ID error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch band',
