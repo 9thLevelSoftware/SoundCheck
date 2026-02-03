@@ -14,6 +14,7 @@
     "migrate:legacy": "ts-node src/scripts/migrate.ts",
     "migrate:events-legacy": "ts-node src/scripts/migrate-events-model.ts",
     "seed": "ts-node src/scripts/seed.ts",
+    "seed:demo": "ts-node src/scripts/seed-demo.ts",
     "seed:dev": "NODE_ENV=development ts-node src/scripts/seed.ts",
     "retention-job": "ts-node src/scripts/retentionJob.ts",
     "test": "jest",
