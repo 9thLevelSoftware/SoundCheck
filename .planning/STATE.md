@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 4: Badge Engine (next)
+**Current focus:** Phase 4: Badge Engine (in progress)
 
 ## Current Position
 
-Phase: 3 of 8 (Core Check-in Flow) -- VERIFIED COMPLETE
-Plan: 3 of 3 in Phase 3 (all complete)
-Status: Phase 3 verified, ready for Phase 4 planning
-Last activity: 2026-02-03 -- Phase 3 verified (5/5 must-haves passed)
+Phase: 4 of 8 (Badge Engine)
+Plan: 1 of 3 in Phase 4
+Status: In progress
+Last activity: 2026-02-03 -- Completed 04-01-PLAN.md
 
-Progress: [#########_____________] 41% (9/22 plans)
+Progress: [##########____________] 45% (10/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 9
-- Average duration: 6.2 min
-- Total execution time: 0.9 hours
+- Total plans completed: 10
+- Average duration: 6.1 min
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -30,10 +30,11 @@ Progress: [#########_____________] 41% (9/22 plans)
 | 01-data-model-foundation | 3/3 | 18 min | 6 min |
 | 02-event-data-pipeline | 3/3 | 13 min | 4.3 min |
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
+| 04-badge-engine | 1/3 | 5 min | 5 min |
 
 **Recent Trend:**
-- Last 5 plans: 4m, 5m, 5m, 16m, 8m
-- Trend: 03-03 back to normal after 03-02 UI rewrite spike
+- Last 5 plans: 5m, 5m, 16m, 8m, 5m
+- Trend: 04-01 fast execution, straightforward backend pipeline
 
 *Updated after each plan completion*
 
@@ -78,6 +79,12 @@ Recent decisions affecting current work:
 - [03-03]: R2Service uses isConfigured flag and logs warning when credentials missing (graceful degradation)
 - [03-03]: Photo upload uses presigned URLs -- client PUTs directly to R2, never proxied through Railway
 - [03-03]: Fresh Dio instance for R2 upload (presigned URLs are self-authenticating, DioClient auth would interfere)
+- [04-01]: Evaluator registry uses Map<string, BadgeEvaluator> for extensible criteria dispatch
+- [04-01]: N+1 optimization groups badges by criteria.type; genre_explorer subgroups by genre
+- [04-01]: road_warrior uses safe column mapping (whitelist) instead of string interpolation for SQL safety
+- [04-01]: Badge eval job has 30s delay for anti-farming and jobId dedup per user+checkin
+- [04-01]: Notification failure is non-fatal: badge award persists even if notification/WebSocket fails
+- [04-01]: user_badges metadata column deferred to plan 02 migration
 
 ### Pending Todos
 
@@ -90,7 +97,7 @@ Recent decisions affecting current work:
 - [Research]: Songkick API unavailable -- removed from plan, Ticketmaster is primary
 - [Research]: Bandsintown API requires approval -- build Ticketmaster first, add when approved
 - [RESOLVED 01-01]: Shows/events dual table in existing DB -- old events table dropped, new events table created with correct schema
-- [Research]: Badge service queries reviews table, not checkins -- must be rewritten in Phase 4
+- [RESOLVED 04-01]: Badge service queries reviews table, not checkins -- rewritten in Phase 4 Plan 1
 - [RESOLVED 01-02]: Production DB missing shows table and legacy checkin columns -- handled with conditional migration logic
 - [01-01]: checkins.band_rating INTEGER column from old migration still exists -- needs cleanup in contract phase
 - [01-02]: Production checkins table has minimal schema (no band_id/venue_id/rating/comment/photo_url/event_date) -- contract phase must handle this (nothing to remove for absent columns)
@@ -99,5 +106,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Phase 3 verified and complete. Ready for Phase 4 planning.
+Stopped at: Completed 04-01-PLAN.md. Ready for 04-02 (badge seed data migration).
 Resume file: None
