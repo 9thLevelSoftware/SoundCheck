@@ -97,16 +97,16 @@ Requirements for initial release (App Store ready). Each maps to roadmap phases.
 
 ### Polish & App Store
 
-- [ ] **PLSH-01**: Check-in flow optimized for speed and one-handed mobile use
-- [ ] **PLSH-02**: Feed designed around live moments with visual check-in cards
-- [ ] **PLSH-03**: Badge showcase UI with collection grid and detail view
-- [ ] **PLSH-04**: Profile page styled as concert resume
-- [ ] **PLSH-05**: Check-in photos stored in Cloudflare R2 (not ephemeral Railway filesystem)
-- [ ] **PLSH-06**: Push notifications via Firebase Cloud Messaging for background delivery
-- [ ] **PLSH-07**: Account deletion flow works end-to-end (Apple requirement)
-- [ ] **PLSH-08**: Flutter version pinned to known-good release (avoid 3.24.3/3.24.4 App Store issues)
-- [ ] **PLSH-09**: Privacy manifests included for all third-party SDKs (Apple requirement)
-- [ ] **PLSH-10**: Demo account with test data prepared for App Store review
+- [x] **PLSH-01**: Check-in flow optimized for speed and one-handed mobile use
+- [x] **PLSH-02**: Feed designed around live moments with visual check-in cards
+- [x] **PLSH-03**: Badge showcase UI with collection grid and detail view
+- [x] **PLSH-04**: Profile page styled as concert resume
+- [x] **PLSH-05**: Check-in photos stored in Cloudflare R2 (not ephemeral Railway filesystem)
+- [x] **PLSH-06**: Push notifications via Firebase Cloud Messaging for background delivery
+- [x] **PLSH-07**: Account deletion flow works end-to-end (Apple requirement)
+- [x] **PLSH-08**: Flutter version pinned to known-good release (avoid 3.24.3/3.24.4 App Store issues)
+- [x] **PLSH-09**: Privacy manifests included for all third-party SDKs (Apple requirement)
+- [x] **PLSH-10**: Demo account with test data prepared for App Store review
 
 ## v2 Requirements
 
@@ -226,16 +226,16 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | PRFL-06 | Phase 6 | Complete |
 | PRFL-07 | Phase 6 | Complete |
 | PRFL-08 | Phase 6 | Complete |
-| PLSH-01 | Phase 8 | Pending |
-| PLSH-02 | Phase 8 | Pending |
-| PLSH-03 | Phase 8 | Pending |
-| PLSH-04 | Phase 8 | Pending |
-| PLSH-05 | Phase 8 | Pending |
-| PLSH-06 | Phase 8 | Pending |
-| PLSH-07 | Phase 8 | Pending |
-| PLSH-08 | Phase 8 | Pending |
-| PLSH-09 | Phase 8 | Pending |
-| PLSH-10 | Phase 8 | Pending |
+| PLSH-01 | Phase 8 | Complete |
+| PLSH-02 | Phase 8 | Complete |
+| PLSH-03 | Phase 8 | Complete |
+| PLSH-04 | Phase 8 | Complete |
+| PLSH-05 | Phase 8 | Complete |
+| PLSH-06 | Phase 8 | Complete |
+| PLSH-07 | Phase 8 | Complete |
+| PLSH-08 | Phase 8 | Complete |
+| PLSH-09 | Phase 8 | Complete |
+| PLSH-10 | Phase 8 | Complete |
 
 **Coverage:**
 - v1 requirements: 77 total
@@ -244,4 +244,4 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 
 ---
 *Requirements defined: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 7 complete (DISC-01 through DISC-09 verified)*
+*Last updated: 2026-02-03 after Phase 8 complete (all 77 v1 requirements verified)*

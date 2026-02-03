@@ -13,7 +13,7 @@ SoundCheck's v1 transforms a barebones concert app into the "Untappd of live mus
 - [x] **Phase 5: Social Feed & Real-time** - FOMO feed, happening now, WebSocket push, Firebase notifications
 - [x] **Phase 6: Profile & Concert Cred** - Stats aggregation, concert resume, badge showcase
 - [x] **Phase 7: Discovery & Recommendations** - Band/venue pages, upcoming shows, trending, genre-based recommendations
-- [ ] **Phase 8: Polish & App Store Readiness** - UX refinement, cloud storage migration, App Store compliance
+- [x] **Phase 8: Polish & App Store Readiness** - UX refinement, cloud storage migration, App Store compliance
 
 ## Phase Details
 
@@ -148,8 +148,8 @@ Plans:
 **Plans**: 2 plans
 
 Plans:
-- [ ] 08-01-PLAN.md -- Wire photo upload in check-in success state (replace placeholder), enhance feed cards with event date and comment preview
-- [ ] 08-02-PLAN.md -- Account deletion API + mobile UI (wiring DataRetentionService), PrivacyInfo.xcprivacy, Flutter version pin, demo account seed script
+- [x] 08-01-PLAN.md -- Wire photo upload in check-in success state (replace placeholder), enhance feed cards with event date and comment preview
+- [x] 08-02-PLAN.md -- Account deletion API + mobile UI (wiring DataRetentionService), PrivacyInfo.xcprivacy, Flutter version pin, demo account seed script
 
 ## Progress
 
@@ -165,10 +165,10 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 | 5. Social Feed & Real-time | 3/3 | Complete | 2026-02-03 |
 | 6. Profile & Concert Cred | 2/2 | Complete | 2026-02-03 |
 | 7. Discovery & Recommendations | 3/3 | Complete | 2026-02-03 |
-| 8. Polish & App Store Readiness | 0/2 | Not started | - |
+| 8. Polish & App Store Readiness | 2/2 | Complete | 2026-02-03 |
 
-**Total: 20/22 plans complete**
+**Total: 22/22 plans complete -- v1 MILESTONE COMPLETE**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 8 planning complete*
+*Last updated: 2026-02-03 after Phase 8 execution complete (all 22 plans done)*
