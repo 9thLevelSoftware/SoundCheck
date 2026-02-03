@@ -5,23 +5,23 @@
 See: .planning/PROJECT.md (updated 2026-02-02)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 6: Profile & Concert Cred (in progress)
+**Current focus:** Phase 6: Profile & Concert Cred (complete)
 
 ## Current Position
 
-Phase: 6 of 8 (Profile & Concert Cred)
-Plan: 1 of 2 in Phase 6 (06-01 complete)
-Status: In progress
-Last activity: 2026-02-03 -- Completed 06-01-PLAN.md (StatsService & concert cred endpoint)
+Phase: 6 of 8 (Profile & Concert Cred) -- COMPLETE
+Plan: 2 of 2 in Phase 6 (06-02 complete)
+Status: Phase complete
+Last activity: 2026-02-03 -- Completed 06-02-PLAN.md (Concert Cred Mobile UI)
 
-Progress: [#################_____] 73% (16/22 plans)
+Progress: [##################____] 77% (17/22 plans)
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 16
+- Total plans completed: 17
 - Average duration: 5.9 min
-- Total execution time: 1.63 hours
+- Total execution time: 1.73 hours
 
 **By Phase:**
 
@@ -32,11 +32,11 @@ Progress: [#################_____] 73% (16/22 plans)
 | 03-core-check-in-flow | 3/3 | 29 min | 9.7 min |
 | 04-badge-engine | 3/3 | 21 min | 7 min |
 | 05-social-feed-realtime | 3/3 | 23 min | 7.7 min |
-| 06-profile-concert-cred | 1/2 | 3 min | 3 min |
+| 06-profile-concert-cred | 2/2 | 9 min | 4.5 min |
 
 **Recent Trend:**
-- Last 5 plans: 4m, 7m, 12m, 3m (06-01 backend stats service + endpoint + cache invalidation)
-- Trend: Backend-only plans execute faster; no Flutter codegen overhead
+- Last 5 plans: 7m, 12m, 3m, 6m (06-02 concert cred mobile UI + Freezed codegen)
+- Trend: Full-stack plans with codegen ~6min; consistent velocity
 
 *Updated after each plan completion*
 
@@ -111,6 +111,9 @@ Recent decisions affecting current work:
 - [06-01]: Genre/band queries join through event_lineup (not checkins.band_id) for multi-band event correctness
 - [06-01]: Concert cred cached with 600s TTL via cache.getOrSet; invalidated fire-and-forget on create/delete
 - [06-01]: Concert cred endpoint requires auth (consistent with /:userId/stats pattern)
+- [06-02]: Deprecated userGenreStatsProvider instead of removing (backward compat for other screens)
+- [06-02]: Concert cred sections share single provider watch (one API call, Riverpod caches result)
+- [06-02]: profileRepositoryProvider added as keepAlive (stateless DioClient wrapper)
 
 ### Pending Todos
 
@@ -135,5 +138,5 @@ Recent decisions affecting current work:
 ## Session Continuity
 
 Last session: 2026-02-03
-Stopped at: Completed 06-01-PLAN.md (StatsService & concert cred endpoint)
+Stopped at: Completed 06-02-PLAN.md (Concert Cred Mobile UI) -- Phase 6 complete
 Resume file: None
