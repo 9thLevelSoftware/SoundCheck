@@ -15,6 +15,7 @@ import '../../features/checkins/data/checkin_repository.dart';
 import '../../features/feed/data/feed_repository.dart';
 import '../../features/notifications/data/notification_repository.dart';
 import '../../features/profile/data/profile_repository.dart';
+import '../../features/discover/data/discovery_repository.dart';
 
 part 'providers.g.dart';
 
@@ -91,6 +92,12 @@ FeedRepository feedRepository(Ref ref) {
 ProfileRepository profileRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return ProfileRepository(dioClient: dioClient);
+}
+
+@Riverpod(keepAlive: true)
+DiscoveryRepository discoveryRepository(Ref ref) {
+  final dioClient = ref.watch(dioClientProvider);
+  return DiscoveryRepository(dioClient: dioClient);
 }
 
 @Riverpod(keepAlive: true)

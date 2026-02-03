@@ -3,6 +3,7 @@ import '../../../../core/providers/providers.dart';
 import '../../../bands/domain/band.dart';
 import '../../../venues/domain/venue.dart';
 import '../../../auth/domain/user.dart';
+import '../../domain/discovery_models.dart';
 
 part 'discover_providers.g.dart';
 
@@ -27,6 +28,7 @@ class DiscoverSearchResults {
   final List<Band> bands;
   final List<Venue> venues;
   final List<User> users;
+  final List<DiscoverEvent> events;
   final bool isLoading;
   final Object? error;
 
@@ -34,6 +36,7 @@ class DiscoverSearchResults {
     required this.bands,
     required this.venues,
     required this.users,
+    required this.events,
     this.isLoading = false,
     this.error,
   });
@@ -42,17 +45,19 @@ class DiscoverSearchResults {
     bands: [],
     venues: [],
     users: [],
+    events: [],
   );
 
   factory DiscoverSearchResults.loading() => const DiscoverSearchResults(
     bands: [],
     venues: [],
     users: [],
+    events: [],
     isLoading: true,
   );
 
-  bool get isEmpty => bands.isEmpty && venues.isEmpty && users.isEmpty;
-  int get totalCount => bands.length + venues.length + users.length;
+  bool get isEmpty => bands.isEmpty && venues.isEmpty && users.isEmpty && events.isEmpty;
+  int get totalCount => bands.length + venues.length + users.length + events.length;
 }
 
 /// Provider for band search results in discover
@@ -149,6 +154,21 @@ Future<List<User>> discoverUserSearch(Ref ref) async {
   }
 }
 
+/// Provider for event search results in discover
+@riverpod
+Future<List<DiscoverEvent>> discoverEventSearch(Ref ref) async {
+  final query = ref.watch(discoverSearchQueryProvider);
+  if (query.length < 2) return [];
+
+  final repository = ref.watch(discoveryRepositoryProvider);
+
+  try {
+    return await repository.searchEvents(query: query, limit: 10);
+  } catch (e) {
+    return [];
+  }
+}
+
 /// Combined search results provider with debouncing
 @riverpod
 DiscoverSearchResults discoverSearchResults(Ref ref) {
@@ -162,16 +182,19 @@ DiscoverSearchResults discoverSearchResults(Ref ref) {
   final bandsAsync = ref.watch(discoverBandSearchProvider);
   final venuesAsync = ref.watch(discoverVenueSearchProvider);
   final usersAsync = ref.watch(discoverUserSearchProvider);
+  final eventsAsync = ref.watch(discoverEventSearchProvider);
 
   final isLoading = bandsAsync.isLoading ||
                     venuesAsync.isLoading ||
-                    usersAsync.isLoading;
+                    usersAsync.isLoading ||
+                    eventsAsync.isLoading;
 
   final hasError = bandsAsync.hasError ||
                    venuesAsync.hasError ||
-                   usersAsync.hasError;
+                   usersAsync.hasError ||
+                   eventsAsync.hasError;
 
-  if (isLoading && bandsAsync.value == null && venuesAsync.value == null) {
+  if (isLoading && bandsAsync.value == null && venuesAsync.value == null && eventsAsync.value == null) {
     return DiscoverSearchResults.loading();
   }
 
@@ -179,7 +202,57 @@ DiscoverSearchResults discoverSearchResults(Ref ref) {
     bands: bandsAsync.value ?? [],
     venues: venuesAsync.value ?? [],
     users: usersAsync.value ?? [],
+    events: eventsAsync.value ?? [],
     isLoading: isLoading,
-    error: hasError ? (bandsAsync.error ?? venuesAsync.error ?? usersAsync.error) : null,
+    error: hasError ? (bandsAsync.error ?? venuesAsync.error ?? usersAsync.error ?? eventsAsync.error) : null,
   );
+}
+
+// ============================================
+// Event Discovery Providers (Phase 7)
+// ============================================
+
+/// Nearby upcoming events based on user GPS location
+@riverpod
+Future<List<DiscoverEvent>> nearbyUpcomingEvents(Ref ref) async {
+  final position = await ref.watch(currentLocationProvider.future);
+  if (position == null) return [];
+
+  final repository = ref.watch(discoveryRepositoryProvider);
+  return repository.getNearbyUpcoming(
+    lat: position.latitude,
+    lon: position.longitude,
+    radiusKm: 50,
+    days: 30,
+    limit: 20,
+  );
+}
+
+/// Trending events near user (sorted by recent check-in count)
+@riverpod
+Future<List<DiscoverEvent>> trendingNearbyEvents(Ref ref) async {
+  final position = await ref.watch(currentLocationProvider.future);
+  if (position == null) return [];
+
+  final repository = ref.watch(discoveryRepositoryProvider);
+  return repository.getTrendingNearby(
+    lat: position.latitude,
+    lon: position.longitude,
+    radiusKm: 50,
+    limit: 20,
+  );
+}
+
+/// Available genres list (from bands endpoint)
+@riverpod
+Future<List<String>> genreList(Ref ref) async {
+  final repository = ref.watch(bandRepositoryProvider);
+  return repository.getGenres();
+}
+
+/// Events filtered by genre (family provider)
+@riverpod
+Future<List<DiscoverEvent>> genreEvents(Ref ref, String genre) async {
+  final repository = ref.watch(discoveryRepositoryProvider);
+  return repository.getEventsByGenre(genre: genre, limit: 20);
 }

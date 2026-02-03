@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/theme/app_theme.dart';
@@ -10,6 +11,7 @@ import '../../../core/providers/providers.dart';
 import '../../../shared/services/location_service.dart';
 import '../../bands/domain/band.dart';
 import '../../venues/domain/venue.dart';
+import '../domain/discovery_models.dart';
 import 'providers/discover_providers.dart';
 
 part 'discover_screen.g.dart';
@@ -53,8 +55,7 @@ Future<List<Venue>> nearbyVenues(Ref ref) async {
 }
 
 /// Discover & Search Screen
-/// Search for Bands, Venues, or Users
-/// Shows trending lists and map toggle
+/// Event-first discovery with search for bands, venues, users, and events
 class DiscoverScreen extends ConsumerStatefulWidget {
   const DiscoverScreen({super.key});
 
@@ -66,6 +67,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   final TextEditingController _searchController = TextEditingController();
   bool _isSearching = false;
   bool _showMapView = false;
+  String? _selectedGenre;
   Timer? _debounceTimer;
 
   @override
@@ -131,7 +133,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         controller: _searchController,
                         style: const TextStyle(color: AppTheme.textPrimary),
                         decoration: InputDecoration(
-                          hintText: 'Search bands, venues, or users...',
+                          hintText: 'Search shows, bands, venues, or users...',
                           hintStyle: const TextStyle(color: AppTheme.textTertiary),
                           prefixIcon: const Icon(
                             Icons.search,
@@ -194,7 +196,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             // Map View
             _buildMapView()
           else
-            // Trending Lists
+            // Event-first Discovery Content
             _buildTrendingContent(),
         ],
       ),
@@ -341,6 +343,27 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       padding: const EdgeInsets.all(16),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
+          // Events section (shown first for event-first discovery)
+          if (searchResults.events.isNotEmpty) ...[
+            _SectionHeader(
+              title: 'Events',
+              subtitle: '${searchResults.events.length} found',
+            ),
+            const SizedBox(height: 8),
+            ...searchResults.events.map(
+              (event) => _SearchResultItem(
+                type: SearchResultType.event,
+                name: event.eventName ?? event.bandName ?? 'Event',
+                subtitle: _formatEventSubtitle(event),
+                onTap: () {
+                  // Navigate to event detail if available
+                  context.push('/events/${event.id}');
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
+
           // Bands section
           if (searchResults.bands.isNotEmpty) ...[
             _SectionHeader(
@@ -396,6 +419,21 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
         ]),
       ),
     );
+  }
+
+  String _formatEventSubtitle(DiscoverEvent event) {
+    final parts = <String>[];
+    if (event.venueName != null) parts.add(event.venueName!);
+    if (event.venueCity != null) parts.add(event.venueCity!);
+    if (event.eventDate.isNotEmpty) {
+      try {
+        final date = DateTime.parse(event.eventDate);
+        parts.add(DateFormat('MMM d').format(date));
+      } catch (_) {
+        // Skip date formatting if parse fails
+      }
+    }
+    return parts.join(' - ');
   }
 
   Widget _buildMapView() {
@@ -787,107 +825,29 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   }
 
   Widget _buildTrendingContent() {
-    final trendingBandsAsync = ref.watch(trendingBandsProvider);
-    final topVenuesAsync = ref.watch(topRatedVenuesProvider);
+    final nearbyEventsAsync = ref.watch(nearbyUpcomingEventsProvider);
+    final trendingEventsAsync = ref.watch(trendingNearbyEventsProvider);
+    final genreListAsync = ref.watch(genreListProvider);
     final popularBandsAsync = ref.watch(popularBandsProvider);
-    final nearbyVenuesAsync = ref.watch(nearbyVenuesProvider);
     final locationStatusAsync = ref.watch(locationStatusProvider);
 
     return SliverPadding(
       padding: const EdgeInsets.only(bottom: 100),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
-          // Nearby Venues (location-based)
-          _buildNearbyVenuesSection(nearbyVenuesAsync, locationStatusAsync),
+          // Nearby Shows (event-first, GPS-based)
+          _buildNearbyShowsSection(nearbyEventsAsync, locationStatusAsync),
           const SizedBox(height: 24),
 
-          // Trending Locally
-          const _SectionHeader(
-            title: 'Trending Locally',
-            subtitle: 'Bands being checked into right now',
-          ),
-          SizedBox(
-            height: 160,
-            child: trendingBandsAsync.when(
-              data: (bands) => bands.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No trending bands yet',
-                        style: TextStyle(color: AppTheme.textTertiary),
-                      ),
-                    )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: bands.length,
-                      itemBuilder: (context, index) {
-                        return _TrendingBandCard(
-                          band: bands[index],
-                          onTap: () {
-                            context.push('/bands/${bands[index].id}');
-                          },
-                        );
-                      },
-                    ),
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.electricPurple,
-                ),
-              ),
-              error: (err, stack) => const Center(
-                child: Text(
-                  'Error loading trending bands',
-                  style: TextStyle(color: AppTheme.textTertiary),
-                ),
-              ),
-            ),
-          ),
+          // Genre Browse
+          _buildGenreBrowseSection(genreListAsync),
           const SizedBox(height: 24),
 
-          // Top Rated Venues
-          const _SectionHeader(
-            title: 'Top Rated Venues',
-            subtitle: 'Highest average check-in ratings',
-          ),
-          SizedBox(
-            height: 160,
-            child: topVenuesAsync.when(
-              data: (venues) => venues.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'No venues yet',
-                        style: TextStyle(color: AppTheme.textTertiary),
-                      ),
-                    )
-                  : ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: venues.length,
-                      itemBuilder: (context, index) {
-                        return _TrendingVenueCard(
-                          venue: venues[index],
-                          onTap: () {
-                            context.push('/venues/${venues[index].id}');
-                          },
-                        );
-                      },
-                    ),
-              loading: () => const Center(
-                child: CircularProgressIndicator(
-                  color: AppTheme.neonPink,
-                ),
-              ),
-              error: (err, stack) => const Center(
-                child: Text(
-                  'Error loading venues',
-                  style: TextStyle(color: AppTheme.textTertiary),
-                ),
-              ),
-            ),
-          ),
+          // Trending Near You
+          _buildTrendingNearYouSection(trendingEventsAsync, locationStatusAsync),
           const SizedBox(height: 24),
 
-          // Popular This Week
+          // Popular This Week (bands - secondary content)
           const _SectionHeader(
             title: 'Popular This Week',
             subtitle: 'Bands on tour with high activity',
@@ -939,30 +899,30 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
     );
   }
 
-  Widget _buildNearbyVenuesSection(
-    AsyncValue<List<Venue>> nearbyVenuesAsync,
+  Widget _buildNearbyShowsSection(
+    AsyncValue<List<DiscoverEvent>> nearbyEventsAsync,
     AsyncValue<LocationStatus> locationStatusAsync,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const _SectionHeader(
-          title: 'Nearby Venues',
-          subtitle: 'Live music spots near you',
+          title: 'Nearby Shows',
+          subtitle: 'Upcoming events near you',
         ),
         SizedBox(
-          height: 160,
+          height: 180,
           child: locationStatusAsync.when(
             data: (status) {
               // Handle permission states
               if (status == LocationStatus.denied) {
                 return _LocationPermissionPrompt(
-                  message: 'Enable location to find venues near you',
+                  message: 'Enable location to find shows near you',
                   buttonText: 'Grant Permission',
                   onPressed: () async {
                     await LocationService.requestPermission();
                     ref.invalidate(locationStatusProvider);
-                    ref.invalidate(nearbyVenuesProvider);
+                    ref.invalidate(nearbyUpcomingEventsProvider);
                   },
                 );
               } else if (status == LocationStatus.deniedForever) {
@@ -983,36 +943,36 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 );
               }
 
-              // Location granted - show nearby venues
-              return nearbyVenuesAsync.when(
-                data: (venues) => venues.isEmpty
+              // Location granted - show nearby events
+              return nearbyEventsAsync.when(
+                data: (events) => events.isEmpty
                     ? const Center(
                         child: Text(
-                          'No venues found nearby',
+                          'No upcoming shows found nearby',
                           style: TextStyle(color: AppTheme.textTertiary),
                         ),
                       )
                     : ListView.builder(
                         scrollDirection: Axis.horizontal,
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: venues.length,
+                        itemCount: events.length,
                         itemBuilder: (context, index) {
-                          return _TrendingVenueCard(
-                            venue: venues[index],
+                          return _EventCard(
+                            event: events[index],
                             onTap: () {
-                              context.push('/venues/${venues[index].id}');
+                              context.push('/events/${events[index].id}');
                             },
                           );
                         },
                       ),
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                    color: AppTheme.voltLime,
+                    color: AppTheme.electricPurple,
                   ),
                 ),
                 error: (err, stack) => const Center(
                   child: Text(
-                    'Error loading nearby venues',
+                    'Error loading nearby shows',
                     style: TextStyle(color: AppTheme.textTertiary),
                   ),
                 ),
@@ -1020,7 +980,266 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             },
             loading: () => const Center(
               child: CircularProgressIndicator(
-                color: AppTheme.voltLime,
+                color: AppTheme.electricPurple,
+              ),
+            ),
+            error: (err, stack) => const Center(
+              child: Text(
+                'Error checking location',
+                style: TextStyle(color: AppTheme.textTertiary),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildGenreBrowseSection(AsyncValue<List<String>> genreListAsync) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          title: 'Browse by Genre',
+          subtitle: 'Find shows matching your taste',
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 40,
+          child: genreListAsync.when(
+            data: (genres) => genres.isEmpty
+                ? const Center(
+                    child: Text(
+                      'No genres available',
+                      style: TextStyle(color: AppTheme.textTertiary),
+                    ),
+                  )
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    itemCount: genres.length,
+                    itemBuilder: (context, index) {
+                      final genre = genres[index];
+                      final isSelected = _selectedGenre == genre;
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 8),
+                        child: GestureDetector(
+                          onTap: () {
+                            setState(() {
+                              _selectedGenre = isSelected ? null : genre;
+                            });
+                            if (!isSelected) {
+                              _showGenreEventsSheet(genre);
+                            }
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isSelected
+                                  ? AppTheme.electricPurple
+                                  : AppTheme.surfaceVariantDark,
+                              borderRadius: BorderRadius.circular(20),
+                              border: isSelected
+                                  ? null
+                                  : Border.all(
+                                      color: AppTheme.electricPurple.withValues(alpha: 0.3),
+                                    ),
+                            ),
+                            child: Text(
+                              genre,
+                              style: TextStyle(
+                                color: isSelected
+                                    ? Colors.white
+                                    : AppTheme.textPrimary,
+                                fontSize: 14,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ),
+                      );
+                    },
+                  ),
+            loading: () => const Center(
+              child: SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: AppTheme.electricPurple,
+                  strokeWidth: 2,
+                ),
+              ),
+            ),
+            error: (err, stack) => const Center(
+              child: Text(
+                'Error loading genres',
+                style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showGenreEventsSheet(String genre) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) => Consumer(
+        builder: (context, ref, child) {
+          final genreEventsAsync = ref.watch(genreEventsProvider(genre));
+          return Container(
+            constraints: BoxConstraints(
+              maxHeight: MediaQuery.of(context).size.height * 0.6,
+            ),
+            decoration: const BoxDecoration(
+              color: AppTheme.cardDark,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Handle bar
+                Container(
+                  margin: const EdgeInsets.only(top: 12),
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.textTertiary.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Text(
+                    '$genre Events',
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                Flexible(
+                  child: genreEventsAsync.when(
+                    data: (events) => events.isEmpty
+                        ? const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(32),
+                              child: Text(
+                                'No upcoming events for this genre',
+                                style: TextStyle(color: AppTheme.textTertiary),
+                              ),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: events.length,
+                            itemBuilder: (context, index) {
+                              final event = events[index];
+                              return _GenreEventListItem(
+                                event: event,
+                                onTap: () {
+                                  Navigator.pop(context);
+                                  this.context.push('/events/${event.id}');
+                                },
+                              );
+                            },
+                          ),
+                    loading: () => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: CircularProgressIndicator(
+                          color: AppTheme.electricPurple,
+                        ),
+                      ),
+                    ),
+                    error: (err, stack) => const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Text(
+                          'Error loading events',
+                          style: TextStyle(color: AppTheme.textTertiary),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 8),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildTrendingNearYouSection(
+    AsyncValue<List<DiscoverEvent>> trendingEventsAsync,
+    AsyncValue<LocationStatus> locationStatusAsync,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const _SectionHeader(
+          title: 'Trending Near You',
+          subtitle: 'Shows with the most check-ins',
+        ),
+        SizedBox(
+          height: 180,
+          child: locationStatusAsync.when(
+            data: (status) {
+              if (status != LocationStatus.granted) {
+                return const Center(
+                  child: Text(
+                    'Enable location to see trending shows nearby',
+                    style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
+                  ),
+                );
+              }
+
+              return trendingEventsAsync.when(
+                data: (events) => events.isEmpty
+                    ? const Center(
+                        child: Text(
+                          'No trending shows nearby',
+                          style: TextStyle(color: AppTheme.textTertiary),
+                        ),
+                      )
+                    : ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: events.length,
+                        itemBuilder: (context, index) {
+                          return _TrendingEventCard(
+                            event: events[index],
+                            onTap: () {
+                              context.push('/events/${events[index].id}');
+                            },
+                          );
+                        },
+                      ),
+                loading: () => const Center(
+                  child: CircularProgressIndicator(
+                    color: AppTheme.neonPink,
+                  ),
+                ),
+                error: (err, stack) => const Center(
+                  child: Text(
+                    'Error loading trending shows',
+                    style: TextStyle(color: AppTheme.textTertiary),
+                  ),
+                ),
+              );
+            },
+            loading: () => const Center(
+              child: CircularProgressIndicator(
+                color: AppTheme.neonPink,
               ),
             ),
             error: (err, stack) => const Center(
@@ -1130,7 +1349,7 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-enum SearchResultType { band, venue, user }
+enum SearchResultType { band, venue, user, event }
 
 class _SearchResultItem extends StatelessWidget {
   const _SearchResultItem({
@@ -1153,6 +1372,8 @@ class _SearchResultItem extends StatelessWidget {
         return Icons.location_on;
       case SearchResultType.user:
         return Icons.person;
+      case SearchResultType.event:
+        return Icons.calendar_today;
     }
   }
 
@@ -1164,6 +1385,8 @@ class _SearchResultItem extends StatelessWidget {
         return AppTheme.neonPink;
       case SearchResultType.user:
         return AppTheme.liveGreen;
+      case SearchResultType.event:
+        return AppTheme.toastGold;
     }
   }
 
@@ -1199,21 +1422,28 @@ class _SearchResultItem extends StatelessWidget {
   }
 }
 
-class _TrendingBandCard extends StatelessWidget {
-  const _TrendingBandCard({
-    required this.band,
+/// Event card for horizontal scroll lists (Nearby Shows)
+class _EventCard extends StatelessWidget {
+  const _EventCard({
+    required this.event,
     required this.onTap,
   });
 
-  final Band band;
+  final DiscoverEvent event;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    String dateDisplay = '';
+    try {
+      final date = DateTime.parse(event.eventDate);
+      dateDisplay = DateFormat('MMM d').format(date);
+    } catch (_) {}
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 140,
+        width: 160,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: AppTheme.cardDark,
@@ -1222,79 +1452,113 @@ class _TrendingBandCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
+            // Image / gradient header with date
             Container(
               height: 90,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.electricPurple.withValues(alpha:0.5),
-                    AppTheme.neonPink.withValues(alpha:0.5),
+                    AppTheme.electricPurple.withValues(alpha: 0.5),
+                    AppTheme.neonPink.withValues(alpha: 0.5),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
               ),
-              child: band.imageUrl != null
-                  ? ClipRRect(
+              child: Stack(
+                children: [
+                  if (event.bandImageUrl != null)
+                    ClipRRect(
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(16),
                       ),
                       child: Image.network(
-                        band.imageUrl!,
+                        event.bandImageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Icon(
-                            Icons.music_note,
-                            size: 36,
-                            color: Colors.white.withValues(alpha:0.7),
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  // Date badge
+                  if (dateDisplay.isNotEmpty)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          dateDisplay,
+                          style: const TextStyle(
+                            color: AppTheme.electricPurple,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.music_note,
-                        size: 36,
-                        color: Colors.white.withValues(alpha:0.7),
+                    ),
+                  // Distance badge
+                  if (event.distanceKm != null)
+                    Positioned(
+                      bottom: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 3,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          '${event.distanceKm!.toStringAsFixed(1)} km',
+                          style: const TextStyle(
+                            color: AppTheme.textSecondary,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
                       ),
                     ),
+                ],
+              ),
             ),
             // Info
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    band.name,
+                    event.eventName ?? event.bandName ?? 'Event',
                     style: const TextStyle(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.local_fire_department,
-                        size: 12,
-                        color: AppTheme.neonPink,
+                  const SizedBox(height: 3),
+                  if (event.venueName != null)
+                    Text(
+                      event.venueName!,
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 11,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        '${band.totalCheckins} check-ins',
-                        style: const TextStyle(
-                          color: AppTheme.textTertiary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),
@@ -1305,21 +1569,28 @@ class _TrendingBandCard extends StatelessWidget {
   }
 }
 
-class _TrendingVenueCard extends StatelessWidget {
-  const _TrendingVenueCard({
-    required this.venue,
+/// Trending event card with check-in count badge
+class _TrendingEventCard extends StatelessWidget {
+  const _TrendingEventCard({
+    required this.event,
     required this.onTap,
   });
 
-  final Venue venue;
+  final DiscoverEvent event;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    String dateDisplay = '';
+    try {
+      final date = DateTime.parse(event.eventDate);
+      dateDisplay = DateFormat('MMM d').format(date);
+    } catch (_) {}
+
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 140,
+        width: 160,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
           color: AppTheme.cardDark,
@@ -1328,84 +1599,191 @@ class _TrendingVenueCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image
+            // Image / gradient header
             Container(
               height: 90,
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.neonPink.withValues(alpha:0.5),
-                    AppTheme.electricPurple.withValues(alpha:0.5),
+                    AppTheme.neonPink.withValues(alpha: 0.6),
+                    AppTheme.electricPurple.withValues(alpha: 0.4),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(16),
                 ),
               ),
-              child: venue.imageUrl != null
-                  ? ClipRRect(
+              child: Stack(
+                children: [
+                  if (event.bandImageUrl != null)
+                    ClipRRect(
                       borderRadius: const BorderRadius.vertical(
                         top: Radius.circular(16),
                       ),
                       child: Image.network(
-                        venue.imageUrl!,
+                        event.bandImageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) => Center(
-                          child: Icon(
-                            Icons.location_city,
-                            size: 36,
-                            color: Colors.white.withValues(alpha:0.7),
+                        width: double.infinity,
+                        height: double.infinity,
+                        errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    ),
+                  // Check-in count badge
+                  if (event.checkinCount > 0)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.neonPink,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(
+                              Icons.local_fire_department,
+                              size: 12,
+                              color: Colors.white,
+                            ),
+                            const SizedBox(width: 3),
+                            Text(
+                              '${event.checkinCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  // Date badge
+                  if (dateDisplay.isNotEmpty)
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          dateDisplay,
+                          style: const TextStyle(
+                            color: AppTheme.neonPink,
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    )
-                  : Center(
-                      child: Icon(
-                        Icons.location_city,
-                        size: 36,
-                        color: Colors.white.withValues(alpha:0.7),
-                      ),
                     ),
+                ],
+              ),
             ),
             // Info
             Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(10),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    venue.name,
+                    event.eventName ?? event.bandName ?? 'Event',
                     style: const TextStyle(
                       color: AppTheme.textPrimary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 13,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 4),
-                  Row(
-                    children: [
-                      const Icon(
-                        Icons.star,
-                        size: 12,
-                        color: AppTheme.toastGold,
+                  const SizedBox(height: 3),
+                  if (event.venueName != null)
+                    Text(
+                      '${event.venueName!}${event.venueCity != null ? ' - ${event.venueCity}' : ''}',
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 11,
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        venue.averageRating.toStringAsFixed(1),
-                        style: const TextStyle(
-                          color: AppTheme.textTertiary,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                  ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// List item for genre events in bottom sheet
+class _GenreEventListItem extends StatelessWidget {
+  const _GenreEventListItem({
+    required this.event,
+    required this.onTap,
+  });
+
+  final DiscoverEvent event;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    String dateDisplay = '';
+    try {
+      final date = DateTime.parse(event.eventDate);
+      dateDisplay = DateFormat('EEE, MMM d').format(date);
+    } catch (_) {}
+
+    return ListTile(
+      onTap: onTap,
+      contentPadding: const EdgeInsets.symmetric(horizontal: 0, vertical: 4),
+      leading: Container(
+        width: 48,
+        height: 48,
+        decoration: BoxDecoration(
+          color: AppTheme.electricPurple.withValues(alpha: 0.2),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Icon(
+          Icons.calendar_today,
+          color: AppTheme.electricPurple,
+          size: 22,
+        ),
+      ),
+      title: Text(
+        event.eventName ?? event.bandName ?? 'Event',
+        style: const TextStyle(
+          color: AppTheme.textPrimary,
+          fontWeight: FontWeight.w600,
+          fontSize: 14,
+        ),
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+      ),
+      subtitle: Text(
+        [
+          if (event.venueName != null) event.venueName,
+          if (dateDisplay.isNotEmpty) dateDisplay,
+        ].join(' - '),
+        style: const TextStyle(
+          color: AppTheme.textTertiary,
+          fontSize: 12,
+        ),
+      ),
+      trailing: const Icon(
+        Icons.chevron_right,
+        color: AppTheme.textTertiary,
       ),
     );
   }
@@ -1453,7 +1831,7 @@ class _PopularBandListItem extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        '${band.totalCheckins} check-ins • ${band.genre ?? "Various"}',
+        '${band.totalCheckins} check-ins  ${band.genre ?? "Various"}',
         style: const TextStyle(color: AppTheme.textTertiary, fontSize: 12),
       ),
       trailing: Row(
