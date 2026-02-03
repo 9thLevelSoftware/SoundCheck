@@ -64,9 +64,9 @@ Plans:
 **Plans**: 3 plans
 
 Plans:
-- [ ] 03-01: Backend CheckinService redesign (event-based, dual ratings, location verification, time window)
-- [ ] 03-02: Mobile check-in flow (quick tap, event auto-suggest by GPS+time, rating bottom sheets)
-- [ ] 03-03: Photo upload pipeline (Cloudflare R2 integration, presigned URLs, mobile camera/gallery)
+- [ ] 03-01-PLAN.md -- Backend CheckinService redesign (event-first creation, location verification, time window validation, per-set ratings endpoint, nearby events)
+- [ ] 03-02-PLAN.md -- Mobile check-in flow (GPS event auto-suggest, single-tap check-in, rating bottom sheets with half-star increments)
+- [ ] 03-03-PLAN.md -- Photo upload pipeline (Cloudflare R2 presigned URLs, mobile camera/gallery picker, direct upload, max 4 photos)
 
 ### Phase 4: Badge Engine
 **Goal**: Build a data-driven badge evaluation engine with JSONB criteria, async BullMQ processing, all 7 concert-specific badge categories, progress tracking, rarity indicators, and anti-farming measures.
@@ -160,7 +160,7 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 |-------|----------------|--------|-----------|
 | 1. Data Model Foundation | 3/3 | Complete | 2026-02-02 |
 | 2. Event Data Pipeline | 3/3 | Complete | 2026-02-03 |
-| 3. Core Check-in Flow | 0/3 | Not started | - |
+| 3. Core Check-in Flow | 0/3 | Planned | - |
 | 4. Badge Engine | 0/3 | Not started | - |
 | 5. Social Feed & Real-time | 0/3 | Not started | - |
 | 6. Profile & Concert Cred | 0/2 | Not started | - |
@@ -171,4 +171,4 @@ Phases execute in numeric order: 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-03 after Phase 2 execution complete*
+*Last updated: 2026-02-03 after Phase 3 planning complete*
