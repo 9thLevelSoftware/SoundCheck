@@ -37,6 +37,8 @@ import dataExportRoutes from './routes/dataExportRoutes';
 import consentRoutes from './routes/consentRoutes';
 import socialAuthRoutes from './routes/socialAuthRoutes';
 import searchRoutes from './routes/searchRoutes';
+import reportRoutes from './routes/reportRoutes';
+import moderationRoutes from './routes/moderationRoutes';
 import passwordResetRoutes from './routes/passwordResetRoutes';
 import blockRoutes from './routes/blockRoutes';
 import Database from './config/database';
@@ -46,6 +48,7 @@ import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
 import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
 import { startNotificationWorker, stopNotificationWorker } from './jobs/notificationWorker';
+import { startModerationWorker, stopModerationWorker } from './jobs/moderationWorker';
 import { registerSyncJobs } from './jobs/syncScheduler';
 import { Worker } from 'bullmq';
 
@@ -196,6 +199,8 @@ app.use('/api/users', dataExportRoutes);
 app.use('/api/users/consents', consentRoutes);
 app.use('/api/auth/social', socialAuthRoutes);
 app.use('/api/search', searchRoutes);
+app.use('/api/reports', reportRoutes);
+app.use('/api/admin/moderation', moderationRoutes);
 app.use('/api/auth', passwordResetRoutes);
 app.use('/api/blocks', blockRoutes);
 
@@ -275,6 +280,7 @@ const server = createServer(app);
 let syncWorker: Worker | null = null;
 let badgeWorker: Worker | null = null;
 let notifWorker: Worker | null = null;
+let modWorker: Worker | null = null;
 
 // Start server
 const startServer = async () => {
@@ -318,6 +324,7 @@ const startServer = async () => {
     syncWorker = startEventSyncWorker();
     badgeWorker = startBadgeEvalWorker();
     notifWorker = startNotificationWorker();
+    modWorker = startModerationWorker();
     registerSyncJobs().catch(err =>
       logError('Failed to register sync jobs', { error: err.message || err }),
     );
@@ -334,6 +341,7 @@ process.on('SIGTERM', async () => {
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
+  if (modWorker) await stopModerationWorker(modWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
@@ -347,6 +355,7 @@ process.on('SIGINT', async () => {
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
+  if (modWorker) await stopModerationWorker(modWorker);
   await closeSentry(2000); // Wait up to 2s for pending Sentry events
   await closeRedis();
   websocket.close();
