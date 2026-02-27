@@ -115,8 +115,9 @@ export class FeedService {
       LEFT JOIN events e ON c.event_id = e.id
       LEFT JOIN venues v ON e.venue_id = v.id
       LEFT JOIN toasts t ON c.id = t.checkin_id
-      LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
+      LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
       WHERE uf.follower_id = $1
+        AND (c.is_hidden IS NOT TRUE)
         ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         ${cursorClause}
       GROUP BY c.id, c.user_id, c.event_id, c.created_at, c.photo_url,
@@ -194,8 +195,9 @@ export class FeedService {
       LEFT JOIN events e ON c.event_id = e.id
       LEFT JOIN venues v ON e.venue_id = v.id
       LEFT JOIN toasts t ON c.id = t.checkin_id
-      LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
+      LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
       WHERE c.event_id = $1
+        AND (c.is_hidden IS NOT TRUE)
         ${cursorClause}
       GROUP BY c.id, c.user_id, c.event_id, c.created_at, c.photo_url,
                u.username, u.profile_image_url, e.event_name, v.name
@@ -262,6 +264,7 @@ export class FeedService {
       JOIN users u ON c.user_id = u.id
       JOIN user_followers uf ON c.user_id = uf.following_id AND uf.follower_id = $1
       WHERE e.event_date = CURRENT_DATE
+        AND (c.is_hidden IS NOT TRUE)
         ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         AND c.created_at >= CURRENT_DATE::timestamptz
         AND NOW() < COALESCE(
@@ -318,7 +321,8 @@ export class FeedService {
         `SELECT COUNT(*)::int AS cnt
          FROM checkins c
          JOIN user_followers uf ON c.user_id = uf.following_id
-         WHERE uf.follower_id = $1 AND c.created_at > $2`,
+         WHERE uf.follower_id = $1 AND c.created_at > $2
+           AND (c.is_hidden IS NOT TRUE)`,
         [userId, cursors.friends]
       );
       friendsCount = friendsResult.rows[0]?.cnt || 0;
@@ -333,7 +337,8 @@ export class FeedService {
          JOIN events e ON c.event_id = e.id
          JOIN user_followers uf ON c.user_id = uf.following_id AND uf.follower_id = $1
          WHERE e.event_date = CURRENT_DATE
-           AND c.created_at > $2`,
+           AND c.created_at > $2
+           AND (c.is_hidden IS NOT TRUE)`,
         [userId, cursors.happening_now]
       );
       happeningNowCount = hnResult.rows[0]?.cnt || 0;
