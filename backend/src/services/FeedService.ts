@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import { getCache, setCache, cache, CacheTTL } from '../utils/cache';
+import { BlockService } from './BlockService';
 
 // ============================================
 // Interfaces
@@ -67,6 +68,7 @@ export function decodeCursor(encoded: string): FeedCursor | null {
 
 export class FeedService {
   private db = Database.getInstance();
+  private blockService = new BlockService();
 
   /**
    * Get friends feed: check-ins from followed users with cursor pagination.
@@ -115,6 +117,7 @@ export class FeedService {
       LEFT JOIN toasts t ON c.id = t.checkin_id
       LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
       WHERE uf.follower_id = $1
+        ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         ${cursorClause}
       GROUP BY c.id, c.user_id, c.event_id, c.created_at, c.photo_url,
                u.username, u.profile_image_url, e.event_name, v.name
@@ -259,6 +262,7 @@ export class FeedService {
       JOIN users u ON c.user_id = u.id
       JOIN user_followers uf ON c.user_id = uf.following_id AND uf.follower_id = $1
       WHERE e.event_date = CURRENT_DATE
+        ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         AND c.created_at >= CURRENT_DATE::timestamptz
         AND NOW() < COALESCE(
           (e.event_date::date || ' ' || e.end_time)::timestamptz + INTERVAL '1 hour',

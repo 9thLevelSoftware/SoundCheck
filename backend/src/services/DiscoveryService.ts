@@ -2,6 +2,7 @@ import Database from '../config/database';
 import { cache, CacheKeys } from '../utils/cache';
 import { BandAggregate, VenueAggregate, Event } from '../types';
 import { EventService } from './EventService';
+import { BlockService } from './BlockService';
 
 /**
  * DiscoveryService: Computes aggregate ratings for bands and venues
@@ -25,6 +26,7 @@ const RECOMMENDATION_TTL = 600; // 10 minutes
 export class DiscoveryService {
   private db = Database.getInstance();
   private eventService = new EventService();
+  private blockService = new BlockService();
 
   /**
    * Get aggregate performance rating for a band.
@@ -136,13 +138,18 @@ export class DiscoveryService {
           LIMIT 5
         ),
         friend_checkins AS (
-          -- Friends checked into upcoming events
+          -- Friends checked into upcoming events (excluding blocked users)
           SELECT c.event_id, COUNT(DISTINCT c.user_id) as friend_count
           FROM checkins c
           JOIN user_followers uf ON c.user_id = uf.following_id
           WHERE uf.follower_id = $1
             AND c.event_id IN (
               SELECT id FROM events WHERE event_date >= CURRENT_DATE AND is_cancelled = FALSE
+            )
+            AND NOT EXISTS (
+              SELECT 1 FROM user_blocks
+              WHERE (blocker_id = $1 AND blocked_id = c.user_id)
+                 OR (blocker_id = c.user_id AND blocked_id = $1)
             )
           GROUP BY c.event_id
         ),
@@ -173,6 +180,11 @@ export class DiscoveryService {
         WHERE e.event_date >= CURRENT_DATE
           AND e.is_cancelled = FALSE
           AND e.id NOT IN (SELECT event_id FROM checkins WHERE user_id = $1 AND event_id IS NOT NULL)
+          AND NOT EXISTS (
+            SELECT 1 FROM user_blocks
+            WHERE (blocker_id = $1 AND blocked_id = e.created_by_user_id)
+               OR (blocker_id = e.created_by_user_id AND blocked_id = $1)
+          )
           ${distanceFilter}
         GROUP BY e.id, v.id, v.name, v.city, v.state, v.image_url, fc.friend_count, rt.checkin_count
         HAVING (COALESCE(MAX(ug.genre_count), 0) * 3.0 +

@@ -10,6 +10,7 @@
  */
 
 import Database from '../../config/database';
+import { BlockService } from '../BlockService';
 import {
   Checkin,
   BandRating,
@@ -21,6 +22,7 @@ import {
 
 export class CheckinQueryService {
   private db = Database.getInstance();
+  private blockService = new BlockService();
 
   /**
    * Get check-in by ID with full details.
@@ -157,6 +159,7 @@ export class CheckinQueryService {
         LEFT JOIN toasts t ON c.id = t.checkin_id
         LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
         ${whereClause}
+        ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
         LIMIT $${limitParamIdx} OFFSET $${offsetParamIdx}
