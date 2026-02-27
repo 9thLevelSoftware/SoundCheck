@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-27T21:44:47Z"
+last_updated: "2026-02-27T21:46:00Z"
 progress:
   total_phases: 4
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 9.1 (Content Moderation Enforcement) — gap closure phase
-Plan: 1 of 2
-Status: Executing
-Last activity: 2026-02-27 — Completed 09.1-01 (Feed Query is_hidden Filtering)
+Plan: 2 of 2
+Status: Complete
+Last activity: 2026-02-27 — Completed 09.1-02 (Discovery/Trending/Stats Hidden Filtering + Cache Invalidation)
 
-Progress: [█████░░░░░] 50%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [█████░░░░░] 50%
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
 | Phase 09.1 P01 | 2min | 2 tasks | 4 files |
+| Phase 09.1 P02 | 3min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [09.1-01] Used IS NOT TRUE instead of = FALSE for null-safe is_hidden filtering
 - [09.1-01] Used plain CREATE INDEX (not CONCURRENTLY) since no existing migrations use CONCURRENTLY
 - [09.1-01] Separate pgm.sql() calls per index for migration runner transaction compatibility
+- [09.1-02] BadgeEvaluators intentionally NOT filtered -- attendance credit preserved when content hidden
+- [09.1-02] ModerationService invalidates author's own feed cache in addition to followers
+- [09.1-02] Comment hiding traces back to parent checkin for correct user/event cache invalidation
 
 ### Pending Todos
 
@@ -87,5 +91,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 09.1-01-PLAN.md (Feed Query is_hidden Filtering)
+Stopped at: Completed 09.1-02-PLAN.md (Discovery/Trending/Stats Hidden Filtering + Cache Invalidation)
 Resume file: None
