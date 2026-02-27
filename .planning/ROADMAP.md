@@ -33,6 +33,7 @@
 - Decimal phases (9.1, 10.1): Urgent insertions (marked with INSERTED)
 
 - [ ] **Phase 9: Trust & Safety Foundation** — App Store compliance infrastructure: report/block/moderation pipeline, auth cleanup, and tech debt that must be resolved before new UGC surfaces ship
+- [ ] **Phase 9.1: Content Moderation Enforcement** *(INSERTED — gap closure)* — Wire is_hidden filtering into all content-serving queries so moderated content is actually excluded from feeds
 - [ ] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop
 - [ ] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
@@ -55,6 +56,18 @@ Plans:
 - [ ] 09-02-PLAN.md — Report & moderation pipeline (ReportService, ModerationService, SafeSearch, admin queue)
 - [ ] 09-03-PLAN.md — Block system & auth cleanup (BlockService, feed filtering, remove biometric/Facebook stubs)
 - [ ] 09-04-PLAN.md — Password reset flow (EmailService, PasswordResetService, Resend integration, mobile screen)
+
+### Phase 9.1: Content Moderation Enforcement *(INSERTED — gap closure)*
+**Goal**: Moderated content (flagged by SafeSearch or hidden by admin) is actually excluded from all user-facing feeds, completing the moderation enforcement loop
+**Depends on**: Phase 9 (is_hidden column and ModerationService already exist)
+**Requirements**: SAFE-02, SAFE-03
+**Gap Closure**: Closes audit gaps — is_hidden written but never read in content-serving queries
+**Success Criteria** (what must be TRUE):
+  1. Check-ins with `is_hidden = true` do not appear in friends feed, event feed, happening-now feed, or activity feed
+  2. Comments with `is_hidden = true` do not appear in comment lists
+  3. Hidden content is excluded from discovery/recommendation queries
+  4. Admin hiding content via moderation queue causes immediate removal from all feeds on next refresh
+**Plans**: TBD
 
 ### Phase 10: Viral Growth Engine
 **Goal**: New users convert through onboarding, existing users share check-ins and badges to social platforms, and pre-show engagement drives friend attendance
@@ -107,11 +120,12 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 6. Profile & Concert Cred | v1.0 | 2/2 | Complete | 2026-02-03 |
 | 7. Discovery & Recommendations | v1.0 | 3/3 | Complete | 2026-02-03 |
 | 8. Polish & App Store Readiness | v1.0 | 2/2 | Complete | 2026-02-03 |
-| 9. Trust & Safety Foundation | v1.1 | 2/4 | In Progress | - |
+| 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
+| 9.1. Content Moderation Enforcement | v1.1 | 0/TBD | Not started | - |
 | 10. Viral Growth Engine | v1.1 | 0/TBD | Not started | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-27 after 09-04 plan completed*
+*Last updated: 2026-02-27 after gap closure Phase 9.1 added*
