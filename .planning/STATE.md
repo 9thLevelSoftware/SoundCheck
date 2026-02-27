@@ -2,26 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
-status: unknown
-last_updated: "2026-02-27T20:48:39.843Z"
-progress:
-  total_phases: 1
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 4
----
-
----
-gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-27T20:41:00.000Z"
+last_updated: "2026-02-27T21:44:47Z"
 progress:
   total_phases: 4
-  completed_phases: 0
-  total_plans: 4
-  completed_plans: 3
+  completed_phases: 1
+  total_plans: 6
+  completed_plans: 5
 ---
 
 # Project State
@@ -31,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 9 — Trust & Safety Foundation
+**Current focus:** Phase 9.1 — Content Moderation Enforcement
 
 ## Current Position
 
-Phase: 9 of 12 (Trust & Safety Foundation) — first phase of v1.1
-Plan: 4 of 4
+Phase: 9.1 (Content Moderation Enforcement) — gap closure phase
+Plan: 1 of 2
 Status: Executing
-Last activity: 2026-02-27 — Completed 09-03 (User Blocking & Login Cleanup)
+Last activity: 2026-02-27 — Completed 09.1-01 (Feed Query is_hidden Filtering)
 
-Progress: [████████░░] 75%
+Progress: [█████░░░░░] 50%
 
 ## Performance Metrics
 
@@ -58,6 +45,7 @@ Progress: [████████░░] 75%
 | 11. Platform Trust | — | — | — |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
+| Phase 09.1 P01 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -75,6 +63,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [09-04] Password reset endpoints return generic message to prevent email enumeration
 - [09-04] Social auth users get specific redirect message instead of reset email
 - [Phase 09]: [09-03] Block filter uses SQL fragment with UUID validation; blocks stored unidirectionally but filtered bilaterally
+- [09.1-01] Used IS NOT TRUE instead of = FALSE for null-safe is_hidden filtering
+- [09.1-01] Used plain CREATE INDEX (not CONCURRENTLY) since no existing migrations use CONCURRENTLY
+- [09.1-01] Separate pgm.sql() calls per index for migration runner transaction compatibility
 
 ### Pending Todos
 
@@ -96,5 +87,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-27
-Stopped at: Completed 09-03-PLAN.md (User Blocking & Login Cleanup)
+Stopped at: Completed 09.1-01-PLAN.md (Feed Query is_hidden Filtering)
 Resume file: None
