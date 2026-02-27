@@ -3,7 +3,6 @@ import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/dio_client.dart';
-import '../services/biometric_service.dart';
 import '../services/websocket_service.dart';
 import '../../shared/services/location_service.dart';
 import '../../features/auth/data/auth_repository.dart';
@@ -18,11 +17,6 @@ import '../../features/profile/data/profile_repository.dart';
 import '../../features/discover/data/discovery_repository.dart';
 
 part 'providers.g.dart';
-
-@Riverpod(keepAlive: true)
-BiometricService biometricService(Ref ref) {
-  return BiometricService();
-}
 
 @Riverpod(keepAlive: true)
 WebSocketService webSocketService(Ref ref) {
