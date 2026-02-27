@@ -221,7 +221,7 @@
 - **Update**: Remove `as any` in middleware/controllers accessing `req.user` (~43 occurrences: 41 in tests, 2 in middleware)
 
 ### Task 4.6: Refactor rate limiting to Redis-only
-- [ ] **Files**:
+- [x] **Files**:
   - `backend/src/middleware/auth.ts` (remove in-memory limiter)
   - `backend/src/utils/redisRateLimiter.ts` (ensure fallback)
 - **Change**: All rate limiting uses Redis; graceful degradation if Redis unavailable
