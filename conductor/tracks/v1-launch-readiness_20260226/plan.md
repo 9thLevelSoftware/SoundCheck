@@ -203,7 +203,7 @@
 - **Update**: CheckinService delegates to CheckinToastService
 
 ### Task 4.5: Create AuthenticatedRequest type
-- [ ] **File**: `backend/src/types/express.d.ts`
+- [x] **File**: `backend/src/types/index.ts` (global declaration already exists)
 - **Content**:
   ```typescript
   declare global {

@@ -18,7 +18,7 @@ export class CheckinController {
    */
   createCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id; // From auth middleware
+      const userId = req.user?.id; // From auth middleware
 
       if (!userId) {
         const response: ApiResponse = {
@@ -124,7 +124,7 @@ export class CheckinController {
   getCheckinById = async (req: Request, res: Response): Promise<void> => {
     try {
       const { id } = req.params;
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       const checkin = await this.checkinService.getCheckinById(id, userId);
 
@@ -152,7 +152,7 @@ export class CheckinController {
    */
   getActivityFeed = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -200,8 +200,8 @@ export class CheckinController {
    */
   toastCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
-      const username = (req as any).user?.username;
+      const userId = req.user?.id;
+      const username = req.user?.username;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -260,7 +260,7 @@ export class CheckinController {
    */
   untoastCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -300,8 +300,8 @@ export class CheckinController {
    */
   addComment = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
-      const username = (req as any).user?.username;
+      const userId = req.user?.id;
+      const username = req.user?.username;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -401,7 +401,7 @@ export class CheckinController {
    */
   deleteCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -528,7 +528,7 @@ export class CheckinController {
    */
   deleteComment = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -571,7 +571,7 @@ export class CheckinController {
    */
   requestPhotoUpload = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -653,7 +653,7 @@ export class CheckinController {
    */
   confirmPhotoUpload = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {
@@ -720,7 +720,7 @@ export class CheckinController {
    */
   updateRatings = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = {

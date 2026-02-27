@@ -28,7 +28,7 @@ export class EventController {
         venueId, bandId, eventDate, eventName, description,
         doorsTime, startTime, ticketUrl, lineup,
       } = req.body;
-      const userId = (req as any).user?.id; // From auth middleware
+      const userId = req.user?.id; // From auth middleware
 
       // Validate required fields
       if (!venueId) {
@@ -522,7 +522,7 @@ export class EventController {
    */
   getRecommendedEvents = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
       if (!userId) {
         res.status(401).json({
           success: false,

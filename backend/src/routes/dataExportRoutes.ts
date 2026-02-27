@@ -22,7 +22,11 @@ router.get(
   exportRateLimit,
   async (req: Request, res: Response) => {
     try {
-      const userId = (req as any).user.userId;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
 
       const exportData = await dataExportService.exportUserData(userId);
 

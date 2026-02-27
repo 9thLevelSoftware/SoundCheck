@@ -19,7 +19,7 @@ export const dailyCheckinRateLimit = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
 
     if (!userId) {
       // Should not happen if placed after authenticateToken, but guard anyway

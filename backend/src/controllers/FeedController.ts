@@ -13,7 +13,7 @@ export class FeedController {
    */
   getFriendsFeed = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = { success: false, error: 'Authentication required' };
@@ -77,7 +77,7 @@ export class FeedController {
    */
   getHappeningNow = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = { success: false, error: 'Authentication required' };
@@ -105,7 +105,7 @@ export class FeedController {
    */
   getUnseenCounts = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = { success: false, error: 'Authentication required' };
@@ -134,7 +134,7 @@ export class FeedController {
    */
   markRead = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = (req as any).user?.id;
+      const userId = req.user?.id;
 
       if (!userId) {
         const response: ApiResponse = { success: false, error: 'Authentication required' };

@@ -69,7 +69,7 @@ class PerUserRateLimiter {
 
   private getKey(req: Request): string {
     // Use user ID if authenticated
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
     if (userId) {
       return `user:${userId}`;
     }

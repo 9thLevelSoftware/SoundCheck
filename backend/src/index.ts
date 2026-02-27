@@ -233,7 +233,7 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     path: req.path,
     method: req.method,
     statusCode,
-    userId: (req as any).user?.id,
+    userId: req.user?.id,
   });
 
   // Send to Sentry for server errors (5xx)
@@ -242,7 +242,7 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
       path: req.path,
       method: req.method,
       statusCode,
-      userId: (req as any).user?.id,
+      userId: req.user?.id,
     });
   }
 

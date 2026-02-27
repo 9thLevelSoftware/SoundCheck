@@ -63,7 +63,11 @@ router.delete('/me', authenticateToken, userController.deactivateAccount);
 // Account deletion routes (GDPR-compliant with 30-day grace period)
 router.post('/me/delete-account', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
     const result = await dataRetentionService.requestAccountDeletion(userId);
 
     // Audit log: user deletion request
@@ -82,7 +86,11 @@ router.post('/me/delete-account', authenticateToken, async (req: Request, res: R
 
 router.post('/me/cancel-deletion', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
     const result = await dataRetentionService.cancelDeletionRequest(userId);
     res.json({ success: true, data: result });
   } catch (error) {
@@ -96,7 +104,11 @@ router.post('/me/cancel-deletion', authenticateToken, async (req: Request, res: 
 
 router.get('/me/deletion-status', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
     const result = await dataRetentionService.getDeletionRequestStatus(userId);
     res.json({ success: true, data: result });
   } catch (error) {
@@ -107,7 +119,11 @@ router.get('/me/deletion-status', authenticateToken, async (req: Request, res: R
 // Device token management for push notifications - MUST come before /:username
 router.post('/device-token', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
     const { token, platform } = req.body;
 
     if (!token || typeof token !== 'string' || token.trim().length === 0) {
@@ -129,7 +145,11 @@ router.post('/device-token', authenticateToken, async (req: Request, res: Respon
 
 router.delete('/device-token', authenticateToken, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const userId = (req as any).user?.id;
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ success: false, error: 'Authentication required' });
+      return;
+    }
     const { token } = req.body;
 
     if (!token || typeof token !== 'string' || token.trim().length === 0) {
