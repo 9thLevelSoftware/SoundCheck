@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/utils/a11y_utils.dart';
 import '../../domain/feed_item.dart';
 
 /// Untappd-style balanced feed card showing user + event info + photo + badge indicator
@@ -43,9 +44,15 @@ class FeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final timeAgo = _getTimeAgo(item.createdAt);
 
-    return GestureDetector(
-      onTap: () => context.push('/checkins/${item.checkinId}'),
-      child: Container(
+    return Semantics(
+      label: feedCardSemantics(
+        username: item.username,
+        eventName: item.eventName,
+        venueName: item.venueName,
+      ),
+      child: GestureDetector(
+        onTap: () => context.push('/checkins/${item.checkinId}'),
+        child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
           color: AppTheme.cardDark,
@@ -158,6 +165,7 @@ class FeedCard extends StatelessWidget {
                         isActive: item.hasUserToasted,
                         activeColor: AppTheme.toastGold,
                         onTap: onToast ?? () {},
+                        semanticLabel: toastButtonSemantics(hasToasted: item.hasUserToasted),
                       ),
                       const SizedBox(width: 24),
                       // Comment button
@@ -166,6 +174,7 @@ class FeedCard extends StatelessWidget {
                         label: '${item.commentCount}',
                         isActive: false,
                         onTap: () => context.push('/checkins/${item.checkinId}'),
+                        semanticLabel: commentsButtonSemantics(commentCount: item.commentCount),
                       ),
                       const Spacer(),
                       // Timestamp
@@ -182,6 +191,7 @@ class FeedCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );
@@ -381,6 +391,7 @@ class _ActionButton extends StatelessWidget {
     required this.isActive,
     required this.onTap,
     this.activeColor,
+    this.semanticLabel,
   });
 
   final IconData icon;
@@ -388,6 +399,7 @@ class _ActionButton extends StatelessWidget {
   final bool isActive;
   final VoidCallback onTap;
   final Color? activeColor;
+  final String? semanticLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -395,21 +407,25 @@ class _ActionButton extends StatelessWidget {
         ? (activeColor ?? AppTheme.electricPurple)
         : AppTheme.textTertiary;
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Row(
-        children: [
-          Icon(icon, size: 20, color: color),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: TextStyle(
-              color: color,
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
+    return Semantics(
+      label: semanticLabel,
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Row(
+          children: [
+            Icon(icon, size: 20, color: color),
+            const SizedBox(width: 6),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

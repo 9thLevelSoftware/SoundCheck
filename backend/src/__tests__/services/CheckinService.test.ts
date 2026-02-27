@@ -138,7 +138,9 @@ describe('CheckinService', () => {
 
       const result = await checkinService.getActivityFeed(mockUserId, 'friends');
 
-      expect(result[0]).toEqual({
+      // Use objectContaining to allow additional fields (event, eventId, imageUrls, etc.)
+      // that may be undefined when not present in the mock data
+      expect(result[0]).toEqual(expect.objectContaining({
         id: 'checkin-1',
         userId: mockUserId,
         venueId: 'venue-1',
@@ -170,7 +172,7 @@ describe('CheckinService', () => {
         toastCount: 5,
         commentCount: 2,
         hasUserToasted: false,
-      });
+      }));
     });
 
     it('should handle database errors gracefully', async () => {

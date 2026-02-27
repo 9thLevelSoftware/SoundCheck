@@ -12,6 +12,7 @@ import '../domain/checkin.dart';
 import 'providers/checkin_providers.dart';
 import 'photo_upload_sheet.dart';
 import 'rating_bottom_sheet.dart';
+import '../../../shared/utils/a11y_utils.dart';
 
 /// Check-in Screen - Event-first quick-tap flow
 ///
@@ -1342,38 +1343,46 @@ class _EventCard extends StatelessWidget {
           const SizedBox(height: 12),
 
           // CHECK IN button
-          SizedBox(
-            width: double.infinity,
-            height: 44,
-            child: ElevatedButton(
-              onPressed: isCheckingIn ? null : onCheckIn,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricPurple,
-                disabledBackgroundColor:
-                    AppTheme.electricPurple.withValues(alpha: 0.5),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Semantics(
+            label: checkInSemantics(
+              eventName: eventName,
+              venueName: event.venue?.name,
+            ),
+            button: true,
+            enabled: !isCheckingIn,
+            child: SizedBox(
+              width: double.infinity,
+              height: 44,
+              child: ElevatedButton(
+                onPressed: isCheckingIn ? null : onCheckIn,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.electricPurple,
+                  disabledBackgroundColor:
+                      AppTheme.electricPurple.withValues(alpha: 0.5),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: EdgeInsets.zero,
                 ),
-                padding: EdgeInsets.zero,
+                child: isCheckingIn
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: AppTheme.backgroundDark,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Text(
+                        'CHECK IN',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.backgroundDark,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
               ),
-              child: isCheckingIn
-                  ? const SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(
-                        color: AppTheme.backgroundDark,
-                        strokeWidth: 2,
-                      ),
-                    )
-                  : const Text(
-                      'CHECK IN',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.backgroundDark,
-                        letterSpacing: 0.5,
-                      ),
-                    ),
             ),
           ),
         ],
@@ -1401,45 +1410,49 @@ class _EnrichmentCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceDark,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: completed
-                ? AppTheme.liveGreen.withValues(alpha: 0.5)
-                : AppTheme.surfaceVariantDark,
-          ),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: iconColor, size: 24),
+    return Semantics(
+      label: '$label${completed ? ", completed" : ""}',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppTheme.surfaceDark,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: completed
+                  ? AppTheme.liveGreen.withValues(alpha: 0.5)
+                  : AppTheme.surfaceVariantDark,
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Text(
-                label,
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: iconColor.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(icon, color: iconColor, size: 24),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
-            ),
-            if (completed)
-              const Icon(Icons.check_circle, color: AppTheme.liveGreen, size: 24)
-            else
-              const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
-          ],
+              if (completed)
+                const Icon(Icons.check_circle, color: AppTheme.liveGreen, size: 24)
+              else
+                const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
+            ],
+          ),
         ),
       ),
     );

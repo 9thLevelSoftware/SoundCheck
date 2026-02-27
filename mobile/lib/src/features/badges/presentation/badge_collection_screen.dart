@@ -7,6 +7,7 @@ import 'package:percent_indicator/circular_percent_indicator.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/services/websocket_service.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/utils/a11y_utils.dart';
 import '../domain/badge.dart';
 import 'badge_providers.dart';
 
@@ -272,7 +273,14 @@ class _BadgeCard extends StatelessWidget {
     final progressColor = parseHexColor(badge.color);
     final theme = Theme.of(context);
 
-    return Container(
+    return Semantics(
+      label: badgeSemantics(
+        badgeName: badge.name,
+        isEarned: isEarned,
+        progress: progress.currentValue.toInt(),
+        total: progress.requirementValue.toInt(),
+      ),
+      child: Container(
       width: 120,
       margin: const EdgeInsets.symmetric(horizontal: 4),
       child: Opacity(
@@ -355,6 +363,7 @@ class _BadgeCard extends StatelessWidget {
                 ),
               ),
           ],
+        ),
         ),
       ),
     );

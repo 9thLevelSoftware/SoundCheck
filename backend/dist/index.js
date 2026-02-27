@@ -42,6 +42,8 @@ const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
 const websocket_1 = require("./utils/websocket");
 const eventSyncWorker_1 = require("./jobs/eventSyncWorker");
+const badgeWorker_1 = require("./jobs/badgeWorker");
+const notificationWorker_1 = require("./jobs/notificationWorker");
 const syncScheduler_1 = require("./jobs/syncScheduler");
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
@@ -239,8 +241,10 @@ app.use((error, req, res, next) => {
 });
 // Create HTTP server
 const server = (0, http_1.createServer)(app);
-// BullMQ sync worker reference (for graceful shutdown)
+// BullMQ worker references (for graceful shutdown)
 let syncWorker = null;
+let badgeWorker = null;
+let notifWorker = null;
 // Start server
 const startServer = async () => {
     try {
@@ -270,9 +274,11 @@ const startServer = async () => {
                 (0, logger_1.logInfo)(`API Documentation: http://localhost:${PORT}/`);
             }
         });
-        // Start BullMQ event sync worker and register scheduled jobs
+        // Start BullMQ workers and register scheduled jobs
         // Guarded by REDIS_URL -- returns null if Redis is not available
         syncWorker = (0, eventSyncWorker_1.startEventSyncWorker)();
+        badgeWorker = (0, badgeWorker_1.startBadgeEvalWorker)();
+        notifWorker = (0, notificationWorker_1.startNotificationWorker)();
         (0, syncScheduler_1.registerSyncJobs)().catch(err => (0, logger_1.logError)('Failed to register sync jobs', { error: err.message || err }));
     }
     catch (error) {
@@ -285,6 +291,10 @@ process.on('SIGTERM', async () => {
     (0, logger_1.logInfo)('SIGTERM received, shutting down gracefully');
     if (syncWorker)
         await (0, eventSyncWorker_1.stopEventSyncWorker)(syncWorker);
+    if (badgeWorker)
+        await (0, badgeWorker_1.stopBadgeEvalWorker)(badgeWorker);
+    if (notifWorker)
+        await (0, notificationWorker_1.stopNotificationWorker)(notifWorker);
     await (0, sentry_1.closeSentry)(2000); // Wait up to 2s for pending Sentry events
     await (0, redisRateLimiter_1.closeRedis)();
     websocket_1.websocket.close();
@@ -296,6 +306,10 @@ process.on('SIGINT', async () => {
     (0, logger_1.logInfo)('SIGINT received, shutting down gracefully');
     if (syncWorker)
         await (0, eventSyncWorker_1.stopEventSyncWorker)(syncWorker);
+    if (badgeWorker)
+        await (0, badgeWorker_1.stopBadgeEvalWorker)(badgeWorker);
+    if (notifWorker)
+        await (0, notificationWorker_1.stopNotificationWorker)(notifWorker);
     await (0, sentry_1.closeSentry)(2000); // Wait up to 2s for pending Sentry events
     await (0, redisRateLimiter_1.closeRedis)();
     websocket_1.websocket.close();

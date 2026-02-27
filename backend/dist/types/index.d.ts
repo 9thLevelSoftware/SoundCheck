@@ -142,15 +142,17 @@ export interface Badge {
     badgeType: BadgeType;
     requirementValue?: number;
     color?: string;
+    criteria?: Record<string, any>;
     createdAt: string;
 }
-export type BadgeType = 'review_count' | 'venue_explorer' | 'music_lover' | 'event_attendance' | 'helpful_count';
+export type BadgeType = 'checkin_count' | 'genre_explorer' | 'unique_venues' | 'superfan' | 'festival_warrior' | 'road_warrior';
 export interface UserBadge {
     id: string;
     userId: string;
     badgeId: string;
     earnedAt: string;
     badge?: Badge;
+    metadata?: Record<string, any>;
 }
 export interface UserFollower {
     id: string;
@@ -276,6 +278,49 @@ export interface DatabaseConfig {
     database: string;
     user: string;
     password: string;
+}
+export interface ConcertCred {
+    totalShows: number;
+    uniqueBands: number;
+    uniqueVenues: number;
+    badgesEarned: number;
+    followersCount: number;
+    followingCount: number;
+    genres: GenreStat[];
+    topBands: TopRatedBand[];
+    topVenues: TopRatedVenue[];
+}
+export interface GenreStat {
+    genre: string;
+    count: number;
+    percentage: number;
+}
+export interface TopRatedBand {
+    id: string;
+    name: string;
+    genre: string | null;
+    imageUrl: string | null;
+    avgRating: number;
+    timesSeen: number;
+}
+export interface TopRatedVenue {
+    id: string;
+    name: string;
+    city: string | null;
+    state: string | null;
+    imageUrl: string | null;
+    avgRating: number;
+    timesVisited: number;
+}
+export interface BandAggregate {
+    avgPerformanceRating: number;
+    totalRatings: number;
+    uniqueFans: number;
+}
+export interface VenueAggregate {
+    avgExperienceRating: number;
+    totalRatings: number;
+    uniqueVisitors: number;
 }
 declare global {
     namespace Express {

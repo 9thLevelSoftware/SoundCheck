@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 export declare class VenueController {
     private venueService;
     private setlistFmService;
+    private discoveryService;
+    private eventService;
     /**
      * Create a new venue
      * POST /api/venues

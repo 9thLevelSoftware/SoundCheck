@@ -3,10 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.BandController = void 0;
 const BandService_1 = require("../services/BandService");
 const MusicBrainzService_1 = require("../services/MusicBrainzService");
+const DiscoveryService_1 = require("../services/DiscoveryService");
+const EventService_1 = require("../services/EventService");
 class BandController {
     constructor() {
         this.bandService = new BandService_1.BandService();
         this.musicBrainzService = new MusicBrainzService_1.MusicBrainzService();
+        this.discoveryService = new DiscoveryService_1.DiscoveryService();
+        this.eventService = new EventService_1.EventService();
         /**
          * Create a new band
          * POST /api/bands
@@ -87,9 +91,14 @@ class BandController {
                     res.status(404).json(response);
                     return;
                 }
+                // Fetch aggregate rating and upcoming shows in parallel
+                const [aggregate, upcomingShows] = await Promise.all([
+                    this.discoveryService.getBandAggregateRating(id),
+                    this.eventService.getEventsByBand(id, { upcoming: true, limit: 5 }),
+                ]);
                 const response = {
                     success: true,
-                    data: band,
+                    data: { ...band, aggregate, upcomingShows },
                 };
                 res.status(200).json(response);
             }

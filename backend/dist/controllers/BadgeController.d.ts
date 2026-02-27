@@ -22,6 +22,11 @@ export declare class BadgeController {
      */
     checkAndAwardBadges: (req: Request, res: Response) => Promise<void>;
     /**
+     * Get badge rarity data
+     * GET /api/badges/rarity
+     */
+    getBadgeRarity: (req: Request, res: Response) => Promise<void>;
+    /**
      * Get badge leaderboard
      * GET /api/badges/leaderboard
      */

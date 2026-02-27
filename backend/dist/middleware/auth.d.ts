@@ -19,9 +19,9 @@ export declare const requireOwnership: (resourceUserIdField?: string) => (req: R
  * Middleware to require admin privileges
  */
 export declare const requireAdmin: () => (req: Request, res: Response, next: NextFunction) => void;
-export declare const rateLimit: (windowMs?: number, maxRequests?: number) => (req: Request, res: Response, next: NextFunction) => void;
+export declare const rateLimit: (windowMs?: number, maxRequests?: number) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
 /**
- * Clean up expired rate limit entries (should be called periodically)
+ * Clean up expired in-memory rate limit entries
  */
 export declare const cleanupRateLimit: () => void;
 //# sourceMappingURL=auth.d.ts.map

@@ -53,3 +53,7 @@ app.*.map.json
 *.keystore
 KEYSTORE_BACKUP_INFO.txt
 key.properties
+
+# Firebase config files - contain project-specific secrets
+/android/app/google-services.json
+/ios/Runner/GoogleService-Info.plist

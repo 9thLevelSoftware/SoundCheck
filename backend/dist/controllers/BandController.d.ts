@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 export declare class BandController {
     private bandService;
     private musicBrainzService;
+    private discoveryService;
+    private eventService;
     /**
      * Create a new band
      * POST /api/bands

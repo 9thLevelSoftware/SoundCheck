@@ -3,10 +3,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.VenueController = void 0;
 const VenueService_1 = require("../services/VenueService");
 const SetlistFmService_1 = require("../services/SetlistFmService");
+const DiscoveryService_1 = require("../services/DiscoveryService");
+const EventService_1 = require("../services/EventService");
 class VenueController {
     constructor() {
         this.venueService = new VenueService_1.VenueService();
         this.setlistFmService = new SetlistFmService_1.SetlistFmService();
+        this.discoveryService = new DiscoveryService_1.DiscoveryService();
+        this.eventService = new EventService_1.EventService();
         /**
          * Create a new venue
          * POST /api/venues
@@ -88,9 +92,14 @@ class VenueController {
                     res.status(404).json(response);
                     return;
                 }
+                // Fetch aggregate rating and upcoming events in parallel
+                const [aggregate, upcomingEvents] = await Promise.all([
+                    this.discoveryService.getVenueAggregateRating(id),
+                    this.eventService.getEventsByVenue(id, { upcoming: true, limit: 5 }),
+                ]);
                 const response = {
                     success: true,
-                    data: venue,
+                    data: { ...venue, aggregate, upcomingEvents },
                 };
                 res.status(200).json(response);
             }

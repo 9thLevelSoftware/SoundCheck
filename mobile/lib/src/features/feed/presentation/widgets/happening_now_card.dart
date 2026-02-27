@@ -2,6 +2,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_theme.dart';
+import '../../../../shared/utils/a11y_utils.dart';
 import '../../domain/happening_now_group.dart';
 
 /// Card showing a group of friends at the same event (Happening Now tab)
@@ -57,10 +58,16 @@ class HappeningNowCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final timeAgo = _getTimeAgo(group.lastCheckinAt);
+    final firstFriend = group.friends.isNotEmpty ? group.friends.first.username : 'Friends';
 
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
+    return Semantics(
+      label: happeningNowSemantics(
+        username: firstFriend,
+        eventName: group.eventName,
+      ),
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -153,6 +160,7 @@ class HappeningNowCard extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

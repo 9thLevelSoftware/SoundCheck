@@ -2,6 +2,8 @@ import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
 export declare class UserController {
     private userService;
+    private statsService;
+    private auditService;
     constructor(userService?: UserService);
     /**
      * Register a new user
@@ -48,6 +50,11 @@ export declare class UserController {
      * GET /api/users/:userId/stats
      */
     getUserStats: (req: Request, res: Response) => Promise<void>;
+    /**
+     * Get concert cred stats for a user
+     * GET /api/users/:userId/concert-cred
+     */
+    getConcertCred: (req: Request, res: Response) => Promise<void>;
     /**
      * Search users by username or display name
      * GET /api/search/users?q=query&limit=20&offset=0

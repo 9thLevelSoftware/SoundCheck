@@ -402,9 +402,12 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
+    return Semantics(
+      label: 'Add photo from $label',
+      button: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.15),
@@ -424,6 +427,7 @@ class _ActionButton extends StatelessWidget {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

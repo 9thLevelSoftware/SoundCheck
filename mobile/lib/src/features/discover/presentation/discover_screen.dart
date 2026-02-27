@@ -9,6 +9,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/services/location_service.dart';
+import '../../../shared/utils/a11y_utils.dart';
 import '../../bands/domain/band.dart';
 import '../../venues/domain/venue.dart';
 import '../domain/discovery_models.dart';
@@ -124,16 +125,19 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     ),
                     const SizedBox(height: 12),
                     // Search Bar
-                    Container(
-                      decoration: BoxDecoration(
-                        color: AppTheme.surfaceVariantDark,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: TextField(
-                        controller: _searchController,
-                        style: const TextStyle(color: AppTheme.textPrimary),
-                        decoration: InputDecoration(
-                          hintText: 'Search shows, bands, venues, or users...',
+                    Semantics(
+                      label: searchFieldSemantics(),
+                      textField: true,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppTheme.surfaceVariantDark,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: TextField(
+                          controller: _searchController,
+                          style: const TextStyle(color: AppTheme.textPrimary),
+                          decoration: InputDecoration(
+                            hintText: 'Search shows, bands, venues, or users...',
                           hintStyle: const TextStyle(color: AppTheme.textTertiary),
                           prefixIcon: const Icon(
                             Icons.search,
@@ -155,6 +159,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           ),
                         ),
                         onChanged: _onSearchChanged,
+                        ),
                       ),
                     ),
                   ],

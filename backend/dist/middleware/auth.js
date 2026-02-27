@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.cleanupRateLimit = exports.rateLimit = exports.requireAdmin = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../utils/auth");
 const UserService_1 = require("../services/UserService");
+const redisRateLimiter_1 = require("../utils/redisRateLimiter");
 /**
  * Middleware to authenticate JWT tokens
  */
@@ -130,48 +131,86 @@ const requireAdmin = () => {
 };
 exports.requireAdmin = requireAdmin;
 /**
- * Rate limiting middleware (simple in-memory implementation)
+ * Rate limiting middleware
+ *
+ * Uses Redis when available for distributed rate limiting across instances.
+ * Falls back to in-memory when Redis is unavailable.
  */
-const rateLimitStore = new Map();
+const inMemoryRateLimitStore = new Map();
+/**
+ * In-memory rate limit check (fallback when Redis unavailable)
+ */
+function checkInMemoryRateLimit(clientIP, windowMs, maxRequests) {
+    const now = Date.now();
+    const clientData = inMemoryRateLimitStore.get(clientIP);
+    if (!clientData || now > clientData.resetTime) {
+        inMemoryRateLimitStore.set(clientIP, {
+            count: 1,
+            resetTime: now + windowMs,
+        });
+        return { allowed: true, remaining: maxRequests - 1 };
+    }
+    if (clientData.count >= maxRequests) {
+        return { allowed: false, remaining: 0 };
+    }
+    clientData.count++;
+    return { allowed: true, remaining: maxRequests - clientData.count };
+}
 const rateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
-    return (req, res, next) => {
-        const clientIP = req.ip || req.connection.remoteAddress || 'unknown';
-        const now = Date.now();
-        const clientData = rateLimitStore.get(clientIP);
-        if (!clientData || now > clientData.resetTime) {
-            // Reset window
-            rateLimitStore.set(clientIP, {
-                count: 1,
-                resetTime: now + windowMs,
-            });
+    return async (req, res, next) => {
+        const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+        try {
+            // Try Redis first
+            if ((0, redisRateLimiter_1.getRedis)()) {
+                const key = `rate_limit:${clientIP}`;
+                const result = await (0, redisRateLimiter_1.checkRateLimit)(key, maxRequests, windowMs);
+                // Set rate limit headers
+                res.setHeader('X-RateLimit-Limit', maxRequests.toString());
+                res.setHeader('X-RateLimit-Remaining', Math.max(0, result.remaining).toString());
+                res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetAt / 1000).toString());
+                if (!result.allowed) {
+                    const response = {
+                        success: false,
+                        error: 'Too many requests, please try again later',
+                    };
+                    res.status(429).json(response);
+                    return;
+                }
+                next();
+                return;
+            }
+            // Fallback to in-memory when Redis unavailable
+            const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
+            if (!result.allowed) {
+                const response = {
+                    success: false,
+                    error: 'Too many requests, please try again later',
+                };
+                res.status(429).json(response);
+                return;
+            }
             next();
-            return;
         }
-        if (clientData.count >= maxRequests) {
-            const response = {
-                success: false,
-                error: 'Too many requests, please try again later',
-            };
-            res.status(429).json(response);
-            return;
+        catch (error) {
+            // On any error, fail-open (allow request through)
+            console.error('Rate limit error:', error);
+            next();
         }
-        clientData.count++;
-        next();
     };
 };
 exports.rateLimit = rateLimit;
 /**
- * Clean up expired rate limit entries (should be called periodically)
+ * Clean up expired in-memory rate limit entries
  */
 const cleanupRateLimit = () => {
     const now = Date.now();
-    for (const [key, data] of rateLimitStore.entries()) {
+    for (const [key, data] of inMemoryRateLimitStore.entries()) {
         if (now > data.resetTime) {
-            rateLimitStore.delete(key);
+            inMemoryRateLimitStore.delete(key);
         }
     }
 };
 exports.cleanupRateLimit = cleanupRateLimit;
-// Clean up every 5 minutes
-setInterval(exports.cleanupRateLimit, 5 * 60 * 1000);
+// Clean up in-memory store every 5 minutes
+setInterval(exports.cleanupRateLimit, 5 * 60 * 1000).unref();
 //# sourceMappingURL=auth.js.map

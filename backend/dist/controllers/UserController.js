@@ -2,6 +2,8 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const UserService_1 = require("../services/UserService");
+const StatsService_1 = require("../services/StatsService");
+const AuditService_1 = require("../services/AuditService");
 // UUID validation regex (supports UUID v1-5)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 class UserController {
@@ -38,6 +40,8 @@ class UserController {
             try {
                 const loginData = req.body;
                 const authResponse = await this.userService.authenticateUser(loginData);
+                // Audit log: login success
+                this.auditService.logLoginSuccess(authResponse.user.id, 'email', req);
                 const response = {
                     success: true,
                     data: authResponse,
@@ -47,6 +51,10 @@ class UserController {
             }
             catch (error) {
                 console.error('Login error:', error);
+                // Audit log: login failure
+                const reason = error instanceof Error ? error.message : 'Unknown error';
+                const email = req.body?.email || 'unknown';
+                this.auditService.logLoginFailure(email, reason, req);
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Login failed',
@@ -113,6 +121,8 @@ class UserController {
                 }
                 const updateData = req.body;
                 const updatedUser = await this.userService.updateProfile(req.user.id, updateData);
+                // Audit log: profile update
+                this.auditService.logProfileUpdated(req.user.id, Object.keys(updateData), req);
                 const response = {
                     success: true,
                     data: updatedUser,
@@ -302,6 +312,38 @@ class UserController {
             }
         };
         /**
+         * Get concert cred stats for a user
+         * GET /api/users/:userId/concert-cred
+         */
+        this.getConcertCred = async (req, res) => {
+            try {
+                const { userId } = req.params;
+                // Validate UUID format
+                if (!UUID_REGEX.test(userId)) {
+                    const response = {
+                        success: false,
+                        error: 'Invalid user ID format',
+                    };
+                    res.status(400).json(response);
+                    return;
+                }
+                const concertCred = await this.statsService.getConcertCred(userId);
+                const response = {
+                    success: true,
+                    data: concertCred,
+                };
+                res.json(response);
+            }
+            catch (error) {
+                console.error('Error getting concert cred:', error);
+                const response = {
+                    success: false,
+                    error: error instanceof Error ? error.message : 'Failed to get concert cred',
+                };
+                res.status(500).json(response);
+            }
+        };
+        /**
          * Search users by username or display name
          * GET /api/search/users?q=query&limit=20&offset=0
          */
@@ -371,6 +413,8 @@ class UserController {
             }
         };
         this.userService = userService ?? new UserService_1.UserService();
+        this.statsService = new StatsService_1.StatsService();
+        this.auditService = new AuditService_1.AuditService();
     }
 }
 exports.UserController = UserController;
