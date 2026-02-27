@@ -7,11 +7,13 @@ import {
 } from '../utils/auth';
 import { rateLimit } from '../middleware/auth';
 import { UserService } from '../services/UserService';
+import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
 import Database from '../config/database';
 
 const router = Router();
 const userService = new UserService();
+const auditService = new AuditService();
 
 // Rate limiting for token endpoints (security critical)
 // 10 requests per 15 minutes to prevent brute force attacks
@@ -131,8 +133,18 @@ router.post('/revoke', tokenRateLimit, async (req: Request, res: Response) => {
   try {
     const { refreshToken } = req.body;
 
+    let userId: string | undefined;
     if (refreshToken && typeof refreshToken === 'string') {
+      // Get user ID before revoking (for audit logging)
+      const result = await verifyRefreshToken(refreshToken);
+      userId = result.userId;
+
       await revokeRefreshToken(refreshToken);
+    }
+
+    // Audit log: logout (if we have a userId)
+    if (userId) {
+      auditService.logLogout(userId, req);
     }
 
     const response: ApiResponse = {

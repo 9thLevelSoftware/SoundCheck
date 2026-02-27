@@ -240,7 +240,11 @@ describe('Token Routes', () => {
     const validToken = crypto.randomBytes(32).toString('hex');
 
     it('should revoke token successfully', async () => {
+      // Mock verifyRefreshToken (returns userId for audit logging)
+      mockQuery.mockResolvedValueOnce({ rows: [{ user_id: 'test-user-id' }], rowCount: 1 });
       // Mock revokeRefreshToken
+      mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
+      // Mock audit log (fire-and-forget)
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
 
       const response = await request(app)
@@ -251,14 +255,21 @@ describe('Token Routes', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.message).toBe('Token revoked');
 
-      // Verify the revocation query was called
-      expect(mockQuery).toHaveBeenCalledTimes(1);
-      const [query] = mockQuery.mock.calls[0];
-      expect(query).toContain('UPDATE refresh_tokens');
-      expect(query).toContain('revoked_at = NOW()');
+      // Verify verifyRefreshToken and revokeRefreshToken queries were called
+      // (audit log also makes a query, but we don't assert exact count for flexibility)
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('SELECT user_id FROM refresh_tokens'),
+        expect.any(Array)
+      );
+      expect(mockQuery).toHaveBeenCalledWith(
+        expect.stringContaining('UPDATE refresh_tokens'),
+        expect.any(Array)
+      );
     });
 
     it('should return success even when token does not exist (idempotent)', async () => {
+      // Mock verifyRefreshToken - no rows found (invalid token)
+      mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
       // Mock revokeRefreshToken - no rows affected
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
 

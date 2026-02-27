@@ -57,6 +57,9 @@ export class UserController {
 
       const authResponse = await this.userService.authenticateUser(loginData);
 
+      // Audit log: login success
+      this.auditService.logLoginSuccess(authResponse.user.id, 'email', req);
+
       const response: ApiResponse = {
         success: true,
         data: authResponse,
@@ -66,7 +69,12 @@ export class UserController {
       res.status(200).json(response);
     } catch (error) {
       console.error('Login error:', error);
-      
+
+      // Audit log: login failure
+      const reason = error instanceof Error ? error.message : 'Unknown error';
+      const email = req.body?.email || 'unknown';
+      this.auditService.logLoginFailure(email, reason, req);
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Login failed',

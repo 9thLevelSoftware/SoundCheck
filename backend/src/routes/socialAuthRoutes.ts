@@ -1,12 +1,14 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { z } from 'zod';
 import { SocialAuthService } from '../services/SocialAuthService';
+import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
 import { logError, logInfo } from '../utils/logger';
 import { rateLimit } from '../middleware/auth';
 
 const router = Router();
 const socialAuthService = new SocialAuthService();
+const auditService = new AuditService();
 
 // Validation schemas
 const googleAuthSchema = z.object({
@@ -72,6 +74,14 @@ router.post(
         userId: result.user.id,
         isNewUser: result.isNewUser,
       });
+
+      // Audit log: social auth login success
+      auditService.logLoginSuccess(result.user.id, 'google', req);
+
+      // If this is a linking to existing account (not new user but first time with this provider)
+      if (!result.isNewUser) {
+        auditService.logSocialAuthLinked(result.user.id, 'google', req);
+      }
 
       const response: ApiResponse = {
         success: true,
@@ -161,6 +171,14 @@ router.post(
         userId: result.user.id,
         isNewUser: result.isNewUser,
       });
+
+      // Audit log: social auth login success
+      auditService.logLoginSuccess(result.user.id, 'apple', req);
+
+      // If this is a linking to existing account (not new user but first time with this provider)
+      if (!result.isNewUser) {
+        auditService.logSocialAuthLinked(result.user.id, 'apple', req);
+      }
 
       const response: ApiResponse = {
         success: true,

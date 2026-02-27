@@ -148,7 +148,7 @@
   - Badge awards: CREATE on user_badges
 
 ### Task 3.4: Add audit logging to auth flows
-- [ ] **Files**:
+- [x] **Files**:
   - `backend/src/services/UserService.ts` (login)
   - `backend/src/services/SocialAuthService.ts`
   - `backend/src/utils/auth.ts` (logout/token)
