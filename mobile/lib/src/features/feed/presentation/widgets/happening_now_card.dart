@@ -9,8 +9,7 @@ import '../../domain/happening_now_group.dart';
 /// Displays event name, venue, friend avatars row, and relative timestamp
 class HappeningNowCard extends StatelessWidget {
   const HappeningNowCard({
-    super.key,
-    required this.group,
+    required this.group, super.key,
     this.onTap,
   });
 

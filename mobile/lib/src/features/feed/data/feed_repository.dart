@@ -57,7 +57,7 @@ class FeedRepository {
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data
           .map((json) =>
-              HappeningNowGroup.fromJson(json as Map<String, dynamic>))
+              HappeningNowGroup.fromJson(json as Map<String, dynamic>),)
           .toList();
     } catch (e) {
       rethrow;
@@ -71,7 +71,7 @@ class FeedRepository {
       final response = await _dioClient.get('/feed/unseen');
 
       return UnseenCounts.fromJson(
-          response.data['data'] as Map<String, dynamic>);
+          response.data['data'] as Map<String, dynamic>,);
     } catch (e) {
       rethrow;
     }

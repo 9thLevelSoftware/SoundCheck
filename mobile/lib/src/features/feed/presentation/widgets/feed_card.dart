@@ -10,8 +10,7 @@ import '../../domain/feed_item.dart';
 /// Ratings and badges are behind a tap (detail view), not on the card surface
 class FeedCard extends StatelessWidget {
   const FeedCard({
-    super.key,
-    required this.item,
+    required this.item, super.key,
     this.onToast,
   });
 
@@ -203,7 +202,7 @@ class _UserAvatar extends StatelessWidget {
   const _UserAvatar({
     required this.username,
     this.avatarUrl,
-    this.size = 40,
+    this.size = 40.0,
   });
 
   final String username;
@@ -269,8 +268,7 @@ class _InitialAvatar extends StatelessWidget {
 /// Photo area with optional badge earned indicator
 class _PhotoArea extends StatelessWidget {
   const _PhotoArea({
-    this.photoUrl,
-    required this.hasBadgeEarned,
+    required this.hasBadgeEarned, this.photoUrl,
   });
 
   final String? photoUrl;

@@ -38,7 +38,7 @@ class PushNotificationService {
     try {
       // Set background message handler
       FirebaseMessaging.onBackgroundMessage(
-          firebaseMessagingBackgroundHandler);
+          firebaseMessagingBackgroundHandler,);
 
       // Request notification permission
       final settings = await FirebaseMessaging.instance.requestPermission(
@@ -54,7 +54,7 @@ class PushNotificationService {
       }
 
       LogService.i(
-          'Push notification permission: ${settings.authorizationStatus}');
+          'Push notification permission: ${settings.authorizationStatus}',);
 
       // Initialize local notifications for foreground display
       await _initializeLocalNotifications();

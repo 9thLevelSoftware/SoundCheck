@@ -31,7 +31,7 @@ class DiscoveryRepository {
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data
           .map((json) =>
-              DiscoverEvent.fromEventJson(json as Map<String, dynamic>))
+              DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
           .toList();
     } catch (e) {
       rethrow;
@@ -60,7 +60,7 @@ class DiscoveryRepository {
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data
           .map((json) =>
-              DiscoverEvent.fromEventJson(json as Map<String, dynamic>))
+              DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
           .toList();
     } catch (e) {
       rethrow;
@@ -86,7 +86,7 @@ class DiscoveryRepository {
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data
           .map((json) =>
-              DiscoverEvent.fromEventJson(json as Map<String, dynamic>))
+              DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
           .toList();
     } catch (e) {
       rethrow;
@@ -117,7 +117,7 @@ class DiscoveryRepository {
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data
           .map((json) =>
-              DiscoverEvent.fromEventJson(json as Map<String, dynamic>))
+              DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
           .toList();
     } catch (e) {
       rethrow;
@@ -142,7 +142,7 @@ class DiscoveryRepository {
       final List<dynamic> data = response.data['data'] as List<dynamic>;
       return data
           .map((json) =>
-              DiscoverEvent.fromEventJson(json as Map<String, dynamic>))
+              DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
           .toList();
     } catch (e) {
       rethrow;

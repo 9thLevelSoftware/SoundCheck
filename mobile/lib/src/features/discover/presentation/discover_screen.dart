@@ -962,7 +962,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
         ],
       ),
       error: (_, __) => const SizedBox.shrink(), // Hide on error

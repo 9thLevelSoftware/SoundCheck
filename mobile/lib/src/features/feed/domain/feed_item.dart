@@ -1,3 +1,4 @@
+// ignore_for_file: invalid_annotation_target
 import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'feed_item.freezed.dart';
@@ -11,12 +12,8 @@ sealed class FeedItem with _$FeedItem {
     @JsonKey(name: 'checkin_id') required String checkinId,
     @JsonKey(name: 'user_id') required String userId,
     required String username,
-    @JsonKey(name: 'user_avatar_url') String? userAvatarUrl,
-    @JsonKey(name: 'event_id') required String eventId,
-    @JsonKey(name: 'event_name') required String eventName,
-    @JsonKey(name: 'venue_name') required String venueName,
+    @JsonKey(name: 'event_id') required String eventId, @JsonKey(name: 'event_name') required String eventName, @JsonKey(name: 'venue_name') required String venueName, @JsonKey(name: 'created_at') required String createdAt, @JsonKey(name: 'user_avatar_url') String? userAvatarUrl,
     @JsonKey(name: 'photo_url') String? photoUrl,
-    @JsonKey(name: 'created_at') required String createdAt,
     @JsonKey(name: 'has_badge_earned') @Default(false) bool hasBadgeEarned,
     @JsonKey(name: 'toast_count') @Default(0) int toastCount,
     @JsonKey(name: 'comment_count') @Default(0) int commentCount,

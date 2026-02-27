@@ -9,8 +9,7 @@ import 'providers/checkin_providers.dart';
 /// Supports per-set band ratings and venue rating with half-star increments
 class RatingBottomSheet extends ConsumerStatefulWidget {
   const RatingBottomSheet({
-    super.key,
-    required this.checkinId,
+    required this.checkinId, super.key,
     this.eventId,
     this.lineup,
     this.venueName,
@@ -88,7 +87,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
         .map((e) => {
               'bandId': e.key,
               'rating': e.value,
-            })
+            },)
         .toList();
 
     final submitNotifier = ref.read(submitRatingsProvider.notifier);
@@ -261,7 +260,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
             borderRadius: BorderRadius.circular(16),
             border: currentRating > 0
                 ? Border.all(
-                    color: AppTheme.electricPurple.withValues(alpha: 0.5))
+                    color: AppTheme.electricPurple.withValues(alpha: 0.5),)
                 : null,
           ),
           child: Column(
@@ -278,7 +277,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.music_note,
-                        color: AppTheme.backgroundDark, size: 24),
+                        color: AppTheme.backgroundDark, size: 24,),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

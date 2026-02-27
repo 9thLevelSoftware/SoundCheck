@@ -128,7 +128,7 @@ class _BadgeCollectionScreenState extends ConsumerState<BadgeCollectionScreen> {
             children: [
               const Icon(Icons.error_outline, color: AppTheme.error, size: 48),
               const SizedBox(height: 16),
-              Text(
+              const Text(
                 'Failed to load badges',
                 style: TextStyle(
                   color: AppTheme.textSecondary,
@@ -344,7 +344,7 @@ class _BadgeCard extends StatelessWidget {
             // Progress text
             Text(
               '${progress.currentValue}/${progress.requirementValue}',
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 10,
                 color: AppTheme.textTertiary,
               ),
@@ -355,7 +355,7 @@ class _BadgeCard extends StatelessWidget {
                 padding: const EdgeInsets.only(top: 2),
                 child: Text(
                   '${rarity!.rarityPct.toStringAsFixed(1)}% of users',
-                  style: TextStyle(
+                  style: const TextStyle(
                     fontSize: 9,
                     fontStyle: FontStyle.italic,
                     color: AppTheme.textTertiary,
