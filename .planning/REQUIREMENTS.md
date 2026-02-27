@@ -1,0 +1,155 @@
+# Requirements: SoundCheck
+
+**Defined:** 2026-02-27
+**Core Value:** The live check-in moment: check in fast, rate the experience, share with friends — feeding discovery, gamification, and concert identity.
+
+## v1.1 Requirements
+
+Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap phases.
+
+### Trust & Safety
+
+- [ ] **SAFE-01**: User can report any check-in, comment, or photo for abuse/spam/inappropriate content
+- [ ] **SAFE-02**: Reported content enters moderation queue with automated Cloud Vision SafeSearch image scan
+- [ ] **SAFE-03**: Admin can review, approve, or remove reported content from moderation queue
+- [ ] **SAFE-04**: User can block another user (bilateral — blocks all interactions in both directions)
+- [ ] **SAFE-05**: User can reset forgotten password via email link
+
+### Auth Cleanup
+
+- [ ] **AUTH-01**: Fake biometric login button removed from login screen
+- [ ] **AUTH-02**: Facebook sign-in stub removed from login screen
+
+### Onboarding & UX
+
+- [ ] **ONBD-01**: New user sees 3-screen onboarding carousel explaining SoundCheck's value
+- [ ] **ONBD-02**: Onboarding includes genre picker that seeds personalized recommendations
+- [ ] **ONBD-03**: After successful check-in, user sees celebration screen with badge progress and share CTA
+
+### Social Sharing
+
+- [ ] **SHARE-01**: Server generates shareable check-in card images (1200x630 OG + 1080x1920 Stories variants)
+- [ ] **SHARE-02**: User can share check-in card to Instagram Stories, X, and TikTok from celebration screen
+- [ ] **SHARE-03**: User can share badge unlock card to social platforms
+- [ ] **SHARE-04**: Non-users clicking a shared link see web landing page with card preview and App Store/Play Store CTAs
+
+### Event Engagement
+
+- [ ] **EVENT-01**: User can RSVP "I'm Going" to upcoming events
+- [ ] **EVENT-02**: Event detail shows count and avatars of friends going
+- [ ] **EVENT-03**: User sees "Trending Shows Near You" feed for between-concert retention
+- [ ] **EVENT-04**: Trending algorithm uses Wilson-scored mix of RSVP count, check-in velocity, friend signals, and proximity
+
+### Platform Credibility
+
+- [ ] **VERIFY-01**: Venue owner can submit claim request for venue profile
+- [ ] **VERIFY-02**: Artist can submit claim request for band profile
+- [ ] **VERIFY-03**: Admin reviews and approves/denies verification claims
+- [ ] **VERIFY-04**: Verified profiles display verification badge
+- [ ] **VERIFY-05**: Claimed venue owner can view aggregate ratings and respond to reviews
+- [ ] **VERIFY-06**: Claimed artist can update profile and view performance stats
+
+### Technical Scale
+
+- [ ] **SCALE-01**: Search uses PostgreSQL tsvector + GIN indexes with pg_trgm fuzzy fallback (replaces ILIKE)
+- [ ] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
+- [ ] **SCALE-03**: Band.genre migrated from single string to array/many-to-many for faceted filtering
+
+### Monetization
+
+- [ ] **MONEY-01**: User can view SoundCheck Wrapped annual recap (basic version free)
+- [ ] **MONEY-02**: Wrapped generates shareable recap cards via satori pipeline
+- [ ] **MONEY-03**: User can subscribe to SoundCheck Pro ($4.99/mo) via in-app purchase
+- [ ] **MONEY-04**: Premium users access enhanced Wrapped with detailed analytics
+- [ ] **MONEY-05**: Premium entitlements validated server-side via RevenueCat webhooks
+
+## v2 Requirements
+
+Deferred to future release. Tracked but not in current roadmap.
+
+### Recommendations
+
+- **RECO-01**: Collaborative filtering for recommendations (requires >5K active users, >50K check-ins)
+- **RECO-02**: Recommendation impression and click-through logging for training data
+
+### Engagement
+
+- **ENGAGE-01**: Badge catalog expanded to 25-30 types
+- **ENGAGE-02**: Offline check-in queue for venues with poor signal
+- **ENGAGE-03**: Setlist integration into check-in flow
+- **ENGAGE-04**: Shimmer loading states replacing plain spinners
+
+### B2B Platform
+
+- **B2B-01**: Full venue dashboard with data exports and heatmaps
+- **B2B-02**: Artist promotional tools and featured events
+
+### Infrastructure
+
+- **INFRA-01**: Public API with OAuth2 scopes for partner ecosystem
+- **INFRA-02**: WebSocket horizontal scaling (complete Redis Pub/Sub wiring)
+- **INFRA-03**: Database read replicas for query distribution
+
+## Out of Scope
+
+Explicitly excluded. Documented to prevent scope creep.
+
+| Feature | Reason |
+|---------|--------|
+| Custom ML content moderation | Cloud Vision SafeSearch is accurate and cheap at current scale |
+| Real-time moderation blocking check-in flow | Adds latency to core action; async post-publish is the correct tradeoff |
+| Collaborative filtering in v1.1 | Insufficient data — existing content-based recommendations are correct for this stage |
+| Web frontend / web profiles | Mobile-only; web landing page for share links is minimal (card preview + CTAs only) |
+| Past concert logging/diary | "I'm here now" creates urgency and authenticity |
+| Ticket sales or purchasing | Link out to Ticketmaster/Bandsintown |
+| Chat/messaging between users | Social via check-ins, toasts, comments |
+| Concert buddy matching | Safety concerns, moderation complexity |
+| Competitive leaderboards | Badges reward milestones, not competition |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| SAFE-01 | — | Pending |
+| SAFE-02 | — | Pending |
+| SAFE-03 | — | Pending |
+| SAFE-04 | — | Pending |
+| SAFE-05 | — | Pending |
+| AUTH-01 | — | Pending |
+| AUTH-02 | — | Pending |
+| ONBD-01 | — | Pending |
+| ONBD-02 | — | Pending |
+| ONBD-03 | — | Pending |
+| SHARE-01 | — | Pending |
+| SHARE-02 | — | Pending |
+| SHARE-03 | — | Pending |
+| SHARE-04 | — | Pending |
+| EVENT-01 | — | Pending |
+| EVENT-02 | — | Pending |
+| EVENT-03 | — | Pending |
+| EVENT-04 | — | Pending |
+| VERIFY-01 | — | Pending |
+| VERIFY-02 | — | Pending |
+| VERIFY-03 | — | Pending |
+| VERIFY-04 | — | Pending |
+| VERIFY-05 | — | Pending |
+| VERIFY-06 | — | Pending |
+| SCALE-01 | — | Pending |
+| SCALE-02 | — | Pending |
+| SCALE-03 | — | Pending |
+| MONEY-01 | — | Pending |
+| MONEY-02 | — | Pending |
+| MONEY-03 | — | Pending |
+| MONEY-04 | — | Pending |
+| MONEY-05 | — | Pending |
+
+**Coverage:**
+- v1.1 requirements: 32 total
+- Mapped to phases: 0
+- Unmapped: 32 ⚠️
+
+---
+*Requirements defined: 2026-02-27*
+*Last updated: 2026-02-27 after initial definition*
