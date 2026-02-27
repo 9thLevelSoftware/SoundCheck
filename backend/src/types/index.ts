@@ -364,6 +364,63 @@ export interface VenueAggregate {
   uniqueVisitors: number;
 }
 
+// Trust & Safety types (Phase 9)
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'copyright' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'actioned' | 'dismissed';
+export type ContentType = 'checkin' | 'comment' | 'photo' | 'user';
+
+export interface Report {
+  id: string;
+  reporterId: string;
+  contentType: ContentType;
+  contentId: string;
+  targetUserId?: string;
+  reason: ReportReason;
+  description?: string;
+  status: ReportStatus;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  createdAt: string;
+}
+
+export interface ModerationItem {
+  id: string;
+  contentType: ContentType;
+  contentId: string;
+  source: 'user_report' | 'auto_safesearch';
+  reportId?: string;
+  safesearchResults?: Record<string, string>;
+  status: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  actionTaken?: string;
+  createdAt: string;
+}
+
+export interface UserBlock {
+  id: string;
+  blockerId: string;
+  blockedId: string;
+  createdAt: string;
+}
+
+export interface PasswordResetToken {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: string;
+  usedAt?: string;
+  createdAt: string;
+}
+
+export interface CreateReportRequest {
+  contentType: ContentType;
+  contentId: string;
+  reason: ReportReason;
+  description?: string;
+}
+
 // Express Request with user
 declare global {
   namespace Express {
