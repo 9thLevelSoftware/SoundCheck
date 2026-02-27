@@ -6,3 +6,6 @@
 
 export * from './types';
 export { CheckinQueryService } from './CheckinQueryService';
+export { CheckinCreatorService } from './CheckinCreatorService';
+export { CheckinRatingService } from './CheckinRatingService';
+export { CheckinToastService } from './CheckinToastService';

@@ -24,7 +24,7 @@ export interface Toast {
   user?: {
     id: string;
     username: string;
-    profileImageUrl?: string;
+    profileImageUrl?: string | null;
   };
 }
 
@@ -37,7 +37,7 @@ export interface Comment {
   user?: {
     id: string;
     username: string;
-    profileImageUrl?: string;
+    profileImageUrl?: string | null;
   };
   ownerId?: string; // Check-in owner for WebSocket notifications
 }
