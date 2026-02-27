@@ -120,6 +120,16 @@ Unanimous CONCERNS (5/5 directors) identified 5 structural gaps vs. Untappd:
 4. No trust infrastructure (moderation, verification)
 5. No monetization design
 
+## Current Milestone: v1.1 Launch Readiness & Growth Platform
+
+**Goal:** Close the 5 structural gaps identified by the Board of Directors gap analysis — launch blockers, viral growth, platform trust, between-show retention, and monetization foundation — transforming SoundCheck from "a good concert check-in app" into "a platform with network effects."
+
+**Target features:**
+- Launch blockers: report/flag, forgot password, remove fake auth stubs, onboarding
+- Viral growth engine: social sharing cards, RSVP, trending feed, badge expansion
+- Platform trust: verification, content moderation, full-text search, tech debt fixes
+- Retention & monetization: artist/venue accounts, SoundCheck Wrapped, premium tier design, collaborative filtering
+
 ## Constraints
 
 - **Tech Stack**: Flutter 3.27.4+ (mobile), Node.js 20 / Express / TypeScript (backend), PostgreSQL 12+ — continue existing stack
@@ -146,4 +156,4 @@ Unanimous CONCERNS (5/5 directors) identified 5 structural gaps vs. Untappd:
 | JSONB badge criteria | New badges without code changes | ✓ Good — 37 badges, zero custom code per type |
 
 ---
-*Last updated: 2026-02-27 after v1.0 milestone*
+*Last updated: 2026-02-27 after v1.1 milestone started*
