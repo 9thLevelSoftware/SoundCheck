@@ -49,7 +49,12 @@
   3. User can reset a forgotten password by receiving an email link and setting a new password
   4. Admin can open a moderation queue, see reported content with automated SafeSearch results, and approve or remove items
   5. Login screen shows only working authentication options (no fake biometric button, no Facebook stub)
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+- [ ] 09-01-PLAN.md — Database migrations and types foundation (reports, blocks, reset tokens, is_admin fix)
+- [ ] 09-02-PLAN.md — Report & moderation pipeline (ReportService, ModerationService, SafeSearch, admin queue)
+- [ ] 09-03-PLAN.md — Block system & auth cleanup (BlockService, feed filtering, remove biometric/Facebook stubs)
+- [ ] 09-04-PLAN.md — Password reset flow (EmailService, PasswordResetService, Resend integration, mobile screen)
 
 ### Phase 10: Viral Growth Engine
 **Goal**: New users convert through onboarding, existing users share check-ins and badges to social platforms, and pre-show engagement drives friend attendance
@@ -102,7 +107,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 6. Profile & Concert Cred | v1.0 | 2/2 | Complete | 2026-02-03 |
 | 7. Discovery & Recommendations | v1.0 | 3/3 | Complete | 2026-02-03 |
 | 8. Polish & App Store Readiness | v1.0 | 2/2 | Complete | 2026-02-03 |
-| 9. Trust & Safety Foundation | v1.1 | 0/TBD | Not started | - |
+| 9. Trust & Safety Foundation | v1.1 | 0/4 | Planned | - |
 | 10. Viral Growth Engine | v1.1 | 0/TBD | Not started | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
