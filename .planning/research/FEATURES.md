@@ -1,367 +1,299 @@
-# Feature Landscape
+# Feature Research: v1.1 Growth Platform
 
-**Domain:** Social concert check-in app ("Untappd for live music")
-**Researched:** 2026-02-02
-**Overall Confidence:** HIGH (multi-source competitor analysis, verified against existing codebase)
+**Domain:** Social concert check-in app -- v1.1 growth, trust, retention, and monetization features
+**Researched:** 2026-02-27
+**Confidence:** HIGH (multi-source research, verified against App Store guidelines, competitor analysis, and existing codebase)
 
----
-
-## Competitor Landscape Summary
-
-Before mapping features, here is what each competitor does and does NOT do. This informs where SoundCheck's opportunity lies.
-
-| App | Primary Function | Check-In | Ratings | Badges/Gamification | Social Feed | Discovery | Year-in-Review | Scale |
-|-----|-----------------|----------|---------|---------------------|-------------|-----------|----------------|-------|
-| **Untappd** (model) | Beer check-in + social | Core mechanic | 0.25-5 stars | Deep system (100+ badge types) | Real-time friend feed | Personalized recs | Recappd (annual) | 12M users |
-| **Bandsintown** | Concert discovery + tickets | Post past shows (minimal) | Read-only reviews | None | Fan feed (artist updates) | AI-powered recs | None | 95M fans |
-| **Songkick** | Concert alerts + tracking | RSVP/tracking | None | None | Minimal (share plans) | Artist-based alerts | None | 15M users |
-| **Setlist.fm** | Setlist archive + wiki | "I Was There" button | Basic show ratings | None | Community edits | Setlist browsing | Personal stats page | 9.6M setlists |
-| **Concert Archives** | Concert diary + social | Full diary logging | Favorite marking | None | Friend feed + flashbacks | Upcoming concerts | Anniversary notifications | Smaller community |
-| **LiveRate** | Critic review aggregator | None | Critic-aggregated scores | "Real Live Certified" badge | None | Artist discovery | None | Niche |
-| **RateGigs** | Concert/venue rating | Rate past/present shows | Multi-dimensional ratings | None | Share reviews | Concert discovery | None | Small/early stage |
-
-**The critical gap no competitor fills:** None of these apps combine real-time check-in + gamification + dual ratings + social feed in the way Untappd does for beer. Bandsintown and Songkick are discovery/ticketing platforms, not social check-in apps. Setlist.fm and Concert Archives are retrospective logging tools, not live-moment apps. RateGigs and LiveRate focus purely on ratings without social mechanics or gamification. SoundCheck's opportunity is to be the first app that nails the Untappd formula for concerts.
+**Scope:** This document covers ONLY the new features for v1.1. For v1.0 feature landscape (check-in, badges, feed, discovery, profiles), see git history of this file.
 
 ---
 
-## Untappd Mechanic Translation Map
+## Existing v1.0 Foundation (Context for Dependencies)
 
-How each core Untappd mechanic maps to the concert domain, with notes on what changes and what stays the same.
+These are already shipped and working. v1.1 features build on top of them.
 
-### 1. Check-In
-
-| Untappd | SoundCheck | Translation Notes |
-|---------|------------|-------------------|
-| Check in a beer (scan/search/tap) | Check in at a show (find event, tap) | **Simpler trigger:** concerts are scheduled events at known venues, so check-in can auto-suggest based on location + time. No scanning needed. |
-| Optional: location, photo, rating, comment | Optional: rate bands, rate venue, photo, tag friends | **Richer optional enrichment:** concerts have multiple bands, so per-set ratings add depth Untappd doesn't have. |
-| Any time (no time constraint) | Live-only (must be near venue during event) | **Key design decision:** SoundCheck's PROJECT.md explicitly scopes to live check-in only. This creates urgency and authenticity. |
-| One beer = one check-in | One event = one check-in (with optional per-set detail) | **Multi-entity:** An event can have 3-5 bands. The check-in is to the event, but enrichment can drill into individual performances. |
-
-**Complexity:** MEDIUM -- The event-matching logic (suggesting the right show based on GPS + time) is the hard part. The check-in tap itself is trivial.
-
-### 2. Ratings
-
-| Untappd | SoundCheck | Translation Notes |
-|---------|------------|-------------------|
-| Single 0.25-5 star rating per beer | Dual rating: band performance + venue experience | **This is the biggest differentiator.** No competitor does dual ratings. Untappd conflates "did I like this beer" into one score. SoundCheck separates "was the band good live" from "was the venue a good experience." |
-| Global aggregate per beer | Aggregate per band (live performance score) + per venue (experience score) | Creates two distinct leaderboards: best live performers and best venues. |
-| Precise ratings (0.25 increments, Insiders) | Half-star increments (0.5) for simplicity | Full-star is too coarse for meaningful differentiation. Quarter-star is overkill for a quick tap. Half-star is the sweet spot. |
-
-**Complexity:** LOW for basic implementation, MEDIUM for per-set ratings within multi-band events.
-
-### 3. Badges / Gamification
-
-| Untappd Badge Category | SoundCheck Equivalent | Translation Notes |
-|------------------------|-----------------------|-------------------|
-| Beer style badges (try N IPAs, stouts, etc.) | **Genre Explorer** (see N shows in metal, jazz, indie, etc.) | Direct translation. Genre taxonomy matters -- need a clean, finite list (not MusicBrainz's 800+ genres). |
-| Venue badges (check in at N breweries) | **Venue Collector** (check in at N unique venues) | Direct translation. Could tier: 5, 10, 25, 50, 100 venues. |
-| Loyalty badges (same beer N times) | **Superfan** (see the same band N times) | Direct translation but rarer -- most people don't see the same band 5+ times. Thresholds should be lower (2, 3, 5, 10). |
-| Festival/event badges | **Festival Warrior** (check in to N shows in one day/weekend) | Concert-specific. Could also have festival-specific badges tied to major events. |
-| Streak badges (check in N days in a row) | **Concert Streak** (attend shows N weeks/months in a row) | Must adapt cadence: nobody attends concerts daily. Weekly or monthly streaks make sense. |
-| Milestone badges (100, 500, 1000 check-ins) | **Milestone badges** (10, 25, 50, 100, 250, 500 shows) | Same mechanic, adjusted thresholds for concert frequency. |
-| Location badges (check in across N countries/states) | **Road Warrior** (check in across N cities/states/countries) | Direct translation. Music tourism is a real behavior. |
-| Seasonal/holiday badges | **Seasonal** (summer festival season, NYE show, holiday concerts) | Concerts are seasonal (summer festival season is real). |
-| Promotional/partner badges | **Venue/festival partner badges** | B2B potential: venues and festivals could sponsor badges. Defer to post-v1. |
-
-**Complexity:** MEDIUM for the badge engine, LOW for individual badge definitions. The badge evaluation engine (check conditions after every check-in) is the architectural challenge.
-
-### 4. Social Feed
-
-| Untappd | SoundCheck | Translation Notes |
-|---------|------------|-------------------|
-| Chronological friend check-in feed | **FOMO Feed**: real-time friend check-ins at shows | Must feel live. "Your friend Alex just checked in at Radiohead @ Madison Square Garden" creates urgency. |
-| Toast (like) reactions | **Toast** reactions on check-ins | Keep the metaphor -- "toast" works for concerts too (raising a toast to the experience). Or consider a concert-specific reaction (e.g., "Encore!" or keep toast for brand consistency with the Untappd model). |
-| Comments on check-ins | Comments on check-ins | Direct translation. Keep lightweight. |
-| "Nearby" feed (see check-ins near you) | **"Happening Now"** feed (shows with active check-ins near you) | More powerful for concerts: shows are time-bounded events, so "happening now" has built-in urgency that beer check-ins don't. |
-| Activity notifications | **Friend activity alerts** ("Alex is at a show near you") | FOMO-inducing. This is the social hook. |
-
-**Complexity:** LOW for basic feed, MEDIUM for real-time "happening now" with WebSocket push.
-
-### 5. Discovery
-
-| Untappd | SoundCheck | Translation Notes |
-|---------|------------|-------------------|
-| "Top Rated" beers near you | **Trending Shows** near you (most check-ins) | The live concert equivalent of "popular right now." |
-| Personalized beer recommendations | **Personalized show recommendations** based on genre history, past check-ins | Requires enough check-in data to build a profile. Cold start problem for new users -- solve with genre preference onboarding. |
-| Nearby venues with tap lists | **Upcoming shows** at venues near you | Powered by event API data (Bandsintown, Songkick, Ticketmaster). This is table stakes -- Bandsintown and Songkick already do this well. |
-| Beer style exploration | **Genre exploration** (browse shows by genre) | Users should be able to say "show me jazz shows near me this week." |
-| Brewery pages | **Band pages** (aggregate live rating, upcoming shows, fan count) + **Venue pages** (aggregate experience rating, upcoming events, capacity, vibe) | Two entity pages instead of one. Band pages answer "is this artist good live?" Venue pages answer "is this a good place to see a show?" |
-
-**Complexity:** MEDIUM for recommendation engine, LOW for basic upcoming show listing.
-
-### 6. Profiles / Stats
-
-| Untappd | SoundCheck | Translation Notes |
-|---------|------------|-------------------|
-| Total unique beers | **Total shows attended** | Core stat. |
-| Total check-ins | **Total check-ins** (same show can be checked into once) | Unlike beer (can check in same beer many times), concerts are unique events. Total shows = total check-ins in most cases. |
-| Unique breweries | **Unique venues** | Direct. |
-| Badge collection | **Badge showcase** | Direct. Display earned badges prominently. |
-| Top rated beers | **Top rated shows** (personal favorites) | Shows the user rated highest. |
-| Beer style breakdown | **Genre breakdown** (pie chart or bar chart of genres attended) | "You've been to 40% rock, 25% indie, 15% jazz, 10% electronic, 10% other." |
-| Recent activity | **Recent check-ins** | Direct. |
-| N/A | **Unique bands seen** | Concert-specific stat that doesn't have a direct Untappd equivalent. |
-| N/A | **Concert cred score** (composite) | Optional: a single number that captures your overall concert-going depth. Could be controversial -- keep it fun, not competitive. |
-
-**Complexity:** LOW for basic stats, MEDIUM for rich aggregation and visualization.
-
-### 7. Year-in-Review
-
-| Untappd | SoundCheck | Translation Notes |
-|---------|------------|-------------------|
-| "Year in Beer" / Recappd | **Year in Shows** / "SoundCheck Wrapped" | Massive engagement driver. Spotify Wrapped proved this format is extremely shareable. No concert app does this well. |
-| Top rated beers of the year | Top rated shows, favorite bands, favorite venues | |
-| Total unique beers | Total shows, unique bands, unique venues | |
-| Style breakdown | Genre breakdown | |
-| Map of check-in locations | **Concert map** (where you saw shows) | Visual map of venues visited is compelling for music tourists. |
-| Shareable cards | **Shareable cards** for social media | Critical for viral growth. Must be Instagram/TikTok ready. |
-
-**Complexity:** MEDIUM (data aggregation is straightforward; the shareable visual design is the hard part).
+| Capability | Status | Relevant to v1.1 |
+|------------|--------|-------------------|
+| Event check-in with dual ratings, GPS auto-suggest | Shipped | Social sharing cards, RSVP, celebration screen |
+| 37 badges across 7 categories, JSONB criteria | Shipped | Badge expansion, Wrapped stats |
+| FOMO feed (friends/events/happening-now), WebSocket | Shipped | Trending feed, RSVP "friends going" |
+| Concert cred profile, stats, genre breakdown | Shipped | Wrapped data source, premium analytics |
+| Event discovery (nearby, trending, genre, search) | Shipped | Trending feed enhancement |
+| User follow/unfollow, toasts, comments | Shipped | Social sharing attribution, moderation targets |
+| Photo uploads via Cloudflare R2 presigned URLs | Shipped | Content moderation scanning pipeline |
+| Firebase push notifications, BullMQ batching | Shipped | RSVP reminders, moderation alerts |
+| Ticketmaster event pipeline with dedup | Shipped | RSVP links to real events |
 
 ---
 
-## Table Stakes
+## Feature Landscape
 
-Features users expect. Missing any of these = product feels incomplete or broken.
+### Table Stakes (Users and App Store Expect These)
 
-| # | Feature | Why Expected | Complexity | Existing? | Notes |
-|---|---------|--------------|------------|-----------|-------|
-| T1 | **Event check-in** (find show, tap, done) | Core mechanic. Without this, there is no app. | MEDIUM | Partial (basic check-in exists, not event-centric) | Must support auto-suggest from GPS + time. Target: 10 seconds from app open to checked in. |
-| T2 | **Event data from APIs** (Bandsintown, Songkick, Ticketmaster) | Users need shows to check into. Can't rely solely on user-created events. | MEDIUM | No (Foursquare venues exist, but no event pipeline) | Critical dependency for T1. Without event data, check-in requires users to manually create events. |
-| T3 | **Band performance rating** (how good were they live?) | This is the Untappd rating equivalent. Core value proposition. | LOW | Partial (single-dimension rating exists) | Needs to be per-band within multi-band events. |
-| T4 | **Venue experience rating** (how was the venue?) | Dual rating is the key differentiator vs competitors. | LOW | No (venue ratings exist but not as independent check-in dimension) | Sound quality, sightlines, vibe, accessibility. |
-| T5 | **User profile with concert stats** | Users need a "concert resume" to show off. Identity is the hook. | MEDIUM | Partial (basic profile exists) | Total shows, unique bands, unique venues, genre breakdown. |
-| T6 | **Social feed of friend check-ins** | Without social, it's a diary app (Concert Archives already exists). Social creates FOMO. | MEDIUM | Partial (activity feed exists) | Must show real-time friend check-ins with show context. |
-| T7 | **Follow/unfollow users** | Social graph is prerequisite for social feed. | LOW | Yes (exists) | Already built. |
-| T8 | **Toast/react to check-ins** | Lightweight social interaction. Like button equivalent. | LOW | Yes (exists) | Already built. |
-| T9 | **Comments on check-ins** | Users want to discuss shows. | LOW | Yes (exists) | Already built. |
-| T10 | **Band pages** (aggregate rating, upcoming shows) | Users ask "is this band good live?" Band page answers this. | MEDIUM | Partial (band discovery exists, not event-enriched) | Need aggregate live performance rating across all check-ins. |
-| T11 | **Venue pages** (aggregate rating, upcoming events) | Users ask "is this venue worth going to?" Venue page answers this. | MEDIUM | Partial (venue details exist, not event-enriched) | Need aggregate venue experience rating + event calendar. |
-| T12 | **Push notifications** (friend check-ins, badges earned) | Users need re-engagement triggers. | LOW | Yes (WebSocket exists) | Already built. Need to add badge-earned and friend-at-nearby-show triggers. |
-| T13 | **Search** (bands, venues, events, users) | Users need to find things. | LOW | Yes (exists) | May need event search added. |
-| T14 | **Location awareness** (GPS for nearby venues/events) | Check-in verification and discovery both need location. | LOW | Yes (geolocator package exists) | Already available. |
+Features that are either App Store compliance requirements, user expectations for a social app at this stage, or critical gap-closers identified by the Board of Directors.
 
-**Total table stakes count:** 14 features. 5 already fully built, 5 partially built, 4 need new work.
+| # | Feature | Why Expected | Complexity | Dependencies | Notes |
+|---|---------|--------------|------------|--------------|-------|
+| T1 | **Report/flag mechanism for UGC** | **App Store Guideline 1.2 hard requirement.** Apps with UGC must have: (1) report mechanism, (2) block abusive users, (3) timely response process, (4) published contact info. Apple will reject updates without this. | LOW | Existing check-ins, comments, photos | Flag button on check-ins, comments, photos, and profiles. Reason picker (spam, harassment, inappropriate content, other). Persisted to `reports` table. Admin review queue. This is a launch blocker -- without it, Apple may reject v1.1 submissions. |
+| T2 | **Content moderation pipeline (image scanning)** | Required complement to T1. Photo uploads exist but have zero moderation. One NSFW photo in the feed and the app loses trust. Google requires "adequate safeguards" for UGC apps. | MEDIUM | T1 (report system), existing R2 photo uploads | Two-tier approach: (1) Automated pre-publish scan via Google Cloud Vision SafeSearch API (first 1,000 units/month free, then ~$1.50/1,000) -- flags adult, violence, racy content. (2) Flagged items go to admin review queue alongside user reports. BullMQ job processes images async after upload. Do NOT block the check-in flow on scan results -- scan async, auto-hide if flagged, notify user. |
+| T3 | **Block abusive users** | App Store Guideline 1.2 explicit requirement. Users must be able to block others from interacting with them. | LOW | Existing follow system, social graph | `user_blocks` table. Blocked users: hidden from feed, cannot comment/toast, cannot follow. Bilateral -- if A blocks B, neither sees the other. Simple but critical for compliance. |
+| T4 | **Forgot password flow** | Currently stubbed in the codebase. Every user expects this. Broken password recovery = locked-out users = churn. Basic hygiene. | LOW | Existing auth system, email service | Email-based reset token with expiry. Standard flow: request reset, email link/code, set new password. Use existing Firebase or add SendGrid/Resend for transactional email. |
+| T5 | **Onboarding flow (first-time users)** | 77% of users abandon apps within 3 days. Onboarding is the single biggest lever for day-1 retention. SoundCheck currently drops users into an empty feed with no guidance. | MEDIUM | None (standalone) | 3-screen carousel: (1) "Check in at shows" value prop, (2) "Earn badges and build your concert resume" gamification hook, (3) "See what friends are at" social proof. Then: genre preference picker (seeds recommendations, solves cold-start), optional friend-finding (contacts import or social graph). Skip button always visible. Track completion rate. |
+| T6 | **Social sharing cards (external)** | Board gap #2: "No viral loops outside the app." Without shareable content, growth is purely organic word-of-mouth. Every social app needs share-to-external-platform capability. Instagram Stories, X, and TikTok are the three that matter for the concert demographic. | MEDIUM | Existing check-ins, existing badge system | Two components: (1) **Server-side card image generation** via Satori (JSX to SVG) + Sharp (SVG to PNG). Template: check-in card with band name, venue, rating stars, user avatar, SoundCheck branding. Standard OG dimensions: 1200x630 for link previews, 1080x1920 for Instagram Stories. (2) **Mobile share sheet** via `appinio_social_share` Flutter package -- supports Instagram Stories, TikTok, X, generic share. Share triggers: post-check-in celebration screen, profile stats, badge earned, Wrapped cards. |
+| T7 | **Post-check-in celebration screen with share CTA** | The check-in moment is the highest-engagement point. Currently, checking in just... ends. No dopamine hit, no share prompt, no viral loop. Untappd shows badge progress and a share prompt after every check-in. | LOW | T6 (sharing cards), existing check-in flow | Full-screen celebration: confetti/animation, badges earned (if any), rating summary, prominent "Share to Stories" button. This is where the viral loop starts -- user checks in, gets excited, shares to Instagram, friend sees it, downloads app. Without this screen, sharing is buried and never happens. |
+
+**Total table stakes for v1.1:** 7 features. All are either compliance requirements (T1-T4), retention fundamentals (T5), or growth infrastructure (T6-T7).
 
 ---
 
-## Differentiators
+### Differentiators (Competitive Advantage)
 
-Features that set SoundCheck apart from Setlist.fm, Songkick, Bandsintown, and Concert Archives. Not expected, but these are what make users choose SoundCheck over alternatives.
+Features that no concert app does well (or at all) and that create network effects, retention loops, or monetization potential.
 
-| # | Feature | Value Proposition | Complexity | Notes |
-|---|---------|-------------------|------------|-------|
-| D1 | **Badge system (genre, venue, superfan, festival, milestone, road warrior)** | Gamification is what makes Untappd addictive. No concert app has a badge system. This is the primary retention mechanic. | MEDIUM | Badge engine exists but needs concert-specific badge types. See badge translation table above. |
-| D2 | **Dual independent ratings (band performance + venue experience)** | Nobody does this. RateGigs rates artists on multiple dimensions but doesn't separate band vs venue. This creates two distinct value surfaces. | LOW | This is the single most differentiated feature. |
-| D3 | **Per-set ratings in multi-band events** | A show has an opener and a headliner. Users want to rate them independently. No app supports this. | MEDIUM | Depends on events-as-first-class-entities data model. |
-| D4 | **FOMO feed with "Happening Now"** | Real-time awareness that friends are at shows right now. Creates urgency and social pressure. Bandsintown shows who's *planning* to go; SoundCheck shows who's *there right now*. | MEDIUM | WebSocket infrastructure exists. Need real-time check-in broadcasting. |
-| D5 | **"Year in Shows" / SoundCheck Wrapped** | Shareable annual recap. Spotify Wrapped generates massive organic social sharing. No concert app offers a proper Wrapped experience. Concerts Wrapped (concertswrapped.com) exists but requires manual data entry. | MEDIUM | Must produce Instagram-ready shareable cards. Defer to post-launch of core features but plan for data collection from day one. |
-| D6 | **Concert cred profile** (composite score, concert resume) | Turn concert-going into an identity. "I've seen 200 shows across 15 genres at 50 venues." This is bragging rights as a feature. | LOW | Data aggregation from check-ins. Visualize attractively. |
-| D7 | **Badge rarity indicators** (% of users who earned it) | "Only 3% of users have the Jazz Explorer badge." Creates aspiration and social proof for the badge system. | LOW | Requires computing badge distribution across user base. |
-| D8 | **Location verification for check-ins** | Ensures check-ins are authentic ("you were actually there"). Prevents fake check-ins. Builds trust in ratings. | LOW | GPS proximity check. Already have geolocator. |
-| D9 | **User-created events** (for DIY shows, house venues, small gigs) | API data covers major shows but misses DIY/underground scene. User-created events fill this gap. Concert Archives does this well. | LOW | Important for underground/indie scene credibility. |
-| D10 | **Photo attachment on check-ins** | Visual proof and memory. Makes the feed more engaging than text-only check-ins. | LOW | Multer upload infrastructure exists on backend. Need mobile camera integration. |
-| D11 | **Personalized show recommendations** | "Based on your check-in history, you might like this show." Goes beyond Bandsintown's "artists you follow" to "genres and experiences you enjoy." | HIGH | Requires sufficient check-in history. Cold start problem. Solve with genre preference onboarding. |
-| D12 | **Shared experience discovery** ("Who else was there?") | After a show, see other SoundCheck users who checked in at the same event. Creates community around shared experiences. | LOW | Query: all check-ins for event X. Social feature on event detail page. |
-| D13 | **Friend activity alerts** ("Alex just checked in at a show near you!") | Real-time FOMO notification. Drives spontaneous attendance and re-engagement. | MEDIUM | Requires location-aware notification logic. |
-| D14 | **Concert streak tracking** (weekly/monthly attendance streaks) | Streak mechanics are proven retention drivers (Duolingo, Snapchat, Untappd). Adapted for concert frequency. | LOW | Count check-ins per week/month, track consecutive periods. |
+| # | Feature | Value Proposition | Complexity | Dependencies | Notes |
+|---|---------|-------------------|------------|--------------|-------|
+| D1 | **Event RSVP / "I'm Going"** | Pre-show social loop. Currently, SoundCheck only engages users AT the show. RSVP creates engagement BEFORE the show: "3 friends are going to Radiohead Friday." Facebook Events proved this pattern -- the "going/interested" signal is one of the strongest social proof mechanisms for event attendance. Creates a funnel: RSVP -> reminder notification -> check-in. | MEDIUM | Existing events, existing follow system | Three states: Going / Interested / Not tracked (default). Show "N friends going" on event cards. Push notification day-of: "The show is tonight! Your friends Alex and Jordan are going." RSVP count feeds into trending algorithm. Unlike Facebook Events, keep it lightweight -- no event pages with walls/discussions. Just an intent signal. Database: `event_rsvps(user_id, event_id, status, created_at)` with unique constraint. |
+| D2 | **Trending shows feed (between-show retention)** | Board gap #1: "No between-show retention mechanism." Users currently have no reason to open the app when they're not at a show. A "trending this week near you" feed gives users content between concerts. Bandsintown does this for discovery; SoundCheck can add social proof ("12 people RSVPd, including 3 friends"). | MEDIUM | D1 (RSVP data), existing discovery engine | Algorithm: weighted score combining RSVP count, check-in velocity (for active shows), friend attendance signals, recency, and proximity. Use Wilson lower bound for statistical confidence when sample sizes are small. Surface as a new tab or section in the existing discovery flow. Time-windowed: "This week" and "This weekend" are the useful frames for concert decisions. Push digest: weekly "Shows trending near you" notification. |
+| D3 | **Venue/artist verification system** | Board gap #4: "No trust infrastructure." Verified badges build platform credibility. Spotify requires zero barrier for artist verification (claim profile, link socials). SoundCheck should follow a similar lightweight model -- verification establishes identity, not exclusivity. Verified venues/artists get a badge, can respond to ratings, and eventually access analytics. | MEDIUM | Existing band/venue entities | **Claim flow:** Artist or venue representative submits claim request with: official website URL, social media links, and proof of association (email from official domain, or link to official social profile that links back). **Verification:** Admin reviews claim. Lightweight -- no ID scanning needed at this scale. Store as `verified_claims(entity_type, entity_id, claimant_user_id, status, evidence_urls, reviewed_at)`. Verified entities get a checkmark badge on their profile. This is table stakes for the B2B pipeline -- you cannot build venue/artist accounts (D4) without verification first. |
+| D4 | **Artist/venue claimed profiles** | Board gap #3: "No artist/venue stakeholders on the platform." Claimed profiles turn artists and venues from passive data into active participants. Spotify for Artists, Yelp for Business, Untappd for Business all follow this pattern. At SoundCheck's stage, keep it read-heavy: verified owners can see aggregate ratings, respond to reviews, and update their profile (bio, photos, links). Full dashboards come later. | HIGH | D3 (verification system) | Role-based access: `claimed_profiles(user_id, entity_type, entity_id, role, granted_at)`. Claimed profile owners get: view aggregate ratings, respond to check-in comments (as the venue/artist), update bio/description/photos, see basic analytics (check-in count over time, average rating trend). Do NOT build a full dashboard yet -- that is a separate product. This phase is "claim and see your data." Revenue potential: premium analytics tier for venues/artists later. |
+| D5 | **SoundCheck Wrapped (Year in Shows)** | Board gap #5 (partial): monetization foundation + massive viral growth potential. Spotify Wrapped generates millions of organic shares annually. Strava moved Year in Sport behind their paywall in 2025 -- proving it has premium-tier value. No concert app does this. Concerts Wrapped (concertswrapped.com) exists but requires manual Last.fm data entry -- SoundCheck has the check-in data natively. | HIGH | Existing check-in data, T6 (sharing cards) | **Data pipeline:** Aggregate per-user stats for the calendar year: total shows, unique bands, unique venues, top genre, top venue, top-rated show, most-seen artist, cities visited, longest streak, total friends met at shows. Run as a scheduled BullMQ job in late November to pre-compute. Store results in `wrapped_data(user_id, year, stats_json, generated_at)`. **Presentation:** Instagram Stories-style swipeable card sequence (5-8 cards). Each card is a stat with bold typography and concert imagery. Generate shareable card images server-side (Satori + Sharp, same pipeline as T6). **Timing:** Available December 1 through January 31. Marketing push in early December. **Premium angle:** Basic Wrapped free (total shows, top genre, top venue). Detailed Wrapped premium (full card deck, concert map, deep stats, comparison to last year). Strava charges for this -- validates the model. |
+| D6 | **Premium tier ("SoundCheck Pro") design** | Board gap #5: "No monetization design." RevenueCat State of Subscription Apps 2025: 82% of non-gaming apps now use subscription models. Untappd Insiders is $5.99/month. Strava is $11.99/month. The key is gating enhancement, not core functionality. | HIGH | RevenueCat Flutter SDK integration | **Price:** $4.99/month or $39.99/year (33% annual discount). **Gate these features (enhancement, not core):** (1) Detailed Wrapped experience (basic free, premium gets full deck), (2) Advanced profile analytics (rating trends over time, genre evolution, attendance heatmap), (3) Retroactive check-in (currently out of scope -- unlock for Pro like Untappd Insiders), (4) Custom badge showcase layout, (5) Ad-free experience (if ads are ever added), (6) Early access to new features. **Never gate:** Check-in, ratings, basic feed, basic badges, basic profile, following, sharing. The free tier must be a complete app. Use RevenueCat for subscription management -- handles receipt validation, cross-platform entitlements, analytics, and Apple/Google billing integration in one SDK. |
 
 ---
 
-## Anti-Features
+### Anti-Features (Commonly Requested, Often Problematic)
 
-Things to deliberately NOT build. Common mistakes in this domain.
+Features that seem obvious for v1.1 but create more problems than they solve.
 
-| # | Anti-Feature | Why Avoid | What to Do Instead |
-|---|--------------|-----------|-------------------|
-| A1 | **Ticket sales/purchasing** | Bandsintown (95M users) and Songkick (15M users) own this space. Adding ticketing creates massive scope creep, business complexity (seller agreements, payment processing, refunds), and distracts from the social check-in core. | Link out to ticket sellers. Deep link to Bandsintown/Songkick/Ticketmaster for ticket purchase. Stay in your lane. |
-| A2 | **Setlist tracking/wiki** | Setlist.fm has 9.6M setlists with an active community of editors. Building a setlist wiki is reinventing the wheel. The crowdsourcing effort required is immense. | Integrate with Setlist.fm API (already in the codebase). Display setlist data on event pages. Let Setlist.fm do the hard work. |
-| A3 | **Retroactive/backdated concert logging** | PROJECT.md explicitly excludes this. Allowing backdated check-ins dilutes the "I'm here now" social signal. Concert Archives already serves the diary use case. Live-only creates authenticity and urgency. | Stay live-only. The constraint is the feature. If a user missed checking in, that's FOMO working as intended. Consider this for premium tier only (like Untappd Insiders). |
-| A4 | **Direct messaging/chat** | Chat is a product in itself (moderation, abuse, spam). The social interaction model is check-ins + toasts + comments, not conversations. GroupMe and iMessage already solve concert-friend coordination. | Keep social interaction lightweight: toasts, comments, friend activity notifications. |
-| A5 | **Web frontend/profiles** | Mobile is the platform. Concerts happen IRL, and the check-in moment is mobile. Web adds maintenance burden and splits focus. | Mobile only for v1. Consider web profiles (read-only) later if profile sharing demands it. |
-| A6 | **Artist/venue management dashboard (B2B)** | B2B is a completely different product with different users, different sales cycles, and different success metrics. Building it alongside the consumer app fragments focus. | Consumer app only for v1. B2B venue/promoter tools are a separate future product (like Untappd for Business was separate from Untappd). |
-| A7 | **Live streaming or audio features** | "Being there" is the core value. Streaming removes the need to be there. Also: licensing, bandwidth, CDN costs, rights management. | SoundCheck is about presence, not broadcast. The check-in proves you were there. |
-| A8 | **Complex social graphs (groups, circles, teams)** | Follow/unfollow is sufficient. Groups add complexity (permissions, administration, discovery) without proportional value for a check-in app. | Simple follow/unfollow social graph. Friends = people you follow who follow you back. |
-| A9 | **Critic/professional reviews** | LiveRate already aggregates critic reviews. SoundCheck's value is crowd-sourced peer ratings, not professional criticism. Mixing them creates confusion about whose opinion you're reading. | All ratings are from users who checked in. This makes every rating verified (you were actually there). |
-| A10 | **Concert buddy matching** | Beatmatch and Showmate do this. It's a dating-app-adjacent feature with moderation nightmares, safety concerns, and a totally different user psychology. | Show "who else was there" (shared experience), not "who should you meet." Community, not matchmaking. |
-| A11 | **Overly granular rating dimensions** | RateGigs asks users to rate Talent, Set List, Crowd Engagement, Production, and Overall. That's 5 ratings per artist. At a 3-band show, that's 15 ratings + venue. Nobody will do this at a show. | Two ratings total: band performance (one star rating) + venue experience (one star rating). Optional per-set breakdown for multi-band shows. Simplicity wins at the check-in moment. |
-| A12 | **Leaderboards / competitive rankings** | Competitive mechanics ("top rater in your city") attract power users who game the system and alienate casual users. Creates incentive for fake check-ins. | Badges reward personal milestones, not competitive ranking. "You've been to 50 shows" not "You're ranked #12 in Chicago." |
+| # | Feature | Why Requested | Why Problematic | Alternative |
+|---|---------|---------------|-----------------|-------------|
+| A1 | **AI-powered content moderation (custom ML model)** | "We should use AI to auto-moderate everything." | At SoundCheck's scale (pre-launch, hundreds of users), training custom ML models is massive overkill. Google Cloud Vision SafeSearch is a pre-trained API that handles image moderation for pennies. Custom NLP for text moderation adds complexity without proportional value when your text content is star ratings and short comments. | Use Google Cloud Vision SafeSearch for images. Simple keyword blocklist + regex for text. Human admin review queue for flagged items. Revisit custom ML only if you hit 100K+ daily uploads. |
+| A2 | **Full venue/artist dashboard (B2B product)** | "Venues should see heatmaps, download CSV exports, manage their events." | A B2B dashboard is a separate product with separate users, separate UX needs, and separate sales motion. Building it alongside the consumer app fragments focus. Untappd for Business launched years after Untappd consumer. | Claimed profiles with basic read-only analytics (D4). Full B2B dashboard is v2.0+ and likely a separate web app. |
+| A3 | **Real-time moderation (block before publish)** | "No inappropriate content should ever appear in the feed." | Synchronous moderation on the check-in flow adds latency to the core action (target: <10 sec). Cloud Vision API calls take 500ms-2s. Blocking the UX for moderation harms the check-in experience. False positives would block legitimate concert photos. | Async moderation: publish immediately, scan in background, auto-hide if flagged within seconds. Users see content briefly before removal in worst case. Acceptable tradeoff for a concert photo app (low NSFW risk compared to dating apps). |
+| A4 | **Instagram/TikTok deep link sharing (in-app content viewing)** | "When someone clicks a shared card on Instagram, it should open the check-in in SoundCheck." | Deep linking from Instagram Stories to apps requires Universal Links (iOS) and App Links (Android) infrastructure, a web landing page for fallback, and App Store association files. Significant implementation cost for an app with no web presence. Instagram also strips most deep links from Stories. | Phase 1: Share card is a static image with QR code or "SoundCheck" branding. The viral loop is brand awareness, not click-through. Phase 2: Add a minimal web landing page at soundcheck.app/checkin/[id] that shows the card and a "Download SoundCheck" CTA. Deep linking comes after web presence exists. |
+| A5 | **Tiered verification (blue check vs. gold check)** | "We need different verification levels like Twitter/Meta." | Multiple verification tiers add confusion, create a class system among users, and require different review processes. At SoundCheck's scale, there are two types of entities: regular users and verified venue/artist accounts. That binary distinction is sufficient. | Single verification badge for claimed venue/artist profiles. All verified accounts get the same visual treatment. Revisit tiered verification only if you have thousands of verified accounts with genuinely different needs. |
+| A6 | **Social login for onboarding friend-finding** | "Import your Instagram/Facebook friends to find who's on SoundCheck." | Facebook deprecated the Friends API years ago. Instagram Graph API does not expose follower lists to third-party apps. The only reliable friend-finding mechanisms are: contacts import (phone numbers/emails) or manual search/invite. Building "social graph import" is a dead end. | Contacts-based friend suggestions (with permission prompt). "Invite friends" via share link. Manual username search. Show "people who attended the same shows as you" as organic friend suggestions. |
+| A7 | **Complex RSVP states (Going / Interested / Maybe / Waitlist)** | "Facebook Events has multiple response options." | More states = more UI complexity, more ambiguous data, and harder-to-interpret social proof. "3 friends going" is clear. "2 going, 1 interested, 1 maybe" is noise. Untappd doesn't have RSVP at all. Keep it simpler than Facebook, not more complex. | Two states only: Going (strong intent signal) and default (no response). Drop "Interested" -- it's a weak signal that adds noise. If a user wants to track without committing, that's what the existing Wishlist feature is for. |
+| A8 | **Wrapped for all time periods (monthly, quarterly)** | "Why wait for December? Give users monthly recaps." | Dilutes the specialness of the annual Wrapped. Spotify only does annual. Strava added monthly summaries and gated them behind premium -- users complained they were annoying. The annual event creates anticipation and social sharing momentum. Monthly recaps feel like spam. | Annual Wrapped only. For ongoing stats, the profile page already shows lifetime stats and genre breakdowns. Premium could add "this month in concerts" as a lightweight summary (not a full Wrapped experience). |
 
 ---
 
 ## Feature Dependencies
 
-Features that must be built before others can function.
-
 ```
-EVENT DATA PIPELINE (T2)
+TRUST & SAFETY (App Store compliance -- must ship first)
   |
-  +---> Event Check-In (T1) --- depends on having events to check into
+  +---> Report/flag mechanism (T1)
   |       |
-  |       +---> Band Performance Rating (T3)
-  |       +---> Venue Experience Rating (T4)
-  |       +---> Per-Set Ratings (D3)
-  |       +---> Photo Attachment (D10)
-  |       +---> Location Verification (D8)
-  |       |
-  |       +---> Social Feed (T6) --- needs check-ins to display
-  |       |       |
-  |       |       +---> FOMO Feed / Happening Now (D4)
-  |       |       +---> Friend Activity Alerts (D13)
-  |       |
-  |       +---> Badge Engine (D1) --- evaluates after each check-in
-  |       |       |
-  |       |       +---> Badge Rarity (D7) --- needs badge distribution data
-  |       |       +---> Concert Streak (D14) --- needs check-in history
-  |       |
-  |       +---> Profile Stats (T5) --- aggregates check-in data
-  |       |       |
-  |       |       +---> Concert Cred (D6) --- needs aggregated stats
-  |       |       +---> Year in Shows (D5) --- needs a year of data
-  |       |
-  |       +---> Shared Experience (D12) --- needs check-ins at same event
+  |       +---> Content moderation pipeline (T2) -- processes reports + auto-scans
+  |       +---> Admin review queue (shared by T1 + T2)
   |
-  +---> Band Pages (T10) --- needs events linked to bands
-  +---> Venue Pages (T11) --- needs events linked to venues
-  +---> Recommendations (D11) --- needs check-in history + event data
-  +---> User-Created Events (D9) --- supplements API data
+  +---> Block users (T3) -- independent of T1, both required for compliance
+  |
+  +---> Forgot password (T4) -- independent, basic hygiene
 
-SOCIAL GRAPH (T7 - exists)
+VIRAL GROWTH ENGINE (depends on trust being in place)
   |
-  +---> Social Feed (T6)
-  +---> Friend Activity Alerts (D13)
-  +---> FOMO Feed (D4)
+  +---> Social sharing cards -- server-side generation (T6)
+  |       |
+  |       +---> Post-check-in celebration screen (T7) -- primary share trigger
+  |       +---> Badge earned share (uses same card pipeline)
+  |       +---> Wrapped shareable cards (D5) -- uses same generation pipeline
+  |
+  +---> Event RSVP (D1)
+  |       |
+  |       +---> Trending shows feed (D2) -- RSVP count is a ranking signal
+  |       +---> "Friends going" social proof on event cards
+  |       +---> Day-of reminder push notifications
+
+ONBOARDING (standalone, no hard dependencies)
+  |
+  +---> Onboarding carousel (T5)
+  |       |
+  |       +---> Genre preference picker -- seeds recommendations + Wrapped
+  |       +---> Friend finding -- seeds social graph
+
+PLATFORM TRUST (depends on trust & safety)
+  |
+  +---> Venue/artist verification (D3)
+  |       |
+  |       +---> Claimed profiles (D4) -- requires verification first
+  |               |
+  |               +---> Premium analytics for venues (future, D6 adjacent)
+
+RETENTION & MONETIZATION (depends on sharing cards + data history)
+  |
+  +---> SoundCheck Wrapped (D5) -- depends on T6 for shareable cards
+  |       |
+  |       +---> Premium detailed Wrapped (D6 gates this)
+  |
+  +---> Premium tier design (D6) -- depends on RevenueCat integration
+          |
+          +---> Requires clear free/premium feature boundary
+          +---> Requires enough premium-worthy features to justify price
 ```
 
-**Critical path:** Event Data Pipeline (T2) --> Event Check-In (T1) --> Everything else.
+### Dependency Notes
 
-The event data pipeline is the single biggest unlock. Without events in the database, check-in cannot work, ratings have no targets, badges cannot trigger, profiles have no data, and the feed is empty.
+- **T1/T2/T3 (trust & safety) must ship before anything else:** Apple will reject app updates if UGC apps lack report/block mechanisms. This is a hard gate on all other v1.1 features reaching the App Store.
+- **T6 (sharing cards) unlocks the entire viral growth engine:** Every share-related feature (T7, D5 sharing) depends on the ability to generate card images. Build the image generation pipeline once, reuse across all share surfaces.
+- **D1 (RSVP) feeds D2 (trending):** RSVP count is the primary signal for trending between shows. Without RSVP data, the trending algorithm falls back to check-in count only (which only works during/after shows, not before).
+- **D3 (verification) gates D4 (claimed profiles):** Cannot give venue/artist access to analytics and review responses without first verifying identity. Verification is the trust boundary.
+- **D5 (Wrapped) has a data requirement:** Users need enough check-in data to make Wrapped interesting. The feature should launch December 2026 at earliest, meaning users need most of 2026 to accumulate data. But the data model and aggregation pipeline should be designed now.
+- **D6 (premium tier) needs D5 (Wrapped):** Strava validated that year-in-review is premium-worthy. Without Wrapped or advanced analytics, the premium tier has weak value props. Design the premium tier now, but launch gating after Wrapped exists.
 
 ---
 
-## MVP Recommendation
+## MVP Definition (v1.1 Phases)
 
-For MVP, prioritize table stakes plus the highest-impact differentiators:
+### Phase 1: Launch Blockers + Trust (Ship First)
 
-### Must Ship (MVP)
+These must ship before any new App Store submission. Without them, Apple may reject.
 
-1. **Event data pipeline** (T2) -- The foundation. Seed from Bandsintown/Songkick/Ticketmaster APIs.
-2. **Event check-in flow** (T1) -- The core action. Quick tap, auto-suggest from GPS + time.
-3. **Dual ratings** (T3, T4) -- Band performance + venue experience. The unique value proposition.
-4. **Per-set ratings** (D3) -- Multi-band lineup support. What makes SoundCheck concert-native.
-5. **Profile stats** (T5) -- Total shows, unique bands, unique venues, genre breakdown. Identity hook.
-6. **Social feed** (T6) -- Friend check-ins. Without this, it's a diary app.
-7. **Badge system** (D1) -- Genre explorer, venue collector, superfan, festival warrior, milestones. Retention mechanic.
-8. **Band and venue pages** (T10, T11) -- Aggregate ratings, upcoming shows. Answer "is X worth seeing/going to?"
-9. **Location verification** (D8) -- Authenticity signal. "You were actually there."
-10. **Photo attachment** (D10) -- Visual feed. Makes check-ins compelling.
+- [x] **Report/flag mechanism (T1)** -- App Store Guideline 1.2 compliance
+- [x] **Content moderation pipeline (T2)** -- Auto-scan photos, admin review queue
+- [x] **Block users (T3)** -- Guideline 1.2 compliance
+- [x] **Forgot password (T4)** -- Basic auth hygiene, currently stubbed
 
-### Defer to Post-MVP
+### Phase 2: Viral Growth + Onboarding (Ship Next)
 
-- **Year in Shows / SoundCheck Wrapped** (D5): Needs a full year of data. But design the data model to support it from day one.
-- **Personalized recommendations** (D11): Needs sufficient check-in history. Cold start problem. Start with genre-based onboarding, implement ML recommendations after accumulating data.
-- **FOMO feed / "Happening Now"** (D4): Important but requires a critical mass of users checking in simultaneously. Ship basic friend feed first, add real-time layer when user density supports it.
-- **Friend activity alerts** (D13): Same critical mass requirement as D4.
-- **Concert cred composite score** (D6): Fun but not essential. Ship raw stats first, add composite scoring later.
-- **Badge rarity indicators** (D7): Needs scale to be meaningful. Add once badge distribution data is statistically interesting.
-- **User-created events** (D9): Important for underground scene but adds moderation burden. Start with API-seeded events only, add user creation after moderation tools exist.
-- **Concert streaks** (D14): Nice retention mechanic but not differentiated enough for MVP. Add in gamification v2.
-- **Shared experience discovery** (D12): Low complexity but needs concurrent users at events. Enable after user base grows.
+The features that create growth loops and first-time user conversion.
 
----
+- [ ] **Onboarding flow (T5)** -- First-time user conversion
+- [ ] **Social sharing cards (T6)** -- Image generation pipeline, share sheet
+- [ ] **Celebration screen (T7)** -- Post-check-in share CTA
+- [ ] **Event RSVP (D1)** -- Pre-show engagement loop
 
-## Competitor Feature Gap Analysis
+### Phase 3: Retention + Platform Trust
 
-What each competitor does well and where SoundCheck wins.
+Between-show engagement and platform credibility.
 
-### vs. Bandsintown (95M fans -- the discovery giant)
-- **Bandsintown wins on:** Discovery engine, artist following, ticket links, YouTube/Spotify integration, massive event database, artist-to-fan messaging.
-- **SoundCheck wins on:** Check-in mechanic (Bandsintown has no real-time check-in), gamification (Bandsintown has zero badges), dual ratings (Bandsintown has no structured rating system), social feed (Bandsintown's feed is artist updates, not friend activity).
-- **Coexistence strategy:** SoundCheck and Bandsintown are complementary. Bandsintown helps you FIND shows. SoundCheck is what you use WHEN YOU'RE THERE. Deep link to Bandsintown for discovery/tickets.
+- [ ] **Trending shows feed (D2)** -- Between-show retention
+- [ ] **Venue/artist verification (D3)** -- Trust infrastructure
+- [ ] **Claimed profiles (D4)** -- Venue/artist stakeholders on platform
 
-### vs. Songkick (15M users -- the alert system)
-- **Songkick wins on:** Artist tracking alerts, Spotify library sync, notification reliability for tour announcements.
-- **SoundCheck wins on:** Everything post-discovery. Songkick has no check-in, no ratings, no badges, no social feed, no gamification. It ends when you buy the ticket. SoundCheck begins when you arrive.
-- **Coexistence strategy:** Same as Bandsintown. Songkick alerts you. SoundCheck is the show companion.
+### Phase 4: Monetization + Wrapped
 
-### vs. Setlist.fm (9.6M setlists -- the archive)
-- **Setlist.fm wins on:** Setlist data (unbeatable crowdsourced archive), song statistics, comprehensive coverage of historical shows.
-- **SoundCheck wins on:** Live experience (Setlist.fm is retrospective), gamification (none), social mechanics (minimal), ratings (basic), identity/profile (weak).
-- **Coexistence strategy:** Integrate Setlist.fm API for setlist display (already done). Don't try to be a setlist wiki.
+Revenue infrastructure and the signature retention feature.
 
-### vs. Concert Archives (the diary app)
-- **Concert Archives wins on:** Retrospective logging (50-year concert histories), photo/video upload to past shows, flashback notifications, import from Setlist.fm.
-- **SoundCheck wins on:** Live check-in (Concert Archives is retrospective), gamification (none), dual ratings (none), badge system (none), polished UX (Concert Archives is functional but not slick).
-- **Differentiation:** SoundCheck is "I'm here now." Concert Archives is "I was there then." Different use cases, minimal overlap.
-
-### vs. RateGigs/LiveRate/Rate My Set (the rating apps)
-- **Rating apps win on:** Nothing significant. These are small, niche apps with limited traction.
-- **SoundCheck wins on:** Everything. Full social platform vs. single-purpose rating tool.
-- **Strategy:** Subsume their value (concert ratings) into a richer experience.
+- [ ] **SoundCheck Wrapped (D5)** -- Annual recap, massive share driver
+- [ ] **Premium tier (D6)** -- RevenueCat integration, subscription gating
 
 ---
 
 ## Feature Prioritization Matrix
 
-| Feature | Impact | Complexity | Priority | Phase |
-|---------|--------|------------|----------|-------|
-| Event data pipeline (T2) | CRITICAL | MEDIUM | P0 | Phase 1 |
-| Event check-in (T1) | CRITICAL | MEDIUM | P0 | Phase 1 |
-| Dual ratings (T3, T4) | HIGH | LOW | P0 | Phase 1 |
-| Events as first-class entities (data model) | CRITICAL | HIGH | P0 | Phase 1 |
-| Profile stats (T5) | HIGH | MEDIUM | P1 | Phase 2 |
-| Badge system (D1) | HIGH | MEDIUM | P1 | Phase 2 |
-| Per-set ratings (D3) | MEDIUM | MEDIUM | P1 | Phase 2 |
-| Social feed update (T6) | HIGH | MEDIUM | P1 | Phase 2 |
-| Band pages enriched (T10) | MEDIUM | MEDIUM | P2 | Phase 2 |
-| Venue pages enriched (T11) | MEDIUM | MEDIUM | P2 | Phase 2 |
-| Location verification (D8) | MEDIUM | LOW | P1 | Phase 1 |
-| Photo attachment (D10) | MEDIUM | LOW | P2 | Phase 2 |
-| User-created events (D9) | MEDIUM | LOW | P2 | Phase 3 |
-| FOMO feed / Happening Now (D4) | HIGH | MEDIUM | P2 | Phase 3 |
-| Friend activity alerts (D13) | MEDIUM | MEDIUM | P2 | Phase 3 |
-| Badge rarity (D7) | LOW | LOW | P3 | Phase 3 |
-| Concert streaks (D14) | LOW | LOW | P3 | Phase 3 |
-| Shared experience (D12) | MEDIUM | LOW | P2 | Phase 3 |
-| Concert cred score (D6) | LOW | LOW | P3 | Phase 3 |
-| Year in Shows (D5) | HIGH | MEDIUM | P3 | Phase 4 |
-| Recommendations (D11) | MEDIUM | HIGH | P3 | Phase 4 |
+| Feature | User Value | Business Value | Implementation Cost | Priority | Phase |
+|---------|------------|----------------|---------------------|----------|-------|
+| Report/flag (T1) | MEDIUM | CRITICAL (compliance) | LOW | P0 | 1 |
+| Content moderation (T2) | MEDIUM | CRITICAL (compliance) | MEDIUM | P0 | 1 |
+| Block users (T3) | MEDIUM | CRITICAL (compliance) | LOW | P0 | 1 |
+| Forgot password (T4) | HIGH | HIGH (churn prevention) | LOW | P0 | 1 |
+| Onboarding flow (T5) | HIGH | HIGH (retention) | MEDIUM | P1 | 2 |
+| Social sharing cards (T6) | HIGH | CRITICAL (growth) | MEDIUM | P1 | 2 |
+| Celebration screen (T7) | HIGH | HIGH (share trigger) | LOW | P1 | 2 |
+| Event RSVP (D1) | HIGH | HIGH (engagement) | MEDIUM | P1 | 2 |
+| Trending feed (D2) | MEDIUM | HIGH (retention) | MEDIUM | P2 | 3 |
+| Verification (D3) | LOW (users) | HIGH (platform trust) | MEDIUM | P2 | 3 |
+| Claimed profiles (D4) | LOW (users) | HIGH (B2B foundation) | HIGH | P2 | 3 |
+| Wrapped (D5) | CRITICAL | CRITICAL (viral + premium) | HIGH | P2 | 4 |
+| Premium tier (D6) | MEDIUM | CRITICAL (revenue) | HIGH | P2 | 4 |
+
+**Priority key:**
+- P0: Must ship before any App Store submission (compliance + blockers)
+- P1: Ship immediately after P0 (growth engine)
+- P2: Ship within v1.1 timeframe (retention + monetization)
+
+---
+
+## Competitor Feature Analysis (v1.1 Features Only)
+
+| Feature | Untappd | Bandsintown | Strava | Spotify | Our Approach |
+|---------|---------|-------------|--------|---------|--------------|
+| **Social sharing** | Basic share button, no card images | Artist update shares | Activity sharing with custom card images | Wrapped cards (Stories-optimized) | Server-side card generation (Satori + Sharp). Stories-optimized (1080x1920). Post-check-in celebration screen as primary trigger. |
+| **Content moderation** | User reports + admin review | Platform-managed (artist content only) | User reports + automated detection | Automated + human review | Two-tier: Google Cloud Vision SafeSearch auto-scan + user reports to admin queue. Async -- never block the check-in. |
+| **Verification** | Verified venues via Untappd for Business | Verified artists (automated from label data) | Verified athletes (for pros) | Spotify for Artists (zero-barrier claim) | Lightweight claim flow: submit proof, admin review. Follow Spotify's low-barrier model -- verify identity, not prestige. |
+| **RSVP / "Going"** | None | "Track" artist (not event-level) | None (not event-based) | None | Two states: Going / default. Show "N friends going" for social proof. Day-of reminder push. Feeds trending algorithm. |
+| **Trending feed** | "Popular" beers (high check-in count) | "Trending" artists (social signals) | "Local Legends" segments | "Popular" playlists | Wilson lower bound scoring: RSVP count + check-in velocity + friend signals + proximity. "This weekend near you" as primary frame. |
+| **Onboarding** | Genre preference picker (beer styles) | Artist import from Spotify | Activity type selection | Genre/artist seed selection | 3-screen carousel + genre picker + friend finding. Track completion rate. A/B test later. |
+| **Year-in-review** | Recappd (annual, free) | None | Year in Sport (annual, **premium since 2025**) | Wrapped (annual, free, massive viral event) | Hybrid: Basic Wrapped free (3-4 cards), detailed Wrapped premium (8+ cards, concert map, deep stats). Launch Dec 2026. |
+| **Premium tier** | Insiders ($5.99/mo): 0.25 ratings, retroactive, tag 25 friends, stats | Free (ad-supported) | Premium ($11.99/mo): routes, training, Year in Sport | Premium ($10.99/mo): ad-free, offline, quality | SoundCheck Pro ($4.99/mo): detailed Wrapped, advanced analytics, retroactive check-in, custom badge showcase. Lower price -- concert frequency is lower than daily-use apps. |
+
+---
+
+## Implementation Complexity Estimates
+
+| Feature | Backend Work | Mobile Work | New Infrastructure | Total Estimate |
+|---------|-------------|-------------|-------------------|----------------|
+| Report/flag (T1) | `reports` table, CRUD routes, admin query | Report button UI, reason picker | None | 2-3 days |
+| Content moderation (T2) | BullMQ job for Cloud Vision API, auto-hide logic | None (backend only) | Google Cloud Vision API key | 3-4 days |
+| Block users (T3) | `user_blocks` table, filter queries | Block button, confirmation | None | 2-3 days |
+| Forgot password (T4) | Reset token generation, email sending | Reset flow screens | Transactional email service (Resend/SendGrid) | 2-3 days |
+| Onboarding (T5) | Genre preference endpoint (may exist) | Carousel screens, genre picker, friend finder | None | 3-4 days |
+| Sharing cards (T6) | Satori + Sharp image generation endpoint | `appinio_social_share` integration, share sheet | Satori/Sharp npm packages | 5-7 days |
+| Celebration screen (T7) | Badge/stats response after check-in (may exist) | Full-screen celebration UI, animation | None | 2-3 days |
+| RSVP (D1) | `event_rsvps` table, CRUD, friend-going queries | RSVP button, "friends going" badge on cards | None | 3-5 days |
+| Trending feed (D2) | Scoring algorithm, trending query endpoint | New feed tab or section | None (uses existing PostgreSQL) | 4-6 days |
+| Verification (D3) | `verified_claims` table, claim flow, admin review | Claim request form, verification badge display | None | 4-5 days |
+| Claimed profiles (D4) | Role-based access, analytics queries, response API | Claimed profile UI, analytics views, response UI | None | 7-10 days |
+| Wrapped (D5) | Aggregation pipeline (BullMQ), stats computation, card generation | Swipeable card sequence UI (Stories-style) | Pre-computation job scheduling | 10-14 days |
+| Premium (D6) | Entitlement checking middleware, feature gates | RevenueCat SDK, paywall UI, gated feature checks | RevenueCat account + configuration | 7-10 days |
+
+**Total estimated engineering effort:** ~55-75 days of work across all features.
 
 ---
 
 ## Sources
 
-### Competitor Apps (Primary Research)
-- [Untappd - Wikipedia](https://en.wikipedia.org/wiki/Untappd)
-- [Untappd on Google Play](https://play.google.com/store/apps/details?id=com.untappdllc.app&hl=en_US)
-- [Untappd Recappd 2025](https://untappd.com/blog/untappd-recappd-2025-is-here/1868)
-- [Untappd Insiders](https://insiders.untappd.com/)
-- [Bandsintown](https://www.bandsintown.com/)
-- [Bandsintown 2025 Trends - Music Ally](https://musically.com/2025/12/17/bandsintown-reveals-its-2025-trends-for-music-concerts/)
-- [Bandsintown as Social Network 2026 - Hypebot](https://www.hypebot.com/hypebot/2026/02/music-marketingin-2026-using-bandsintown-as-a-social-network.html)
-- [Songkick](https://www.songkick.com/)
-- [Songkick Review - AppPicker](https://www.apppicker.com/music/songkick-concerts)
-- [Setlist.fm](https://www.setlist.fm/)
-- [Setlist Concert App - App Store](https://apps.apple.com/us/app/setlist-concert-for-setlist-fm/id1164020210)
-- [Concert Archives](https://www.concertarchives.org/)
-- [Concert Archives - App Store](https://apps.apple.com/us/app/concert-archives/id1531993239)
+### App Store Compliance
+- [Apple App Store Review Guidelines -- Guideline 1.2 Safety](https://developer.apple.com/app-store/review/guidelines/) -- HIGH confidence
+- [How to Resolve App Store Guideline 1.2](https://www.buddyboss.com/docs/app-store-guideline-1-2-safety-user-generated-content/) -- MEDIUM confidence
+- [TermsFeed: Apple UGC Requirements](https://www.termsfeed.com/videos/apple-app-store-comply-ugc-requirements/) -- MEDIUM confidence
 
-### Rating Apps
-- [LiveRate](https://www.liverate.com/)
-- [LiveRate FAQ](https://www.liverate.com/faq)
-- [RateGigs - EDM.com](https://edm.com/news/new-app-aims-to-improve-live-music-for-concert-goers-everywhere)
-- [Rate My Set - Google Play](https://play.google.com/store/apps/details?id=com.ratemyset.rate_my_set&hl=en)
+### Content Moderation
+- [Google Cloud Vision SafeSearch Detection](https://docs.cloud.google.com/vision/docs/detecting-safe-search) -- HIGH confidence
+- [Google Cloud Vision Pricing](https://cloud.google.com/vision/pricing) -- HIGH confidence
+- [ACM: Scaling Content Moderation for Massive Datasets](https://cacm.acm.org/blogcacm/the-ugc-overload-scaling-content-moderation-for-massive-datasets/) -- MEDIUM confidence
+- [Best Automated Content Moderation Tools 2026](https://www.cometchat.com/blog/automated-content-moderation-tools) -- MEDIUM confidence
 
-### Gamification Research
-- [Longitudinal Analysis of Gamification in Untappd - arXiv](https://arxiv.org/html/2601.04841v1)
-- [Untappd Gamification in Customer Engagement - SlideShare](https://www.slideshare.net/manumelwin/untappd-gamification-in-customer-engagement-manu-melwin-joy)
-- [Badges in Gamification Examples - Trophy](https://trophy.so/blog/badges-feature-gamification-examples)
+### Social Sharing
+- [Vercel OG Image Generation](https://vercel.com/blog/introducing-vercel-og-image-generation-fast-dynamic-social-card-images) -- HIGH confidence
+- [Satori Dynamic OG Images](https://dev.to/woovi/how-to-generate-dynamic-og-opengraph-images-with-satori-and-react-1bhb) -- MEDIUM confidence
+- [6 Pitfalls of Satori + resvg-wasm on Cloudflare Workers](https://dev.to/devoresyah/6-pitfalls-of-dynamic-og-image-generation-on-cloudflare-workers-satori-resvg-wasm-1kle) -- MEDIUM confidence
+- [appinio_social_share Flutter Package](https://pub.dev/packages/appinio_social_share) -- HIGH confidence
+- [Social Media Image Sizes 2026](https://www.eclincher.com/articles/ultimate-social-media-image-size-guide-2026) -- MEDIUM confidence
 
-### Social Music / Wrapped
-- [Concerts Wrapped](https://www.concertswrapped.com/)
-- [Best Live Music Discovery Platforms 2026](https://resources.onestowatch.com/best-live-music-discovery-platforms/)
-- [Beatmatch](https://www.beatmatch.app/)
+### Onboarding
+- [VWO Mobile App Onboarding Guide 2026](https://vwo.com/blog/mobile-app-onboarding-guide/) -- MEDIUM confidence
+- [UXCam Onboarding Flow Examples 2026](https://uxcam.com/blog/10-apps-with-great-user-onboarding/) -- MEDIUM confidence
+- [Adapty: How to Build Onboarding Flows That Convert](https://adapty.io/blog/how-to-build-app-onboarding-flows-that-convert/) -- MEDIUM confidence
+
+### Wrapped / Year-in-Review
+- [Spotify Engineering: Spotify Unwrapped](https://engineering.atspotify.com/2020/02/spotify-unwrapped-how-we-brought-you-a-decade-of-data/) -- HIGH confidence
+- [Spotify Engineering: Load Testing for Wrapped](https://engineering.atspotify.com/2023/03/load-testing-for-2022-wrapped/) -- HIGH confidence
+- [How Spotify Wrapped Works (Hightouch)](https://hightouch.com/blog/how-spotify-wrapped-works) -- MEDIUM confidence
+- [Strava Year in Sport](https://support.strava.com/hc/en-us/articles/22067973274509-Your-Year-in-Sport) -- HIGH confidence
+- [Strava Year in Sport Now Premium Only](https://road.cc/content/news/strava-year-sport-now-only-subscribers-317425) -- HIGH confidence
+
+### Premium Tier / Subscriptions
+- [RevenueCat Flutter SDK](https://www.revenuecat.com/docs/getting-started/installation/flutter) -- HIGH confidence
+- [RevenueCat State of Subscription Apps 2025](https://www.revenuecat.com/state-of-subscription-apps-2025/) -- HIGH confidence
+- [Adapty Freemium Monetization Strategies](https://adapty.io/blog/freemium-app-monetization-strategies/) -- MEDIUM confidence
+- [Untappd Insiders](https://insiders.untappd.com/) -- HIGH confidence
+
+### Trending / Feed Algorithms
+- [Evan Miller: How Not to Sort by Average Rating](https://www.evanmiller.org/how-not-to-sort-by-average-rating.html) -- HIGH confidence
+- [Wilson Score Interval](https://insightful-data-lab.com/2025/08/20/wilson-score-interval/) -- MEDIUM confidence
+
+### Verification
+- [Spotify Artist Verification](https://playlistpush.com/blog/how-to-get-verified-on-spotify/) -- MEDIUM confidence
+- [Untappd Verified Venues](https://help.untappd.com/hc/en-us/articles/360033786032-How-Do-I-Subscribe-to-a-Verified-Venue-on-Untappd) -- MEDIUM confidence
+
+### Competitor Analysis
+- [Untappd for Business Guide](https://www.beermenus.com/blog/260-untappd-for-business) -- MEDIUM confidence
+- [Meta Testing Premium Subscriptions (TechCrunch, Jan 2026)](https://techcrunch.com/2026/01/26/meta-to-test-premium-subscriptions-on-instagram-facebook-and-whatsapp/) -- HIGH confidence
 
 ---
 
-*Feature landscape research: 2026-02-02*
+*Feature research for: SoundCheck v1.1 Growth Platform*
+*Researched: 2026-02-27*

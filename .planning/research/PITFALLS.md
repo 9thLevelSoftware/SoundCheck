@@ -1,658 +1,397 @@
-# Domain Pitfalls
+# Pitfalls Research: SoundCheck v1.1 Feature Additions
 
-**Domain:** Social concert check-in app (Untappd for live music)
-**Project:** SoundCheck
-**Researched:** 2026-02-02
-**Overall confidence:** HIGH (cross-referenced codebase analysis, web research, API documentation)
+**Domain:** Adding social sharing, content moderation, verification, full-text search, collaborative filtering, year-in-review, and premium tier to existing Flutter + Node.js concert check-in app
+**Researched:** 2026-02-27
+**Confidence:** HIGH (codebase analysis + web research + official documentation cross-referenced)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause rewrites, data loss, or product failure. Each of these has been seen in the existing SoundCheck codebase or is a documented pattern in the concert app / social check-in domain.
+### Pitfall 1: App Store Rejection for Missing Moderation Before New UGC Surfaces
+
+**What goes wrong:**
+SoundCheck v1.0 has no content moderation at all -- no report button, no block user, no content filtering. The existing `AdminController.moderateContent` is a bare-bones admin-only endpoint (delete review, ban user, delete venue) with no user-facing reporting mechanism. Adding social sharing, share cards, or any new UGC surface (comments on shared content, RSVP messages) without first implementing Guideline 1.2 compliance will result in App Store rejection. Apple has been aggressively enforcing this since 2024, and apps that previously passed review can be rejected on update if new UGC surfaces are added without moderation.
+
+**Why it happens:**
+Teams prioritize the "fun" features (sharing, Wrapped) and treat moderation as a checkbox to add later. But Apple reviews the app holistically on each update submission -- they will notice the new UGC surfaces lack report/block/filter capabilities even if those surfaces were not the focus of the update.
+
+**How to avoid:**
+Build the moderation foundation BEFORE any feature that creates new UGC surfaces or makes existing UGC more visible. Minimum viable moderation for Apple Guideline 1.2:
+1. Report button on every piece of user content (check-ins, comments, photos, share cards)
+2. Block user functionality accessible from any user profile
+3. Published content guidelines (in-app, not just buried in ToS)
+4. Admin review queue for reported content
+5. Contact information for support
+6. Mechanism to filter objectionable material (at minimum: profanity filter on text, image scanning on uploads)
+
+**Warning signs:**
+- Features being built that create or display UGC without report/block affordances
+- Image uploads going directly to R2 with no scanning pipeline
+- No `reports` or `content_flags` table in the database schema
+- Admin tools that only handle post-hoc moderation (current state)
+
+**Phase to address:**
+Phase 1 (Trust & Safety Foundation) -- this MUST ship before or alongside any social sharing features.
 
 ---
 
-### CRITICAL-1: Schema Migration Without Backward Compatibility (Data Model Rework)
+### Pitfall 2: Share Card Image Generation Killing the Single Railway Instance
 
-**What goes wrong:** The existing SoundCheck database has two parallel systems for the same concept -- `shows` table (venue + band + date) and a migration script that creates an `events` table with the same shape. The `checkins` table references `band_id` and `venue_id` directly, but the new model needs `event_id` as a foreign key. Running a single "big bang" migration that drops old columns and adds new ones will break the running application during deployment.
+**What goes wrong:**
+Social share cards (Instagram Stories, X cards, TikTok) require server-side image generation -- turning a check-in into a visually appealing image with event name, venue, rating, badges, and user info. The naive approach uses Puppeteer/Chromium headless to render HTML to image, which consumes 200-500MB RAM per instance and takes 3-5 seconds per image. On a single Railway.app instance with no horizontal scaling, a burst of 20 users sharing after a popular show would exhaust memory and block the main Express event loop, taking down the entire API.
 
-**Why it happens:** Developers treat schema migration as a single step: "swap the old schema for the new one." On a live database with active users, this creates a window where the old code expects old columns and the new code expects new columns, and neither works.
+**Why it happens:**
+Puppeteer is the most-documented approach for HTML-to-image. Developers reach for it because it is conceptually simple (render HTML, screenshot). They do not realize it is a memory hog until production load hits.
 
-**Consequences:**
-- Downtime during deployment (minutes to hours depending on table size)
-- Risk of data loss if migration fails mid-way without proper rollback
-- CHECK constraint violations if old application code writes to new schema
-- Broken API responses for mobile clients still running the old app version
+**How to avoid:**
+Use Satori (from Vercel) for image generation. It converts JSX/HTML+CSS to SVG/PNG using WebAssembly, runs in ~50ms per image, and uses minimal memory. Alternatively, use a dedicated Cloudflare Worker for image generation (keeps it off the main Railway instance entirely). Pre-generate and cache share card images on check-in creation via BullMQ background job, not on-demand when the user taps "share."
 
-**Prevention:**
-1. Use the **expand-contract migration pattern**: First ADD new columns/tables alongside old ones (expand), deploy code that writes to both, backfill old data, then remove old columns (contract) in a later release
-2. Never DROP columns or rename columns in the same deployment as the code change that stops using them
-3. Set `lock_timeout` on all DDL statements (e.g., `SET lock_timeout = '3s'`) with retry logic to prevent blocking production queries
-4. Test migrations on a production-sized dataset clone, not just an empty dev database
-5. Wrap migration in a transaction so failure rolls back cleanly
-6. The existing `migrate-events-model.ts` script has no transaction wrapping and no rollback -- this must be rewritten
+Architecture:
+1. Check-in created -> BullMQ job queued for share card generation
+2. Worker generates image using Satori or Cloudflare Worker
+3. Image stored in R2 with `share-cards/{checkinId}.png` key
+4. Share endpoint returns the pre-generated R2 URL
 
-**Detection (warning signs):**
-- Migration script that runs ALTER TABLE and DROP COLUMN in the same file
-- No transaction wrapping in migration scripts
-- API endpoints that hard-code column names without abstraction
-- Mobile app that expects specific JSON field names with no fallback
+**Warning signs:**
+- Puppeteer or `node-html-to-image` in `package.json`
+- Image generation happening in Express request handlers (synchronous)
+- Memory usage climbing on Railway dashboard after share feature deployed
+- 502 errors during concert peak hours
 
-**Specific to SoundCheck codebase:** The existing `checkins` table stores `band_id` and `venue_id` directly. The new model puts these under `events`. The mobile `CheckIn` model already has an `eventId` field and a nested `CheckInEvent` object, suggesting the frontend is partially prepared. But the backend `CheckinService.ts` still writes directly to `band_id`/`venue_id` columns. These two systems must coexist during migration.
-
-**Phase relevance:** Data Model Redesign phase -- this should be the FIRST phase because everything else depends on a stable event model.
-
-**Confidence:** HIGH -- verified from existing codebase analysis and PostgreSQL migration best practices.
+**Phase to address:**
+Phase 2 (Viral Growth Engine) -- but architecture decision must be made in Phase 1 planning to avoid rework.
 
 ---
 
-### CRITICAL-2: The Shows/Events Dual Table Confusion
+### Pitfall 3: Full-Text Search Migration Breaking Existing Search Behavior
 
-**What goes wrong:** The SoundCheck codebase already has BOTH a `shows` table (from `database-schema.sql`) and an `events` table (from `migrate-events-model.ts`). The `EventService.ts` wraps `shows` queries but the migration creates a separate `events` table. The `checkins` table references `band_id`/`venue_id` directly, NOT `event_id`. This creates a split-brain data model where the same concert might exist in `shows` and `events` with different IDs.
+**What goes wrong:**
+The current codebase uses ILIKE extensively across 5 services: `BandService` (4 ILIKE queries), `VenueService` (2 ILIKE), `EventService` (4 ILIKE), `ReviewService` (1 ILIKE), plus demo seeding. Migrating to `tsvector` + GIN indexes changes search semantics in ways that silently break user expectations:
+- ILIKE `%jazz%` matches "jazz-fusion" and "jazzercise." `tsvector` with `to_tsquery('jazz')` will NOT match partial words by default.
+- ILIKE is case-insensitive by nature. `tsvector` depends on the text search configuration and dictionary -- if misconfigured, searches can become case-sensitive or miss word forms.
+- Stop words get stripped: searching for "The Black Keys" via tsvector drops "The" which is usually fine, but searching for "The The" (an actual band) returns nothing.
+- `COALESCE` is needed for nullable fields -- the current ILIKE queries on `description` fields do not use COALESCE, and `to_tsvector(NULL)` returns NULL, which would silently exclude records from search results.
 
-**Why it happens:** Incremental development without cleaning up the previous model. The `shows` table was the original design; the `events` table was added as part of the redesign. But the migration was never completed -- the old table was never retired, and the checkins were never migrated to use event_id.
+**Why it happens:**
+Developers treat the migration as a simple find-and-replace of ILIKE with tsvector. They test with common cases ("Taylor Swift") and miss edge cases. The app already has pg_trgm enabled and trigram indexes on `bands.name` and `events.event_name` from migrations 015 and 022 -- these provide fuzzy matching that tsvector does NOT. Removing ILIKE without keeping trigram support loses the fuzzy matching users already depend on.
 
-**Consequences:**
-- Queries return different results depending on which table is queried
-- Check-ins cannot be reliably linked to events (the `event_id` column may not exist on the active `checkins` table)
-- Badge calculations based on event attendance will miss check-ins that predate the migration
-- Feed queries will show inconsistent data
+**How to avoid:**
+Use a hybrid approach:
+1. Add `tsvector` generated columns and GIN indexes for ranked full-text search (new capability)
+2. KEEP `pg_trgm` trigram indexes for fuzzy/typo-tolerant matching (existing capability)
+3. Search flow: `tsvector` for ranked results UNION `pg_trgm` similarity for fuzzy fallback
+4. Always specify the text search configuration explicitly: `to_tsvector('english', ...)` not `to_tsvector(...)`
+5. Use `COALESCE` on all nullable fields: `to_tsvector('english', COALESCE(name, '') || ' ' || COALESCE(description, ''))`
+6. Create a stored generated column per table for the combined tsvector
+7. Write regression tests for edge cases: partial words, band names with stop words, non-English characters, empty descriptions
 
-**Prevention:**
-1. Before writing any new feature code, audit and resolve the shows/events dual table situation
-2. Decide definitively: `events` is the canonical table, `shows` becomes a view or is dropped
-3. Create a data migration script that:
-   - Creates `events` records from existing `shows` records
-   - Adds `event_id` to `checkins` and backfills from `shows` data
-   - Validates referential integrity before dropping old foreign keys
-4. Do NOT add features on top of the dual-table model -- it will compound the problem
+**Warning signs:**
+- Search tests only cover exact word matches
+- No explicit text search configuration in `to_tsvector` calls
+- Trigram indexes being dropped as "no longer needed"
+- Band search for "The National" returning zero results
+- No COALESCE wrapping nullable columns
 
-**Detection:**
-- Two tables with overlapping data (`shows` and `events`)
-- Service layer that wraps one table's queries as another's (EventService wrapping shows queries)
-- Mobile model with fields that don't map to any active database column
-
-**Phase relevance:** Must be resolved in the Data Model Redesign phase BEFORE any feature work.
-
-**Confidence:** HIGH -- directly observed in the codebase.
-
----
-
-### CRITICAL-3: Songkick API Is Effectively Dead for New Integrations
-
-**What goes wrong:** Teams plan their event data pipeline around Songkick, Bandsintown, and Ticketmaster as three equal sources. Then they discover Songkick requires a paid partnership agreement, is not accepting new free API key requests, and has a history of disabling existing keys without warning. Development stalls while the team scrambles for alternatives.
-
-**Why it happens:** Songkick's API documentation is still publicly visible on their developer page, giving the impression it's available. But the API key request form leads to a dead end -- they are "currently making changes and improvements" and "unable to process new applications."
-
-**Consequences:**
-- Weeks of wasted development time building a Songkick integration adapter that can never be used
-- Event data pipeline has one fewer source than planned, reducing coverage
-- Architecture becomes overly dependent on Ticketmaster (which has its own rate limits: 5000 calls/day, 5 requests/second)
-
-**Prevention:**
-1. Drop Songkick from the planning entirely. Use Ticketmaster Discovery API and Bandsintown as primary sources
-2. Consider SeatGeek API or PredictHQ as alternatives for broader coverage
-3. Design the event ingestion pipeline with a pluggable adapter pattern so new sources can be added without refactoring
-4. Never build a critical feature that depends on a single external API -- always have at least two sources for event data
-
-**Detection:**
-- PROJECT.md lists Songkick as a planned integration (it does)
-- No API key has been obtained for Songkick
-- No fallback plan if a planned API source becomes unavailable
-
-**Phase relevance:** Event API Integration phase. This decision must be made before architecture is finalized.
-
-**Confidence:** HIGH -- verified via Songkick developer page, support forums, and Google Groups reports.
-
-**Sources:**
-- [Songkick Developer Page](https://www.songkick.com/developer)
-- [Songkick API Google Group: Key Disabled](https://groups.google.com/g/songkick-api)
-- [Best Music Data APIs 2025](https://soundcharts.com/en/blog/music-data-api)
+**Phase to address:**
+Phase 3 (Technical Scale) -- must NOT be done hastily alongside feature work. Needs dedicated migration with rollback plan.
 
 ---
 
-### CRITICAL-4: Duplicate Events Across API Sources (The Deduplication Problem)
+### Pitfall 4: Collaborative Filtering With Insufficient Data (Cold Start Catastrophe)
 
-**What goes wrong:** The same concert (e.g., "Foo Fighters at Madison Square Garden, March 15") appears in Ticketmaster, Bandsintown, and user-created events -- each with different IDs, slightly different names ("Foo Fighters" vs "The Foo Fighters"), different venue names ("Madison Square Garden" vs "MSG"), and different date formats. Without deduplication, users see 2-3 copies of the same event and can check in to any of them, fragmenting the social data (half the attendees checked in to event A, half to event B).
+**What goes wrong:**
+SoundCheck is a new app with a small user base. Collaborative filtering ("users who checked in to X also checked in to Y") requires a critical mass of interaction data to produce useful recommendations. With fewer than ~1,000 active users and ~10,000 check-ins, the collaborative filtering matrix is too sparse to generate meaningful signals. The system either returns nothing, returns obviously bad recommendations (the same 3 popular events for everyone), or worse -- appears to work in testing with seed data but fails spectacularly with real users who have 2-5 check-ins each.
 
-**Why it happens:** There is no universal concert event identifier across APIs. Each platform has its own ID namespace. Artist names, venue names, and event titles vary across platforms due to different editorial standards, localization, and data entry practices.
+**Why it happens:**
+The team already has a simple recommendation engine in `DiscoveryService` using genre affinity + friend attendance + trending signals. This works because it uses content-based and social signals that do not require dense interaction matrices. The temptation is to "upgrade" to collaborative filtering because it sounds more sophisticated. But collaborative filtering is the wrong tool for an early-stage app.
 
-**Consequences:**
-- Users see duplicate events in search and discovery
-- Check-in counts are split across duplicate events, making popular shows look less popular
-- Badge calculations count the same concert multiple times (attending "the same show" twice)
-- Feed shows redundant check-ins for what is clearly one event
-- Data integrity erodes user trust in the platform
+**How to avoid:**
+1. Do NOT build collaborative filtering in v1.1. The current genre-affinity + friend-attendance + trending approach in `DiscoveryService` is the right architecture for this stage.
+2. Instead, invest in improving the existing content-based recommendations: expand `Band.genre` from single VARCHAR to array/many-to-many (already identified as tech debt), add artist similarity via MusicBrainz relationships, use venue proximity for discovery.
+3. Build the DATA COLLECTION infrastructure now: log all recommendation impressions and click-throughs in an analytics table. This creates the training data for future collaborative filtering.
+4. Set a threshold: implement collaborative filtering when you have >5,000 active users with >50,000 check-ins AND the content-based approach is measurably underperforming.
 
-**Prevention:**
-1. Create a **canonical event identity** using a composite key: normalized artist name + normalized venue name + event date (not time)
-2. Normalize artist names by: lowercasing, stripping "The" prefix, removing special characters, using a fuzzy match threshold (Levenshtein distance <= 2)
-3. Normalize venue names by: maintaining a venue alias table ("MSG" = "Madison Square Garden" = "The Garden"), geocoding-based matching (venues within 100m of each other with similar names are likely the same)
-4. When ingesting from external APIs, always check for existing canonical events before creating new ones
-5. Store external API IDs as metadata on the canonical event (e.g., `ticketmaster_id`, `bandsintown_id`) for cross-referencing
-6. The existing schema already has `foursquare_place_id` and `setlistfm_venue_id` on venues -- extend this pattern to events
+**Warning signs:**
+- Recommendation engine being built without analyzing available data volume
+- All users receiving identical "recommended" events
+- Test suite using seed data with 50+ check-ins per user (unrealistic for real users)
+- No A/B testing infrastructure to measure recommendation quality
 
-**Detection:**
-- Search results show visually identical events with different IDs
-- Check-in counts on events are suspiciously low despite being popular shows
-- User reports of "I can't find my friend's check-in even though we were at the same show"
-
-**Phase relevance:** Event API Integration phase. Must be solved before the event pipeline goes live.
-
-**Confidence:** HIGH -- this is a well-documented problem in event aggregation. Soundcharts, PredictHQ, and others have invested heavily in NLP-based deduplication.
-
-**Sources:**
-- [Soundcharts Music Data API Guide](https://soundcharts.com/en/blog/music-data-api)
-- [PredictHQ Concerts API](https://www.predicthq.com/events/concerts)
+**Phase to address:**
+Phase 4 (Retention & Monetization) -- build the data collection, defer the algorithm. This is explicitly a "do less, do it right" recommendation.
 
 ---
 
-### CRITICAL-5: Event Timezone Handling Causes Wrong "Is Happening Now" Logic
+### Pitfall 5: Premium Tier / IAP Without Server-Side Entitlement Validation
 
-**What goes wrong:** A concert is stored as `event_date DATE` (just the date, no time, no timezone). The "live now" / "happening tonight" feed logic compares this against `CURRENT_DATE` on the PostgreSQL server, which uses the server's timezone (likely UTC on Railway.app). A concert at 8 PM in Los Angeles on January 15 appears as "tomorrow" to a user in LA at 7 PM because the server is already on January 16 UTC.
+**What goes wrong:**
+Flutter's `in_app_purchase` plugin handles client-side purchase flow but does NOT validate receipts server-side. Without server-side validation, users can: (a) modify the app's local storage to fake a purchase, (b) request a refund from Apple/Google after gaining premium access and keep using it, (c) share purchase tokens across accounts. Additionally, if a user logs out and another user logs in on the same device, the second user sees the first user's purchase as "already purchased" because Google stores the purchase token against the device/app, not the user account.
 
-**Why it happens:** The existing schema stores `show_date DATE` and `event_date DATE` -- neither has time or timezone information. The "is this show today?" comparison uses `CURRENT_DATE` in PostgreSQL, which respects the server's `timezone` setting, not the venue's timezone.
+**Why it happens:**
+The `in_app_purchase` Flutter plugin is designed as a thin wrapper. Developers build the purchase flow, see it working in sandbox testing, and ship. Server-side receipt validation is not included in most tutorials and requires integrating with Apple's App Store Server API and Google Play Developer API -- both have complex, poorly-documented flows for subscription state changes (renewals, cancellations, grace periods, billing retries).
 
-**Consequences:**
-- "Happening Now" and "Tonight's Shows" features show wrong events
-- Check-in windows open/close at the wrong time (user can't check in to a show that's currently happening because the server thinks it's tomorrow)
-- Badge calculations for "Night Owl" (check-in after midnight) use server midnight, not venue midnight
-- Notifications for "your friend just checked in at a show near you" fire at wrong times
+**How to avoid:**
+Use RevenueCat instead of raw `in_app_purchase`. RevenueCat provides:
+1. Server-side receipt validation out of the box
+2. Cross-platform subscription state management
+3. Webhook integration for real-time subscription events (renewal, cancellation, refund)
+4. User entitlement tracking that maps App Store/Play Store purchases to your user IDs
+5. Analytics dashboard for subscription metrics
 
-**Prevention:**
-1. Store event timestamps as `TIMESTAMP WITH TIME ZONE`, not `DATE`
-2. Store the venue's IANA timezone identifier (e.g., `America/Los_Angeles`) on the venues table -- the existing schema does NOT have this column
-3. Add `timezone VARCHAR(50)` to the venues table (IANA format, not UTC offset)
-4. For "happening now" queries, convert to venue local time: `event_start_time AT TIME ZONE venue.timezone`
-5. For check-in window validation, use the venue's timezone, not the user's or server's
-6. The existing `shows` table stores `doors_time TIME`, `start_time TIME`, `end_time TIME` -- these are local times without timezone context. They must be interpreted relative to the venue's timezone
-7. API responses should include both UTC timestamp and venue timezone so the mobile app can display correctly
+Backend integration:
+1. RevenueCat webhook -> Express endpoint -> update `user_entitlements` table
+2. Middleware that checks entitlement on premium endpoints: `requirePremium` similar to existing `requireAuth`
+3. Never trust the client for entitlement status -- always verify server-side
+4. Store entitlement state in PostgreSQL with Redis cache (same pattern as existing `cache.getOrSet`)
 
-**Detection:**
-- Events appearing on the wrong date in the feed for users in timezones far from UTC
-- Check-in validation rejecting valid check-ins because "the show isn't today"
-- "Tonight" showing tomorrow's events for US West Coast users in the evening
+**Warning signs:**
+- Purchase validation logic only on the client side
+- No `user_entitlements` or `subscriptions` table in the database
+- Premium features gated by a client-side boolean
+- No webhook endpoint for subscription lifecycle events
+- Multi-account purchase conflicts in QA testing
 
-**Specific to SoundCheck codebase:** The schema uses `DATE` for event dates and `TIME` (without timezone) for start/end times. The `EventService.ts` compares against `CURRENT_DATE` in SQL. The migration script creates `event_date DATE`. All of these need timezone awareness.
-
-**Phase relevance:** Data Model Redesign phase. Must be addressed when redesigning the events schema.
-
-**Confidence:** HIGH -- verified from existing schema analysis and timezone handling best practices.
-
-**Sources:**
-- [Moesif: Handling Timezone in APIs](https://www.moesif.com/blog/technical/timestamp/manage-datetime-timestamp-timezones-in-api/)
-- [DEV: Handle Date and Time Correctly](https://dev.to/kcsujeet/how-to-handle-date-and-time-correctly-to-avoid-timezone-bugs-4o03)
+**Phase to address:**
+Phase 4 (Monetization) -- but the design decision (RevenueCat vs DIY) should be made in Phase 1 planning.
 
 ---
 
-## High-Severity Pitfalls
+### Pitfall 6: SoundCheck Wrapped Pre-Computing Personal Data Without Consent Architecture
 
-Mistakes that cause significant rework or undermine the product's core value. Not as catastrophic as Critical, but still cause weeks of wasted effort.
+**What goes wrong:**
+"Year in Shows" requires aggregating a user's entire check-in history into a shareable recap: top genres, most-visited venues, total shows attended, "listening personality" classifications. This means pre-computing and storing user behavior summaries. If you pre-compute Wrapped data for ALL users (the obvious batch job approach), you are creating detailed behavioral profiles that: (a) fall under GDPR Article 22 (automated decision-making/profiling), (b) may require separate consent under GDPR Article 6, (c) create a data breach liability (a dump of Wrapped data reveals detailed user behavior patterns), and (d) must be included in GDPR data export (existing `DataExportService` would need updating).
 
----
+**Why it happens:**
+The Spotify Wrapped approach of batch pre-computation is the engineering gold standard. But Spotify has a dedicated privacy/legal team and handles this at massive scale with dedicated infrastructure. A small app team copies the architecture without the compliance infrastructure.
 
-### HIGH-1: Badge Farming Through Rapid-Fire Fake Check-ins
+**How to avoid:**
+1. Compute Wrapped data on-demand per user, not batch pre-computed for all users. With SoundCheck's current scale (hundreds, not millions of users), on-demand computation from the existing `checkins` + `checkin_band_ratings` tables is fast enough (sub-second with proper indexes).
+2. Add a consent toggle: "Generate my Year in Shows" -- explicit opt-in, not automatic.
+3. Cache the computed result (Redis, 24h TTL) after the user requests it -- do not persist it in the database permanently.
+4. Update `DataExportService` to include any cached Wrapped data.
+5. Share cards generated from Wrapped data should strip any PII before upload to R2 (use aggregates only: "47 shows," not "attended Event X on Date Y").
 
-**What goes wrong:** Without location verification and rate limiting, users create dozens of check-ins in minutes to farm badges. A single user checks in to "50 unique venues" by submitting check-ins to every venue in the database from their couch. The leaderboard becomes meaningless, legitimate users lose motivation, and the badge system's social signal erodes.
+**Warning signs:**
+- A BullMQ job computing Wrapped for all users on January 1st
+- A `user_wrapped_data` table storing detailed behavioral profiles
+- No consent mechanism before Wrapped generation
+- Wrapped data not included in data export/deletion flows
+- Share cards containing venue-specific check-in history
 
-**Why it happens:** The existing SoundCheck `CheckinService.createCheckin()` accepts `checkinLatitude` and `checkinLongitude` as optional parameters but does not validate them against the venue's location. There is no rate limiting on check-in creation beyond the general API rate limiter. The badge system (`BadgeService.checkAndAwardBadges()`) counts rows without verifying temporal or geographic plausibility.
-
-**Consequences:**
-- Leaderboards dominated by cheaters, legitimate users disengage
-- Badge rarity indicators become meaningless (everyone has every badge)
-- Social proof signals ("100 people checked in here tonight") are inflated
-- App Store reviewers may flag the app if the social features appear artificial
-
-**Prevention:**
-1. **Location verification on check-in**: Require location within a configurable radius of the venue (e.g., 500m for outdoor festivals, 200m for clubs). The `LocationService` already calculates distance -- wire it to validation
-2. **Time-window enforcement**: Check-ins only valid within a window around the event time (e.g., 2 hours before doors to 4 hours after start time)
-3. **Per-user rate limits on check-ins**: Maximum 3 check-ins per day (reasonable for a music festival with multiple stages, unreasonable for farming)
-4. **Server-side mock location detection**: Flag check-ins where the GPS accuracy is suspiciously perfect (exactly 0.0 accuracy) or where the user "teleports" between distant venues
-5. **Delay badge evaluation**: Don't award badges synchronously on check-in. Run badge evaluation as a background job with a 15-minute delay -- this allows time for fraud detection and prevents the instant gratification that motivates farming
-6. **Badge categories that resist farming**: Event-presence badges (you were at an event that actually happened on that date) are harder to farm than pure count badges. Require the event to exist in the events table with a verified date
-7. **Social validation signals**: Show "verified" badge on check-ins that have location verification. This creates a soft social pressure to check in legitimately
-
-**Detection:**
-- Users with implausibly high check-in counts relative to their account age
-- Check-ins with null or missing location data
-- Multiple check-ins from the same user at venues hundreds of miles apart within hours
-- Badge earning velocity that exceeds what's physically possible
-
-**Phase relevance:** Gamification/Badges phase. But the location verification foundation must be laid in the Check-in Experience phase.
-
-**Confidence:** HIGH -- this is the most common failure mode in check-in apps, documented extensively from Foursquare's early days through Untappd.
-
-**Sources:**
-- [Guardsquare: Prevent Geo-Spoofing](https://www.guardsquare.com/blog/securing-location-trust-to-prevent-geo-spoofing)
-- [LinkedIn: Beat the Cheat in Gamification](https://www.linkedin.com/pulse/beat-cheat-stop-gaming-gamification-michael-wu-phd)
-- [arXiv: Longitudinal Analysis of Gamification in Untappd](https://arxiv.org/html/2601.04841v1)
+**Phase to address:**
+Phase 4 (Year in Review) -- consent architecture should be part of the Trust & Safety foundation in Phase 1.
 
 ---
 
-### HIGH-2: The Dual Rating Friction Trap
+### Pitfall 7: Verification System Creating Permissions Complexity Explosion
 
-**What goes wrong:** The app asks users to rate both the band performance AND the venue experience on every check-in. This doubles the friction of the core action (checking in). Completion rates drop, users give identical ratings to both, or they skip ratings entirely. The dual rating system produces either no data or meaningless data.
+**What goes wrong:**
+Adding venue/artist "claimed profile" verification means introducing a new user role system into an app that currently has only two roles: `user` and `admin` (the `is_verified` boolean on `users` table is just a profile badge, not a permission level). Venue owners who "claim" a venue need to: edit venue details, see venue analytics, respond to reviews, but NOT edit other venues or see other venues' data. Artists who claim a band profile need similar scoped access. This requires row-level authorization -- "user X can edit venue Y because they claimed it" -- which is fundamentally different from the current role-based auth (`isAdmin` check in middleware).
 
-**Why it happens:** The product vision correctly identifies that band performance and venue experience are independent signals. But the UX implementation asks for both ratings at the wrong moment -- during the quick check-in flow when the user wants to tell their friends "I'm here."
+If implemented as a series of `if` statements scattered across controllers, this becomes an unmaintainable mess within 2-3 features. The `AdminController.moderateContent` already shows the pattern: a switch statement that will grow linearly with each new moderated entity type.
 
-**Consequences:**
-- Check-in completion rate drops (users abandon mid-flow)
-- Rating data quality suffers (users give 5/5 to both or skip both)
-- The core value proposition ("quick check-in, share with friends") is undermined by a 30-second rating task
-- Users rate the band 1 star because the venue's sound system was bad, or rate the venue low because the opener was boring -- cross-contamination of signals
+**Why it happens:**
+The first verified venue is simple: add a `claimed_by` column to `venues`, check it in the update endpoint. The second verified entity (bands) copies the pattern. By the third (event organizers?), you have duplicated authorization logic across 5+ controllers with subtle inconsistencies.
 
-**Prevention:**
-1. **Separate the check-in from the rating**: The check-in should be ONE TAP: "I'm at [event]." Done. That's the social signal
-2. **Offer ratings as optional enrichment AFTER the check-in**: "Want to rate this show?" appears as a card in the feed or a notification 30 minutes after check-in
-3. **Make ratings dead simple**: Thumbs up/down for quick signal, with an OPTIONAL 5-star drill-down for users who want to be detailed
-4. **Prompt at the right moment**: Push a notification after the show ends (based on event end time) asking "How was [band] at [venue]?" -- this is when the user has the full experience to rate
-5. **Default to single combined rating**: Show one rating input by default. Offer "Rate band and venue separately" as an expandable option for power users
-6. **The existing mobile `CheckIn` model already handles this well**: `venueRating` and `bandRating` are both nullable, and there's a computed `rating` getter that averages them. Keep this flexibility on the backend, but don't force both on the frontend
+**How to avoid:**
+Design a proper authorization model BEFORE implementing the first claimed profile:
+1. Create a `user_roles` table: `{user_id, role, scope_type, scope_id}` -- e.g., `{user123, 'venue_owner', 'venues', 'venue456'}`
+2. Build authorization middleware: `requirePermission('venues', 'edit', req.params.venueId)` that checks the roles table
+3. Keep it simple -- three roles total: `user` (default), `venue_owner` (scoped to specific venues), `artist` (scoped to specific bands). Do NOT add `admin` to this table; keep admin as the existing `is_admin` flag.
+4. Verification flow: venue owner submits claim -> admin approves -> role row created
+5. All scoped-permission checks go through the authorization middleware, never inline
 
-**Detection:**
-- Check-in abandonment rate > 20% (users start but don't finish)
-- > 60% of check-ins have identical band and venue ratings
-- Significant portion of check-ins have no ratings at all
-- User interviews reveal "it asks too many questions"
+**Warning signs:**
+- `claimed_by` columns appearing on multiple tables without a unified auth model
+- Authorization checks like `if (venue.claimed_by === userId || user.isAdmin)` inline in controllers
+- Different authorization patterns for venue owners vs artist accounts
+- No audit trail for who approved verification claims
 
-**Phase relevance:** Check-in Experience phase. The UX for ratings must be designed before the gamification layer is built on top of it.
-
-**Confidence:** HIGH -- established UX research on rating system friction.
-
-**Sources:**
-- [Appcues: 5 Stars vs Thumbs](https://www.appcues.com/blog/rating-system-ux-star-thumbs)
-- [UX Collective: Rating System Design](https://uxdesign.cc/designing-the-user-experience-of-a-rating-system-2c6a4d33bb11)
-- [Smart Interface Design Patterns: Reviews and Ratings](https://smart-interface-design-patterns.com/articles/reviews-and-ratings-ux/)
+**Phase to address:**
+Phase 3 (Platform Trust) -- the authorization model must be designed before Phase 4 (Artist/Venue Accounts) implements it.
 
 ---
 
-### HIGH-3: Feed N+1 Query Problem at Scale
+### Pitfall 8: Social Sharing Deep Links Into a Mobile-Only App With No Web Presence
 
-**What goes wrong:** The social feed query in `CheckinService.getActivityFeed()` already joins 5 tables (checkins, users, venues, bands, toasts, comments) with COUNT aggregations. As the user base grows, this query gets progressively slower. Adding event data, badge data, and vibe tags to the feed response means either more JOINs (making the query exponentially slower) or N+1 queries (one per check-in to fetch its related data).
+**What goes wrong:**
+Social share cards on Instagram/X/TikTok generate clicks. Those clicks go to a URL. SoundCheck is mobile-only with no web frontend (explicitly out of scope for v1). When a non-user clicks a share card link, they land on... nothing. Or a generic app store page. The entire viral growth loop breaks because there is no web landing page to: (a) show the shared content (check-in, Wrapped card), (b) deep-link to the app if installed, (c) redirect to the app store if not installed.
 
-**Why it happens:** The current implementation does all feed enrichment in a single SQL query with LEFT JOINs and GROUP BY. This works for small datasets but degrades as the cross-join product grows. The Haversine formula in the "nearby" feed filter makes the query impossible to index efficiently.
+**Why it happens:**
+The team builds sharing and deep linking as separate concerns. They implement the share button, the card image generation, and the deep link scheme -- but forget that the MAJORITY of people clicking shared links do not have the app installed, and mobile deep links fail silently for non-users.
 
-**Consequences:**
-- Feed load times exceed 2 seconds as the database grows past 100K check-ins
-- Database CPU spikes during peak hours (Friday/Saturday nights when concerts happen)
-- Users experience "empty feed" because the query times out
-- Adding new feed features (badges earned, event details) makes it worse
+**How to avoid:**
+Build a minimal web landing page (not a full web app -- this stays out of scope). Options:
+1. **Cloudflare Pages** (free): A single-page site at `soundcheck.app/s/{checkinId}` that renders the share card image, shows basic event info, and has "Get SoundCheck" buttons for iOS/Android. Deploy as a static site with a Cloudflare Worker for dynamic OG meta tags.
+2. **Smart links**: Use Firebase Dynamic Links (deprecated but still functional) or Branch.io to handle the web->app routing. These services provide the web fallback page automatically.
+3. At minimum: configure Universal Links (iOS) and App Links (Android) for the domain, and ensure the fallback URL goes to a branded landing page, not a 404.
 
-**Prevention:**
-1. **Denormalize the feed**: Create a `feed_items` materialized table that pre-computes the feed. Update it asynchronously when check-ins, toasts, or comments are created
-2. **Use cursor-based pagination** instead of OFFSET (the existing implementation uses OFFSET, which gets slower as pages increase)
-3. **Cache the "friends" feed** in Redis with a TTL of 30-60 seconds. Most users refresh within that window, and the feed doesn't need to be real-time to the second
-4. **Separate the counts**: Don't COUNT toasts and comments in the feed query. Store denormalized counts on the checkins table (already partially done -- `toast_count` and `comment_count` columns exist)
-5. **Move location filtering to PostGIS**: The Haversine formula in raw SQL cannot use indexes. PostGIS's spatial indexes make "nearby" queries orders of magnitude faster
-6. **Fetch enrichment data separately**: Load the feed skeleton (check-in IDs, timestamps) first, then batch-load related data (badges, vibes, events) in parallel
+The landing page does NOT need to be a full web app. It is a glorified marketing page with dynamic OG tags and app store links.
 
-**Detection:**
-- Feed endpoint P95 latency > 500ms
-- Database slow query log shows the feed query regularly
-- `EXPLAIN ANALYZE` on the feed query shows sequential scans on large tables
-- Users report slow or empty feeds on Friday/Saturday nights
+**Warning signs:**
+- Share cards generating URLs with custom scheme (`soundcheck://`) instead of HTTPS
+- No web domain configured for Universal Links / App Links
+- Click-through rate from social shares near 0% (people clicking but bouncing)
+- No analytics on share link clicks vs app installs
 
-**Specific to SoundCheck codebase:** The `getActivityFeed()` method already has the Haversine formula for nearby filtering with a 64.4km radius. This cannot use any standard B-tree index. The method also counts toasts and comments via LEFT JOIN + COUNT(DISTINCT), which creates a massive cross-join even when there are few results.
-
-**Phase relevance:** Social Feed phase. But the denormalization strategy should be planned during the Data Model Redesign phase.
-
-**Confidence:** HIGH -- directly observed in the codebase, and this is the most common scaling bottleneck for social feed apps.
+**Phase to address:**
+Phase 2 (Viral Growth) -- the landing page is a prerequisite for the share feature, not a follow-up.
 
 ---
 
-### HIGH-4: App Store Rejection for Flutter-Specific Issues
-
-**What goes wrong:** The app is submitted to Apple's App Store and rejected for Flutter-specific issues that are invisible during development: debug banners in screenshots, non-public API usage from specific Flutter versions, missing account deletion functionality, or privacy manifest issues from third-party SDKs.
-
-**Why it happens:** Flutter apps face additional scrutiny from Apple's review process. Specific Flutter versions (3.24.3, 3.24.4) have been flagged for using non-public APIs (Guideline 2.5.1). The review process catches things that work perfectly in development but violate Apple's policies.
-
-**Consequences:**
-- 1-2 week delay per rejection cycle (24-72 hours per re-review, often multiple rounds)
-- Launch timeline slips by weeks or months
-- Demoralization of the team, especially if rejections seem arbitrary
-
-**Prevention:**
-1. **Pin Flutter to a known-good version**: Avoid 3.24.3 and 3.24.4. Check Flutter GitHub issues for App Store rejection reports before upgrading
-2. **Account deletion is mandatory**: Apple requires account deletion if the app supports account creation. The existing `deletion_requests` table and `DataRetentionService` suggest this is partially implemented -- verify the full flow works end-to-end including the UI
-3. **Remove debug banner**: Ensure `debugShowCheckedModeBanner: false` in release builds (seems basic, but it's a top rejection reason for Flutter apps)
-4. **Privacy manifest for all SDKs**: Starting 2025/2026, Apple requires SDK privacy manifests. Audit every dependency (Geolocator, Sentry, analytics) for manifest compliance
-5. **Provide demo credentials in App Review Notes**: If the app requires login, Apple needs a test account to review the app
-6. **Test on real devices, not just simulators**: Simulators miss issues that only show up on hardware
-7. **As of April 2026**: All submissions must use the iOS 26 SDK or later
-8. **New age ratings**: Complete the updated age rating questionnaire by January 31, 2026
-
-**Detection:**
-- No pre-submission checklist exists
-- Flutter version has known App Store issues
-- Account deletion flow is incomplete or untested
-- No demo account prepared for Apple review
-
-**Phase relevance:** Every phase that produces a deployable build. But a dedicated "App Store Readiness" checklist should be created in the UX Redesign phase.
-
-**Confidence:** HIGH -- Flutter + App Store rejection is extensively documented.
-
-**Sources:**
-- [NextNative: App Store Review Guidelines Checklist](https://nextnative.dev/blog/app-store-review-guidelines)
-- [Flutter GitHub Issue #158423: Guideline 2.5.1 Rejection](https://github.com/flutter/flutter/issues/158423)
-- [Adapty: App Store Review Guidelines 2026](https://adapty.io/blog/how-to-pass-app-store-review/)
-- [CrustLab: iOS App Store Review Guidelines 2026](https://crustlab.com/blog/ios-app-store-review-guidelines/)
-
----
-
-## Moderate Pitfalls
-
-Mistakes that cause delays, technical debt, or user experience degradation. Important but recoverable.
-
----
-
-### MOD-1: Events Without Lineup Support (Single-Band-Per-Event Model)
-
-**What goes wrong:** The existing data model (`shows` table and `events` migration) assumes one band per event. But concerts frequently have multi-band lineups: headliner + opener(s), festival stages with 5+ acts, DJ lineups with rotating sets. The single-band model forces users to check in to multiple "events" for one night at a venue, fragmenting the social experience.
-
-**Why it happens:** The `shows` table has a `UNIQUE(venue_id, band_id, event_date)` constraint, and the `events` migration has the same. Each row is one band at one venue on one date. A three-band show requires three rows, and there's no way to group them as "one event."
-
-**Consequences:**
-- User has to find and check in to each band separately (friction)
-- "Who was at this show?" is impossible to answer because check-ins are split across band-specific events
-- Festival check-ins are unusable (checking in to each of 30 bands on a festival day?)
-- Badge "Festival Warrior" (check in to N shows in one day) rewards festival-goers disproportionately for what is really one event
-
-**Prevention:**
-1. Redesign the event model to support lineups:
-   - `events` table: `id, venue_id, event_date, event_name, ...` (NO band_id)
-   - `event_lineup` junction table: `event_id, band_id, set_order, set_time, is_headliner`
-   - Check-in references `event_id`, with optional `band_id` for per-set ratings
-2. The unique constraint becomes `UNIQUE(venue_id, event_date, event_name)` or a more sophisticated dedup key
-3. Check-in flow: "Check in to [event]" with optional "Rate individual sets" expansion
-4. Badge logic counts unique events, not unique event-band combinations
-
-**Detection:**
-- Schema has band_id directly on the events table
-- No junction table for lineups
-- Festival events create dozens of records for one actual event
-
-**Phase relevance:** Data Model Redesign phase. This is the most important structural change.
-
-**Confidence:** HIGH -- directly observed in the existing schema.
-
----
-
-### MOD-2: Ticketmaster API Rate Limits and Deep Paging Limitation
-
-**What goes wrong:** The Ticketmaster Discovery API has a default quota of 5000 API calls per day and a rate limit of 5 requests per second. For an event data pipeline that needs to ingest concerts across multiple cities, this budget is exhausted quickly. Additionally, the Discovery API only supports retrieving up to the 1000th result (deep paging limitation), meaning you cannot paginate beyond 1000 events for a given search.
-
-**Why it happens:** Teams assume the API can be queried like a database -- fetching all concerts in a region, paginating through thousands of results. The rate limits and paging limits are hard constraints that cannot be negotiated without a partnership tier.
-
-**Consequences:**
-- Event ingestion job fails or takes days to complete
-- Missing events for less popular artists or smaller venues (outside the first 1000 results)
-- API key gets throttled or banned, blocking all event data updates
-- Users see stale event data because the pipeline can't keep up
-
-**Prevention:**
-1. **Batch and cache aggressively**: Ingest events by narrow geographic regions and date ranges to stay under the 1000-result paging limit
-2. **Use incremental sync**: Query for events changed since last sync (if API supports it), not full re-ingestion
-3. **Respect rate limits with exponential backoff**: 429 responses should trigger backoff, not retries
-4. **Supplement with Bandsintown**: Bandsintown's API focuses on artist-specific events, which complements Ticketmaster's venue/region-based approach
-5. **Store API response metadata**: Track last-synced timestamp per region to enable efficient delta syncs
-6. **Consider PredictHQ or JamBase for production**: PredictHQ aggregates 200+ sources and handles deduplication -- this may be more cost-effective than building your own multi-API pipeline
-
-**Phase relevance:** Event API Integration phase.
-
-**Confidence:** MEDIUM -- based on API documentation and developer reports, not direct testing.
-
-**Sources:**
-- [Ticketmaster Discovery API](https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/)
-- [PredictHQ vs Ticketmaster](https://www.predicthq.com/compare/ticketmaster-vs-predicthq)
-
----
-
-### MOD-3: Real-Time Feed Creates Notification Overload
-
-**What goes wrong:** The "FOMO feed" concept -- showing friends checking in at shows in real-time -- quickly becomes annoying if users follow many people. On a busy concert night (Friday or Saturday), a user with 50 friends might receive 20+ notifications and see a feed flooded with check-ins, all within a 2-hour window. Instead of FOMO, users feel overwhelmed and mute notifications entirely.
-
-**Why it happens:** The product is designed to create urgency ("your friend is at a show RIGHT NOW!"). But the notification system (already implemented via WebSocket) doesn't aggregate or prioritize. Every toast, comment, and friend check-in generates a separate notification.
-
-**Consequences:**
-- Users disable notifications, removing a key engagement mechanism
-- Feed becomes unreadable during peak hours
-- The app feels spammy rather than social
-- Notification fatigue leads to app uninstalls
-
-**Prevention:**
-1. **Aggregate notifications**: "3 friends checked in tonight" instead of 3 separate notifications
-2. **Smart notification batching**: During high-activity periods (Friday 7-11 PM), batch notifications every 15-30 minutes instead of real-time
-3. **Priority system**: Differentiate between high-priority (close friend at a nearby show) and low-priority (acquaintance at a show 100 miles away)
-4. **Notification caps**: Maximum 5 notifications per hour per user, with aggregation for any beyond that
-5. **FOMO without the noise**: Show "3 friends are at shows tonight" as a persistent banner in the app, not a push notification for each one
-6. **Mute controls**: Let users mute specific friends, event types, or time windows
-
-**Detection:**
-- Notification opt-out rate > 30%
-- Users report "too many notifications" in reviews
-- WebSocket message volume spikes on weekends, causing performance issues
-- Feed engagement (toasts, comments) drops despite high check-in volume
-
-**Phase relevance:** Social Feed phase.
-
-**Confidence:** MEDIUM -- based on social app notification design patterns, not concert-app-specific data.
-
----
-
-### MOD-4: Denormalized Stats Drift Out of Sync
-
-**What goes wrong:** The existing schema has denormalized counters on multiple tables: `users.total_checkins`, `users.unique_bands`, `users.unique_venues`, `bands.total_checkins`, `bands.average_rating`, `venues.total_checkins`, `venues.average_rating`, `checkins.toast_count`, `checkins.comment_count`. These are maintained by PostgreSQL triggers. When data is modified outside the trigger path (bulk updates, manual fixes, migration scripts, or deleted records), the counters drift.
-
-**Why it happens:** Triggers only fire on the specific operations they're bound to. The `update_user_stats_on_checkin` trigger only fires on INSERT to checkins. A DELETE of a check-in does NOT decrement the user's `total_checkins` counter. A bulk migration that moves check-ins between events will leave all counters stale.
-
-**Consequences:**
-- User profiles show wrong stats (saw 50 bands but profile says 47)
-- Venue/band ratings are incorrect after bulk operations
-- Leaderboards are unfair -- users who had check-ins migrated lose credit
-- Debugging requires manual SQL to find and fix discrepancies
-
-**Prevention:**
-1. **Add DELETE triggers**: The existing `update_user_stats_on_checkin` only handles INSERT. Add corresponding DELETE triggers that decrement counters
-2. **Create a reconciliation job**: A scheduled job (weekly or after migrations) that recalculates all denormalized counters from source data
-3. **Use the reconciliation job after every migration**: Include `CALL reconcile_all_stats()` as the final step of any migration script
-4. **Consider replacing triggers with application-level updates**: Triggers are invisible to developers and create hidden coupling. A service-level `updateStats()` method is easier to maintain and test
-5. **Log counter discrepancies**: Alert when a recalculation changes a counter by more than 5% -- this indicates a systematic bug
-
-**Detection:**
-- User profile stats don't match actual check-in count
-- Venue total_checkins decreases after running migrations
-- Badge progress shows 49/50 but the user clearly has 50 check-ins
-
-**Specific to SoundCheck codebase:** The `update_user_stats_on_checkin` trigger runs subqueries for unique_bands and unique_venues on every INSERT, which is also a performance concern at scale. These COUNT(DISTINCT) subqueries will get slower as the checkins table grows.
-
-**Phase relevance:** Data Model Redesign phase (add DELETE triggers), then ongoing monitoring.
-
-**Confidence:** HIGH -- directly observed in the trigger code.
-
----
-
-### MOD-5: Badge System Doesn't Support the Check-in Model Shift
-
-**What goes wrong:** The existing `BadgeService` checks badges against `reviews` table (review_count, unique_venues_reviewed, unique_bands_reviewed). But the new model replaces reviews with check-ins as the core action. The badge types in the seed data (checkin_count, unique_bands, unique_venues, vibe-specific) don't match the badge types the service checks (review_count, venue_explorer, music_lover). This mismatch means no badges will ever be awarded after the model shift.
-
-**Why it happens:** The badge service was built for the review model and never updated when the check-in model was introduced. The seed data defines badge_types like `checkin_count` but the service queries for `review_count`.
-
-**Consequences:**
-- Zero badges awarded after the data model migration
-- Badge progress always shows 0%
-- Users lose all earned badges if the reviews table is dropped
-- The gamification system is silently broken with no error -- it just returns empty arrays
-
-**Prevention:**
-1. Rewrite `BadgeService.getUserStats()` to query the `checkins` table instead of `reviews`
-2. Update badge_type identifiers to match the new model (or add a mapping layer)
-3. Create a migration that preserves existing user_badges records
-4. Add integration tests that verify badge award flow end-to-end (create check-in -> check badges -> verify badge awarded)
-5. Add concert-specific badge types that the new model enables:
-   - Genre-based: Query `checkins JOIN events JOIN bands WHERE genre = X`
-   - Time-based: "Night Owl" via `checkins.created_at` timezone-aware
-   - Social: "Social Butterfly" via toast count on user's check-ins
-   - Loyalty: "Loyal Fan" via COUNT of check-ins for same band_id
-
-**Detection:**
-- Badge progress always shows 0% for all users
-- `BadgeService.checkAndAwardBadges()` always returns empty array
-- Integration tests for badge flow don't exist or are skipped
-
-**Phase relevance:** Must be resolved when Gamification phase begins. Foundation must be laid in Data Model Redesign phase (ensure badge queries can target the new schema).
-
-**Confidence:** HIGH -- directly observed in the codebase (BadgeService queries reviews table, not checkins).
-
----
-
-## Minor Pitfalls
-
-Mistakes that cause annoyance but are fixable without significant rework.
-
----
-
-### MINOR-1: Overly Generous Check-in Location Radius
-
-**What goes wrong:** The location verification radius is set too large (e.g., 500m+) to "be generous." Users check in from the parking lot, from a bar across the street, or from their home if they live near a venue. The check-in loses its "I'm here right now" authenticity.
-
-**Prevention:** Start with 200m radius for standard venues, 500m for outdoor festivals/stadiums. Make it configurable per venue type. Log the actual distance for analytics so you can tune later.
-
-**Phase relevance:** Check-in Experience phase.
-
----
-
-### MINOR-2: Missing Venue Type on Location Verification
-
-**What goes wrong:** A 200m radius works for a small club but not for a 50-acre outdoor festival venue. A single radius setting for all venue types leads to either false rejections at large venues or overly permissive validation at small ones.
-
-**Prevention:** Use the existing `venue_type` column (concert_hall, club, arena, outdoor, bar, theater, stadium) to set different verification radii. Stadiums and outdoor venues get 1km, clubs get 200m.
-
-**Phase relevance:** Check-in Experience phase.
-
----
-
-### MINOR-3: User-Created Events Without Moderation
-
-**What goes wrong:** The app allows users to create events (to fill gaps where APIs don't have coverage). Without moderation, users create fake events, duplicate events, or test events that pollute the database. Spam events appear in search and discovery.
-
-**Prevention:** User-created events start as "unverified" and don't appear in public discovery feeds until either (a) multiple users check in (social proof), (b) a moderator approves, or (c) the event matches an API source. Show user-created events only to the creator and their followers until verified.
-
-**Phase relevance:** Event API Integration phase.
-
----
-
-### MINOR-4: Photo Uploads Without Size/Content Limits
-
-**What goes wrong:** Users upload 10MB concert photos from their phone camera. The backend stores them (or runs out of storage). No content moderation means inappropriate photos appear in the public feed.
-
-**Prevention:** Client-side compression before upload (the existing `image_compression.dart` suggests this is partially addressed). Server-side size limit (2MB). Store in cloud storage (S3/Cloudflare R2), not in PostgreSQL. Content moderation via API (AWS Rekognition, Google Vision) for public-facing photos.
-
-**Phase relevance:** Check-in Experience phase.
-
----
-
-### MINOR-5: Ignoring Cancelled/Rescheduled Events
-
-**What goes wrong:** An event is ingested from Ticketmaster, users plan to attend and add it to their wishlist, then the event is cancelled or rescheduled. The app still shows the old date, users show up to nothing, and any check-ins for the cancelled event are orphaned.
-
-**Prevention:** Periodic re-sync of event data from APIs (at least daily for events within 7 days). Add `is_cancelled` and `is_rescheduled` status fields (partially exists on `shows` table). Send notifications to users who wishlisted or planned to attend. Archive cancelled event check-ins with a flag rather than deleting them.
-
-**Phase relevance:** Event API Integration phase.
-
----
-
-## Phase-Specific Warnings
-
-| Phase Topic | Likely Pitfall | Severity | Mitigation |
-|-------------|---------------|----------|------------|
-| Data Model Redesign | Dual table confusion (shows vs events) | CRITICAL | Resolve before any feature work. Single source of truth. |
-| Data Model Redesign | Migration breaks running app | CRITICAL | Expand-contract pattern. lock_timeout on DDL. |
-| Data Model Redesign | Timezone in DATE columns | CRITICAL | Add IANA timezone to venues. Use TIMESTAMP WITH TIME ZONE. |
-| Data Model Redesign | Denormalized stats drift | MODERATE | Add DELETE triggers. Create reconciliation job. |
-| Event API Integration | Songkick API unavailable | CRITICAL | Drop from plan. Use Ticketmaster + Bandsintown. |
-| Event API Integration | Duplicate events across sources | CRITICAL | Composite dedup key. Fuzzy matching. Venue alias table. |
-| Event API Integration | Ticketmaster rate limits | MODERATE | Batch by region. Incremental sync. Cache aggressively. |
-| Event API Integration | Cancelled event handling | MINOR | Daily re-sync. Notification to wishlisted users. |
-| Check-in Experience | Dual rating friction | HIGH | Separate check-in from rating. Optional enrichment after. |
-| Check-in Experience | Location spoofing | HIGH | Multi-source validation. Mock location detection. Rate limits. |
-| Check-in Experience | Venue type affects radius | MINOR | Per-type configurable radius. |
-| Gamification/Badges | Badge farming | HIGH | Time windows. Location verification. Delayed evaluation. |
-| Gamification/Badges | Badge service queries wrong table | HIGH | Rewrite to query checkins, not reviews. |
-| Gamification/Badges | Single-band events break festival badges | MODERATE | Lineup junction table. Event-level check-ins. |
-| Social Feed | N+1 query performance | HIGH | Denormalize feed. Cursor pagination. Redis cache. |
-| Social Feed | Notification overload | MODERATE | Aggregate. Batch. Cap. Priority system. |
-| UX / App Store | Flutter-specific rejection | HIGH | Version pinning. Privacy manifest. Account deletion. Demo account. |
-| UX / App Store | Photo moderation | MINOR | Size limits. Cloud storage. Content moderation API. |
-
----
-
-## Codebase-Specific Risk Summary
-
-Issues identified directly in the existing SoundCheck code that must be addressed:
-
-| File | Issue | Severity |
-|------|-------|----------|
-| `database-schema.sql` | `shows` table and `events` migration create parallel models | CRITICAL |
-| `database-schema.sql` | `event_date DATE` has no timezone info | CRITICAL |
-| `database-schema.sql` | Events have single band_id, no lineup support | MODERATE |
-| `migrate-events-model.ts` | No transaction wrapping, no rollback capability | CRITICAL |
-| `migrate-events-model.ts` | Creates duplicate of `checkins` table structure | CRITICAL |
-| `CheckinService.ts` | Writes to band_id/venue_id directly, no event_id | CRITICAL |
-| `CheckinService.ts` | Activity feed uses Haversine in raw SQL (unindexable) | HIGH |
-| `CheckinService.ts` | No location verification against venue coordinates | HIGH |
-| `BadgeService.ts` | Queries `reviews` table, not `checkins` table | HIGH |
-| `BadgeService.ts` | Badge types don't match seed data types | HIGH |
-| `EventService.ts` | Wraps `shows` table but exports as "events" API | MODERATE |
-| `database-schema.sql` | Trigger only handles INSERT, not DELETE | MODERATE |
-| `database-schema.sql` | COUNT(DISTINCT) subqueries in trigger (slow at scale) | MODERATE |
-
----
+## Technical Debt Patterns
+
+Shortcuts that seem reasonable but create long-term problems.
+
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Inline moderation checks (`if flagged`) instead of moderation middleware | Ships faster | Every new UGC endpoint needs manual flagging checks; inconsistent enforcement | Never -- build the middleware |
+| Storing premium status as a boolean on the users table | Simple to query | No subscription history, no grace period handling, no refund tracking, no audit trail | Never -- use a separate entitlements table |
+| Computing Wrapped stats with raw SQL in a controller | Quick to prototype | Unmaintainable SQL, no caching, no incremental computation, hits DB hard | Only in a prototype; must move to service + cache |
+| Using ILIKE as "temporary" search while building tsvector | Users keep searching | Two search code paths to maintain; ILIKE performance degrades; "temporary" becomes permanent | Only if tsvector migration has a firm deadline within 2 sprints |
+| Single admin user for moderation review | Works at low volume | Admin burnout, no escalation path, no moderation audit trail, single point of failure | Only for first 100 reported items; build queue immediately after |
+| Adding `role` column to `users` table instead of separate `user_roles` table | Simpler schema | Cannot have multiple roles (venue owner + artist), cannot scope roles to specific entities | Never -- use a junction table from the start |
+| Client-side only feature flags for premium | No backend changes needed | Users can toggle premium features by modifying app state; no server-side enforcement | Never for paid features |
+
+## Integration Gotchas
+
+Common mistakes when connecting to external services for v1.1 features.
+
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| RevenueCat webhooks | Not validating webhook signatures, allowing forged subscription events | Validate the `X-RevenueCat-Signature` header using your webhook secret; reject unsigned requests |
+| Instagram Stories sharing | Using custom URL schemes (`soundcheck://`) that Instagram's in-app browser cannot handle | Use Universal Links (HTTPS URLs) with proper `apple-app-site-association` and `assetlinks.json` |
+| Cloudflare Workers (for image gen) | Hitting the 128MB memory limit or 50ms CPU time on free plan when generating images | Use the Workers Paid plan ($5/mo) with 30s CPU time; or generate on Railway and cache to R2 |
+| Apple App Store Server API (receipts) | Calling the production endpoint during sandbox testing (or vice versa); getting `21007` errors | Use the correct environment URL; better yet, let RevenueCat abstract this entirely |
+| Google Play Developer API (subscriptions) | Not handling Google's `linkedPurchaseToken` for subscription upgrades/downgrades | RevenueCat handles this; if DIY, always check and acknowledge linked purchase tokens |
+| Firebase Dynamic Links | Using Firebase Dynamic Links for smart app links -- the service was deprecated in August 2025 | Use Branch.io, Appsflyer OneLink, or build a custom solution with Cloudflare Workers |
+| MusicBrainz API (for artist similarity) | Rate limiting (1 req/sec for unauthenticated) causing collaborative filtering data collection to take days | Authenticate with MusicBrainz API for higher limits; cache aggressively; batch during off-peak hours |
+
+## Performance Traps
+
+Patterns that work at small scale but fail as usage grows.
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| Feed queries with `COUNT(DISTINCT)` on toasts/comments (current: lines 98-99, 180-181 in FeedService) | Feed load time >2s; database CPU spikes during popular events | Denormalize `toast_count` and `comment_count` on the `checkins` table; increment via trigger or application code | ~5,000 check-ins with active toast/comment activity |
+| On-demand Wrapped computation hitting raw aggregate queries | Year-end traffic spike causes database CPU to max out as all users request Wrapped simultaneously | Pre-compute Wrapped data in a BullMQ batch job during low-traffic hours (3-4 AM); cache results in Redis | When >500 users request Wrapped within the same hour |
+| Share card image generation in the Express request handler | Request timeouts; Railway instance OOM; blocking the event loop | Generate asynchronously via BullMQ; store in R2; return the pre-cached URL | First popular event with >50 concurrent shares |
+| Full-text search without proper GIN indexes | Search queries take >500ms; sequential scan warnings in `EXPLAIN ANALYZE` | Add GIN indexes on generated `tsvector` columns; verify index usage with `EXPLAIN` | ~10,000 bands + events with ILIKE fallback still active |
+| WebSocket client map in memory (current: `Map<string, Client>` in websocket.ts) | Memory grows linearly with connected users; single-instance bottleneck | This is fine for v1.1 scale (single Railway instance). Flag for v1.2+ when horizontal scaling is needed | >5,000 concurrent WebSocket connections |
+| Audit log table growing unbounded (fire-and-forget INSERT on every action) | Table bloat; slow admin queries on audit_logs; backup size growing | Add a retention policy: archive logs >90 days to R2 or delete; add date-range partitioning | ~1M audit log rows (approximately 6 months with moderation + sharing actions) |
+
+## Security Mistakes
+
+Domain-specific security issues beyond general web security.
+
+| Mistake | Risk | Prevention |
+|---------|------|------------|
+| Share card URLs exposing check-in UUIDs without access control | Enumeration attack: brute-force UUIDs to find all check-ins, including private users | Use a separate short-code for share URLs (not the checkin UUID); rate-limit share endpoint; respect user privacy settings |
+| Content moderation bypass via photo metadata | EXIF data in uploaded photos can contain GPS coordinates, device identifiers, and other PII even after the user set their profile to private | Strip EXIF data from all uploaded photos before storing in R2; use a Cloudflare Worker or `sharp` library |
+| Presigned R2 URLs with long expiration used for share cards | URLs shared on social media remain valid indefinitely; no way to "unshare" content | Use short-lived presigned URLs (1 hour) for upload; use public R2 URLs for read (revocable by deleting the object) |
+| Verification claim allowing impersonation | Malicious user claims to be a venue owner or artist to gain edit access to profiles | Require manual admin approval for all verification claims; do NOT auto-approve based on email domain; add an appeal process |
+| Premium feature access checked only on client | Jailbroken/rooted devices can bypass client-side paywalls | All premium features must be gated server-side with entitlement checks on every API call |
+| Report/flag system used for harassment (mass-reporting a user) | Legitimate users get auto-suspended by coordinated false reports | Never auto-action on reports; all reports go to admin review queue; track reporter reputation (frequent false reporters get deprioritized) |
+| Wrapped share cards leaking behavioral data | A share card showing "You attended 47 shows at 12 venues in 2026" reveals location patterns | Allow users to customize what appears on their share card; default to aggregate stats only (no specific venues/dates) |
+
+## UX Pitfalls
+
+Common user experience mistakes in this domain.
+
+| Pitfall | User Impact | Better Approach |
+|---------|-------------|-----------------|
+| Report button buried in a submenu | Users cannot find how to report objectionable content; gives up and leaves app | Visible report icon on every content card (check-in, comment, photo); 2-tap maximum to submit a report |
+| Mandatory moderation queue delay on all content | Check-in posts delayed by minutes while awaiting moderation; kills the "live at a show" feeling | Post-then-moderate: show content immediately but with an async moderation pipeline that removes violations retroactively |
+| Verification badge confusion (Spotify learned this the hard way) | Users interpret a blue checkmark as "this venue/artist is endorsed by SoundCheck" | Use "Claimed" label (like Yelp) instead of a generic checkmark; make the tooltip clear: "This profile is managed by the venue/artist" |
+| Premium paywall on core check-in flow | Users who paid nothing for the core experience feel betrayed when basic features get gated | NEVER gate check-ins, ratings, or feed access. Premium = cosmetic (custom share cards, profile themes), analytics (detailed stats), or convenience (ad-free, priority support) |
+| Wrapped only available for a limited time | Users who miss the window feel excluded; time-limited availability creates support burden | Make Wrapped available year-round (compute on demand); add a notification when their Wrapped is ready, but do not expire it |
+| Share flow requiring too many taps | Users abandon sharing if it requires >3 taps from the check-in | One-tap share: check-in confirmation screen has share buttons directly; auto-generated card with option to customize |
+| Search results changing behavior after tsvector migration | Users accustomed to ILIKE partial matching ("jazz" finding "jazz-funk") confused when tsvector returns different results | Keep trigram fuzzy search as a fallback; show "Did you mean..." suggestions; log zero-result queries for analysis |
+
+## "Looks Done But Isn't" Checklist
+
+Things that appear complete but are missing critical pieces.
+
+- [ ] **Content Moderation:** Often missing image scanning -- verify that photo uploads (check-in photos, share cards, profile images) pass through a moderation pipeline, not just text content
+- [ ] **Content Moderation:** Often missing moderation for EXISTING content -- verify that the ~37 badges, existing check-in photos, and comments from v1.0 are retroactively scannable
+- [ ] **Social Sharing:** Often missing web landing page -- verify that shared URLs resolve to a web page (not a deep link failure) for users without the app installed
+- [ ] **Social Sharing:** Often missing OG meta tags -- verify that shared URLs render proper preview cards on Instagram, X, TikTok, and iMessage (each platform renders differently)
+- [ ] **Full-Text Search:** Often missing search ranking -- verify that results are ordered by relevance (tsvector `ts_rank`), not just filtered. ILIKE returns unranked results; tsvector should improve this
+- [ ] **Full-Text Search:** Often missing accent/diacritic handling -- verify searching "Beyonce" matches "Beyonce" (with or without accent on the e)
+- [ ] **Premium/IAP:** Often missing subscription restoration -- verify that reinstalling the app or switching devices restores premium access via server-side entitlement check
+- [ ] **Premium/IAP:** Often missing grace period handling -- verify that users in Apple/Google billing grace period (failed payment) retain premium access temporarily
+- [ ] **Verification:** Often missing the "unclaim" flow -- verify that if a venue changes ownership, the old owner's access can be revoked and reassigned
+- [ ] **Wrapped:** Often missing the "insufficient data" state -- verify that users with 1-2 check-ins get a graceful message, not a sad-looking empty Wrapped card
+- [ ] **Collaborative Filtering:** Often missing offline/degraded behavior -- verify that if the recommendation engine fails, the app falls back to the existing content-based recommendations instead of showing nothing
+
+## Recovery Strategies
+
+When pitfalls occur despite prevention, how to recover.
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| App Store rejection for missing moderation | MEDIUM (1-2 weeks) | Implement minimum viable report/block; submit expedited review; use existing `AdminController` as starting point |
+| Share card image gen crashing Railway | LOW (hours) | Immediately disable share card generation; serve a static fallback image; migrate to async BullMQ generation |
+| Full-text search returning wrong results | MEDIUM (days) | Revert to ILIKE as fallback while fixing tsvector config; both search paths should exist during migration |
+| Collaborative filtering serving bad recommendations | LOW (minutes) | Feature flag off; existing `DiscoveryService` recommendations are already the fallback |
+| IAP purchases not validating server-side | HIGH (1-2 weeks + audit) | Retroactively validate all existing purchases; migrate to RevenueCat; audit for fraudulent premium access |
+| Wrapped data breaching privacy | HIGH (weeks + legal) | Immediately purge pre-computed Wrapped data; switch to on-demand computation; notify affected users; engage legal for GDPR assessment |
+| Verification impersonation | MEDIUM (days) | Revoke the fraudulent claim; notify the real venue/artist; add manual verification step; audit all existing claims |
+| Deep links failing on social platforms | LOW (hours) | Verify `apple-app-site-association` and `assetlinks.json` are served correctly; test with each platform's link validator |
+
+## Pitfall-to-Phase Mapping
+
+How roadmap phases should address these pitfalls.
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| App Store rejection (Guideline 1.2) | Phase 1: Trust & Safety Foundation | Submit test build to Apple; verify report/block/filter present on ALL UGC surfaces |
+| Share card killing Railway | Phase 2: Viral Growth | Load test share card generation with 50 concurrent requests; verify memory stays under 256MB |
+| Full-text search breaking results | Phase 3: Technical Scale | Side-by-side comparison test: ILIKE results vs tsvector results for 100 real search queries; zero regression |
+| Collaborative filtering cold start | Phase 4: Retention | Measure data volume before implementing; decision gate: >5K users + >50K check-ins required |
+| IAP without server validation | Phase 4: Monetization | Penetration test: attempt to access premium features with a forged receipt; must fail |
+| Wrapped privacy issues | Phase 4: Year in Review | Privacy review: verify Wrapped data is computed on-demand, not stored; included in data export |
+| Verification permissions explosion | Phase 3: Platform Trust | Code review: all authorization checks go through middleware, not inline conditionals |
+| Deep links failing for non-users | Phase 2: Viral Growth | Test shared URLs on 3 platforms (Instagram, X, iMessage) from a device without SoundCheck installed |
+
+## Existing Technical Debt That v1.1 Features Will Aggravate
+
+These are pre-existing issues (documented in PROJECT.md) that become WORSE when v1.1 features are added.
+
+| Existing Debt | v1.1 Feature That Makes It Worse | Impact | Recommended Fix Timing |
+|---------------|----------------------------------|--------|------------------------|
+| CheckinService 1,400 LOC (facade at ~30% extraction) | Social sharing adds share card generation to check-in flow | More responsibilities piled onto an already-large service | Phase 1: Complete facade extraction BEFORE adding share logic |
+| Legacy `reviews` table coexisting with `checkin_band_ratings` | Full-text search must decide which table to index; Wrapped must decide which to aggregate | Confusion about source of truth for ratings; duplicate search results | Phase 1: Migrate or deprecate reviews table |
+| Feed queries using `COUNT(DISTINCT)` with `LEFT JOIN` | Social sharing increases feed traffic (shared check-ins drive users back to feed) | Feed performance degrades faster with more traffic | Phase 1: Denormalize toast_count/comment_count |
+| No staging environment | Content moderation pipeline, IAP integration, verification flow all need testing | Testing these features against production data risks data corruption or embarrassing moderation false positives | Phase 1: Create Railway staging environment |
+| No load testing performed | Share card generation, Wrapped computation, full-text search all have scale-sensitive performance | Performance issues discovered in production instead of testing | Phase 1: Set up basic load testing with k6 or Artillery |
+| In-memory rate limiter fallback | Content moderation report endpoint could be rate-limited inconsistently across instances (future) | Coordinated abuse could bypass per-instance rate limits | Phase 3: When horizontal scaling is implemented, switch to Redis-only rate limiting |
+| 8 `as any` type casts in production code | Adding verification, moderation, premium types increases type surface area | More type safety issues as the codebase grows | Phase 1: Fix existing type casts; enforce `no-explicit-any` ESLint rule |
+| Fire-and-forget audit logging | Moderation actions MUST be reliably logged for compliance; fire-and-forget can silently drop logs | Missing audit trail for moderation decisions could be a legal liability | Phase 1: Make moderation audit logs reliable (not fire-and-forget); keep fire-and-forget for non-critical logs |
 
 ## Sources
 
-### Concert API Ecosystem
-- [Songkick Developer Page](https://www.songkick.com/developer)
-- [Bandsintown API Documentation](https://help.artists.bandsintown.com/en/articles/9186477-api-documentation)
-- [Ticketmaster Discovery API](https://developer.ticketmaster.com/products-and-docs/apis/discovery-api/v2/)
-- [PredictHQ Concerts API](https://www.predicthq.com/events/concerts)
-- [JamBase Data API](https://data.jambase.com/data-api/)
-- [Soundcharts Music Data API Guide](https://soundcharts.com/en/blog/music-data-api)
+- [Apple App Store Review Guidelines - Guideline 1.2](https://developer.apple.com/app-store/review/guidelines/)
+- [How to Resolve App Store Guideline 1.2 - BuddyBoss](https://www.buddyboss.com/docs/app-store-guideline-1-2-safety-user-generated-content/)
+- [App Store Review Guidelines 2025 Checklist](https://nextnative.dev/blog/app-store-review-guidelines)
+- [PostgreSQL Full-Text Search Documentation](https://www.postgresql.org/docs/current/textsearch-intro.html)
+- [PostgreSQL tsvector and tsquery](https://medium.com/geekculture/comprehend-tsvector-and-tsquery-in-postgres-for-full-text-search-1fd4323409fc)
+- [Scaling Pub/Sub with WebSockets and Redis - Ably](https://ably.com/blog/scaling-pub-sub-with-websockets-and-redis)
+- [Scaling WebSocket Services with Redis Pub/Sub - Leapcell](https://leapcell.io/blog/scaling-websocket-services-with-redis-pub-sub-in-node-js)
+- [Spotify Unwrapped Engineering](https://engineering.atspotify.com/2020/02/spotify-unwrapped-how-we-brought-you-a-decade-of-data)
+- [Spotify Wrapped 2024 Mistakes - TechRadar](https://www.techradar.com/audio/spotify/spotify-admits-it-made-mistakes-with-your-wrapped-2024-heres-what-could-change-this-year)
+- [RevenueCat Flutter Plugin](https://github.com/RevenueCat/purchases-flutter)
+- [Flutter In-App Purchases with RevenueCat 2025](https://medium.com/blocship/in-app-purchases-with-revenue-cat-flutter-2025-36adbef2c2d5)
+- [Cloudflare Serverless Image Content Management](https://developers.cloudflare.com/reference-architecture/diagrams/serverless/serverless-image-content-management/)
+- [Vercel OG Image Generation](https://vercel.com/blog/introducing-vercel-og-image-generation-fast-dynamic-social-card-images)
+- [Cold Start Problem in Recommender Systems](https://www.freecodecamp.org/news/cold-start-problem-in-recommender-systems/)
+- [Scaling a SaaS Application on Railway](https://blog.railway.com/p/scaling-a-saas-application)
+- [Spotify Registered Artist Label Change](https://routenote.com/blog/spotify-replaces-verified-artist-badge-with-registered-artist-label/)
+- [UGC Content Moderation Guide - WebPurify](https://www.webpurify.com/blog/content-moderation-definitive-guide/)
+- [Content Moderation for UGC - Cleanspeak](https://cleanspeak.com/help-center-article/things-you-should-know-about-ugc-moderation)
+- Codebase analysis: `FeedService.ts` (lines 98-99, 180-181), `CheckinService.ts` (facade pattern), `AdminController.ts` (moderation stub), `websocket.ts` (Redis Pub/Sub), `R2Service.ts` (presigned URLs), `DiscoveryService.ts` (recommendation engine), `StatsService.ts` (aggregation pattern), database migrations 015 and 022 (trigram indexes)
 
-### PostgreSQL Migration
-- [DEV: Zero-Downtime Database Migration Guide](https://dev.to/ari-ghosh/zero-downtime-database-migration-the-definitive-guide-5672)
-- [Xata: Zero Downtime Schema Migrations PostgreSQL](https://xata.io/blog/zero-downtime-schema-migrations-postgresql)
-- [Uptrace: Zero-Downtime PostgreSQL Migrations](https://bun.uptrace.dev/postgres/zero-downtime-migrations.html)
-- [PostgresAI: lock_timeout and retries](https://postgres.ai/blog/20210923-zero-downtime-postgres-schema-migrations-lock-timeout-and-retries)
-
-### Timezone Handling
-- [Moesif: Manage Datetime Timestamps Timezones in APIs](https://www.moesif.com/blog/technical/timestamp/manage-datetime-timestamp-timezones-in-api/)
-- [DEV: Handle Date and Time Correctly](https://dev.to/kcsujeet/how-to-handle-date-and-time-correctly-to-avoid-timezone-bugs-4o03)
-
-### Gamification and Anti-Farming
-- [arXiv: Longitudinal Ethical Analysis of Gamification in Untappd](https://arxiv.org/html/2601.04841v1)
-- [Guardsquare: Prevent Geo-Spoofing in Mobile Apps](https://www.guardsquare.com/blog/securing-location-trust-to-prevent-geo-spoofing)
-- [Approov: Stop Geo-Spoofing with API Integration](https://approov.io/blog/stop-geo-spoofing-with-secure-api-integration-for-mobile-application)
-- [LinkedIn: Beat the Cheat in Gamification](https://www.linkedin.com/pulse/beat-cheat-stop-gaming-gamification-michael-wu-phd)
-- [Game Developer: Why Badges Fail in Gamification](https://www.gamedeveloper.com/design/why-badges-fail-in-gamification-4-strategies-to-make-them-work-properly)
-
-### Rating System UX
-- [Appcues: 5 Stars vs Thumbs Up/Down](https://www.appcues.com/blog/rating-system-ux-star-thumbs)
-- [UX Collective: Rating System Design](https://uxdesign.cc/designing-the-user-experience-of-a-rating-system-2c6a4d33bb11)
-- [Smart Interface Design Patterns: Reviews and Ratings UX](https://smart-interface-design-patterns.com/articles/reviews-and-ratings-ux/)
-
-### App Store & Flutter
-- [NextNative: App Store Review Guidelines Checklist](https://nextnative.dev/blog/app-store-review-guidelines)
-- [Flutter GitHub Issue #158423: Guideline 2.5.1](https://github.com/flutter/flutter/issues/158423)
-- [Adapty: App Store Review Guidelines 2026](https://adapty.io/blog/how-to-pass-app-store-review/)
-- [Medium: Flutter + Swift Passing iOS App Review](https://medium.com/@sharma-deepak/flutter-swift-in-2025-the-developers-guide-to-passing-ios-app-review-every-time-cb9bb4836046)
-
-### Social Feed Architecture
-- [AlgoMaster: Designing a Scalable News Feed System](https://blog.algomaster.io/p/designing-a-scalable-news-feed-system)
-- [Medium: How Instagram Scales PostgreSQL](https://medium.com/@mamidipaka2003/inside-high-traffic-databases-how-instagram-scales-postgresql-beyond-limits-0a4af13696ff)
-- [OneSignal: Lessons from 5 Years of Scaling PostgreSQL](https://onesignal.com/blog/lessons-learned-from-5-years-of-scaling-postgresql/)
-
-### Competitor Analysis
-- [Concert Archives](https://www.concertarchives.org/)
-- [Setlist.fm](https://www.setlist.fm/)
-- [Untappd](https://untappd.com/)
+---
+*Pitfalls research for: SoundCheck v1.1 feature additions*
+*Researched: 2026-02-27*
