@@ -6,6 +6,7 @@ import '../providers/providers.dart';
 import '../services/analytics_service.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
+import '../../features/auth/presentation/forgot_password_screen.dart';
 import '../../features/feed/presentation/feed_screen.dart';
 import '../../features/discover/presentation/discover_screen.dart';
 import '../../features/checkins/presentation/checkin_screen.dart';
@@ -48,7 +49,8 @@ GoRouter goRouter(Ref ref) {
       final isAuthenticated = authState.hasValue && authState.value != null;
       final isError = authState.hasError;
       final isOnAuthPage = state.matchedLocation.startsWith('/login') ||
-          state.matchedLocation.startsWith('/register');
+          state.matchedLocation.startsWith('/register') ||
+          state.matchedLocation.startsWith('/forgot-password');
 
       // Don't redirect if on auth pages during loading or error state
       // This allows the auth screens to show their own loading/error UI
@@ -105,6 +107,28 @@ GoRouter goRouter(Ref ref) {
         pageBuilder: (context, state) => CustomTransitionPage(
           key: state.pageKey,
           child: const RegisterScreen(),
+          transitionsBuilder: (context, animation, secondaryAnimation, child) {
+            const begin = Offset(1.0, 0.0);
+            const end = Offset.zero;
+            const curve = Curves.easeInOut;
+            final tween = Tween(begin: begin, end: end).chain(
+              CurveTween(curve: curve),
+            );
+            return SlideTransition(
+              position: animation.drive(tween),
+              child: child,
+            );
+          },
+        ),
+      ),
+
+      // Forgot Password Route
+      GoRoute(
+        path: '/forgot-password',
+        name: 'forgot-password',
+        pageBuilder: (context, state) => CustomTransitionPage(
+          key: state.pageKey,
+          child: const ForgotPasswordScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             const begin = Offset(1.0, 0.0);
             const end = Offset.zero;

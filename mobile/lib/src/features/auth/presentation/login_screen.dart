@@ -24,13 +24,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   SocialAuthService? _socialAuthService;
   bool _isLoading = false;
   bool _obscurePassword = true;
-  bool _canCheckBiometrics = false;
 
   @override
   void initState() {
     super.initState();
     _initSocialAuth();
-    _checkBiometrics();
   }
 
   void _initSocialAuth() {
@@ -40,12 +38,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
       dioClient: dioClient,
       secureStorage: secureStorage,
     );
-  }
-
-  Future<void> _checkBiometrics() async {
-    final biometricService = ref.read(biometricServiceProvider);
-    final canCheck = await biometricService.isBiometricAvailable();
-    setState(() => _canCheckBiometrics = canCheck);
   }
 
   @override
@@ -322,15 +314,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         child: TextButton(
                           onPressed: () {
                             if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Forgot Password feature coming soon!'),
-                                  behavior: SnackBarBehavior.floating,
-                                ),
-                              );
+                              context.push('/forgot-password');
                             }
                           },
-                          child: const Text('Forgot Password?'),
+                          child: Text(
+                            'Forgot password?',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                            ),
+                          ),
                         ),
                       ),
 
@@ -354,30 +346,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         ),
                       ),
                       
-                      if (_canCheckBiometrics) ...[
-                         const SizedBox(height: 16),
-                         OutlinedButton.icon(
-                           onPressed: () async {
-                             // Placeholder for biometrics
-                             final success = await ref.read(biometricServiceProvider).authenticate();
-                             if (!context.mounted) return;
-                             if (success) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Biometric Auth Successful (Simulated)')),
-                                );
-                             }
-                           },
-                           icon: const Icon(Icons.fingerprint),
-                           label: const Text('Login with Biometrics'),
-                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                           ),
-                         ),
-                      ],
-
                       const SizedBox(height: AppTheme.spacing32),
 
                       // Divider
@@ -412,17 +380,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                           _SocialLoginButton(
                             icon: Icons.g_mobiledata, // Google icon
                             onTap: _isLoading ? null : _handleGoogleSignIn,
-                          ),
-                          _SocialLoginButton(
-                            icon: Icons.facebook,
-                            onTap: _isLoading
-                                ? null
-                                : () {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Facebook Sign-In coming soon')),
-                                    );
-                                    // TODO: Implement Facebook Sign-In with flutter_facebook_auth package
-                                  },
                           ),
                         ],
                       ),
