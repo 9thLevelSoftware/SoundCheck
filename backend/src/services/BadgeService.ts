@@ -17,10 +17,12 @@ import Database from '../config/database';
 import { Badge, UserBadge, BadgeType } from '../types';
 import { evaluatorRegistry, EvalResult } from './BadgeEvaluators';
 import { NotificationService } from './NotificationService';
+import { AuditService } from './AuditService';
 import { sendToUser } from '../utils/websocket';
 
 export class BadgeService {
   private db = Database.getInstance();
+  private auditService = new AuditService();
 
   /**
    * Get all available badges
@@ -138,6 +140,9 @@ export class BadgeService {
           if (earned) {
             await this.awardBadge(userId, badge.id, result.metadata);
             newBadges.push(badge);
+
+            // Audit log: badge awarded (fire-and-forget, no request context in batch jobs)
+            this.auditService.logBadgeAwarded(userId, badge.id, badge.name);
           }
         }
       } catch (err) {

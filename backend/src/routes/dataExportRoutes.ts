@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { DataExportService } from '../services/DataExportService';
+import { AuditService } from '../services/AuditService';
 import { authenticateToken, rateLimit } from '../middleware/auth';
 import { ApiResponse } from '../types';
 
 const router = Router();
 const dataExportService = new DataExportService();
+const auditService = new AuditService();
 
 // Rate limit for export endpoint (1 request per 5 minutes)
 const exportRateLimit = rateLimit(5 * 60 * 1000, 1);
@@ -23,6 +25,9 @@ router.get(
       const userId = (req as any).user.userId;
 
       const exportData = await dataExportService.exportUserData(userId);
+
+      // Audit log: data export
+      auditService.logDataExport(userId, req);
 
       // Set headers for file download
       const filename = `soundcheck-data-export-${new Date().toISOString().split('T')[0]}.json`;

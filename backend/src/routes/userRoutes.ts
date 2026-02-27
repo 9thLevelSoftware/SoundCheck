@@ -14,6 +14,7 @@ import {
 } from '../utils/validationSchemas';
 import { pushNotificationService } from '../services/PushNotificationService';
 import { DataRetentionService } from '../services/DataRetentionService';
+import { AuditService } from '../services/AuditService';
 
 // Multer error handler for profile image uploads
 const handleMulterError = (err: Error | null, req: Request, res: Response, next: NextFunction): void => {
@@ -36,6 +37,7 @@ const router = Router();
 const userController = new UserController();
 const followController = new FollowController();
 const dataRetentionService = new DataRetentionService();
+const auditService = new AuditService();
 
 // Rate limiting for auth endpoints
 const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
@@ -63,6 +65,10 @@ router.post('/me/delete-account', authenticateToken, async (req: Request, res: R
   try {
     const userId = (req as any).user?.id;
     const result = await dataRetentionService.requestAccountDeletion(userId);
+
+    // Audit log: user deletion request
+    auditService.logUserDeleted(userId, result.deletionRequest.scheduledFor, req);
+
     res.json({ success: true, data: result });
   } catch (error) {
     if (error instanceof Error &&

@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { UserService } from '../services/UserService';
 import { StatsService } from '../services/StatsService';
+import { AuditService } from '../services/AuditService';
 import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
 
 // UUID validation regex (supports UUID v1-5)
@@ -9,10 +10,12 @@ const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 export class UserController {
   private userService: UserService;
   private statsService: StatsService;
+  private auditService: AuditService;
 
   constructor(userService?: UserService) {
     this.userService = userService ?? new UserService();
     this.statsService = new StatsService();
+    this.auditService = new AuditService();
   }
 
   /**
@@ -140,6 +143,9 @@ export class UserController {
 
       const updateData = req.body;
       const updatedUser = await this.userService.updateProfile(req.user.id, updateData);
+
+      // Audit log: profile update
+      this.auditService.logProfileUpdated(req.user.id, Object.keys(updateData), req);
 
       const response: ApiResponse = {
         success: true,

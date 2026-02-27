@@ -1,10 +1,12 @@
 import { Request, Response } from 'express';
 import { CheckinService } from '../services/CheckinService';
+import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
 import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
 
 export class CheckinController {
   private checkinService = new CheckinService();
+  private auditService = new AuditService();
 
   /**
    * Create a new check-in
@@ -54,6 +56,9 @@ export class CheckinController {
           vibeTagIds,
         });
 
+        // Audit log: check-in created (event-first flow)
+        this.auditService.logCheckinCreated(userId, checkin.id, { eventId, isVerified: checkin.isVerified }, req);
+
         const response: ApiResponse = {
           success: true,
           data: checkin,
@@ -84,6 +89,9 @@ export class CheckinController {
           checkinLongitude,
           vibeTagIds,
         });
+
+        // Audit log: check-in created (legacy flow)
+        this.auditService.logCheckinCreated(userId, checkin.id, { venueId, bandId }, req);
 
         const response: ApiResponse = {
           success: true,
