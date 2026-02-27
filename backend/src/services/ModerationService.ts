@@ -11,10 +11,12 @@
 import Database from '../config/database';
 import { ModerationItem, ContentType } from '../types';
 import { mapDbRowToModerationItem } from '../utils/dbMappers';
-import { logInfo, logWarn } from '../utils/logger';
+import { logInfo, logWarn, logError } from '../utils/logger';
+import { FeedService } from './FeedService';
 
 export class ModerationService {
   private db: Database;
+  private feedService = new FeedService();
 
   constructor(db?: Database) {
     this.db = db || Database.getInstance();
@@ -86,6 +88,11 @@ export class ModerationService {
     }
 
     logInfo(`Content auto-hidden`, { contentType, contentId });
+
+    // Invalidate feed caches so hidden content disappears immediately
+    this.invalidateFeedCachesForContent(contentType, contentId).catch((err) =>
+      logError('Failed to invalidate feed caches after hiding content', { error: err, contentType, contentId })
+    );
   }
 
   /**
@@ -111,6 +118,11 @@ export class ModerationService {
     }
 
     logInfo(`Content unhidden`, { contentType, contentId });
+
+    // Invalidate feed caches so unhidden content reappears immediately
+    this.invalidateFeedCachesForContent(contentType, contentId).catch((err) =>
+      logError('Failed to invalidate feed caches after unhiding content', { error: err, contentType, contentId })
+    );
   }
 
   /**
@@ -212,5 +224,74 @@ export class ModerationService {
     }
 
     return mapDbRowToModerationItem(result.rows[0]);
+  }
+
+  /**
+   * Invalidate feed caches for content that was hidden or unhidden.
+   * Looks up the checkin's author and event, then invalidates follower
+   * feed caches and event feed cache so the change is reflected immediately.
+   *
+   * For comments, traces back to the parent checkin to find the correct
+   * user_id and event_id for cache invalidation.
+   *
+   * Fire-and-forget: errors are caught by the caller (.catch pattern).
+   */
+  private async invalidateFeedCachesForContent(
+    contentType: ContentType,
+    contentId: string
+  ): Promise<void> {
+    let checkinUserId: string | null = null;
+    let checkinEventId: string | null = null;
+
+    if (contentType === 'checkin' || contentType === 'photo') {
+      // Content is a checkin -- look up user_id and event_id directly
+      const result = await this.db.query(
+        `SELECT user_id, event_id FROM checkins WHERE id = $1`,
+        [contentId]
+      );
+      if (result.rows.length > 0) {
+        checkinUserId = result.rows[0].user_id;
+        checkinEventId = result.rows[0].event_id;
+      }
+    } else if (contentType === 'comment') {
+      // Content is a comment -- trace back to parent checkin
+      const commentResult = await this.db.query(
+        `SELECT checkin_id FROM checkin_comments WHERE id = $1`,
+        [contentId]
+      );
+      if (commentResult.rows.length > 0) {
+        const checkinId = commentResult.rows[0].checkin_id;
+        const checkinResult = await this.db.query(
+          `SELECT user_id, event_id FROM checkins WHERE id = $1`,
+          [checkinId]
+        );
+        if (checkinResult.rows.length > 0) {
+          checkinUserId = checkinResult.rows[0].user_id;
+          checkinEventId = checkinResult.rows[0].event_id;
+        }
+      }
+    }
+
+    if (!checkinUserId) {
+      return; // Could not resolve content to a checkin -- nothing to invalidate
+    }
+
+    // Invalidate feed caches for all followers of the content author
+    const followers = await this.db.query(
+      'SELECT follower_id FROM user_followers WHERE following_id = $1',
+      [checkinUserId]
+    );
+
+    for (const f of followers.rows) {
+      await this.feedService.invalidateUserFeedCache(f.follower_id);
+    }
+
+    // Also invalidate the author's own feed cache
+    await this.feedService.invalidateUserFeedCache(checkinUserId);
+
+    // Invalidate event feed cache if the checkin is tied to an event
+    if (checkinEventId) {
+      await this.feedService.invalidateEventFeedCache(checkinEventId);
+    }
   }
 }
