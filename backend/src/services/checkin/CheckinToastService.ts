@@ -162,6 +162,7 @@ export class CheckinToastService {
         FROM checkin_comments c
         LEFT JOIN users u ON c.user_id = u.id
         WHERE c.checkin_id = $1
+          AND (c.is_hidden IS NOT TRUE)
         ORDER BY c.created_at ASC
       `;
 

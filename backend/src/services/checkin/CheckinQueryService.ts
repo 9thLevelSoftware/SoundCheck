@@ -51,8 +51,9 @@ export class CheckinQueryService {
         LEFT JOIN bands b ON c.band_id = b.id
         LEFT JOIN events ev ON c.event_id = ev.id
         LEFT JOIN toasts t ON c.id = t.checkin_id
-        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
+        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
         WHERE c.id = $1
+          AND (c.is_hidden IS NOT TRUE)
         GROUP BY c.id, u.id, v.id, b.id, ev.id
       `;
 
@@ -157,8 +158,9 @@ export class CheckinQueryService {
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
         LEFT JOIN toasts t ON c.id = t.checkin_id
-        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
+        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
         ${whereClause}
+        AND (c.is_hidden IS NOT TRUE)
         ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
@@ -217,8 +219,9 @@ export class CheckinQueryService {
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
         LEFT JOIN toasts t ON c.id = t.checkin_id
-        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id
+        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
         ${whereClause}
+        AND (c.is_hidden IS NOT TRUE)
         GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}
