@@ -112,44 +112,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SAFE-01 | — | Pending |
-| SAFE-02 | — | Pending |
-| SAFE-03 | — | Pending |
-| SAFE-04 | — | Pending |
-| SAFE-05 | — | Pending |
-| AUTH-01 | — | Pending |
-| AUTH-02 | — | Pending |
-| ONBD-01 | — | Pending |
-| ONBD-02 | — | Pending |
-| ONBD-03 | — | Pending |
-| SHARE-01 | — | Pending |
-| SHARE-02 | — | Pending |
-| SHARE-03 | — | Pending |
-| SHARE-04 | — | Pending |
-| EVENT-01 | — | Pending |
-| EVENT-02 | — | Pending |
-| EVENT-03 | — | Pending |
-| EVENT-04 | — | Pending |
-| VERIFY-01 | — | Pending |
-| VERIFY-02 | — | Pending |
-| VERIFY-03 | — | Pending |
-| VERIFY-04 | — | Pending |
-| VERIFY-05 | — | Pending |
-| VERIFY-06 | — | Pending |
-| SCALE-01 | — | Pending |
-| SCALE-02 | — | Pending |
-| SCALE-03 | — | Pending |
-| MONEY-01 | — | Pending |
-| MONEY-02 | — | Pending |
-| MONEY-03 | — | Pending |
-| MONEY-04 | — | Pending |
-| MONEY-05 | — | Pending |
+| SAFE-01 | Phase 9 | Pending |
+| SAFE-02 | Phase 9 | Pending |
+| SAFE-03 | Phase 9 | Pending |
+| SAFE-04 | Phase 9 | Pending |
+| SAFE-05 | Phase 9 | Pending |
+| AUTH-01 | Phase 9 | Pending |
+| AUTH-02 | Phase 9 | Pending |
+| ONBD-01 | Phase 10 | Pending |
+| ONBD-02 | Phase 10 | Pending |
+| ONBD-03 | Phase 10 | Pending |
+| SHARE-01 | Phase 10 | Pending |
+| SHARE-02 | Phase 10 | Pending |
+| SHARE-03 | Phase 10 | Pending |
+| SHARE-04 | Phase 10 | Pending |
+| EVENT-01 | Phase 10 | Pending |
+| EVENT-02 | Phase 10 | Pending |
+| EVENT-03 | Phase 11 | Pending |
+| EVENT-04 | Phase 11 | Pending |
+| VERIFY-01 | Phase 11 | Pending |
+| VERIFY-02 | Phase 11 | Pending |
+| VERIFY-03 | Phase 11 | Pending |
+| VERIFY-04 | Phase 11 | Pending |
+| VERIFY-05 | Phase 11 | Pending |
+| VERIFY-06 | Phase 11 | Pending |
+| SCALE-01 | Phase 11 | Pending |
+| SCALE-02 | Phase 11 | Pending |
+| SCALE-03 | Phase 11 | Pending |
+| MONEY-01 | Phase 12 | Pending |
+| MONEY-02 | Phase 12 | Pending |
+| MONEY-03 | Phase 12 | Pending |
+| MONEY-04 | Phase 12 | Pending |
+| MONEY-05 | Phase 12 | Pending |
 
 **Coverage:**
 - v1.1 requirements: 32 total
-- Mapped to phases: 0
-- Unmapped: 32 ⚠️
+- Mapped to phases: 32
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 after initial definition*
+*Last updated: 2026-02-27 after roadmap creation*
