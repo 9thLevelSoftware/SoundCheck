@@ -60,9 +60,9 @@ export class StatsService {
   }> {
     const result = await this.db.query(
       `SELECT
-        (SELECT COUNT(DISTINCT c.id)::int FROM checkins c WHERE c.user_id = $1) as total_shows,
-        (SELECT COUNT(DISTINCT el.band_id)::int FROM checkins c JOIN event_lineup el ON c.event_id = el.event_id WHERE c.user_id = $1) as unique_bands,
-        (SELECT COUNT(DISTINCT c.venue_id)::int FROM checkins c WHERE c.user_id = $1) as unique_venues,
+        (SELECT COUNT(DISTINCT c.id)::int FROM checkins c WHERE c.user_id = $1 AND c.is_hidden IS NOT TRUE) as total_shows,
+        (SELECT COUNT(DISTINCT el.band_id)::int FROM checkins c JOIN event_lineup el ON c.event_id = el.event_id WHERE c.user_id = $1 AND c.is_hidden IS NOT TRUE) as unique_bands,
+        (SELECT COUNT(DISTINCT c.venue_id)::int FROM checkins c WHERE c.user_id = $1 AND c.is_hidden IS NOT TRUE) as unique_venues,
         (SELECT COUNT(DISTINCT ub.badge_id)::int FROM user_badges ub WHERE ub.user_id = $1) as badges_earned,
         (SELECT COUNT(*)::int FROM user_followers WHERE following_id = $1) as followers_count,
         (SELECT COUNT(*)::int FROM user_followers WHERE follower_id = $1) as following_count
@@ -94,6 +94,7 @@ export class StatsService {
        JOIN event_lineup el ON c.event_id = el.event_id
        JOIN bands b ON el.band_id = b.id
        WHERE c.user_id = $1 AND b.genre IS NOT NULL
+         AND (c.is_hidden IS NOT TRUE)
        GROUP BY b.genre
        ORDER BY checkin_count DESC
        LIMIT $2`,
@@ -123,6 +124,7 @@ export class StatsService {
        JOIN checkins c ON cbr.checkin_id = c.id
        JOIN bands b ON cbr.band_id = b.id
        WHERE c.user_id = $1
+         AND (c.is_hidden IS NOT TRUE)
        GROUP BY b.id, b.name, b.genre, b.image_url
        ORDER BY avg_rating DESC, times_seen DESC
        LIMIT $2`,
@@ -153,6 +155,7 @@ export class StatsService {
        FROM checkins c
        JOIN venues v ON c.venue_id = v.id
        WHERE c.user_id = $1 AND c.venue_rating IS NOT NULL AND c.venue_rating > 0
+         AND (c.is_hidden IS NOT TRUE)
        GROUP BY v.id, v.name, v.city, v.state, v.image_url
        ORDER BY avg_rating DESC, times_visited DESC
        LIMIT $2`,

@@ -133,6 +133,7 @@ export class DiscoveryService {
           JOIN event_lineup el ON c.event_id = el.event_id
           JOIN bands b ON el.band_id = b.id
           WHERE c.user_id = $1 AND b.genre IS NOT NULL
+            AND (c.is_hidden IS NOT TRUE)
           GROUP BY b.genre
           ORDER BY genre_count DESC
           LIMIT 5
@@ -146,6 +147,7 @@ export class DiscoveryService {
             AND c.event_id IN (
               SELECT id FROM events WHERE event_date >= CURRENT_DATE AND is_cancelled = FALSE
             )
+            AND (c.is_hidden IS NOT TRUE)
             AND NOT EXISTS (
               SELECT 1 FROM user_blocks
               WHERE (blocker_id = $1 AND blocked_id = c.user_id)
@@ -158,11 +160,12 @@ export class DiscoveryService {
           SELECT event_id, COUNT(*) as checkin_count
           FROM checkins
           WHERE created_at >= NOW() - INTERVAL '7 days'
+            AND (is_hidden IS NOT TRUE)
           GROUP BY event_id
         )
         SELECT e.*, v.id as v_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
-          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
+          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id AND c.is_hidden IS NOT TRUE) as checkin_count,
           COALESCE(MAX(ug.genre_count), 0) * 3.0 as genre_score,
           COALESCE(fc.friend_count, 0) * 5.0 as friend_score,
           COALESCE(rt.checkin_count, 0) * 1.0 as trending_score,
@@ -232,7 +235,8 @@ export class DiscoveryService {
           COUNT(DISTINCT c.user_id)::int as unique_fans
         FROM checkin_band_ratings cbr
         JOIN checkins c ON cbr.checkin_id = c.id
-        WHERE cbr.band_id = $1`,
+        WHERE cbr.band_id = $1
+          AND (c.is_hidden IS NOT TRUE)`,
         [bandId]
       );
 
@@ -262,7 +266,8 @@ export class DiscoveryService {
           COUNT(DISTINCT c.id)::int as total_ratings,
           COUNT(DISTINCT c.user_id)::int as unique_visitors
         FROM checkins c
-        WHERE c.venue_id = $1 AND c.venue_rating IS NOT NULL AND c.venue_rating > 0`,
+        WHERE c.venue_id = $1 AND c.venue_rating IS NOT NULL AND c.venue_rating > 0
+          AND (c.is_hidden IS NOT TRUE)`,
         [venueId]
       );
 

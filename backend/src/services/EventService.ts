@@ -306,7 +306,7 @@ export class EventService {
           e.*,
           v.id as v_id, v.name as venue_name, v.city as venue_city,
           v.state as venue_state, v.image_url as venue_image,
-          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+          (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id AND c.is_hidden IS NOT TRUE) as checkin_count
         FROM events e
         LEFT JOIN venues v ON e.venue_id = v.id
         WHERE e.event_date >= CURRENT_DATE - INTERVAL '30 days'
@@ -662,10 +662,11 @@ export class EventService {
             SELECT e.*,
                    v.id as v_id, v.name as venue_name, v.city as venue_city,
                    v.state as venue_state, v.image_url as venue_image,
-                   (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
+                   (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id AND c.is_hidden IS NOT TRUE) as checkin_count,
                    (SELECT COUNT(*) FROM checkins c
                     WHERE c.event_id = e.id
                       AND c.created_at >= CURRENT_DATE - ($3 || ' days')::INTERVAL
+                      AND c.is_hidden IS NOT TRUE
                    ) as recent_checkins,
                    (6371 * acos(
                      cos(radians($1)) * cos(radians(v.latitude)) *
