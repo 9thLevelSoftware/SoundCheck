@@ -163,7 +163,7 @@
 ## Phase 4: Service Refactoring (CA) — QUALITY
 
 ### Task 4.1: Extract CheckinQueryService
-- [ ] **File**: `backend/src/services/CheckinQueryService.ts`
+- [x] **File**: `backend/src/services/checkin/CheckinQueryService.ts`
 - **Move from CheckinService**:
   - `getActivityFeed()`
   - `getCheckinById()`
