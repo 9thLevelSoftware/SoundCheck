@@ -39,7 +39,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
     try {
       final dioClient = ref.read(dioClientProvider);
       final response = await dioClient.post(
-        '/api/auth/forgot-password',
+        '/auth/forgot-password',
         data: {'email': _emailController.text.trim()},
       );
 

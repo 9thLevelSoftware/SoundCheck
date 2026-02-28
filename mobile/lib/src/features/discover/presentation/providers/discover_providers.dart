@@ -134,7 +134,7 @@ Future<List<User>> discoverUserSearch(Ref ref) async {
 
   try {
     final response = await dioClient.get(
-      '/api/search/users',
+      '/search/users',
       queryParameters: {
         'q': query,
         'limit': 10,

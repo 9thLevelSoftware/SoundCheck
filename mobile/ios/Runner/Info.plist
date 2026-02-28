@@ -82,5 +82,18 @@
 	<!-- Motion & Fitness (for activity detection in future) -->
 	<key>NSMotionUsageDescription</key>
 	<string>SoundCheck may use motion data to enhance your concert experience and automatically detect when you're at a venue.</string>
+	<key>FlutterDeepLinkingEnabled</key>
+	<true/>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>soundcheck</string>
+			</array>
+		</dict>
+	</array>
 </dict>
 </plist>
