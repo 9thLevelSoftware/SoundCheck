@@ -38,6 +38,8 @@
 - [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
 - [x] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile (completed 2026-02-28)
 - [x] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements (completed 2026-02-28)
+- [ ] **Phase 11.1: Cross-Phase Integration Fixes** *(INSERTED — gap closure)* — Fix 4 backend integration gaps: denormalized count triggers, claimed_by_user_id in API responses, block filter in TrendingService, is_hidden in SearchService
+- [ ] **Phase 11.2: Mobile Review Response UI** *(INSERTED — gap closure)* — Add mobile screen for claimed venue owners to respond to reviews, completing the VERIFY-05 requirement
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
 
 ## Phase Details
@@ -140,6 +142,29 @@ Plans:
 - [ ] 11-05-PLAN.md — Mobile trending feed section + search screen upgrade
 - [ ] 11-06-PLAN.md — Mobile verification UI (claim submission, claims list, verified badges, owner responses)
 
+### Phase 11.1: Cross-Phase Integration Fixes *(INSERTED — gap closure)*
+**Goal**: Fix 4 cross-phase integration gaps discovered by milestone audit — denormalized count write path, claimed_by_user_id in API responses, block filtering in trending, and is_hidden in search counts
+**Depends on**: Phase 11 (all gaps are in Phase 11 services)
+**Requirements**: SCALE-02, VERIFY-04, SAFE-04, SAFE-02
+**Gap Closure**: Closes audit gaps — 2 unsatisfied requirements (SCALE-02, VERIFY-04) and 2 partial requirements (SAFE-04, SAFE-02); fixes 3 broken E2E flows and 4 integration connections
+**Success Criteria** (what must be TRUE):
+  1. After toasting or commenting on a check-in, the feed correctly reflects updated toast_count and comment_count (not permanently 0)
+  2. Verified venues and bands display verification badges in venue/band detail screens (claimed_by_user_id returned in API responses)
+  3. Blocked users' check-ins do not appear in or influence the trending feed
+  4. Event search result checkin_count excludes hidden/moderated content
+**Plans:** TBD
+
+### Phase 11.2: Mobile Review Response UI *(INSERTED — gap closure)*
+**Goal**: Claimed venue owners can respond to reviews from the mobile app, completing the review response feature that currently exists only as a backend endpoint
+**Depends on**: Phase 11.1 (claimed_by_user_id fix needed for badge display), Phase 11 (ReviewService.respondToReview endpoint exists)
+**Requirements**: VERIFY-05
+**Gap Closure**: Closes audit gap — POST /api/claims/reviews/:reviewId/respond exists but has no mobile consumer
+**Success Criteria** (what must be TRUE):
+  1. Claimed venue owner sees a "Respond" action on reviews of their venue
+  2. Owner can type and submit a response that is saved via the existing backend endpoint
+  3. Response appears in the review thread for all users to see
+**Plans:** TBD
+
 ### Phase 12: Monetization & Wrapped
 **Goal**: Users experience their year in concerts through SoundCheck Wrapped, and a premium subscription tier generates recurring revenue
 **Depends on**: Phase 11 (user_roles authorization model supports premium entitlements; satori pipeline reused for Wrapped cards)
@@ -155,7 +180,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 12
+Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 -> 11.2 -> 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -172,9 +197,11 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 12
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
 | 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
-| 11. Platform Trust & Between-Show Retention | 6/6 | Complete    | 2026-02-28 | - |
+| 11. Platform Trust & Between-Show Retention | v1.1 | 6/6 | Complete | 2026-02-28 |
+| 11.1. Cross-Phase Integration Fixes | v1.1 | 0/TBD | Not started | - |
+| 11.2. Mobile Review Response UI | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-28 after Phase 11 planning complete*
+*Last updated: 2026-02-28 after gap closure Phases 11.1/11.2 added*

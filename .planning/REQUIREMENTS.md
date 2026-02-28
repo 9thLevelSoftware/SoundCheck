@@ -10,9 +10,9 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 ### Trust & Safety
 
 - [x] **SAFE-01**: User can report any check-in, comment, or photo for abuse/spam/inappropriate content
-- [x] **SAFE-02**: Reported content enters moderation queue with automated Cloud Vision SafeSearch image scan
+- [ ] **SAFE-02**: Reported content enters moderation queue with automated Cloud Vision SafeSearch image scan
 - [x] **SAFE-03**: Admin can review, approve, or remove reported content from moderation queue
-- [x] **SAFE-04**: User can block another user (bilateral — blocks all interactions in both directions)
+- [ ] **SAFE-04**: User can block another user (bilateral — blocks all interactions in both directions)
 - [x] **SAFE-05**: User can reset forgotten password via email link
 
 ### Auth Cleanup
@@ -45,14 +45,14 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 - [x] **VERIFY-01**: Venue owner can submit claim request for venue profile
 - [x] **VERIFY-02**: Artist can submit claim request for band profile
 - [x] **VERIFY-03**: Admin reviews and approves/denies verification claims
-- [x] **VERIFY-04**: Verified profiles display verification badge
-- [x] **VERIFY-05**: Claimed venue owner can view aggregate ratings and respond to reviews
+- [ ] **VERIFY-04**: Verified profiles display verification badge
+- [ ] **VERIFY-05**: Claimed venue owner can view aggregate ratings and respond to reviews
 - [x] **VERIFY-06**: Claimed artist can update profile and view performance stats
 
 ### Technical Scale
 
 - [x] **SCALE-01**: Search uses PostgreSQL tsvector + GIN indexes with pg_trgm fuzzy fallback (replaces ILIKE)
-- [x] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
+- [ ] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
 - [x] **SCALE-03**: Band.genre migrated from single string to array/many-to-many for faceted filtering
 
 ### Monetization
@@ -113,9 +113,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SAFE-01 | Phase 10.1 | Complete |
-| SAFE-02 | Phase 9.1 | Complete |
+| SAFE-02 | Phase 11.1 | Pending |
 | SAFE-03 | Phase 9.1 | Complete |
-| SAFE-04 | Phase 10.1 | Complete |
+| SAFE-04 | Phase 11.1 | Pending |
 | SAFE-05 | Phase 10.2 | Complete |
 | AUTH-01 | Phase 9 | Complete |
 | AUTH-02 | Phase 9 | Complete |
@@ -133,11 +133,11 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VERIFY-01 | Phase 11 | Complete |
 | VERIFY-02 | Phase 11 | Complete |
 | VERIFY-03 | Phase 11 | Complete |
-| VERIFY-04 | Phase 11 | Complete |
-| VERIFY-05 | Phase 11 | Complete |
+| VERIFY-04 | Phase 11.1 | Pending |
+| VERIFY-05 | Phase 11.2 | Pending |
 | VERIFY-06 | Phase 11 | Complete |
 | SCALE-01 | Phase 11 | Complete |
-| SCALE-02 | Phase 11 | Complete |
+| SCALE-02 | Phase 11.1 | Pending |
 | SCALE-03 | Phase 11 | Complete |
 | MONEY-01 | Phase 12 | Pending |
 | MONEY-02 | Phase 12 | Pending |
@@ -152,4 +152,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 after gap closure Phase 10.2 added (SAFE-05 reset to Pending)*
+*Last updated: 2026-02-28 after gap closure Phases 11.1/11.2 added (SCALE-02, VERIFY-04, SAFE-04, SAFE-02, VERIFY-05 reset to Pending)*
