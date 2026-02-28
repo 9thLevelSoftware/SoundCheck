@@ -105,6 +105,31 @@ export class R2Service {
   }
 
   /**
+   * Upload a buffer directly to R2 (for server-generated content like share card images).
+   *
+   * @param buffer - The file content as a Buffer
+   * @param key - R2 object key (e.g., 'cards/checkin/abc-og.png')
+   * @param contentType - MIME type (e.g., 'image/png')
+   * @returns Public URL of the uploaded object
+   */
+  async uploadBuffer(buffer: Buffer, key: string, contentType: string): Promise<string> {
+    if (!this.isConfigured || !this.s3) {
+      throw new Error('R2 is not configured');
+    }
+
+    await this.s3.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: contentType,
+      })
+    );
+
+    return `${this.publicUrl}/${key}`;
+  }
+
+  /**
    * Delete an object from R2 (e.g., when a photo is removed from a check-in).
    * Silently returns if R2 is not configured.
    */
