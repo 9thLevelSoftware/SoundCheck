@@ -93,42 +93,32 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 
 ## Context
 
-**Current State (v1.0 shipped 2026-02-27):**
-- Monorepo: `/backend` (Node.js/Express/TypeScript, 25k LOC) and `/mobile` (Flutter/Dart, 60k LOC)
-- PostgreSQL with 25 migrations, Redis caching, BullMQ job processing
-- 363 tests passing across 166 test files
+**Current State (v1.1 shipped 2026-02-28):**
+- Monorepo: `/backend` (Node.js/Express/TypeScript, 28.7k LOC) and `/mobile` (Flutter/Dart, 32.9k LOC excl. generated)
+- PostgreSQL with 38 migrations, Redis caching, BullMQ job processing
+- 353 tests passing
 - Clean architecture on mobile (data/domain/presentation), MVC + service layer on backend
 - Deployed on Railway.app (single instance)
-- External integrations: Ticketmaster Discovery API, Foursquare, MusicBrainz, SetlistFM, Firebase, Cloudflare R2, Sentry
+- External integrations: Ticketmaster, Foursquare, MusicBrainz, SetlistFM, Firebase, Cloudflare R2, Sentry, RevenueCat, Resend (email), Cloud Vision SafeSearch
+- Full trust & safety pipeline (report/block/moderation/verification)
+- SoundCheck Wrapped + Pro subscription tier
 
-**Known Technical Debt:**
+**Known Technical Debt (from v1.1 audit):**
 - CheckinService still 1,400 LOC (facade pattern started, ~70% extraction deferred)
-- Legacy `reviews` table coexists with new `checkin_band_ratings` — needs cleanup
-- `checkins.band_rating` INTEGER column from old migration still exists
-- Feed queries use COUNT(DISTINCT) with LEFT JOINs — will degrade at scale
-- Search uses ILIKE — needs full-text search for scale
-- In-memory rate limiter fallback on Redis failure (per-instance, not distributed)
-- 8 `as any` type casts remaining in production code
-- No staging environment
-- No load testing performed
+- Legacy `reviews` table coexists with `checkin_band_ratings`
+- VenueService maps `total_reviews` to `totalCheckins` (semantic mismatch)
+- purchases_flutter `purchasePackage()` deprecated API
+- Dead code: `showPremiumPaywallSheet`, `serverSubscriptionStatusProvider`
+- WrappedService.getFriendOverlap missing block filter (P3)
+- No mobile screen for claimed owner stats or band profile edit
+- ReviewService.respondToReview has no idempotency guard
+- No staging environment, no load testing
 
-**Board of Directors Gap Analysis (2026-02-27):**
-Unanimous CONCERNS (5/5 directors) identified 5 structural gaps vs. Untappd:
-1. No between-show retention mechanism
-2. No viral loops outside the app (no social sharing)
-3. No artist/venue stakeholders on the platform
-4. No trust infrastructure (moderation, verification)
-5. No monetization design
+**Shipped Milestones:**
+- v1.0 MVP (2026-02-27): 8 phases, 22 plans, 77 requirements
+- v1.1 Launch Readiness (2026-02-28): 9 phases, 30 plans, 32 requirements
 
-## Current Milestone: v1.1 Launch Readiness & Growth Platform
-
-**Goal:** Close the 5 structural gaps identified by the Board of Directors gap analysis — launch blockers, viral growth, platform trust, between-show retention, and monetization foundation — transforming SoundCheck from "a good concert check-in app" into "a platform with network effects."
-
-**Target features:**
-- Launch blockers: report/flag, forgot password, remove fake auth stubs, onboarding
-- Viral growth engine: social sharing cards, RSVP, trending feed, badge expansion
-- Platform trust: verification, content moderation, full-text search, tech debt fixes
-- Retention & monetization: artist/venue accounts, SoundCheck Wrapped, premium tier design, collaborative filtering
+## Current Milestone: None (use `/gsd:new-milestone` to start next)
 
 ## Constraints
 

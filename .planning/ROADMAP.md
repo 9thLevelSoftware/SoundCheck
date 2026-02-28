@@ -3,46 +3,36 @@
 ## Milestones
 
 - ✅ **v1.0 MVP** — Phases 1-8 (shipped 2026-02-27)
-- 🚧 **v1.1 Launch Readiness & Growth Platform** — Phases 9-12 (in progress)
+- ✅ **v1.1 Launch Readiness & Growth Platform** — Phases 9-12 (shipped 2026-02-28)
 
 ## Phases
 
 <details>
 <summary>✅ v1.0 MVP (Phases 1-8) — SHIPPED 2026-02-27</summary>
 
-- [x] Phase 1: Data Model Foundation (3/3 plans) — completed 2026-02-02
-- [x] Phase 2: Event Data Pipeline (3/3 plans) — completed 2026-02-03
-- [x] Phase 3: Core Check-in Flow (3/3 plans) — completed 2026-02-03
-- [x] Phase 4: Badge Engine (3/3 plans) — completed 2026-02-03
-- [x] Phase 5: Social Feed & Real-time (3/3 plans) — completed 2026-02-03
-- [x] Phase 6: Profile & Concert Cred (2/2 plans) — completed 2026-02-03
-- [x] Phase 7: Discovery & Recommendations (3/3 plans) — completed 2026-02-03
-- [x] Phase 8: Polish & App Store Readiness (2/2 plans) — completed 2026-02-03
-
 **Total: 8 phases, 22 plans, 77 requirements — all complete**
 **Archive:** `.planning/milestones/v1.0-ROADMAP.md`
 
 </details>
 
-### 🚧 v1.1 Launch Readiness & Growth Platform (In Progress)
+<details>
+<summary>✅ v1.1 Launch Readiness & Growth Platform (Phases 9-12) — SHIPPED 2026-02-28</summary>
 
-**Milestone Goal:** Close the 5 structural gaps identified by the Board of Directors gap analysis — launch blockers, viral growth, platform trust, between-show retention, and monetization foundation — transforming SoundCheck from "a good concert check-in app" into "a platform with network effects."
+**Total: 9 phases, 30 plans, 32 requirements — all complete**
+**Archive:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`
 
-**Phase Numbering:**
-- Integer phases (9, 10, 11, 12): Planned milestone work
-- Decimal phases (9.1, 10.1): Urgent insertions (marked with INSERTED)
+</details>
 
-- [ ] **Phase 9: Trust & Safety Foundation** — App Store compliance infrastructure: report/block/moderation pipeline, auth cleanup, and tech debt that must be resolved before new UGC surfaces ship
-- [ ] **Phase 9.1: Content Moderation Enforcement** *(INSERTED — gap closure)* — Wire is_hidden filtering into all content-serving queries so moderated content is actually excluded from feeds
-- [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
-- [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
-- [x] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile (completed 2026-02-28)
-- [x] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements (completed 2026-02-28)
-- [x] **Phase 11.1: Cross-Phase Integration Fixes** *(INSERTED — gap closure)* — Fix 4 backend integration gaps: denormalized count triggers, claimed_by_user_id in API responses, block filter in TrendingService, is_hidden in SearchService (completed 2026-02-28)
-- [ ] **Phase 11.2: Mobile Review Response UI** *(INSERTED — gap closure)* — Add mobile screen for claimed venue owners to respond to reviews, completing the VERIFY-05 requirement
-- [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
+### Next Milestone (TBD)
 
-## Phase Details
+Use `/gsd:new-milestone` to define the next milestone with requirements and roadmap.
+
+---
+
+<details>
+<summary>v1.1 Phase Details (archived)</summary>
+
+## v1.1 Phase Details
 
 ### Phase 9: Trust & Safety Foundation
 **Goal**: Users and content are protected by a complete moderation pipeline, and the app meets App Store Guideline 1.2 requirements for UGC-enabled applications
@@ -54,12 +44,12 @@
   3. User can reset a forgotten password by receiving an email link and setting a new password
   4. Admin can open a moderation queue, see reported content with automated SafeSearch results, and approve or remove items
   5. Login screen shows only working authentication options (no fake biometric button, no Facebook stub)
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 Plans:
-- [ ] 09-01-PLAN.md — Database migrations and types foundation (reports, blocks, reset tokens, is_admin fix)
-- [ ] 09-02-PLAN.md — Report & moderation pipeline (ReportService, ModerationService, SafeSearch, admin queue)
-- [ ] 09-03-PLAN.md — Block system & auth cleanup (BlockService, feed filtering, remove biometric/Facebook stubs)
-- [ ] 09-04-PLAN.md — Password reset flow (EmailService, PasswordResetService, Resend integration, mobile screen)
+- [x] 09-01-PLAN.md — Database migrations and types foundation (reports, blocks, reset tokens, is_admin fix)
+- [x] 09-02-PLAN.md — Report & moderation pipeline (ReportService, ModerationService, SafeSearch, admin queue)
+- [x] 09-03-PLAN.md — Block system & auth cleanup (BlockService, feed filtering, remove biometric/Facebook stubs)
+- [x] 09-04-PLAN.md — Password reset flow (EmailService, PasswordResetService, Resend integration, mobile screen)
 
 ### Phase 9.1: Content Moderation Enforcement *(INSERTED — gap closure)*
 **Goal**: Moderated content (flagged by SafeSearch or hidden by admin) is actually excluded from all user-facing feeds, completing the moderation enforcement loop
@@ -71,10 +61,10 @@ Plans:
   2. Comments with `is_hidden = true` do not appear in comment lists
   3. Hidden content is excluded from discovery/recommendation queries
   4. Admin hiding content via moderation queue causes immediate removal from all feeds on next refresh
-**Plans:** 2 plans
+**Plans:** 2/2 plans complete
 Plans:
-- [ ] 09.1-01-PLAN.md -- Feed & checkin query is_hidden filtering (FeedService, CheckinQueryService, CheckinToastService) + partial indexes migration
-- [ ] 09.1-02-PLAN.md -- Discovery/trending/stats is_hidden filtering (DiscoveryService, EventService, StatsService) + ModerationService cache invalidation
+- [x] 09.1-01-PLAN.md -- Feed & checkin query is_hidden filtering (FeedService, CheckinQueryService, CheckinToastService) + partial indexes migration
+- [x] 09.1-02-PLAN.md -- Discovery/trending/stats is_hidden filtering (DiscoveryService, EventService, StatsService) + ModerationService cache invalidation
 
 ### Phase 10: Viral Growth Engine
 **Goal**: New users convert through onboarding, existing users share check-ins and badges to social platforms, and pre-show engagement drives friend attendance
@@ -88,11 +78,11 @@ Plans:
   5. User can tap "I'm Going" on an upcoming event and see which friends are also going (count + avatars)
 **Plans:** 5/5 plans complete
 Plans:
-- [ ] 10-01-PLAN.md -- Database migrations + RsvpService + OnboardingService + routes (backend RSVP & onboarding APIs)
-- [ ] 10-02-PLAN.md -- ShareCardService + satori card templates + web landing page (backend share pipeline)
-- [ ] 10-03-PLAN.md -- Mobile onboarding enhancement (carousel + genre picker)
-- [ ] 10-04-PLAN.md -- Mobile celebration screen + social sharing flow
-- [ ] 10-05-PLAN.md -- Mobile RSVP UI + event detail friends going
+- [x] 10-01-PLAN.md -- Database migrations + RsvpService + OnboardingService + routes (backend RSVP & onboarding APIs)
+- [x] 10-02-PLAN.md -- ShareCardService + satori card templates + web landing page (backend share pipeline)
+- [x] 10-03-PLAN.md -- Mobile onboarding enhancement (carousel + genre picker)
+- [x] 10-04-PLAN.md -- Mobile celebration screen + social sharing flow
+- [x] 10-05-PLAN.md -- Mobile RSVP UI + event detail friends going
 
 ### Phase 10.1: Report & Block Mobile UI *(INSERTED — gap closure)*
 **Goal**: Users can report content and block other users from the mobile app, completing the Trust & Safety loop that Phase 9 started on the backend
@@ -106,8 +96,8 @@ Plans:
   4. Report confirmation is shown to the user after submission
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 10.1-01-PLAN.md -- Content reporting UI (ReportRepository + ReportBottomSheet + feed card / check-in detail integration)
-- [ ] 10.1-02-PLAN.md -- Block system UI (BlockRepository + UserProfileScreen rebuild + BlockedUsersScreen + Settings link)
+- [x] 10.1-01-PLAN.md -- Content reporting UI (ReportRepository + ReportBottomSheet + feed card / check-in detail integration)
+- [x] 10.1-02-PLAN.md -- Block system UI (BlockRepository + UserProfileScreen rebuild + BlockedUsersScreen + Settings link)
 
 ### Phase 10.2: Password Reset Mobile Fix *(INSERTED — gap closure)*
 **Goal**: Password reset flow works end-to-end on mobile — user can request a reset email and complete the password change via deep link
@@ -121,7 +111,7 @@ Plans:
   4. Pre-existing discover_providers.dart double-prefix URL fixed (bonus)
 **Plans:** 1/1 plans complete
 Plans:
-- [ ] 10.2-01-PLAN.md -- Password reset URL fix + deep link handler + ResetPasswordScreen
+- [x] 10.2-01-PLAN.md -- Password reset URL fix + deep link handler + ResetPasswordScreen
 
 ### Phase 11: Platform Trust & Between-Show Retention
 **Goal**: Users stay engaged between concerts via trending shows, the platform gains credibility through verified venue/artist profiles, and search/feed performance scales
@@ -135,12 +125,12 @@ Plans:
   5. Feed queries perform consistently under load using denormalized count columns instead of COUNT(DISTINCT) joins
 **Plans:** 6/6 plans complete
 Plans:
-- [ ] 11-01-PLAN.md — Database migrations (verification claims, tsvector search, genre array, review responses) + TypeScript types
-- [ ] 11-02-PLAN.md — TrendingService with Wilson scoring + feed denormalized count switchover
-- [ ] 11-03-PLAN.md — SearchService (tsvector + fuzzy fallback) + genre array query migration
-- [ ] 11-04-PLAN.md — ClaimService + admin approval + claimed owner features (review response, profile update, stats)
-- [ ] 11-05-PLAN.md — Mobile trending feed section + search screen upgrade
-- [ ] 11-06-PLAN.md — Mobile verification UI (claim submission, claims list, verified badges, owner responses)
+- [x] 11-01-PLAN.md — Database migrations (verification claims, tsvector search, genre array, review responses) + TypeScript types
+- [x] 11-02-PLAN.md — TrendingService with Wilson scoring + feed denormalized count switchover
+- [x] 11-03-PLAN.md — SearchService (tsvector + fuzzy fallback) + genre array query migration
+- [x] 11-04-PLAN.md — ClaimService + admin approval + claimed owner features (review response, profile update, stats)
+- [x] 11-05-PLAN.md — Mobile trending feed section + search screen upgrade
+- [x] 11-06-PLAN.md — Mobile verification UI (claim submission, claims list, verified badges, owner responses)
 
 ### Phase 11.1: Cross-Phase Integration Fixes *(INSERTED — gap closure)*
 **Goal**: Fix 4 cross-phase integration gaps discovered by milestone audit — denormalized count write path, claimed_by_user_id in API responses, block filtering in trending, and is_hidden in search counts
@@ -154,8 +144,8 @@ Plans:
   4. Event search result checkin_count excludes hidden/moderated content
 **Plans:** 2/2 plans complete
 Plans:
-- [ ] 11.1-01-PLAN.md — Denormalized count triggers migration (PostgreSQL triggers + backfill for toast_count/comment_count)
-- [ ] 11.1-02-PLAN.md — Service query patches (claimed_by_user_id in venue/band APIs, block filter in trending, is_hidden in search)
+- [x] 11.1-01-PLAN.md — Denormalized count triggers migration (PostgreSQL triggers + backfill for toast_count/comment_count)
+- [x] 11.1-02-PLAN.md — Service query patches (claimed_by_user_id in venue/band APIs, block filter in trending, is_hidden in search)
 
 ### Phase 11.2: Mobile Review Response UI *(INSERTED — gap closure)*
 **Goal**: Claimed venue owners can respond to reviews from the mobile app, completing the review response feature that currently exists only as a backend endpoint
@@ -166,9 +156,9 @@ Plans:
   1. Claimed venue owner sees a "Respond" action on reviews of their venue
   2. Owner can type and submit a response that is saved via the existing backend endpoint
   3. Response appears in the review thread for all users to see
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 11.2-01-PLAN.md — Backend review query fix + mobile Review model update + owner response bottom sheet + venue detail reviews section
+- [x] 11.2-01-PLAN.md — Backend review query fix + mobile Review model update + owner response bottom sheet + venue detail reviews section
 
 ### Phase 12: Monetization & Wrapped
 **Goal**: Users experience their year in concerts through SoundCheck Wrapped, and a premium subscription tier generates recurring revenue
@@ -180,7 +170,15 @@ Plans:
   3. User can subscribe to SoundCheck Pro ($4.99/mo) via in-app purchase on iOS and Android
   4. Premium subscribers access enhanced Wrapped with detailed analytics (top sets, genre evolution, friend overlap)
   5. Premium entitlements are validated server-side — revoking a subscription immediately removes access to premium features
-**Plans**: TBD
+**Plans:** 7/7 plans complete
+Plans:
+- [x] 12-01-PLAN.md — Database migration (is_premium, processed_webhook_events) + types + requirePremium() middleware
+- [x] 12-02-PLAN.md — WrappedService (year-filtered stats) + WrappedController + routes
+- [x] 12-03-PLAN.md — Wrapped card templates (satori voltLime) + ShareCardService extension + landing page
+- [x] 12-04-PLAN.md — SubscriptionService (RevenueCat webhook handler) + subscription routes
+- [x] 12-05-PLAN.md — Mobile Wrapped feature (story slides, detail screen, repository, providers)
+- [x] 12-06-PLAN.md — Mobile subscription feature (RevenueCat SDK, Pro screen, paywall, Pro badge)
+- [x] 12-07-PLAN.md — Integration (main.dart init, router, profile Pro badge + Wrapped entry, analytics)
 
 ## Progress
 
@@ -198,15 +196,17 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 | 7. Discovery & Recommendations | v1.0 | 3/3 | Complete | 2026-02-03 |
 | 8. Polish & App Store Readiness | v1.0 | 2/2 | Complete | 2026-02-03 |
 | 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
-| 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
+| 9.1. Content Moderation Enforcement | v1.1 | 2/2 | Complete | 2026-02-27 |
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
 | 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 6/6 | Complete | 2026-02-28 |
 | 11.1. Cross-Phase Integration Fixes | v1.1 | 2/2 | Complete | 2026-02-28 |
-| 11.2. Mobile Review Response UI | v1.1 | 0/1 | Not started | - |
-| 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
+| 11.2. Mobile Review Response UI | v1.1 | 1/1 | Complete | 2026-02-28 |
+| 12. Monetization & Wrapped | v1.1 | 7/7 | Complete | 2026-02-28 |
+
+</details>
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-28 after Phase 11.2 planning (1 plan)*
+*Last updated: 2026-02-28 — v1.1 milestone archived*

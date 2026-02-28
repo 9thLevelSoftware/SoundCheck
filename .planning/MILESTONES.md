@@ -23,3 +23,26 @@
 
 ---
 
+## v1.1 Launch Readiness & Growth Platform (Shipped: 2026-02-28)
+
+**Phases completed:** 9 phases, 30 plans
+**Timeline:** 2 days (2026-02-27 → 2026-02-28)
+**Commits:** 103 (44 feat, 5 fix)
+**Files changed:** 215 (+30,564 / -616 LOC)
+**Codebase:** 28,704 LOC TypeScript (backend) + 32,889 LOC Dart (mobile, excl. generated)
+**Migrations:** 13 new (026–038), 38 total
+**Requirements:** 32/32 satisfied
+
+**Key accomplishments:**
+1. Complete trust & safety pipeline: report/block/moderation with SafeSearch image scanning, is_hidden enforcement across all services, and admin moderation queue
+2. Viral growth engine: onboarding carousel with genre picker, post-check-in celebration screen, satori-generated share cards for Instagram Stories/X/TikTok, and web landing pages
+3. Platform credibility: venue/artist claim-and-verify system with admin approval, verification badges, owner review responses, and trending shows feed with Wilson scoring
+4. Technical scalability: PostgreSQL full-text search (tsvector + pg_trgm fuzzy), denormalized count triggers, genre array migration
+5. SoundCheck Wrapped: story-style annual recap with 6 slides, share cards, premium detail analytics, RevenueCat subscription integration
+6. Cross-phase integration: 5 gap-closure phases (9.1, 10.1, 10.2, 11.1, 11.2) inserted during execution to fix integration issues found by milestone audits
+
+**Git range:** `df00cad` (feat(09-01)) → `bc4272f` (fix(12))
+**Archive:** `.planning/milestones/v1.1-ROADMAP.md`, `.planning/milestones/v1.1-REQUIREMENTS.md`
+
+---
+
