@@ -97,8 +97,8 @@ export class FeedService {
         u.profile_image_url AS user_avatar_url,
         e.event_name,
         v.name AS venue_name,
-        COUNT(DISTINCT t.id)::int AS toast_count,
-        COUNT(DISTINCT cm.id)::int AS comment_count,
+        c.toast_count,
+        c.comment_count,
         EXISTS(
           SELECT 1 FROM user_badges ub
           WHERE ub.user_id = c.user_id
@@ -114,14 +114,10 @@ export class FeedService {
       JOIN users u ON c.user_id = u.id
       LEFT JOIN events e ON c.event_id = e.id
       LEFT JOIN venues v ON e.venue_id = v.id
-      LEFT JOIN toasts t ON c.id = t.checkin_id
-      LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
       WHERE uf.follower_id = $1
         AND (c.is_hidden IS NOT TRUE)
         ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         ${cursorClause}
-      GROUP BY c.id, c.user_id, c.event_id, c.created_at, c.photo_url,
-               u.username, u.profile_image_url, e.event_name, v.name
       ORDER BY c.created_at DESC, c.id DESC
       LIMIT $2
     `;
@@ -181,8 +177,8 @@ export class FeedService {
         u.profile_image_url AS user_avatar_url,
         e.event_name,
         v.name AS venue_name,
-        COUNT(DISTINCT t.id)::int AS toast_count,
-        COUNT(DISTINCT cm.id)::int AS comment_count,
+        c.toast_count,
+        c.comment_count,
         EXISTS(
           SELECT 1 FROM user_badges ub
           WHERE ub.user_id = c.user_id
@@ -194,13 +190,9 @@ export class FeedService {
       JOIN users u ON c.user_id = u.id
       LEFT JOIN events e ON c.event_id = e.id
       LEFT JOIN venues v ON e.venue_id = v.id
-      LEFT JOIN toasts t ON c.id = t.checkin_id
-      LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
       WHERE c.event_id = $1
         AND (c.is_hidden IS NOT TRUE)
         ${cursorClause}
-      GROUP BY c.id, c.user_id, c.event_id, c.created_at, c.photo_url,
-               u.username, u.profile_image_url, e.event_name, v.name
       ORDER BY c.created_at DESC, c.id DESC
       LIMIT $2
     `;

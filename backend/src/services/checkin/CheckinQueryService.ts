@@ -39,8 +39,8 @@ export class CheckinQueryService {
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
           ev.event_date as ev_event_date, ev.event_name as ev_event_name,
-          COUNT(DISTINCT t.id) as toast_count,
-          COUNT(DISTINCT cm.id) as comment_count
+          c.toast_count,
+          c.comment_count
           ${currentUserId ? `, EXISTS(
             SELECT 1 FROM toasts
             WHERE checkin_id = c.id AND user_id = $2
@@ -50,11 +50,8 @@ export class CheckinQueryService {
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
         LEFT JOIN events ev ON c.event_id = ev.id
-        LEFT JOIN toasts t ON c.id = t.checkin_id
-        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
         WHERE c.id = $1
           AND (c.is_hidden IS NOT TRUE)
-        GROUP BY c.id, u.id, v.id, b.id, ev.id
       `;
 
       const params = currentUserId ? [checkinId, currentUserId] : [checkinId];
@@ -147,8 +144,8 @@ export class CheckinQueryService {
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(DISTINCT t.id) as toast_count,
-          COUNT(DISTINCT cm.id) as comment_count,
+          c.toast_count,
+          c.comment_count,
           EXISTS(
             SELECT 1 FROM toasts
             WHERE checkin_id = c.id AND user_id = $1
@@ -157,12 +154,9 @@ export class CheckinQueryService {
         LEFT JOIN users u ON c.user_id = u.id
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
-        LEFT JOIN toasts t ON c.id = t.checkin_id
-        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
         ${whereClause}
         AND (c.is_hidden IS NOT TRUE)
         ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
-        GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
         LIMIT $${limitParamIdx} OFFSET $${offsetParamIdx}
       `;
@@ -212,17 +206,14 @@ export class CheckinQueryService {
           v.state as venue_state, v.image_url as venue_image,
           b.id as band_id, b.name as band_name, b.genre as band_genre,
           b.image_url as band_image,
-          COUNT(DISTINCT t.id) as toast_count,
-          COUNT(DISTINCT cm.id) as comment_count
+          c.toast_count,
+          c.comment_count
         FROM checkins c
         LEFT JOIN users u ON c.user_id = u.id
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
-        LEFT JOIN toasts t ON c.id = t.checkin_id
-        LEFT JOIN checkin_comments cm ON c.id = cm.checkin_id AND cm.is_hidden IS NOT TRUE
         ${whereClause}
         AND (c.is_hidden IS NOT TRUE)
-        GROUP BY c.id, u.id, v.id, b.id
         ORDER BY c.created_at DESC
         LIMIT $${paramIndex++} OFFSET $${paramIndex++}
       `;
