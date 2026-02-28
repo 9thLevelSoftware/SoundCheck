@@ -115,6 +115,13 @@ class SettingsScreen extends ConsumerWidget {
                   _launchUrl('https://soundcheck.app/terms');
                 },
               ),
+              _SettingsTile(
+                title: 'Blocked Users',
+                subtitle: 'Manage blocked users',
+                leading: const Icon(Icons.block),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/profile/settings/blocked-users'),
+              ),
               const Divider(),
 
               // About Section
