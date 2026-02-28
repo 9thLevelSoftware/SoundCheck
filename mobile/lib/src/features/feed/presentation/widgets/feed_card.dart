@@ -1,14 +1,17 @@
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../../core/providers/providers.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/utils/a11y_utils.dart';
+import '../../../reporting/presentation/widgets/report_bottom_sheet.dart';
 import '../../domain/feed_item.dart';
 
 /// Untappd-style balanced feed card showing user + event info + photo + badge indicator
 /// Ratings and badges are behind a tap (detail view), not on the card surface
-class FeedCard extends StatelessWidget {
+class FeedCard extends ConsumerWidget {
   const FeedCard({
     required this.item, super.key,
     this.onToast,
@@ -40,8 +43,10 @@ class FeedCard extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final timeAgo = _getTimeAgo(item.createdAt);
+    final currentUserId = ref.watch(authStateProvider).value?.id;
+    final isOwnContent = currentUserId != null && item.userId == currentUserId;
 
     return Semantics(
       label: feedCardSemantics(
@@ -118,6 +123,36 @@ class FeedCard extends StatelessWidget {
                       ],
                     ),
                   ),
+                  // Report overflow menu (hidden on own content)
+                  if (!isOwnContent)
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: AppTheme.textTertiary,
+                        size: 20,
+                      ),
+                      onSelected: (value) {
+                        if (value == 'report') {
+                          showReportBottomSheet(
+                            context,
+                            contentType: 'checkin',
+                            contentId: item.checkinId,
+                          );
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'report',
+                          child: Row(
+                            children: [
+                              Icon(Icons.flag_outlined, size: 18),
+                              SizedBox(width: 8),
+                              Text('Report'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),

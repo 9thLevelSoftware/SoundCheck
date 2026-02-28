@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../reporting/presentation/widgets/report_bottom_sheet.dart';
 import '../domain/checkin.dart';
 import '../domain/checkin_comment.dart';
 import 'providers/checkin_providers.dart';
@@ -134,10 +136,48 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
         title: const Text('Check-in'),
         actions: [
           checkinAsync.maybeWhen(
-            data: (checkIn) => IconButton(
-              icon: const Icon(Icons.share),
-              onPressed: () => _handleShare(checkIn),
-            ),
+            data: (checkIn) {
+              final currentUserId = ref.watch(authStateProvider).value?.id;
+              final isOwnContent = currentUserId != null &&
+                  checkIn.userId == currentUserId;
+              return Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.share),
+                    onPressed: () => _handleShare(checkIn),
+                  ),
+                  if (!isOwnContent)
+                    PopupMenuButton<String>(
+                      icon: const Icon(
+                        Icons.more_vert,
+                        color: AppTheme.textSecondary,
+                      ),
+                      onSelected: (value) {
+                        if (value == 'report') {
+                          showReportBottomSheet(
+                            context,
+                            contentType: 'checkin',
+                            contentId: widget.checkinId,
+                          );
+                        }
+                      },
+                      itemBuilder: (context) => [
+                        const PopupMenuItem(
+                          value: 'report',
+                          child: Row(
+                            children: [
+                              Icon(Icons.flag_outlined, size: 18),
+                              SizedBox(width: 8),
+                              Text('Report Check-in'),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              );
+            },
             orElse: () => const SizedBox.shrink(),
           ),
         ],
@@ -199,7 +239,12 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
 
                     // Photos Carousel
                     if (checkIn.imageUrls != null && checkIn.imageUrls!.isNotEmpty)
-                      _PhotosCarousel(imageUrls: checkIn.imageUrls!),
+                      _PhotosCarousel(
+                        imageUrls: checkIn.imageUrls!,
+                        checkinId: widget.checkinId,
+                        currentUserId: ref.watch(authStateProvider).value?.id,
+                        checkinUserId: checkIn.userId,
+                      ),
 
                     // Action Bar
                     _ActionBar(
@@ -220,6 +265,7 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
                       checkinId: widget.checkinId,
                       getTimeAgo: _getTimeAgo,
                       onUserTap: (userId) => context.push('/users/$userId'),
+                      currentUserId: ref.watch(authStateProvider).value?.id,
                     ),
 
                     // Bottom padding for comment input
@@ -775,8 +821,16 @@ class _VibeTagsSection extends StatelessWidget {
 /// Photos Carousel
 class _PhotosCarousel extends StatelessWidget {
   final List<String> imageUrls;
+  final String checkinId;
+  final String? currentUserId;
+  final String checkinUserId;
 
-  const _PhotosCarousel({required this.imageUrls});
+  const _PhotosCarousel({
+    required this.imageUrls,
+    required this.checkinId,
+    required this.checkinUserId,
+    this.currentUserId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -801,34 +855,47 @@ class _PhotosCarousel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             itemCount: imageUrls.length,
             itemBuilder: (context, index) {
-              return Padding(
-                padding: EdgeInsets.only(right: index < imageUrls.length - 1 ? 8 : 0),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: CachedNetworkImage(
-                    imageUrl: imageUrls[index],
-                    width: 200,
-                    height: 200,
-                    fit: BoxFit.cover,
-                    placeholder: (_, __) => Container(
+              final isOwnPhoto = currentUserId != null &&
+                  checkinUserId == currentUserId;
+              return GestureDetector(
+                onLongPress: isOwnPhoto
+                    ? null
+                    : () => showReportBottomSheet(
+                          context,
+                          contentType: 'photo',
+                          contentId: checkinId,
+                        ),
+                child: Padding(
+                  padding: EdgeInsets.only(
+                    right: index < imageUrls.length - 1 ? 8 : 0,
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: CachedNetworkImage(
+                      imageUrl: imageUrls[index],
                       width: 200,
                       height: 200,
-                      color: AppTheme.surfaceVariantDark,
-                      child: const Center(
-                        child: CircularProgressIndicator(
-                          color: AppTheme.voltLime,
-                          strokeWidth: 2,
+                      fit: BoxFit.cover,
+                      placeholder: (_, __) => Container(
+                        width: 200,
+                        height: 200,
+                        color: AppTheme.surfaceVariantDark,
+                        child: const Center(
+                          child: CircularProgressIndicator(
+                            color: AppTheme.voltLime,
+                            strokeWidth: 2,
+                          ),
                         ),
                       ),
-                    ),
-                    errorWidget: (_, __, ___) => Container(
-                      width: 200,
-                      height: 200,
-                      color: AppTheme.surfaceVariantDark,
-                      child: const Icon(
-                        Icons.broken_image,
-                        color: AppTheme.textTertiary,
-                        size: 48,
+                      errorWidget: (_, __, ___) => Container(
+                        width: 200,
+                        height: 200,
+                        color: AppTheme.surfaceVariantDark,
+                        child: const Icon(
+                          Icons.broken_image,
+                          color: AppTheme.textTertiary,
+                          size: 48,
+                        ),
                       ),
                     ),
                   ),
@@ -947,12 +1014,14 @@ class _CommentsSection extends StatelessWidget {
   final String checkinId;
   final String Function(String) getTimeAgo;
   final void Function(String) onUserTap;
+  final String? currentUserId;
 
   const _CommentsSection({
     required this.commentsAsync,
     required this.checkinId,
     required this.getTimeAgo,
     required this.onUserTap,
+    this.currentUserId,
   });
 
   @override
@@ -1037,6 +1106,7 @@ class _CommentsSection extends StatelessWidget {
                     comment: comment,
                     timeAgo: getTimeAgo(comment.createdAt),
                     onUserTap: () => onUserTap(comment.userId),
+                    currentUserId: currentUserId,
                   );
                 },
               );
@@ -1053,11 +1123,13 @@ class _CommentItem extends StatelessWidget {
   final CheckInComment comment;
   final String timeAgo;
   final VoidCallback onUserTap;
+  final String? currentUserId;
 
   const _CommentItem({
     required this.comment,
     required this.timeAgo,
     required this.onUserTap,
+    this.currentUserId,
   });
 
   @override
@@ -1065,8 +1137,18 @@ class _CommentItem extends StatelessWidget {
     final user = comment.user;
     final userName = user?.username ?? 'Unknown';
     final profileImageUrl = user?.profileImageUrl;
+    final isOwnComment =
+        currentUserId != null && comment.userId == currentUserId;
 
-    return Container(
+    return GestureDetector(
+      onLongPress: isOwnComment
+          ? null
+          : () => showReportBottomSheet(
+                context,
+                contentType: 'comment',
+                contentId: comment.id,
+              ),
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppTheme.cardDark,
@@ -1156,6 +1238,7 @@ class _CommentItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
       ),
     );
   }
