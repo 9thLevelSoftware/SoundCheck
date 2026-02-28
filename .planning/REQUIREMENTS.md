@@ -23,7 +23,7 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 ### Onboarding & UX
 
 - [ ] **ONBD-01**: New user sees 3-screen onboarding carousel explaining SoundCheck's value
-- [ ] **ONBD-02**: Onboarding includes genre picker that seeds personalized recommendations
+- [x] **ONBD-02**: Onboarding includes genre picker that seeds personalized recommendations
 - [ ] **ONBD-03**: After successful check-in, user sees celebration screen with badge progress and share CTA
 
 ### Social Sharing
@@ -35,8 +35,8 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 
 ### Event Engagement
 
-- [ ] **EVENT-01**: User can RSVP "I'm Going" to upcoming events
-- [ ] **EVENT-02**: Event detail shows count and avatars of friends going
+- [x] **EVENT-01**: User can RSVP "I'm Going" to upcoming events
+- [x] **EVENT-02**: Event detail shows count and avatars of friends going
 - [ ] **EVENT-03**: User sees "Trending Shows Near You" feed for between-concert retention
 - [ ] **EVENT-04**: Trending algorithm uses Wilson-scored mix of RSVP count, check-in velocity, friend signals, and proximity
 
@@ -120,14 +120,14 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-01 | Phase 9 | Complete |
 | AUTH-02 | Phase 9 | Complete |
 | ONBD-01 | Phase 10 | Pending |
-| ONBD-02 | Phase 10 | Pending |
+| ONBD-02 | Phase 10 | Complete |
 | ONBD-03 | Phase 10 | Pending |
 | SHARE-01 | Phase 10 | Pending |
 | SHARE-02 | Phase 10 | Pending |
 | SHARE-03 | Phase 10 | Pending |
 | SHARE-04 | Phase 10 | Pending |
-| EVENT-01 | Phase 10 | Pending |
-| EVENT-02 | Phase 10 | Pending |
+| EVENT-01 | Phase 10 | Complete |
+| EVENT-02 | Phase 10 | Complete |
 | EVENT-03 | Phase 11 | Pending |
 | EVENT-04 | Phase 11 | Pending |
 | VERIFY-01 | Phase 11 | Pending |

@@ -2,26 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
-status: unknown
-last_updated: "2026-02-27T21:55:56.798Z"
-progress:
-  total_phases: 2
-  completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
----
-
----
-gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-27T21:46:00Z"
+last_updated: "2026-02-28T02:27:35Z"
 progress:
   total_phases: 4
   completed_phases: 2
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -31,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 9.1 — Content Moderation Enforcement
+**Current focus:** Phase 10 — Viral Growth Engine
 
 ## Current Position
 
-Phase: 9.1 (Content Moderation Enforcement) — gap closure phase
-Plan: 2 of 2
-Status: Complete
-Last activity: 2026-02-27 — Completed 09.1-02 (Discovery/Trending/Stats Hidden Filtering + Cache Invalidation)
+Phase: 10 (Viral Growth Engine)
+Plan: 1 of 5
+Status: Executing
+Last activity: 2026-02-28 — Completed 10-01 (Event RSVP & Onboarding Genre Preferences)
 
-Progress: [██████████] 100%
+Progress: [██████████░░░░░░░░░░] 20%
 
 ## Performance Metrics
 
@@ -54,7 +41,7 @@ Progress: [██████████] 100%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
-| 10. Viral Growth | — | — | — |
+| 10. Viral Growth | 1/5 | 3min | 3.0min |
 | 11. Platform Trust | — | — | — |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
@@ -83,6 +70,10 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [09.1-02] BadgeEvaluators intentionally NOT filtered -- attendance credit preserved when content hidden
 - [09.1-02] ModerationService invalidates author's own feed cache in addition to followers
 - [09.1-02] Comment hiding traces back to parent checkin for correct user/event cache invalidation
+- [10-01] RSVP toggle follows WishlistService pattern with ON CONFLICT DO NOTHING for race safety
+- [10-01] Genre preferences use DELETE-all+INSERT-batch for idempotent replace semantics
+- [10-01] DiscoveryService UNION ALL gives onboarding prefs additive weight with check-in genres
+- [10-01] Route /api/rsvp/me placed before /:eventId to prevent param matching conflict
 
 ### Pending Todos
 
@@ -103,6 +94,6 @@ None active.
 
 ## Session Continuity
 
-Last session: 2026-02-27
-Stopped at: Completed 09.1-02-PLAN.md (Discovery/Trending/Stats Hidden Filtering + Cache Invalidation)
+Last session: 2026-02-28
+Stopped at: Completed 10-01-PLAN.md (Event RSVP & Onboarding Genre Preferences)
 Resume file: None
