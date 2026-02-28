@@ -25,6 +25,8 @@ import '../../features/sharing/presentation/celebration_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/onboarding/presentation/genre_picker_screen.dart';
+import '../../features/verification/presentation/claim_submission_screen.dart';
+import '../../features/verification/presentation/my_claims_screen.dart';
 import '../../shared/widgets/scaffold_with_nav_bar.dart';
 
 part 'app_router.g.dart';
@@ -306,6 +308,28 @@ GoRouter goRouter(Ref ref) {
                           );
                         },
                       ),
+                      GoRoute(
+                        path: 'my-claims',
+                        name: 'my-claims',
+                        pageBuilder: (context, state) {
+                          return CustomTransitionPage(
+                            key: state.pageKey,
+                            child: const MyClaimsScreen(),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              const begin = Offset(1.0, 0.0);
+                              const end = Offset.zero;
+                              const curve = Curves.easeInOut;
+                              final tween = Tween(begin: begin, end: end).chain(
+                                CurveTween(curve: curve),
+                              );
+                              return SlideTransition(
+                                position: animation.drive(tween),
+                                child: child,
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ],
                   ),
                 ],
@@ -485,6 +509,37 @@ GoRouter goRouter(Ref ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: UserProfileScreen(userId: userId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // Claim Submission Route
+      GoRoute(
+        path: '/claim/:entityType/:entityId',
+        name: 'claim-submission',
+        pageBuilder: (context, state) {
+          final entityType = state.pathParameters['entityType']!;
+          final entityId = state.pathParameters['entityId']!;
+          final entityName = state.uri.queryParameters['name'] ?? '';
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ClaimSubmissionScreen(
+              entityType: entityType,
+              entityId: entityId,
+              entityName: entityName,
+            ),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;

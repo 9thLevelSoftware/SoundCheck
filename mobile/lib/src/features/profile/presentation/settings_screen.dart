@@ -122,6 +122,13 @@ class SettingsScreen extends ConsumerWidget {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () => context.push('/profile/settings/blocked-users'),
               ),
+              _SettingsTile(
+                title: 'My Claims',
+                subtitle: 'View your venue and band claims',
+                leading: const Icon(Icons.verified_outlined),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () => context.push('/profile/settings/my-claims'),
+              ),
               const Divider(),
 
               // About Section
