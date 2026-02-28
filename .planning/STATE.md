@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 11 (Platform Trust & Between-Show Retention)
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Executing
-Last activity: 2026-02-28 — Completed 11-03 (Unified Search & Genre Array Migration)
+Last activity: 2026-02-28 — Completed 11-04 (Verification Claim Workflow)
 
-Progress: [████████████░░░░░░░░░░░░░] 50%
+Progress: [████████████████░░░░░░░░░] 67%
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Progress: [████████████░░░░░░░░░░░
 | Phase 10.1 P02 | 3min | 2 tasks | 6 files |
 | Phase 10.1 P01 | 4min | 2 tasks | 5 files |
 | Phase 10.2 P01 | 2min | 2 tasks | 6 files |
+| Phase 11 P04 | 5min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -109,6 +110,10 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [11-03] SearchService uses CTE-based fts_results UNION ALL fuzzy_results with NOT IN dedup for clean tsvector+fuzzy fallback
 - [11-03] Genre partial matching uses unnest(genres) with ILIKE; exact filtering uses $N = ANY(genres) for GIN index efficiency
 - [11-03] DiscoveryService user_genres CTE restructured to CROSS JOIN LATERAL unnest(b.genres) for array-based genre affinity scoring
+- [11-04] Transaction-based claim approval: BEGIN...COMMIT atomically updates claim status AND sets claimed_by_user_id on entity
+- [11-04] claimed_by_user_id used as claim signal (not is_verified which has organic semantics via checkins)
+- [11-04] Claimed owner authorization: isClaimedOwner on service layer, checked in controllers before updates
+- [11-04] Owner review response verifies ownership against venue/band claimed_by_user_id, not separate permission table
 
 ### Pending Todos
 
@@ -130,5 +135,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-03-PLAN.md (Unified Search & Genre Array Migration)
+Stopped at: Completed 11-04-PLAN.md (Verification Claim Workflow)
 Resume file: None
