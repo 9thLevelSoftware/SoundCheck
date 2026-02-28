@@ -152,7 +152,10 @@ Plans:
   2. Verified venues and bands display verification badges in venue/band detail screens (claimed_by_user_id returned in API responses)
   3. Blocked users' check-ins do not appear in or influence the trending feed
   4. Event search result checkin_count excludes hidden/moderated content
-**Plans:** TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 11.1-01-PLAN.md — Denormalized count triggers migration (PostgreSQL triggers + backfill for toast_count/comment_count)
+- [ ] 11.1-02-PLAN.md — Service query patches (claimed_by_user_id in venue/band APIs, block filter in trending, is_hidden in search)
 
 ### Phase 11.2: Mobile Review Response UI *(INSERTED — gap closure)*
 **Goal**: Claimed venue owners can respond to reviews from the mobile app, completing the review response feature that currently exists only as a backend endpoint
@@ -198,10 +201,10 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 | 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 6/6 | Complete | 2026-02-28 |
-| 11.1. Cross-Phase Integration Fixes | v1.1 | 0/TBD | Not started | - |
+| 11.1. Cross-Phase Integration Fixes | v1.1 | 0/2 | Not started | - |
 | 11.2. Mobile Review Response UI | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-28 after gap closure Phases 11.1/11.2 added*
+*Last updated: 2026-02-28 after Phase 11.1 planning (2 plans)*
