@@ -22,7 +22,7 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 
 ### Onboarding & UX
 
-- [ ] **ONBD-01**: New user sees 3-screen onboarding carousel explaining SoundCheck's value
+- [x] **ONBD-01**: New user sees 3-screen onboarding carousel explaining SoundCheck's value
 - [x] **ONBD-02**: Onboarding includes genre picker that seeds personalized recommendations
 - [ ] **ONBD-03**: After successful check-in, user sees celebration screen with badge progress and share CTA
 
@@ -119,7 +119,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAFE-05 | Phase 9 | Complete |
 | AUTH-01 | Phase 9 | Complete |
 | AUTH-02 | Phase 9 | Complete |
-| ONBD-01 | Phase 10 | Pending |
+| ONBD-01 | Phase 10 | Complete |
 | ONBD-02 | Phase 10 | Complete |
 | ONBD-03 | Phase 10 | Pending |
 | SHARE-01 | Phase 10 | Complete |

@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-28T02:27:35Z"
+last_updated: "2026-02-28T02:40:45Z"
 progress:
   total_phases: 4
   completed_phases: 2
   total_plans: 7
-  completed_plans: 8
+  completed_plans: 10
 ---
 
 # Project State
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 10 (Viral Growth Engine)
-Plan: 2 of 5
+Plan: 3 of 5
 Status: Executing
-Last activity: 2026-02-28 — Completed 10-02 (Share Card Generation & Landing Pages)
+Last activity: 2026-02-28 — Completed 10-03 (Onboarding Flow & Genre Picker)
 
-Progress: [████████████████░░░░] 40%
+Progress: [████████████████████░░░░] 60%
 
 ## Performance Metrics
 
@@ -41,7 +41,7 @@ Progress: [████████████████░░░░] 40%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
-| 10. Viral Growth | 2/5 | 8min | 4.0min |
+| 10. Viral Growth | 3/5 | 14min | 4.7min |
 | 11. Platform Trust | — | — | — |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
@@ -77,6 +77,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [10-02] Used plain TS objects instead of JSX/TSX to avoid adding React as a dependency for satori card templates
 - [10-02] Dual router export pattern (api + public) for shareRoutes to separate auth boundaries
 - [10-02] Content-addressable R2 keys with timestamp suffix to avoid OG image cache staleness
+- [10-03] OnboardingRepository uses DioClient (not raw Dio) matching all other repository patterns
+- [10-03] Genre preferences saved locally during onboarding, synced to backend after login via GenrePersistence
+- [10-03] Router redirect allows /onboarding paths without authentication for pre-login flow
 
 ### Pending Todos
 
@@ -98,5 +101,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 10-02-PLAN.md (Share Card Generation & Landing Pages)
+Stopped at: Completed 10-03-PLAN.md (Onboarding Flow & Genre Picker)
 Resume file: None
