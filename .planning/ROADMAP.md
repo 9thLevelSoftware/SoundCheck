@@ -166,7 +166,9 @@ Plans:
   1. Claimed venue owner sees a "Respond" action on reviews of their venue
   2. Owner can type and submit a response that is saved via the existing backend endpoint
   3. Response appears in the review thread for all users to see
-**Plans:** TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 11.2-01-PLAN.md — Backend review query fix + mobile Review model update + owner response bottom sheet + venue detail reviews section
 
 ### Phase 12: Monetization & Wrapped
 **Goal**: Users experience their year in concerts through SoundCheck Wrapped, and a premium subscription tier generates recurring revenue
@@ -201,10 +203,10 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 | 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 6/6 | Complete | 2026-02-28 |
-| 11.1. Cross-Phase Integration Fixes | 2/2 | Complete    | 2026-02-28 | - |
-| 11.2. Mobile Review Response UI | v1.1 | 0/TBD | Not started | - |
+| 11.1. Cross-Phase Integration Fixes | v1.1 | 2/2 | Complete | 2026-02-28 |
+| 11.2. Mobile Review Response UI | v1.1 | 0/1 | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-28 after Phase 11.1 planning (2 plans)*
+*Last updated: 2026-02-28 after Phase 11.2 planning (1 plan)*
