@@ -127,15 +127,16 @@ export class DiscoveryService {
 
       const query = `
         WITH user_genres AS (
-          -- User's top 5 genres: check-in-derived + explicit onboarding preferences (cold-start)
+          -- User's top 5 genres: check-in-derived (from genres[] array) + explicit onboarding preferences (cold-start)
           SELECT genre, SUM(genre_count) as genre_count FROM (
-            SELECT b.genre, COUNT(DISTINCT c.id) as genre_count
+            SELECT g AS genre, COUNT(DISTINCT c.id) as genre_count
             FROM checkins c
             JOIN event_lineup el ON c.event_id = el.event_id
             JOIN bands b ON el.band_id = b.id
-            WHERE c.user_id = $1 AND b.genre IS NOT NULL
+            CROSS JOIN LATERAL unnest(b.genres) AS g
+            WHERE c.user_id = $1
               AND (c.is_hidden IS NOT TRUE)
-            GROUP BY b.genre
+            GROUP BY g
             UNION ALL
             SELECT genre, 1 as genre_count
             FROM user_genre_preferences
@@ -184,7 +185,7 @@ export class DiscoveryService {
         JOIN venues v ON e.venue_id = v.id
         LEFT JOIN event_lineup el ON e.id = el.event_id
         LEFT JOIN bands b ON el.band_id = b.id
-        LEFT JOIN user_genres ug ON b.genre = ug.genre
+        LEFT JOIN user_genres ug ON ug.genre = ANY(b.genres)
         LEFT JOIN friend_checkins fc ON e.id = fc.event_id
         LEFT JOIN recent_trending rt ON e.id = rt.event_id
         WHERE e.event_date >= CURRENT_DATE

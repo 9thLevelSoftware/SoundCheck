@@ -94,15 +94,15 @@ export class BandService {
 
     // Text search
     if (q.trim()) {
-      conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR genre ILIKE $${paramCount} OR hometown ILIKE $${paramCount})`);
+      conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE g ILIKE $${paramCount}) OR hometown ILIKE $${paramCount})`);
       values.push(`%${q.trim()}%`);
       paramCount++;
     }
 
-    // Genre filter
+    // Genre filter (uses genres TEXT[] column)
     if (genre) {
-      conditions.push(`genre ILIKE $${paramCount}`);
-      values.push(`%${genre}%`);
+      conditions.push(`$${paramCount} = ANY(genres)`);
+      values.push(genre);
       paramCount++;
     }
 
@@ -240,12 +240,12 @@ export class BandService {
              instagram_url, facebook_url, image_url, hometown, average_rating,
              total_reviews, is_active, created_at, updated_at
       FROM bands
-      WHERE is_active = true AND genre ILIKE $1
+      WHERE is_active = true AND $1 = ANY(genres)
       ORDER BY average_rating DESC, total_reviews DESC
       LIMIT $2
     `;
 
-    const result = await this.db.query(query, [`%${genre}%`, limit]);
+    const result = await this.db.query(query, [genre, limit]);
     return result.rows.map((row: any) => this.mapDbBandToBand(row));
   }
 

@@ -728,7 +728,7 @@ export class EventService {
           JOIN venues v ON e.venue_id = v.id
           JOIN event_lineup el ON e.id = el.event_id
           JOIN bands b ON el.band_id = b.id
-          WHERE b.genre ILIKE '%' || $1 || '%'
+          WHERE $1 = ANY(b.genres)
             AND e.event_date >= CURRENT_DATE
             AND e.is_cancelled = FALSE
           ORDER BY e.id, e.event_date ASC
@@ -780,7 +780,7 @@ export class EventService {
               COALESCE(e.event_name, '') ILIKE '%' || $1 || '%'
               OR v.name ILIKE '%' || $1 || '%'
               OR b.name ILIKE '%' || $1 || '%'
-              OR b.genre ILIKE '%' || $1 || '%'
+              OR EXISTS (SELECT 1 FROM unnest(b.genres) g WHERE g ILIKE '%' || $1 || '%')
             )
           ORDER BY e.id, relevance DESC
         ) sub
