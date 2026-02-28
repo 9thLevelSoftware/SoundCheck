@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../data/search_providers.dart';
 import '../../../shared/widgets/venue_card.dart';
@@ -53,7 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           controller: _searchController,
           autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Search venues, bands...',
+            hintText: 'Search bands, venues, events...',
             border: InputBorder.none,
             hintStyle: TextStyle(color: AppTheme.textSecondary),
           ),
@@ -78,38 +79,59 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               horizontal: AppTheme.spacing16,
               vertical: AppTheme.spacing8,
             ),
-            child: Row(
-              children: [
-                FilterChip(
-                  label: const Text('All'),
-                  selected: currentFilter == SearchFilter.all,
-                  onSelected: (selected) {
-                    if (selected) {
-                      ref.read(searchFilterStateProvider.notifier).setFilter(SearchFilter.all);
-                    }
-                  },
-                ),
-                const SizedBox(width: AppTheme.spacing8),
-                FilterChip(
-                  label: const Text('Venues'),
-                  selected: currentFilter == SearchFilter.venues,
-                  onSelected: (selected) {
-                    if (selected) {
-                      ref.read(searchFilterStateProvider.notifier).setFilter(SearchFilter.venues);
-                    }
-                  },
-                ),
-                const SizedBox(width: AppTheme.spacing8),
-                FilterChip(
-                  label: const Text('Bands'),
-                  selected: currentFilter == SearchFilter.bands,
-                  onSelected: (selected) {
-                    if (selected) {
-                      ref.read(searchFilterStateProvider.notifier).setFilter(SearchFilter.bands);
-                    }
-                  },
-                ),
-              ],
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  FilterChip(
+                    label: const Text('All'),
+                    selected: currentFilter == SearchFilter.all,
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setFilter(SearchFilter.all);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: AppTheme.spacing8),
+                  FilterChip(
+                    label: const Text('Bands'),
+                    selected: currentFilter == SearchFilter.bands,
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setFilter(SearchFilter.bands);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: AppTheme.spacing8),
+                  FilterChip(
+                    label: const Text('Venues'),
+                    selected: currentFilter == SearchFilter.venues,
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setFilter(SearchFilter.venues);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: AppTheme.spacing8),
+                  FilterChip(
+                    label: const Text('Events'),
+                    selected: currentFilter == SearchFilter.events,
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setFilter(SearchFilter.events);
+                      }
+                    },
+                  ),
+                ],
+              ),
             ),
           ),
 
@@ -202,7 +224,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
               ),
               const SizedBox(height: AppTheme.spacing16),
               Text(
-                'No results found',
+                'No results for "$query"',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: AppTheme.spacing8),
@@ -219,47 +241,217 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
       );
     }
 
-    // Show results
+    // Show categorized results
     return ListView(
       padding: const EdgeInsets.all(AppTheme.spacing16),
       children: [
-        // Venues Section
-        if (results.venues.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
-            child: Text(
-              'Venues (${results.venues.length})',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+        // Bands Section
+        if (results.bands.isNotEmpty) ...[
+          _buildSectionHeader(
+            context,
+            title: 'Bands',
+            count: results.bands.length,
+            icon: Icons.music_note,
+            color: AppTheme.voltLime,
           ),
-          ...results.venues.map((venue) => Padding(
-                padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
-                child: VenueCard(
-                  venue: venue,
-                  onTap: () => context.push('/venues/${venue.id}'),
+          const SizedBox(height: AppTheme.spacing8),
+          ...results.bands.take(5).map(
+                (band) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+                  child: BandCard(
+                    band: band,
+                    onTap: () => context.push('/bands/${band.id}'),
+                  ),
                 ),
-              ),),
+              ),
+          if (results.bands.length > 5)
+            _buildSeeAllButton(
+              context,
+              label: 'See all ${results.bands.length} bands',
+              onTap: () {
+                ref
+                    .read(searchFilterStateProvider.notifier)
+                    .setFilter(SearchFilter.bands);
+              },
+            ),
           const SizedBox(height: AppTheme.spacing16),
         ],
 
-        // Bands Section
-        if (results.bands.isNotEmpty) ...[
-          Padding(
-            padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
-            child: Text(
-              'Bands (${results.bands.length})',
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
+        // Venues Section
+        if (results.venues.isNotEmpty) ...[
+          _buildSectionHeader(
+            context,
+            title: 'Venues',
+            count: results.venues.length,
+            icon: Icons.location_on,
+            color: AppTheme.hotOrange,
           ),
-          ...results.bands.map((band) => Padding(
-                padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
-                child: BandCard(
-                  band: band,
-                  onTap: () => context.push('/bands/${band.id}'),
+          const SizedBox(height: AppTheme.spacing8),
+          ...results.venues.take(5).map(
+                (venue) => Padding(
+                  padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+                  child: VenueCard(
+                    venue: venue,
+                    onTap: () => context.push('/venues/${venue.id}'),
+                  ),
                 ),
-              ),),
+              ),
+          if (results.venues.length > 5)
+            _buildSeeAllButton(
+              context,
+              label: 'See all ${results.venues.length} venues',
+              onTap: () {
+                ref
+                    .read(searchFilterStateProvider.notifier)
+                    .setFilter(SearchFilter.venues);
+              },
+            ),
+          const SizedBox(height: AppTheme.spacing16),
+        ],
+
+        // Events Section
+        if (results.events.isNotEmpty) ...[
+          _buildSectionHeader(
+            context,
+            title: 'Events',
+            count: results.events.length,
+            icon: Icons.calendar_today,
+            color: AppTheme.electricBlue,
+          ),
+          const SizedBox(height: AppTheme.spacing8),
+          ...results.events.take(5).map(
+                (event) => _EventSearchTile(
+                  event: event,
+                  onTap: () => context.push('/events/${event.id}'),
+                ),
+              ),
+          if (results.events.length > 5)
+            _buildSeeAllButton(
+              context,
+              label: 'See all ${results.events.length} events',
+              onTap: () {
+                ref
+                    .read(searchFilterStateProvider.notifier)
+                    .setFilter(SearchFilter.events);
+              },
+            ),
         ],
       ],
+    );
+  }
+
+  Widget _buildSectionHeader(
+    BuildContext context, {
+    required String title,
+    required int count,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, size: 20, color: color),
+        const SizedBox(width: 8),
+        Text(
+          '$title ($count)',
+          style: Theme.of(context).textTheme.titleLarge,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSeeAllButton(
+    BuildContext context, {
+    required String label,
+    required VoidCallback onTap,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.only(top: AppTheme.spacing4),
+      child: TextButton(
+        onPressed: onTap,
+        child: Text(
+          label,
+          style: const TextStyle(
+            color: AppTheme.voltLime,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Event search result tile.
+class _EventSearchTile extends StatelessWidget {
+  const _EventSearchTile({
+    required this.event,
+    required this.onTap,
+  });
+
+  final SearchEvent event;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    // Format date
+    String dateDisplay = '';
+    if (event.eventDate != null && event.eventDate!.isNotEmpty) {
+      try {
+        final date = DateTime.parse(event.eventDate!);
+        dateDisplay = DateFormat('MMM d, yyyy').format(date);
+      } catch (_) {}
+    }
+
+    // Build subtitle
+    final parts = <String>[];
+    if (event.venueName != null) parts.add(event.venueName!);
+    if (event.venueCity != null) parts.add(event.venueCity!);
+    if (dateDisplay.isNotEmpty) parts.add(dateDisplay);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+      child: ListTile(
+        onTap: onTap,
+        leading: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: AppTheme.electricBlue.withValues(alpha: 0.2),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: const Icon(
+            Icons.calendar_today,
+            color: AppTheme.electricBlue,
+          ),
+        ),
+        title: Text(
+          event.eventName ?? 'Event',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(
+            color: AppTheme.textPrimary,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        subtitle: parts.isNotEmpty
+            ? Text(
+                parts.join(' - '),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(color: AppTheme.textTertiary),
+              )
+            : null,
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: AppTheme.textTertiary,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacing8,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        ),
+        tileColor: AppTheme.cardDark,
+      ),
     );
   }
 }
