@@ -7,6 +7,7 @@ import '../services/analytics_service.dart';
 import '../../features/auth/presentation/login_screen.dart';
 import '../../features/auth/presentation/register_screen.dart';
 import '../../features/auth/presentation/forgot_password_screen.dart';
+import '../../features/auth/presentation/reset_password_screen.dart';
 import '../../features/feed/presentation/feed_screen.dart';
 import '../../features/discover/presentation/discover_screen.dart';
 import '../../features/checkins/presentation/checkin_screen.dart';
@@ -55,7 +56,8 @@ GoRouter goRouter(Ref ref) {
       final isError = authState.hasError;
       final isOnAuthPage = state.matchedLocation.startsWith('/login') ||
           state.matchedLocation.startsWith('/register') ||
-          state.matchedLocation.startsWith('/forgot-password');
+          state.matchedLocation.startsWith('/forgot-password') ||
+          state.matchedLocation.startsWith('/reset-password');
       final isOnOnboardingPage =
           state.matchedLocation.startsWith('/onboarding');
 
@@ -154,6 +156,31 @@ GoRouter goRouter(Ref ref) {
             );
           },
         ),
+      ),
+
+      // Reset Password Route (Deep Link from email)
+      GoRoute(
+        path: '/reset-password',
+        name: 'reset-password',
+        pageBuilder: (context, state) {
+          final token = state.uri.queryParameters['token'] ?? '';
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: ResetPasswordScreen(token: token),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
       ),
 
       // Onboarding Routes
