@@ -29,7 +29,7 @@ class RsvpRepository {
   /// Toggle RSVP for an event (creates or deletes).
   /// POST /api/rsvp/:eventId -> { success: true, data: { isGoing: boolean } }
   Future<bool> toggleRsvp(String eventId) async {
-    final response = await _dioClient.post('/api/rsvp/$eventId');
+    final response = await _dioClient.post('/rsvp/$eventId');
     return response.data['data']['isGoing'] as bool;
   }
 
@@ -55,7 +55,7 @@ class RsvpRepository {
   /// Get all event IDs user has RSVP'd to (batch status check for event lists).
   /// GET /api/rsvp/me -> { success: true, data: { eventIds: [...] } }
   Future<Set<String>> getUserRsvps() async {
-    final response = await _dioClient.get('/api/rsvp/me');
+    final response = await _dioClient.get('/rsvp/me');
     final eventIds = response.data['data']['eventIds'] as List;
     return eventIds.map((e) => e as String).toSet();
   }

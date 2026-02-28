@@ -14,7 +14,7 @@ import 'friends_going_widget.dart';
 final eventDetailProvider =
     FutureProvider.autoDispose.family<DiscoverEvent, String>((ref, eventId) async {
   final dioClient = ref.watch(dioClientProvider);
-  final response = await dioClient.get('/api/events/$eventId');
+  final response = await dioClient.get('/events/$eventId');
   final data = response.data['data'] as Map<String, dynamic>;
   return DiscoverEvent.fromEventJson(data);
 });
