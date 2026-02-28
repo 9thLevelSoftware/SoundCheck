@@ -52,7 +52,7 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 ### Technical Scale
 
 - [x] **SCALE-01**: Search uses PostgreSQL tsvector + GIN indexes with pg_trgm fuzzy fallback (replaces ILIKE)
-- [ ] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
+- [x] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
 - [x] **SCALE-03**: Band.genre migrated from single string to array/many-to-many for faceted filtering
 
 ### Monetization
@@ -137,7 +137,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VERIFY-05 | Phase 11.2 | Pending |
 | VERIFY-06 | Phase 11 | Complete |
 | SCALE-01 | Phase 11 | Complete |
-| SCALE-02 | Phase 11.1 | Pending |
+| SCALE-02 | Phase 11.1 | Complete |
 | SCALE-03 | Phase 11 | Complete |
 | MONEY-01 | Phase 12 | Pending |
 | MONEY-02 | Phase 12 | Pending |

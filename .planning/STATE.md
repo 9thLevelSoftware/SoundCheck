@@ -31,16 +31,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 11 — Platform Trust & Between-Show Retention
+**Current focus:** Phase 11.1 — Cross-Phase Integration Fixes
 
 ## Current Position
 
-Phase: 11 (Platform Trust & Between-Show Retention)
-Plan: 6 of 6 (all complete)
-Status: Phase Complete
-Last activity: 2026-02-28 — Completed 11-06 (Mobile Verification UI)
+Phase: 11.1 (Cross-Phase Integration Fixes)
+Plan: 1 of 2
+Status: Executing
+Last activity: 2026-02-28 — Completed 11.1-01 (Denormalized Count Triggers)
 
-Progress: [█████████████████████████] 100%
+Progress: [████████████░░░░░░░░░░░░░] 50%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [███████████████████████
 | Phase 11 P04 | 5min | 2 tasks | 10 files |
 | Phase 11 P05 | 7min | 2 tasks | 6 files |
 | Phase 11 P06 | 8min | 2 tasks | 10 files |
+| Phase 11.1 P01 | 1min | 1 task | 1 file |
 
 ## Accumulated Context
 
@@ -136,6 +137,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [11-06] Manual Riverpod providers for claim feature per Phase 10 decision [10-05]
 - [11-06] Claimed-owner badge (primary color) takes precedence over organic isVerified badge (info color) on venue detail
 - [11-06] VerificationClaim.fromJson supports both camelCase and snake_case for backend compatibility
+- [11.1-01] Used GREATEST(count - 1, 0) in DELETE triggers to prevent negative counts from data inconsistencies
+- [11.1-01] Separate INSERT and DELETE triggers (not combined INSERT OR DELETE) for clarity and independent maintenance
+- [11.1-01] Backfill uses correlated subqueries against full toasts/checkin_comments tables for accuracy
 
 ### Pending Todos
 
@@ -157,5 +161,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-06-PLAN.md (Mobile Verification UI)
+Stopped at: Completed 11.1-01-PLAN.md (Denormalized Count Triggers)
 Resume file: None
