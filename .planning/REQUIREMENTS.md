@@ -24,13 +24,13 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 
 - [x] **ONBD-01**: New user sees 3-screen onboarding carousel explaining SoundCheck's value
 - [x] **ONBD-02**: Onboarding includes genre picker that seeds personalized recommendations
-- [ ] **ONBD-03**: After successful check-in, user sees celebration screen with badge progress and share CTA
+- [x] **ONBD-03**: After successful check-in, user sees celebration screen with badge progress and share CTA
 
 ### Social Sharing
 
 - [x] **SHARE-01**: Server generates shareable check-in card images (1200x630 OG + 1080x1920 Stories variants)
-- [ ] **SHARE-02**: User can share check-in card to Instagram Stories, X, and TikTok from celebration screen
-- [ ] **SHARE-03**: User can share badge unlock card to social platforms
+- [x] **SHARE-02**: User can share check-in card to Instagram Stories, X, and TikTok from celebration screen
+- [x] **SHARE-03**: User can share badge unlock card to social platforms
 - [x] **SHARE-04**: Non-users clicking a shared link see web landing page with card preview and App Store/Play Store CTAs
 
 ### Event Engagement
@@ -121,10 +121,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | AUTH-02 | Phase 9 | Complete |
 | ONBD-01 | Phase 10 | Complete |
 | ONBD-02 | Phase 10 | Complete |
-| ONBD-03 | Phase 10 | Pending |
+| ONBD-03 | Phase 10 | Complete |
 | SHARE-01 | Phase 10 | Complete |
-| SHARE-02 | Phase 10 | Pending |
-| SHARE-03 | Phase 10 | Pending |
+| SHARE-02 | Phase 10 | Complete |
+| SHARE-03 | Phase 10 | Complete |
 | SHARE-04 | Phase 10 | Complete |
 | EVENT-01 | Phase 10 | Complete |
 | EVENT-02 | Phase 10 | Complete |
