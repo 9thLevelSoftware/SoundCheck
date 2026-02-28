@@ -230,6 +230,19 @@ class AnalyticsEvents {
   // Errors
   static const String errorOccurred = 'app_error';
   static const String apiError = 'api_error';
+
+  // Wrapped
+  static const String wrappedViewed = 'wrapped_viewed';
+  static const String wrappedSlideViewed = 'wrapped_slide_viewed';
+  static const String wrappedShared = 'wrapped_shared';
+  static const String wrappedDetailViewed = 'wrapped_detail_viewed';
+
+  // Subscription
+  static const String subscriptionViewed = 'subscription_viewed';
+  static const String subscriptionStarted = 'subscription_started';
+  static const String subscriptionRestored = 'subscription_restored';
+  static const String paywallViewed = 'paywall_viewed';
+  static const String paywallDismissed = 'paywall_dismissed';
 }
 
 /// Common property names for consistency
@@ -251,4 +264,13 @@ class AnalyticsProperties {
   static const String contentType = 'content_type';
   static const String itemId = 'item_id';
   static const String method = 'method';
+
+  // Wrapped
+  static const String wrappedYear = 'wrapped_year';
+  static const String slideIndex = 'slide_index';
+  static const String statType = 'stat_type';
+  static const String sharePlatform = 'share_platform';
+
+  // Subscription
+  static const String subscriptionProduct = 'subscription_product';
 }

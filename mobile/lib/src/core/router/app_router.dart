@@ -27,6 +27,9 @@ import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/onboarding/presentation/genre_picker_screen.dart';
 import '../../features/verification/presentation/claim_submission_screen.dart';
 import '../../features/verification/presentation/my_claims_screen.dart';
+import '../../features/wrapped/presentation/wrapped_story_screen.dart';
+import '../../features/wrapped/presentation/wrapped_detail_screen.dart';
+import '../../features/subscription/presentation/pro_feature_screen.dart';
 import '../../shared/widgets/scaffold_with_nav_bar.dart';
 
 part 'app_router.g.dart';
@@ -565,6 +568,71 @@ GoRouter goRouter(Ref ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: CheckInDetailScreen(checkinId: checkinId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // Wrapped Story Route
+      GoRoute(
+        path: '/wrapped/:year',
+        name: 'wrapped',
+        pageBuilder: (context, state) {
+          final year = int.parse(state.pathParameters['year']!);
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: WrappedStoryScreen(year: year),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              return FadeTransition(opacity: animation, child: child);
+            },
+          );
+        },
+      ),
+
+      // Wrapped Detail Route (premium analytics)
+      GoRoute(
+        path: '/wrapped/:year/detail',
+        name: 'wrapped-detail',
+        pageBuilder: (context, state) {
+          final year = int.parse(state.pathParameters['year']!);
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: WrappedDetailScreen(year: year),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // Pro Feature Screen Route
+      GoRoute(
+        path: '/pro',
+        name: 'pro',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const ProFeatureScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;

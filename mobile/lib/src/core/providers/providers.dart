@@ -3,10 +3,13 @@ import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../api/dio_client.dart';
+import '../services/analytics_service.dart';
 import '../services/websocket_service.dart';
 import '../../shared/services/location_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/domain/user.dart';
+import '../../features/subscription/presentation/subscription_service.dart';
+import '../../features/subscription/presentation/subscription_providers.dart';
 import '../../features/venues/data/venue_repository.dart';
 import '../../features/bands/data/band_repository.dart';
 import '../../features/badges/data/badge_repository.dart';
@@ -105,6 +108,7 @@ class AuthState extends _$AuthState {
     // Connect WebSocket if user is logged in
     if (user != null) {
       _connectWebSocket(user.id);
+      await _syncSubscriptionState(user.id);
     }
 
     return user;
@@ -120,6 +124,9 @@ class AuthState extends _$AuthState {
 
       // Connect WebSocket after successful login
       _connectWebSocket(authResponse.user.id);
+
+      // Sync RevenueCat identity and premium state
+      await _syncSubscriptionState(authResponse.user.id);
 
       // Sync onboarding genre preferences to backend if saved locally
       ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
@@ -151,6 +158,9 @@ class AuthState extends _$AuthState {
       // Connect WebSocket after successful registration
       _connectWebSocket(authResponse.user.id);
 
+      // Sync RevenueCat identity and premium state
+      await _syncSubscriptionState(authResponse.user.id);
+
       // Sync onboarding genre preferences to backend if saved locally
       ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
 
@@ -165,6 +175,12 @@ class AuthState extends _$AuthState {
     final wsService = ref.read(webSocketServiceProvider);
     wsService.disconnect();
 
+    // Clear RevenueCat identity and premium state
+    try {
+      await SubscriptionService.logout();
+      ref.read(isPremiumProvider.notifier).set(false);
+    } catch (_) {}
+
     await authRepository.logout();
     state = const AsyncValue.data(null);
   }
@@ -175,6 +191,21 @@ class AuthState extends _$AuthState {
       final authRepository = ref.read(authRepositoryProvider);
       return authRepository.getMe();
     });
+  }
+
+  /// Sync RevenueCat identity and refresh premium state
+  Future<void> _syncSubscriptionState(String userId) async {
+    try {
+      await SubscriptionService.login(userId);
+      final isPremium = await SubscriptionService.isPremium();
+      ref.read(isPremiumProvider.notifier).set(isPremium);
+      AnalyticsService.setUserProperty(
+        name: 'plan',
+        value: isPremium ? 'premium' : 'free',
+      );
+    } catch (_) {
+      // Subscription sync failure should not prevent login
+    }
   }
 
   /// Connect to WebSocket with authentication

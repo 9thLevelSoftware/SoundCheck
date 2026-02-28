@@ -9,6 +9,8 @@ import '../../../shared/utils/date_formatter.dart';
 import '../../badges/domain/badge.dart';
 import '../../checkins/domain/checkin.dart';
 import '../domain/concert_cred.dart';
+import '../../subscription/presentation/subscription_providers.dart';
+import '../../subscription/presentation/widgets/pro_badge.dart';
 import 'providers/profile_providers.dart';
 
 /// Profile Screen - Concert resume / concert cred
@@ -45,6 +47,51 @@ class ProfileScreen extends ConsumerWidget {
                     // Main Stats Row (from concert cred)
                     SliverToBoxAdapter(
                       child: _MainStatsRow(userId: user.id),
+                    ),
+
+                    // Your Wrapped entry point
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: InkWell(
+                          onTap: () => context.push('/wrapped/${DateTime.now().year}'),
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: AppTheme.cardDark,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: AppTheme.voltLime.withValues(alpha: 0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.all(10),
+                                  decoration: BoxDecoration(
+                                    color: AppTheme.voltLime.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: const Icon(Icons.auto_awesome, color: AppTheme.voltLime, size: 24),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text('Your ${DateTime.now().year} Wrapped',
+                                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                                      const SizedBox(height: 4),
+                                      const Text('See your year in concerts',
+                                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                    ],
+                                  ),
+                                ),
+                                const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
 
                     // Level Progress
@@ -146,13 +193,13 @@ class ProfileScreen extends ConsumerWidget {
 }
 
 // Profile Header with cover image and avatar
-class _ProfileHeader extends StatelessWidget {
+class _ProfileHeader extends ConsumerWidget {
   const _ProfileHeader({required this.user});
 
   final dynamic user;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Stack(
       clipBehavior: Clip.none,
       children: [
@@ -266,13 +313,21 @@ class _ProfileHeader extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      user.username,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: AppTheme.textPrimary,
-                      ),
+                    Row(
+                      children: [
+                        Text(
+                          user.username,
+                          style: const TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: AppTheme.textPrimary,
+                          ),
+                        ),
+                        if (ref.watch(isPremiumProvider)) ...[
+                          const SizedBox(width: 8),
+                          const ProBadge(),
+                        ],
+                      ],
                     ),
                     if (user.firstName != null || user.lastName != null)
                       Text(

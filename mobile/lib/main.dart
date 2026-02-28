@@ -6,6 +6,7 @@ import 'src/core/theme/theme_provider.dart';
 import 'src/core/router/app_router.dart';
 import 'src/core/services/crash_reporting_service.dart';
 import 'src/core/services/analytics_service.dart';
+import 'src/features/subscription/presentation/subscription_service.dart';
 
 void main() {
   // Capture async errors not caught by Flutter
@@ -20,6 +21,9 @@ void main() {
 
       // Initialize analytics (Firebase Analytics)
       await AnalyticsService.initialize();
+
+      // Initialize RevenueCat subscriptions
+      await SubscriptionService.initialize();
 
       // Capture Flutter framework errors
       FlutterError.onError = (FlutterErrorDetails details) {
