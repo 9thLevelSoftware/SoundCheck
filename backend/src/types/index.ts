@@ -63,6 +63,7 @@ export interface Venue {
   averageRating: number;
   totalCheckins: number;
   isActive: boolean;
+  claimedByUserId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -102,6 +103,7 @@ export interface Band {
   averageRating: number;
   totalCheckins: number;
   isActive: boolean;
+  claimedByUserId?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -133,6 +135,8 @@ export interface Review {
   helpfulCount: number;
   createdAt: string;
   updatedAt: string;
+  ownerResponse?: string;
+  ownerResponseAt?: string;
   // Populated fields
   user?: User;
   venue?: Venue;
@@ -419,6 +423,69 @@ export interface CreateReportRequest {
   contentId: string;
   reason: ReportReason;
   description?: string;
+}
+
+// === Phase 11: Platform Trust & Between-Show Retention ===
+
+export type ClaimStatus = 'pending' | 'approved' | 'denied';
+export type ClaimEntityType = 'venue' | 'band';
+
+export interface VerificationClaim {
+  id: string;
+  userId: string;
+  entityType: ClaimEntityType;
+  entityId: string;
+  status: ClaimStatus;
+  evidenceText?: string;
+  evidenceUrl?: string;
+  reviewedBy?: string;
+  reviewedAt?: string;
+  reviewNotes?: string;
+  createdAt: string;
+  updatedAt: string;
+  // Joined fields (populated in list queries)
+  entityName?: string;
+  userName?: string;
+  userEmail?: string;
+}
+
+export interface CreateClaimRequest {
+  entityType: ClaimEntityType;
+  entityId: string;
+  evidenceText?: string;
+  evidenceUrl?: string;
+}
+
+export interface ReviewClaimRequest {
+  status: 'approved' | 'denied';
+  reviewNotes?: string;
+}
+
+export interface TrendingEvent {
+  id: string;
+  eventName: string;
+  eventDate: string;
+  venueName: string;
+  venueCity: string;
+  venueState: string;
+  rsvpCount: number;
+  checkinVelocity: number;
+  friendSignals: number;
+  distanceKm: number;
+  trendingScore: number;
+  imageUrl?: string;
+  lineupBands?: string[];
+}
+
+export interface SearchResults {
+  bands: Band[];
+  venues: Venue[];
+  events: Event[];
+}
+
+export interface OwnerReviewResponse {
+  reviewId: string;
+  ownerResponse: string;
 }
 
 // Express Request with user
