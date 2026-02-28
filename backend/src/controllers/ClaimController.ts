@@ -1,10 +1,16 @@
 import { Request, Response } from 'express';
 import { ClaimService } from '../services/ClaimService';
+import { ReviewService } from '../services/ReviewService';
+import { BandService } from '../services/BandService';
+import { VenueService } from '../services/VenueService';
 import { ApiResponse, ClaimStatus } from '../types';
 import { AppError } from '../utils/errors';
 
 export class ClaimController {
   private claimService = new ClaimService();
+  private reviewService = new ReviewService();
+  private bandService = new BandService();
+  private venueService = new VenueService();
 
   /**
    * Submit a verification claim
@@ -147,6 +153,100 @@ export class ClaimController {
       res.status(statusCode).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to review claim',
+      } as ApiResponse);
+    }
+  };
+
+  /**
+   * Claimed owner responds to a review
+   * POST /api/claims/reviews/:reviewId/respond
+   */
+  respondToReview = async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Authentication required' } as ApiResponse);
+        return;
+      }
+
+      const { reviewId } = req.params;
+      const { ownerResponse } = req.body;
+
+      if (!ownerResponse || typeof ownerResponse !== 'string' || ownerResponse.trim().length === 0) {
+        res.status(400).json({
+          success: false,
+          error: 'ownerResponse is required and must be a non-empty string',
+        } as ApiResponse);
+        return;
+      }
+
+      const review = await this.reviewService.respondToReview(reviewId, req.user.id, ownerResponse.trim());
+
+      res.status(200).json({
+        success: true,
+        data: review,
+        message: 'Response posted successfully',
+      } as ApiResponse);
+    } catch (error) {
+      console.error('Respond to review error:', error);
+      const statusCode = error instanceof AppError ? error.statusCode : 400;
+      res.status(statusCode).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to respond to review',
+      } as ApiResponse);
+    }
+  };
+
+  /**
+   * Get aggregate stats for a claimed entity
+   * GET /api/claims/stats/:entityType/:entityId
+   */
+  getEntityStats = async (req: Request, res: Response): Promise<void> => {
+    try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Authentication required' } as ApiResponse);
+        return;
+      }
+
+      const { entityType, entityId } = req.params;
+
+      if (entityType !== 'venue' && entityType !== 'band') {
+        res.status(400).json({
+          success: false,
+          error: 'entityType must be "venue" or "band"',
+        } as ApiResponse);
+        return;
+      }
+
+      // Verify user is the claimed owner
+      let isOwner = false;
+      if (entityType === 'band') {
+        isOwner = await this.bandService.isClaimedOwner(entityId, req.user.id);
+      } else {
+        isOwner = await this.venueService.isClaimedOwner(entityId, req.user.id);
+      }
+
+      if (!isOwner) {
+        res.status(403).json({
+          success: false,
+          error: 'Only the claimed owner can view entity stats',
+        } as ApiResponse);
+        return;
+      }
+
+      let stats: any;
+      if (entityType === 'band') {
+        stats = await this.bandService.getBandStats(entityId);
+      } else {
+        stats = await this.venueService.getVenueStats(entityId);
+      }
+
+      res.status(200).json({ success: true, data: stats } as ApiResponse);
+    } catch (error) {
+      console.error('Get entity stats error:', error);
+      const statusCode = error instanceof AppError ? error.statusCode : 500;
+      res.status(statusCode).json({
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch entity stats',
       } as ApiResponse);
     }
   };

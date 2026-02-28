@@ -309,6 +309,79 @@ export class VenueService {
   }
 
   /**
+   * Check if a user is the claimed owner of a venue.
+   */
+  async isClaimedOwner(venueId: string, userId: string): Promise<boolean> {
+    const result = await this.db.query(
+      'SELECT 1 FROM venues WHERE id = $1 AND claimed_by_user_id = $2',
+      [venueId, userId]
+    );
+    return result.rows.length > 0;
+  }
+
+  /**
+   * Get aggregate stats for a claimed venue owner.
+   * Returns check-in totals, average rating, unique visitors, upcoming events, and popular genres.
+   */
+  async getVenueStats(venueId: string): Promise<{
+    totalCheckins: number;
+    averageRating: number;
+    uniqueVisitors: number;
+    upcomingEventsCount: number;
+    popularGenres: Array<{ genre: string; count: number }>;
+  }> {
+    // Total check-ins and unique visitors
+    const checkinsResult = await this.db.query(
+      `SELECT COUNT(c.id) AS total_checkins,
+              COUNT(DISTINCT c.user_id) AS unique_visitors
+       FROM checkins c
+       JOIN events e ON c.event_id = e.id
+       WHERE e.venue_id = $1`,
+      [venueId]
+    );
+
+    // Average rating from reviews
+    const ratingResult = await this.db.query(
+      `SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
+       FROM reviews WHERE venue_id = $1`,
+      [venueId]
+    );
+
+    // Upcoming events count
+    const upcomingResult = await this.db.query(
+      `SELECT COUNT(*) AS upcoming_events
+       FROM events
+       WHERE venue_id = $1 AND event_date >= CURRENT_DATE AND is_cancelled = false`,
+      [venueId]
+    );
+
+    // Popular genres (from bands who played at this venue)
+    const genresResult = await this.db.query(
+      `SELECT b.genre, COUNT(DISTINCT el.event_id) AS event_count
+       FROM event_lineup el
+       JOIN events e ON el.event_id = e.id
+       JOIN bands b ON el.band_id = b.id
+       WHERE e.venue_id = $1 AND b.genre IS NOT NULL AND b.genre != ''
+       GROUP BY b.genre
+       ORDER BY event_count DESC
+       LIMIT 10`,
+      [venueId]
+    );
+
+    const row = checkinsResult.rows[0];
+    return {
+      totalCheckins: parseInt(row.total_checkins || '0'),
+      averageRating: parseFloat(ratingResult.rows[0].avg_rating || '0'),
+      uniqueVisitors: parseInt(row.unique_visitors || '0'),
+      upcomingEventsCount: parseInt(upcomingResult.rows[0].upcoming_events || '0'),
+      popularGenres: genresResult.rows.map((r: any) => ({
+        genre: r.genre,
+        count: parseInt(r.event_count),
+      })),
+    };
+  }
+
+  /**
    * Map database venue row to Venue type
    */
   private mapDbVenueToVenue(row: any): Venue {

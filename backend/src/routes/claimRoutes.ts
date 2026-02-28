@@ -1,15 +1,17 @@
 /**
- * Claim Routes -- Verification claim submission and admin review.
+ * Claim Routes -- Verification claim submission, admin review, and claimed owner features.
  *
  * Public routes (authenticated users):
- *   POST /api/claims        -- Submit a claim
- *   GET  /api/claims/me     -- List user's own claims
- *   GET  /api/claims/:id    -- Get claim by ID
+ *   POST /api/claims                              -- Submit a claim
+ *   GET  /api/claims/me                           -- List user's own claims
+ *   GET  /api/claims/stats/:entityType/:entityId  -- Get claimed entity stats
+ *   POST /api/claims/reviews/:reviewId/respond     -- Respond to a review as owner
+ *   GET  /api/claims/:id                          -- Get claim by ID
  *
  * Admin routes:
- *   GET  /api/admin/claims           -- List all claims (optional ?status filter)
- *   GET  /api/admin/claims/pending   -- List pending claims (FIFO)
- *   PUT  /api/admin/claims/:id/review -- Approve or deny a claim
+ *   GET  /api/admin/claims                        -- List all claims (optional ?status filter)
+ *   GET  /api/admin/claims/pending                -- List pending claims (FIFO)
+ *   PUT  /api/admin/claims/:id/review             -- Approve or deny a claim
  *
  * Phase 11: Platform Trust & Between-Show Retention
  */
@@ -28,6 +30,12 @@ const publicRouter = Router();
 
 publicRouter.post('/', authenticateToken, claimController.submitClaim);
 publicRouter.get('/me', authenticateToken, claimController.getMyClaims);
+
+// Claimed owner features
+publicRouter.get('/stats/:entityType/:entityId', authenticateToken, claimController.getEntityStats);
+publicRouter.post('/reviews/:reviewId/respond', authenticateToken, claimController.respondToReview);
+
+// Generic :id route must be last
 publicRouter.get('/:id', authenticateToken, claimController.getClaimById);
 
 // ============================================

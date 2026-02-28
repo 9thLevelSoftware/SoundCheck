@@ -133,12 +133,27 @@ export class VenueController {
   /**
    * Update venue
    * PUT /api/venues/:id
+   * Authorized for admins and claimed owners (claimed_by_user_id match)
    */
   updateVenue = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
-      const updateData = req.body;
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Authentication required' } as ApiResponse);
+        return;
+      }
 
+      const { id } = req.params;
+
+      // Authorization: admin or claimed owner
+      const isAdmin = !!req.user.isAdmin;
+      const isOwner = await this.venueService.isClaimedOwner(id, req.user.id);
+
+      if (!isAdmin && !isOwner) {
+        res.status(403).json({ success: false, error: 'Only admins or claimed owners can update this venue' } as ApiResponse);
+        return;
+      }
+
+      const updateData = req.body;
       const venue = await this.venueService.updateVenue(id, updateData);
 
       const response: ApiResponse = {
@@ -150,7 +165,7 @@ export class VenueController {
       res.status(200).json(response);
     } catch (error) {
       console.error('Update venue error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update venue',

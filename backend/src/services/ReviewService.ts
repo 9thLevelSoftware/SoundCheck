@@ -3,6 +3,7 @@ import { Review, CreateReviewRequest, SearchQuery, User, Venue, Band } from '../
 import { VenueService } from './VenueService';
 import { BandService } from './BandService';
 import { BadgeService } from './BadgeService';
+import { NotFoundError, ForbiddenError } from '../utils/errors';
 
 export class ReviewService {
   private db = Database.getInstance();
@@ -493,6 +494,51 @@ export class ReviewService {
   }
 
   /**
+   * Claimed owner responds to a review.
+   * Verifies the user owns the venue/band that the review targets.
+   */
+  async respondToReview(reviewId: string, userId: string, response: string): Promise<Review> {
+    // Fetch the review to determine target entity
+    const review = await this.getReviewById(reviewId, false);
+    if (!review) {
+      throw new NotFoundError('Review not found');
+    }
+
+    // Determine entity and check claimed ownership
+    let isOwner = false;
+    if (review.venueId) {
+      const result = await this.db.query(
+        'SELECT 1 FROM venues WHERE id = $1 AND claimed_by_user_id = $2',
+        [review.venueId, userId]
+      );
+      isOwner = result.rows.length > 0;
+    } else if (review.bandId) {
+      const result = await this.db.query(
+        'SELECT 1 FROM bands WHERE id = $1 AND claimed_by_user_id = $2',
+        [review.bandId, userId]
+      );
+      isOwner = result.rows.length > 0;
+    }
+
+    if (!isOwner) {
+      throw new ForbiddenError('Only the claimed owner can respond to reviews');
+    }
+
+    // Update review with owner response
+    const updateResult = await this.db.query(
+      `UPDATE reviews
+       SET owner_response = $1, owner_response_at = NOW(), updated_at = CURRENT_TIMESTAMP
+       WHERE id = $2
+       RETURNING id, user_id, venue_id, band_id, rating, title, content, event_date,
+                 image_urls, is_verified, helpful_count, owner_response, owner_response_at,
+                 created_at, updated_at`,
+      [response, reviewId]
+    );
+
+    return this.mapDbReviewToReview(updateResult.rows[0]);
+  }
+
+  /**
    * Check if user already reviewed venue/band
    */
   private async findExistingReview(userId: string, venueId?: string, bandId?: string): Promise<Review | null> {
@@ -515,6 +561,8 @@ export class ReviewService {
       imageUrls: row.image_urls,
       isVerified: row.is_verified,
       helpfulCount: row.helpful_count || 0,
+      ownerResponse: row.owner_response || undefined,
+      ownerResponseAt: row.owner_response_at || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };

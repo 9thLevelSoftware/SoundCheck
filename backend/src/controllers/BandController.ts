@@ -132,12 +132,27 @@ export class BandController {
   /**
    * Update band
    * PUT /api/bands/:id
+   * Authorized for admins and claimed owners (claimed_by_user_id match)
    */
   updateBand = async (req: Request, res: Response): Promise<void> => {
     try {
-      const { id } = req.params;
-      const updateData = req.body;
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Authentication required' } as ApiResponse);
+        return;
+      }
 
+      const { id } = req.params;
+
+      // Authorization: admin or claimed owner
+      const isAdmin = !!req.user.isAdmin;
+      const isOwner = await this.bandService.isClaimedOwner(id, req.user.id);
+
+      if (!isAdmin && !isOwner) {
+        res.status(403).json({ success: false, error: 'Only admins or claimed owners can update this band' } as ApiResponse);
+        return;
+      }
+
+      const updateData = req.body;
       const band = await this.bandService.updateBand(id, updateData);
 
       const response: ApiResponse = {
@@ -149,7 +164,7 @@ export class BandController {
       res.status(200).json(response);
     } catch (error) {
       console.error('Update band error:', error);
-      
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to update band',

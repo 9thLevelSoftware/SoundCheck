@@ -309,6 +309,83 @@ export class BandService {
   }
 
   /**
+   * Check if a user is the claimed owner of a band.
+   */
+  async isClaimedOwner(bandId: string, userId: string): Promise<boolean> {
+    const result = await this.db.query(
+      'SELECT 1 FROM bands WHERE id = $1 AND claimed_by_user_id = $2',
+      [bandId, userId]
+    );
+    return result.rows.length > 0;
+  }
+
+  /**
+   * Get aggregate stats for a claimed band owner.
+   * Returns check-in totals, average rating, unique fans, recent events, and top venues.
+   */
+  async getBandStats(bandId: string): Promise<{
+    totalCheckins: number;
+    averageRating: number;
+    uniqueFans: number;
+    recentEventsCount: number;
+    topVenues: Array<{ venueId: string; venueName: string; checkinCount: number }>;
+  }> {
+    // Total check-ins to events featuring this band
+    const checkinsResult = await this.db.query(
+      `SELECT COUNT(c.id) AS total_checkins,
+              COUNT(DISTINCT c.user_id) AS unique_fans
+       FROM checkins c
+       JOIN events e ON c.event_id = e.id
+       JOIN event_lineup el ON el.event_id = e.id
+       WHERE el.band_id = $1`,
+      [bandId]
+    );
+
+    // Average rating from reviews
+    const ratingResult = await this.db.query(
+      `SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
+       FROM reviews WHERE band_id = $1`,
+      [bandId]
+    );
+
+    // Recent events count (last 90 days)
+    const recentEventsResult = await this.db.query(
+      `SELECT COUNT(DISTINCT e.id) AS recent_events
+       FROM events e
+       JOIN event_lineup el ON el.event_id = e.id
+       WHERE el.band_id = $1 AND e.event_date >= CURRENT_DATE - INTERVAL '90 days'`,
+      [bandId]
+    );
+
+    // Top venues by checkin count
+    const topVenuesResult = await this.db.query(
+      `SELECT v.id AS venue_id, v.name AS venue_name, COUNT(c.id) AS checkin_count
+       FROM checkins c
+       JOIN events e ON c.event_id = e.id
+       JOIN event_lineup el ON el.event_id = e.id
+       JOIN venues v ON e.venue_id = v.id
+       WHERE el.band_id = $1
+       GROUP BY v.id, v.name
+       ORDER BY checkin_count DESC
+       LIMIT 5`,
+      [bandId]
+    );
+
+    const row = checkinsResult.rows[0];
+    return {
+      totalCheckins: parseInt(row.total_checkins || '0'),
+      averageRating: parseFloat(ratingResult.rows[0].avg_rating || '0'),
+      uniqueFans: parseInt(row.unique_fans || '0'),
+      recentEventsCount: parseInt(recentEventsResult.rows[0].recent_events || '0'),
+      topVenues: topVenuesResult.rows.map((r: any) => ({
+        venueId: r.venue_id,
+        venueName: r.venue_name,
+        checkinCount: parseInt(r.checkin_count),
+      })),
+    };
+  }
+
+  /**
    * Map database band row to Band type
    */
   private mapDbBandToBand(row: any): Band {
