@@ -37,8 +37,8 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 
 - [x] **EVENT-01**: User can RSVP "I'm Going" to upcoming events
 - [x] **EVENT-02**: Event detail shows count and avatars of friends going
-- [ ] **EVENT-03**: User sees "Trending Shows Near You" feed for between-concert retention
-- [ ] **EVENT-04**: Trending algorithm uses Wilson-scored mix of RSVP count, check-in velocity, friend signals, and proximity
+- [x] **EVENT-03**: User sees "Trending Shows Near You" feed for between-concert retention
+- [x] **EVENT-04**: Trending algorithm uses Wilson-scored mix of RSVP count, check-in velocity, friend signals, and proximity
 
 ### Platform Credibility
 
@@ -52,7 +52,7 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 ### Technical Scale
 
 - [x] **SCALE-01**: Search uses PostgreSQL tsvector + GIN indexes with pg_trgm fuzzy fallback (replaces ILIKE)
-- [ ] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
+- [x] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
 - [x] **SCALE-03**: Band.genre migrated from single string to array/many-to-many for faceted filtering
 
 ### Monetization
@@ -128,8 +128,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SHARE-04 | Phase 10 | Complete |
 | EVENT-01 | Phase 10 | Complete |
 | EVENT-02 | Phase 10 | Complete |
-| EVENT-03 | Phase 11 | Pending |
-| EVENT-04 | Phase 11 | Pending |
+| EVENT-03 | Phase 11 | Complete |
+| EVENT-04 | Phase 11 | Complete |
 | VERIFY-01 | Phase 11 | Complete |
 | VERIFY-02 | Phase 11 | Complete |
 | VERIFY-03 | Phase 11 | Complete |
@@ -137,7 +137,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VERIFY-05 | Phase 11 | Complete |
 | VERIFY-06 | Phase 11 | Complete |
 | SCALE-01 | Phase 11 | Complete |
-| SCALE-02 | Phase 11 | Pending |
+| SCALE-02 | Phase 11 | Complete |
 | SCALE-03 | Phase 11 | Complete |
 | MONEY-01 | Phase 12 | Pending |
 | MONEY-02 | Phase 12 | Pending |

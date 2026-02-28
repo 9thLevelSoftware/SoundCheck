@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-28T15:34:00Z"
+last_updated: "2026-02-28T15:40:00Z"
 progress:
   total_phases: 5
   completed_phases: 5
@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 11 (Platform Trust & Between-Show Retention)
-Plan: 1 of 6
+Plan: 3 of 6
 Status: Executing
-Last activity: 2026-02-28 — Completed 11-01 (Database Migrations & Types)
+Last activity: 2026-02-28 — Completed 11-03 (Unified Search & Genre Array Migration)
 
-Progress: [████░░░░░░░░░░░░░░░░░░░░░] 17%
+Progress: [████████████░░░░░░░░░░░░░] 50%
 
 ## Performance Metrics
 
@@ -42,7 +42,7 @@ Progress: [████░░░░░░░░░░░░░░░░░░░
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
 | 10. Viral Growth | 5/5 | 29min | 5.8min |
-| 11. Platform Trust | 1/6 | 3min | 3min |
+| 11. Platform Trust | 3/6 | 9min | 3min |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
 | Phase 09.1 P01 | 2min | 2 tasks | 4 files |
@@ -103,6 +103,12 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [11-01] tsvector columns use GENERATED ALWAYS AS ... STORED (not VIRTUAL) because GIN indexes require materialized data
 - [11-01] Genre migration adds new genres TEXT[] column alongside existing genre VARCHAR — old column kept for backward compatibility
 - [11-01] Owner response added directly to reviews table (not separate table) — matches Google Maps one-response-per-review pattern
+- [11-02] TrendingService uses LATERAL joins for signal computation to avoid correlated subquery performance issues
+- [11-02] Proximity decay formula: wilson_result * (1.0 / (1.0 + distance_km / 50.0)) — 50km = ~50% score
+- [11-02] Feed denormalization removes GROUP BY entirely since no aggregate functions remain after switching to c.toast_count/c.comment_count
+- [11-03] SearchService uses CTE-based fts_results UNION ALL fuzzy_results with NOT IN dedup for clean tsvector+fuzzy fallback
+- [11-03] Genre partial matching uses unnest(genres) with ILIKE; exact filtering uses $N = ANY(genres) for GIN index efficiency
+- [11-03] DiscoveryService user_genres CTE restructured to CROSS JOIN LATERAL unnest(b.genres) for array-based genre affinity scoring
 
 ### Pending Todos
 
@@ -124,5 +130,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-01-PLAN.md (Database Migrations & Types)
+Stopped at: Completed 11-03-PLAN.md (Unified Search & Genre Array Migration)
 Resume file: None
