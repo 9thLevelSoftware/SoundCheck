@@ -101,7 +101,7 @@ Plans:
   2. User can tap a block button on any user profile to block that user, with confirmation
   3. Blocked state is reflected in the UI (block/unblock toggle)
   4. Report confirmation is shown to the user after submission
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
 - [ ] 10.1-01-PLAN.md -- Content reporting UI (ReportRepository + ReportBottomSheet + feed card / check-in detail integration)
 - [ ] 10.1-02-PLAN.md -- Block system UI (BlockRepository + UserProfileScreen rebuild + BlockedUsersScreen + Settings link)
@@ -148,7 +148,7 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 11 -> 12
 | 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
 | 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
-| 10.1. Report & Block Mobile UI | v1.1 | 0/2 | Not started | - |
+| 10.1. Report & Block Mobile UI | 1/2 | In Progress|  | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 

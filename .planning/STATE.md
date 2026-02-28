@@ -3,6 +3,19 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
 status: unknown
+last_updated: "2026-02-28T03:34:18.222Z"
+progress:
+  total_phases: 4
+  completed_phases: 3
+  total_plans: 13
+  completed_plans: 12
+---
+
+---
+gsd_state_version: 1.0
+milestone: v1.1
+milestone_name: Launch Readiness & Growth Platform
+status: unknown
 last_updated: "2026-02-28T02:52:16.996Z"
 progress:
   total_phases: 3
@@ -31,14 +44,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 10 — Viral Growth Engine
+**Current focus:** Phase 10.1 — Report & Block Mobile UI
 
 ## Current Position
 
-Phase: 10 (Viral Growth Engine)
-Plan: 5 of 5
+Phase: 10.1 (Report & Block Mobile UI)
+Plan: 2 of 2
 Status: Phase Complete
-Last activity: 2026-02-28 — Completed 10-04 (Celebration Screen & Social Sharing)
+Last activity: 2026-02-28 — Completed 10.1-02 (Block Feature Mobile UI)
 
 Progress: [█████████████████████████] 100%
 
@@ -60,6 +73,8 @@ Progress: [███████████████████████
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
 | Phase 09.1 P01 | 2min | 2 tasks | 4 files |
 | Phase 09.1 P02 | 3min | 2 tasks | 4 files |
+| 10.1 Report & Block UI | 2/2 | 6min | 3min |
+| Phase 10.1 P02 | 3min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -100,6 +115,10 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [10-04] Used share_plus only (no social_share_kit) for reliable cross-platform sharing via OS share sheet
 - [10-04] Enhanced checkin success state inline with badge progress and share CTA instead of navigating away
 - [10-04] Badge sharing via tap-to-share on earned badges in collection screen (no separate badge detail screen exists)
+- [10.1-02] Manual Riverpod providers (not @riverpod codegen) for block feature consistent with Phase 10 decision [10-05]
+- [10.1-02] UserProfileScreen parses User.fromJson from /users/:id for type-safe field access
+- [10.1-02] Route /profile/settings/blocked-users as child of settings GoRoute for proper shell navigation
+- [10.1-02] userPublicProfileProvider co-located in block_providers.dart with related block providers
 
 ### Pending Todos
 
@@ -121,5 +140,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 10-04-PLAN.md (Celebration Screen & Social Sharing)
+Stopped at: Completed 10.1-02-PLAN.md (Block Feature Mobile UI)
 Resume file: None
