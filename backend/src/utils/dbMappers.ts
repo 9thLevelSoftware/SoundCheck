@@ -21,6 +21,7 @@ export function mapDbUserToUser(row: any): User {
     isVerified: row.is_verified ?? false,
     isActive: row.is_active ?? true,
     isAdmin: row.is_admin ?? false,
+    isPremium: row.is_premium ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };

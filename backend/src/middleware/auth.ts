@@ -156,6 +156,33 @@ export const requireAdmin = () => {
 };
 
 /**
+ * Middleware to require premium subscription
+ */
+export const requirePremium = () => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const user = req.user;
+
+    if (!user) {
+      res.status(401).json({
+        success: false,
+        error: 'Authentication required',
+      });
+      return;
+    }
+
+    if (!user.isPremium) {
+      res.status(403).json({
+        success: false,
+        error: 'SoundCheck Pro subscription required',
+      });
+      return;
+    }
+
+    next();
+  };
+};
+
+/**
  * Rate limiting middleware
  *
  * Uses Redis when available for distributed rate limiting across instances.

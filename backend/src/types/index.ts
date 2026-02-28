@@ -13,6 +13,7 @@ export interface User {
   isVerified: boolean;
   isActive: boolean;
   isAdmin?: boolean;
+  isPremium?: boolean;
   createdAt: string;
   updatedAt: string;
   // Statistics (populated on profile requests)

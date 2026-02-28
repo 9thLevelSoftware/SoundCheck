@@ -46,6 +46,8 @@ import trendingRoutes from './routes/trendingRoutes';
 import onboardingRoutes from './routes/onboardingRoutes';
 import shareRoutes from './routes/shareRoutes';
 import claimRoutes from './routes/claimRoutes';
+import wrappedRoutes from './routes/wrappedRoutes';
+import subscriptionRoutes from './routes/subscriptionRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -214,9 +216,12 @@ app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/share', shareRoutes.api);
 app.use('/api/claims', claimRoutes.public);
 app.use('/api/admin/claims', claimRoutes.admin);
+app.use('/api/wrapped', wrappedRoutes.api);
+app.use('/api/subscription', subscriptionRoutes);
 
 // Public share landing pages (no auth, not under /api/)
 app.use('/share', shareRoutes.public);
+app.use('/wrapped', wrappedRoutes.public);
 
 // Root endpoint
 app.get('/', (req, res) => {

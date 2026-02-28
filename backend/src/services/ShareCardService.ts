@@ -23,6 +23,8 @@ import path from 'path';
 import { r2Service } from './R2Service';
 import { checkinCardOG, checkinCardStories, CheckinCardData } from '../templates/share-cards/checkin-card';
 import { badgeCardOG, badgeCardStories, BadgeCardData } from '../templates/share-cards/badge-card';
+import { wrappedSummaryCardOG, wrappedSummaryCardStories, WrappedSummaryData } from '../templates/share-cards/wrapped-summary-card';
+import { wrappedStatCardOG, wrappedStatCardStories, WrappedStatData } from '../templates/share-cards/wrapped-stat-card';
 
 // ============================================
 // Font loading (once at module level)
@@ -94,6 +96,50 @@ export class ShareCardService {
       this.renderAndUpload(badgeCardStories(data), 1080, 1920, storiesKey),
     ]);
 
+    return { ogUrl, storiesUrl };
+  }
+
+  /**
+   * Generate Wrapped summary share card images in both variants.
+   */
+  async generateWrappedCard(
+    userId: string,
+    year: number,
+    data: WrappedSummaryData
+  ): Promise<{ ogUrl: string; storiesUrl: string }> {
+    if (!r2Service.configured) {
+      console.warn('ShareCardService: R2 not configured, returning placeholder URLs');
+      return { ogUrl: '', storiesUrl: '' };
+    }
+    const ts = Date.now();
+    const ogKey = `cards/wrapped/${userId}-${year}-summary-${ts}-og.png`;
+    const storiesKey = `cards/wrapped/${userId}-${year}-summary-${ts}-stories.png`;
+    const [ogUrl, storiesUrl] = await Promise.all([
+      this.renderAndUpload(wrappedSummaryCardOG(data), 1200, 630, ogKey),
+      this.renderAndUpload(wrappedSummaryCardStories(data), 1080, 1920, storiesKey),
+    ]);
+    return { ogUrl, storiesUrl };
+  }
+
+  /**
+   * Generate Wrapped per-stat share card images in both variants.
+   */
+  async generateWrappedStatCard(
+    userId: string,
+    year: number,
+    data: WrappedStatData
+  ): Promise<{ ogUrl: string; storiesUrl: string }> {
+    if (!r2Service.configured) {
+      console.warn('ShareCardService: R2 not configured, returning placeholder URLs');
+      return { ogUrl: '', storiesUrl: '' };
+    }
+    const ts = Date.now();
+    const ogKey = `cards/wrapped/${userId}-${year}-${data.statType}-${ts}-og.png`;
+    const storiesKey = `cards/wrapped/${userId}-${year}-${data.statType}-${ts}-stories.png`;
+    const [ogUrl, storiesUrl] = await Promise.all([
+      this.renderAndUpload(wrappedStatCardOG(data), 1200, 630, ogKey),
+      this.renderAndUpload(wrappedStatCardStories(data), 1080, 1920, storiesKey),
+    ]);
     return { ogUrl, storiesUrl };
   }
 
