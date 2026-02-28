@@ -157,7 +157,7 @@ export class SearchService {
       SELECT e.*,
         v.id as v_id, v.name as venue_name, v.city as venue_city,
         v.state as venue_state, v.image_url as venue_image,
-        (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count
+        (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id AND c.is_hidden IS NOT TRUE) as checkin_count
       FROM events e
       JOIN venues v ON e.venue_id = v.id
       WHERE e.id IN (SELECT id FROM matched_ids)

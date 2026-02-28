@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import { TrendingEvent } from '../types';
+import { BlockService } from './BlockService';
 
 interface TrendingOptions {
   radiusKm?: number;
@@ -9,6 +10,7 @@ interface TrendingOptions {
 
 export class TrendingService {
   private db = Database.getInstance();
+  private blockService = new BlockService();
 
   /**
    * Get trending events near a user, ranked by Wilson-scored composite
@@ -80,6 +82,7 @@ export class TrendingService {
           WHERE c.event_id = e.id
             AND c.created_at >= NOW() - INTERVAL '7 days'
             AND c.is_hidden IS NOT TRUE
+            ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
         ) velocity_stats ON TRUE
         LEFT JOIN LATERAL (
           SELECT COUNT(DISTINCT er.user_id)::int AS friend_signals
@@ -87,6 +90,7 @@ export class TrendingService {
           JOIN user_followers uf ON er.user_id = uf.following_id
           WHERE er.event_id = e.id
             AND uf.follower_id = $1
+            ${this.blockService.getBlockFilterSQL(userId, 'er.user_id')}
         ) friend_stats ON TRUE
         WHERE e.event_date >= CURRENT_DATE
           AND e.event_date <= CURRENT_DATE + ($4 || ' days')::INTERVAL
