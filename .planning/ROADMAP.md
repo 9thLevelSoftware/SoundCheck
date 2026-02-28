@@ -82,7 +82,7 @@ Plans:
   3. User can share a badge unlock card to social platforms from the badge detail screen
   4. Non-user clicking a shared link on social media lands on a web page showing the check-in/badge card with App Store and Play Store download buttons
   5. User can tap "I'm Going" on an upcoming event and see which friends are also going (count + avatars)
-**Plans:** 1/5 plans executed
+**Plans:** 2/5 plans executed
 Plans:
 - [ ] 10-01-PLAN.md -- Database migrations + RsvpService + OnboardingService + routes (backend RSVP & onboarding APIs)
 - [ ] 10-02-PLAN.md -- ShareCardService + satori card templates + web landing page (backend share pipeline)
@@ -131,7 +131,7 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 8. Polish & App Store Readiness | v1.0 | 2/2 | Complete | 2026-02-03 |
 | 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
 | 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
-| 10. Viral Growth Engine | 1/5 | In Progress|  | - |
+| 10. Viral Growth Engine | 2/5 | In Progress|  | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 

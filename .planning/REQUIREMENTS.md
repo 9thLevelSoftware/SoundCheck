@@ -28,10 +28,10 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 
 ### Social Sharing
 
-- [ ] **SHARE-01**: Server generates shareable check-in card images (1200x630 OG + 1080x1920 Stories variants)
+- [x] **SHARE-01**: Server generates shareable check-in card images (1200x630 OG + 1080x1920 Stories variants)
 - [ ] **SHARE-02**: User can share check-in card to Instagram Stories, X, and TikTok from celebration screen
 - [ ] **SHARE-03**: User can share badge unlock card to social platforms
-- [ ] **SHARE-04**: Non-users clicking a shared link see web landing page with card preview and App Store/Play Store CTAs
+- [x] **SHARE-04**: Non-users clicking a shared link see web landing page with card preview and App Store/Play Store CTAs
 
 ### Event Engagement
 
@@ -122,10 +122,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | ONBD-01 | Phase 10 | Pending |
 | ONBD-02 | Phase 10 | Complete |
 | ONBD-03 | Phase 10 | Pending |
-| SHARE-01 | Phase 10 | Pending |
+| SHARE-01 | Phase 10 | Complete |
 | SHARE-02 | Phase 10 | Pending |
 | SHARE-03 | Phase 10 | Pending |
-| SHARE-04 | Phase 10 | Pending |
+| SHARE-04 | Phase 10 | Complete |
 | EVENT-01 | Phase 10 | Complete |
 | EVENT-02 | Phase 10 | Complete |
 | EVENT-03 | Phase 11 | Pending |
