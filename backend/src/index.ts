@@ -42,6 +42,7 @@ import moderationRoutes from './routes/moderationRoutes';
 import passwordResetRoutes from './routes/passwordResetRoutes';
 import blockRoutes from './routes/blockRoutes';
 import rsvpRoutes from './routes/rsvpRoutes';
+import trendingRoutes from './routes/trendingRoutes';
 import onboardingRoutes from './routes/onboardingRoutes';
 import shareRoutes from './routes/shareRoutes';
 import Database from './config/database';
@@ -207,6 +208,7 @@ app.use('/api/admin/moderation', moderationRoutes);
 app.use('/api/auth', passwordResetRoutes);
 app.use('/api/blocks', blockRoutes);
 app.use('/api/rsvp', rsvpRoutes);
+app.use('/api/trending', trendingRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/share', shareRoutes.api);
 
