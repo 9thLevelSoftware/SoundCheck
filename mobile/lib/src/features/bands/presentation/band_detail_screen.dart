@@ -142,6 +142,33 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
             ),
           ),
 
+          // Claim button (only for unclaimed bands)
+          if (band.claimedByUserId == null)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: TextButton.icon(
+                  onPressed: () {
+                    context.push(
+                      '/claim/band/${band.id}?name=${Uri.encodeComponent(band.name)}',
+                    );
+                  },
+                  icon: const Icon(
+                    Icons.verified_outlined,
+                    size: 18,
+                    color: AppTheme.textSecondary,
+                  ),
+                  label: const Text(
+                    'Claim this band',
+                    style: TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+
           // Upcoming Shows section (Phase 7)
           SliverToBoxAdapter(
             child: _UpcomingShowsSection(band: band),
@@ -267,13 +294,28 @@ class _BandHeader extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  band.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.textPrimary,
-                  ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        band.name,
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppTheme.textPrimary,
+                        ),
+                      ),
+                    ),
+                    if (band.claimedByUserId != null)
+                      Tooltip(
+                        message: 'Verified band',
+                        child: Icon(
+                          Icons.verified,
+                          color: AppTheme.primary,
+                          size: 20,
+                        ),
+                      ),
+                  ],
                 ),
                 if (band.genre != null) ...[
                   const SizedBox(height: 4),

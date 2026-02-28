@@ -28,6 +28,8 @@ sealed class Band with _$Band {
     @Default(0) int totalCheckins,
     @Default(0) int uniqueFans,
     @Default(0) int monthlyCheckins,
+    // Claimed owner user ID (Phase 11 - verification claims)
+    String? claimedByUserId,
     // Discovery aggregate (Phase 7) -- from check-in ratings, not old reviews
     BandAggregate? aggregate,
     // Upcoming shows for this band (Phase 7)

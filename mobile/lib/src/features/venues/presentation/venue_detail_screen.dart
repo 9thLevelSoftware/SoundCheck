@@ -131,14 +131,47 @@ class _VenueContent extends StatelessWidget {
                               ),
                             ),
                           ),
-                          if (venue.isVerified)
+                          if (venue.claimedByUserId != null)
+                            Tooltip(
+                              message: 'Verified venue',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.primary.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: const Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      Icons.verified,
+                                      size: 16,
+                                      color: AppTheme.primary,
+                                    ),
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Claimed',
+                                      style: TextStyle(
+                                        color: AppTheme.primary,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          else if (venue.isVerified)
                             Container(
                               padding: const EdgeInsets.symmetric(
                                 horizontal: 8,
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: AppTheme.info.withValues(alpha:0.2),
+                                color: AppTheme.info.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: const Row(
@@ -195,6 +228,33 @@ class _VenueContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: _MapStrip(venue: venue),
         ),
+
+        // Claim button (only for unclaimed venues)
+        if (venue.claimedByUserId == null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: TextButton.icon(
+                onPressed: () {
+                  context.push(
+                    '/claim/venue/${venue.id}?name=${Uri.encodeComponent(venue.name)}',
+                  );
+                },
+                icon: const Icon(
+                  Icons.verified_outlined,
+                  size: 18,
+                  color: AppTheme.textSecondary,
+                ),
+                label: const Text(
+                  'Claim this venue',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+            ),
+          ),
 
         // Stats Row -- uses aggregate if available
         SliverToBoxAdapter(
