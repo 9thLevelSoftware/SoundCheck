@@ -35,6 +35,7 @@
 - [ ] **Phase 9: Trust & Safety Foundation** — App Store compliance infrastructure: report/block/moderation pipeline, auth cleanup, and tech debt that must be resolved before new UGC surfaces ship
 - [ ] **Phase 9.1: Content Moderation Enforcement** *(INSERTED — gap closure)* — Wire is_hidden filtering into all content-serving queries so moderated content is actually excluded from feeds
 - [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
+- [ ] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop
 - [ ] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
 
@@ -90,6 +91,18 @@ Plans:
 - [ ] 10-04-PLAN.md -- Mobile celebration screen + social sharing flow
 - [ ] 10-05-PLAN.md -- Mobile RSVP UI + event detail friends going
 
+### Phase 10.1: Report & Block Mobile UI *(INSERTED — gap closure)*
+**Goal**: Users can report content and block other users from the mobile app, completing the Trust & Safety loop that Phase 9 started on the backend
+**Depends on**: Phase 9 (report and block backend APIs already exist), Phase 10 (audit discovered gaps after Phase 10 completion)
+**Requirements**: SAFE-01, SAFE-04
+**Gap Closure**: Closes audit gaps — backend POST /api/reports and POST/DELETE /api/blocks/:userId/block exist but have no mobile entry points
+**Success Criteria** (what must be TRUE):
+  1. User can tap a report option on any check-in, comment, or photo and submit a report with reason
+  2. User can tap a block button on any user profile to block that user, with confirmation
+  3. Blocked state is reflected in the UI (block/unblock toggle)
+  4. Report confirmation is shown to the user after submission
+**Plans:** TBD
+
 ### Phase 11: Platform Trust & Between-Show Retention
 **Goal**: Users stay engaged between concerts via trending shows, the platform gains credibility through verified venue/artist profiles, and search/feed performance scales
 **Depends on**: Phase 10 (RSVP data feeds trending algorithm; satori pipeline reused for verification badges)
@@ -117,7 +130,7 @@ Plans:
 ## Progress
 
 **Execution Order:**
-Phases execute in numeric order: 9 -> 10 -> 11 -> 12
+Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 11 -> 12
 
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
@@ -131,10 +144,11 @@ Phases execute in numeric order: 9 -> 10 -> 11 -> 12
 | 8. Polish & App Store Readiness | v1.0 | 2/2 | Complete | 2026-02-03 |
 | 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
 | 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
-| 10. Viral Growth Engine | 5/5 | Complete    | 2026-02-28 | - |
+| 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
+| 10.1. Report & Block Mobile UI | v1.1 | 0/TBD | Not started | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-27 after gap closure Phase 9.1 added*
+*Last updated: 2026-02-27 after gap closure Phase 10.1 added*
