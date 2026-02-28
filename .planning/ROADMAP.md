@@ -34,7 +34,7 @@
 
 - [ ] **Phase 9: Trust & Safety Foundation** — App Store compliance infrastructure: report/block/moderation pipeline, auth cleanup, and tech debt that must be resolved before new UGC surfaces ship
 - [ ] **Phase 9.1: Content Moderation Enforcement** *(INSERTED — gap closure)* — Wire is_hidden filtering into all content-serving queries so moderated content is actually excluded from feeds
-- [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
+- [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
 - [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
 - [x] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile (completed 2026-02-28)
 - [ ] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements
@@ -131,7 +131,14 @@ Plans:
   3. Artist can submit a claim request, and after admin approval, sees a verification badge on their band profile and can update their profile and view performance stats
   4. Search across bands, venues, and events uses full-text search with fuzzy fallback, returning relevant results for partial matches, typos, and multi-word queries
   5. Feed queries perform consistently under load using denormalized count columns instead of COUNT(DISTINCT) joins
-**Plans**: TBD
+**Plans:** 6 plans
+Plans:
+- [ ] 11-01-PLAN.md — Database migrations (verification claims, tsvector search, genre array, review responses) + TypeScript types
+- [ ] 11-02-PLAN.md — TrendingService with Wilson scoring + feed denormalized count switchover
+- [ ] 11-03-PLAN.md — SearchService (tsvector + fuzzy fallback) + genre array query migration
+- [ ] 11-04-PLAN.md — ClaimService + admin approval + claimed owner features (review response, profile update, stats)
+- [ ] 11-05-PLAN.md — Mobile trending feed section + search screen upgrade
+- [ ] 11-06-PLAN.md — Mobile verification UI (claim submission, claims list, verified badges, owner responses)
 
 ### Phase 12: Monetization & Wrapped
 **Goal**: Users experience their year in concerts through SoundCheck Wrapped, and a premium subscription tier generates recurring revenue
@@ -163,11 +170,11 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 12
 | 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
 | 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
-| 10.1. Report & Block Mobile UI | 2/2 | Complete    | 2026-02-28 | - |
-| 10.2. Password Reset Mobile Fix | 1/1 | Complete    | 2026-02-28 | - |
-| 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
+| 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
+| 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
+| 11. Platform Trust & Between-Show Retention | v1.1 | 0/6 | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-27 after gap closure Phase 10.2 added*
+*Last updated: 2026-02-28 after Phase 11 planning complete*
