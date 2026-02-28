@@ -51,3 +51,23 @@ export const checkUsernameSchema = z.object({
     username: z.string().min(3),
   }),
 });
+
+/**
+ * RSVP Validation Schemas
+ */
+
+export const toggleRsvpSchema = z.object({
+  params: z.object({
+    eventId: z.string().uuid('Event ID must be a valid UUID'),
+  }),
+});
+
+/**
+ * Onboarding Validation Schemas
+ */
+
+export const saveGenrePreferencesSchema = z.object({
+  body: z.object({
+    genres: z.array(z.string().min(1).max(100)).min(3, 'Must select at least 3 genres').max(8, 'Cannot select more than 8 genres'),
+  }),
+});

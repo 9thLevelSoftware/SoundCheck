@@ -41,6 +41,8 @@ import reportRoutes from './routes/reportRoutes';
 import moderationRoutes from './routes/moderationRoutes';
 import passwordResetRoutes from './routes/passwordResetRoutes';
 import blockRoutes from './routes/blockRoutes';
+import rsvpRoutes from './routes/rsvpRoutes';
+import onboardingRoutes from './routes/onboardingRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -203,6 +205,8 @@ app.use('/api/reports', reportRoutes);
 app.use('/api/admin/moderation', moderationRoutes);
 app.use('/api/auth', passwordResetRoutes);
 app.use('/api/blocks', blockRoutes);
+app.use('/api/rsvp', rsvpRoutes);
+app.use('/api/onboarding', onboardingRoutes);
 
 // Root endpoint
 app.get('/', (req, res) => {
