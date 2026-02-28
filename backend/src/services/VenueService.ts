@@ -33,7 +33,8 @@ export class VenueService {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING id, name, description, address, city, state, country, postal_code,
                 latitude, longitude, website_url, phone, email, capacity, venue_type,
-                image_url, average_rating, total_reviews, is_active, created_at, updated_at
+                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+                created_at, updated_at
     `;
 
     const values = [
@@ -65,7 +66,8 @@ export class VenueService {
     const query = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, created_at, updated_at
+             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             created_at, updated_at
       FROM venues
       WHERE id = $1 AND is_active = true
     `;
@@ -148,7 +150,8 @@ export class VenueService {
     const mainQuery = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, created_at, updated_at
+             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             created_at, updated_at
       FROM venues
       WHERE ${conditions.join(' AND ')}
       ORDER BY ${sortColumn} ${sortOrder}
@@ -208,11 +211,12 @@ export class VenueService {
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, name, description, address, city, state, country, postal_code,
                 latitude, longitude, website_url, phone, email, capacity, venue_type,
-                image_url, average_rating, total_reviews, is_active, created_at, updated_at
+                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+                created_at, updated_at
     `;
 
     const result = await this.db.query(query, values);
-    
+
     if (result.rows.length === 0) {
       throw new Error('Venue not found or inactive');
     }
@@ -240,7 +244,8 @@ export class VenueService {
     const query = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, created_at, updated_at
+             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             created_at, updated_at
       FROM venues
       WHERE is_active = true AND total_reviews >= 5
       ORDER BY (average_rating * 0.7 + LEAST(total_reviews/100.0, 1.0) * 0.3) DESC
@@ -266,7 +271,8 @@ export class VenueService {
       SELECT * FROM (
         SELECT id, name, description, address, city, state, country, postal_code,
                latitude, longitude, website_url, phone, email, capacity, venue_type,
-               image_url, average_rating, total_reviews, is_active, created_at, updated_at,
+               image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+               created_at, updated_at,
                (6371 * acos(cos(radians($1)) * cos(radians(latitude)) *
                 cos(radians(longitude) - radians($2)) +
                 sin(radians($1)) * sin(radians(latitude)))) AS distance
@@ -406,6 +412,7 @@ export class VenueService {
       averageRating: parseFloat(row.average_rating || 0),
       totalCheckins: parseInt(row.total_reviews || 0),
       isActive: row.is_active,
+      claimedByUserId: row.claimed_by_user_id || undefined,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
