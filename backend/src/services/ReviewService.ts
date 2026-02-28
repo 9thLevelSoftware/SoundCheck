@@ -98,7 +98,8 @@ export class ReviewService {
   async getReviewById(reviewId: string, includeRelated: boolean = true): Promise<Review | null> {
     let query = `
       SELECT r.id, r.user_id, r.venue_id, r.band_id, r.rating, r.title, r.content,
-             r.event_date, r.image_urls, r.is_verified, r.helpful_count, 
+             r.event_date, r.image_urls, r.is_verified, r.helpful_count,
+             r.owner_response, r.owner_response_at,
              r.created_at, r.updated_at
     `;
 
@@ -264,7 +265,8 @@ export class ReviewService {
     // Main query with related data
     const mainQuery = `
       SELECT r.id, r.user_id, r.venue_id, r.band_id, r.rating, r.title, r.content,
-             r.event_date, r.image_urls, r.is_verified, r.helpful_count, 
+             r.event_date, r.image_urls, r.is_verified, r.helpful_count,
+             r.owner_response, r.owner_response_at,
              r.created_at, r.updated_at,
              u.username, u.first_name, u.last_name, u.profile_image_url, u.is_verified as user_verified,
              v.name as venue_name, v.city as venue_city, v.image_url as venue_image,

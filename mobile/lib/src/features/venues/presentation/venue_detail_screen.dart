@@ -8,6 +8,9 @@ import '../../../core/providers/providers.dart';
 import '../domain/venue.dart';
 import '../../checkins/presentation/providers/checkin_providers.dart';
 import '../../checkins/domain/checkin.dart';
+import '../../reviews/domain/review.dart';
+import '../../verification/presentation/providers/claim_providers.dart';
+import '../../verification/presentation/widgets/owner_response_bottom_sheet.dart';
 
 final venueDetailProvider = FutureProvider.autoDispose.family<Venue, String>((ref, id) async {
   final repository = ref.watch(venueRepositoryProvider);
@@ -70,14 +73,14 @@ class VenueDetailScreen extends ConsumerWidget {
   }
 }
 
-class _VenueContent extends StatelessWidget {
+class _VenueContent extends ConsumerWidget {
   final Venue venue;
   final String venueId;
 
   const _VenueContent({required this.venue, required this.venueId});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return CustomScrollView(
       slivers: [
         // Cover Header
@@ -270,6 +273,12 @@ class _VenueContent extends StatelessWidget {
         SliverToBoxAdapter(
           child: _VenueInsightsSection(venueId: venueId),
         ),
+
+        // Reviews section (for claimed venues)
+        if (venue.claimedByUserId != null)
+          SliverToBoxAdapter(
+            child: _VenueReviewsSection(venue: venue, venueId: venueId),
+          ),
 
         // Recent Check-ins Feed
         SliverToBoxAdapter(
@@ -932,6 +941,313 @@ class _RecentBandsSection extends ConsumerWidget {
           ),
         );
       }).toList(),
+    );
+  }
+}
+
+String _timeAgo(String isoDate) {
+  try {
+    final date = DateTime.parse(isoDate);
+    final diff = DateTime.now().difference(date);
+    if (diff.inDays > 365) return '${diff.inDays ~/ 365}y ago';
+    if (diff.inDays > 30) return '${diff.inDays ~/ 30}mo ago';
+    if (diff.inDays > 0) return '${diff.inDays}d ago';
+    if (diff.inHours > 0) return '${diff.inHours}h ago';
+    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
+    return 'just now';
+  } catch (_) {
+    return '';
+  }
+}
+
+class _VenueReviewsSection extends ConsumerWidget {
+  final Venue venue;
+  final String venueId;
+
+  const _VenueReviewsSection({required this.venue, required this.venueId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final reviewsAsync = ref.watch(venueReviewsProvider(venueId));
+    final authState = ref.watch(authStateProvider);
+    final currentUserId = authState.hasValue ? authState.value?.id : null;
+    final isOwner = currentUserId != null &&
+        currentUserId == venue.claimedByUserId;
+
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Row(
+            children: [
+              Icon(
+                Icons.star,
+                color: AppTheme.toastGold,
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Text(
+                'Reviews',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: AppTheme.textPrimary,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          reviewsAsync.when(
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(16),
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppTheme.electricPurple,
+                  ),
+                ),
+              ),
+            ),
+            error: (_, __) => Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: AppTheme.cardDark,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Text(
+                'Unable to load reviews',
+                style: TextStyle(
+                  color: AppTheme.textTertiary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            data: (reviews) {
+              if (reviews.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.cardDark,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Row(
+                    children: [
+                      Icon(
+                        Icons.rate_review_outlined,
+                        color: AppTheme.textTertiary,
+                        size: 20,
+                      ),
+                      SizedBox(width: 12),
+                      Text(
+                        'No reviews yet',
+                        style: TextStyle(
+                          color: AppTheme.textTertiary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              return Column(
+                children: reviews
+                    .map(
+                      (review) => _ReviewCard(
+                        review: review,
+                        isOwner: isOwner,
+                        venueId: venueId,
+                      ),
+                    )
+                    .toList(),
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReviewCard extends StatelessWidget {
+  final Review review;
+  final bool isOwner;
+  final String venueId;
+
+  const _ReviewCard({
+    required this.review,
+    required this.isOwner,
+    required this.venueId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppTheme.cardDark,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header: avatar, username, rating, time
+          Row(
+            children: [
+              // Avatar
+              if (review.userProfileImageUrl != null)
+                ClipOval(
+                  child: CachedNetworkImage(
+                    imageUrl: review.userProfileImageUrl!,
+                    width: 36,
+                    height: 36,
+                    fit: BoxFit.cover,
+                    errorWidget: (_, __, ___) =>
+                        _buildInitialAvatar(review.userName),
+                  ),
+                )
+              else
+                _buildInitialAvatar(review.userName),
+              const SizedBox(width: 10),
+              // Name + time
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      review.userName ?? 'Anonymous',
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      _timeAgo(review.createdAt),
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              // Rating stars
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: List.generate(5, (i) {
+                  return Icon(
+                    Icons.star,
+                    size: 14,
+                    color: i < review.rating
+                        ? AppTheme.toastGold
+                        : AppTheme.ratingInactive,
+                  );
+                }),
+              ),
+            ],
+          ),
+
+          // Review content
+          if (review.content != null && review.content!.isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              review.content!,
+              style: const TextStyle(
+                color: AppTheme.textSecondary,
+                fontSize: 14,
+              ),
+            ),
+          ],
+
+          // Owner response (if exists)
+          if (review.ownerResponse != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.only(left: 12),
+              decoration: const BoxDecoration(
+                border: Border(
+                  left: BorderSide(color: AppTheme.primary, width: 2),
+                ),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Owner Response',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    review.ownerResponse!,
+                    style: const TextStyle(
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
+                    ),
+                  ),
+                  if (review.ownerResponseAt != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      _timeAgo(review.ownerResponseAt!),
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ],
+
+          // Respond button (owner only, no existing response)
+          if (isOwner && review.ownerResponse == null) ...[
+            const SizedBox(height: 8),
+            TextButton.icon(
+              onPressed: () => showOwnerResponseBottomSheet(
+                context,
+                reviewId: review.id,
+                venueId: venueId,
+              ),
+              icon: const Icon(Icons.reply, size: 18, color: AppTheme.primary),
+              label: const Text(
+                'Respond',
+                style: TextStyle(color: AppTheme.primary),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInitialAvatar(String? name) {
+    final initial = (name != null && name.isNotEmpty) ? name[0].toUpperCase() : '?';
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: const BoxDecoration(
+        shape: BoxShape.circle,
+        gradient: AppTheme.primaryGradient,
+      ),
+      child: Center(
+        child: Text(
+          initial,
+          style: const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 14,
+          ),
+        ),
+      ),
     );
   }
 }
