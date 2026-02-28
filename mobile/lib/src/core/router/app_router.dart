@@ -19,6 +19,9 @@ import '../../features/venues/presentation/venue_detail_screen.dart';
 import '../../features/bands/presentation/band_detail_screen.dart';
 import '../../features/checkins/presentation/checkin_detail_screen.dart';
 import '../../features/badges/presentation/badge_collection_screen.dart';
+import '../../features/events/presentation/event_detail_screen.dart';
+import '../../features/onboarding/presentation/onboarding_screen.dart';
+import '../../features/onboarding/presentation/genre_picker_screen.dart';
 import '../../shared/widgets/scaffold_with_nav_bar.dart';
 
 part 'app_router.g.dart';
@@ -51,10 +54,17 @@ GoRouter goRouter(Ref ref) {
       final isOnAuthPage = state.matchedLocation.startsWith('/login') ||
           state.matchedLocation.startsWith('/register') ||
           state.matchedLocation.startsWith('/forgot-password');
+      final isOnOnboardingPage =
+          state.matchedLocation.startsWith('/onboarding');
 
       // Don't redirect if on auth pages during loading or error state
       // This allows the auth screens to show their own loading/error UI
       if (isOnAuthPage && (isLoading || isError)) {
+        return null;
+      }
+
+      // Allow onboarding pages without authentication
+      if (isOnOnboardingPage) {
         return null;
       }
 
@@ -142,6 +152,20 @@ GoRouter goRouter(Ref ref) {
             );
           },
         ),
+      ),
+
+      // Onboarding Routes
+      GoRoute(
+        path: '/onboarding',
+        name: 'onboarding',
+        builder: (context, state) => const OnboardingScreen(),
+        routes: [
+          GoRoute(
+            path: 'genres',
+            name: 'onboarding-genres',
+            builder: (context, state) => const GenrePickerScreen(),
+          ),
+        ],
       ),
 
       // Main App Routes with Shell Navigation (4 branches)
@@ -333,6 +357,31 @@ GoRouter goRouter(Ref ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: VenueDetailScreen(venueId: venueId),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // Event Detail Route
+      GoRoute(
+        path: '/events/:id',
+        name: 'event-detail',
+        pageBuilder: (context, state) {
+          final eventId = state.pathParameters['id']!;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: EventDetailScreen(eventId: eventId),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;

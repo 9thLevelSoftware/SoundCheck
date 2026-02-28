@@ -14,6 +14,7 @@ import '../../bands/domain/band.dart';
 import '../../venues/domain/venue.dart';
 import '../domain/discovery_models.dart';
 import 'providers/discover_providers.dart';
+import '../../events/presentation/providers/event_providers.dart';
 
 part 'discover_screen.g.dart';
 
@@ -1493,7 +1494,8 @@ class _SearchResultItem extends StatelessWidget {
 }
 
 /// Event card for horizontal scroll lists (Nearby Shows)
-class _EventCard extends StatelessWidget {
+/// Shows RSVP checkmark indicator when user has RSVP'd (uses batch userRsvpsProvider).
+class _EventCard extends ConsumerWidget {
   const _EventCard({
     required this.event,
     required this.onTap,
@@ -1503,7 +1505,10 @@ class _EventCard extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final userRsvps = ref.watch(userRsvpsProvider);
+    final isGoing = userRsvps.value?.contains(event.id) ?? false;
+
     String dateDisplay = '';
     try {
       final date = DateTime.parse(event.eventDate);
@@ -1572,6 +1577,30 @@ class _EventCard extends StatelessWidget {
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
+                        ),
+                      ),
+                    ),
+                  // RSVP indicator (checkmark when user is going)
+                  if (isGoing)
+                    Positioned(
+                      top: 8,
+                      left: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: AppTheme.voltLime,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: AppTheme.voltLime.withValues(alpha: 0.4),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          color: AppTheme.backgroundDark,
+                          size: 12,
                         ),
                       ),
                     ),

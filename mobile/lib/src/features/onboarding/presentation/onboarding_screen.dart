@@ -16,19 +16,22 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   final List<_OnboardingPage> _pages = [
     const _OnboardingPage(
-      title: 'Discover Live Music',
-      description: 'Find the best concert venues and local bands in your area.',
-      icon: Icons.location_on_outlined,
+      title: 'Check In to Live Shows',
+      description:
+          "You're at a concert? Prove it. Check in, rate the set, and build your live music resume.",
+      icon: Icons.music_note,
     ),
     const _OnboardingPage(
-      title: 'Share Your Reviews',
-      description: 'Rate venues and bands, and help the community find great experiences.',
-      icon: Icons.rate_review_outlined,
-    ),
-    const _OnboardingPage(
-      title: 'Connect & Earn',
-      description: 'Follow other music lovers, earn badges, and climb the leaderboard.',
+      title: 'Earn Badges & Concert Cred',
+      description:
+          'First show? 10th metal show? Unlock badges that tell your concert story.',
       icon: Icons.emoji_events_outlined,
+    ),
+    const _OnboardingPage(
+      title: 'Share & Discover',
+      description:
+          'Share your check-ins with friends, discover trending shows, and never miss a gig your crew is attending.',
+      icon: Icons.people_outline,
     ),
   ];
 
@@ -38,10 +41,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     super.dispose();
   }
 
+  /// Skip onboarding entirely -- sets local pref and goes to login.
+  /// Does NOT call backend API (user isn't logged in yet).
   Future<void> _finishOnboarding() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool('hasSeenOnboarding', true);
-    
+
     if (mounted) {
       context.go('/login');
     }
@@ -54,6 +59,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       body: SafeArea(
         child: Column(
           children: [
+            // Skip button in top-right corner
+            Align(
+              alignment: Alignment.centerRight,
+              child: Padding(
+                padding: const EdgeInsets.only(
+                  top: AppTheme.spacing8,
+                  right: AppTheme.spacing16,
+                ),
+                child: TextButton(
+                  onPressed: _finishOnboarding,
+                  child: const Text(
+                    'Skip',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                ),
+              ),
+            ),
+
             Expanded(
               child: PageView.builder(
                 controller: _pageController,
@@ -66,7 +89,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ),
-            
+
             // Indicators and Controls
             Padding(
               padding: const EdgeInsets.all(AppTheme.spacing24),
@@ -83,16 +106,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         height: 8,
                         width: _currentPage == index ? 24 : 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index 
-                              ? AppTheme.primary 
-                              : AppTheme.textSecondary.withValues(alpha:0.3),
+                          color: _currentPage == index
+                              ? AppTheme.primary
+                              : AppTheme.textSecondary
+                                  .withValues(alpha: 0.3),
                           borderRadius: BorderRadius.circular(4),
                         ),
                       ),
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
+
                   // Buttons
                   SizedBox(
                     width: double.infinity,
@@ -104,7 +128,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             curve: Curves.easeIn,
                           );
                         } else {
-                          _finishOnboarding();
+                          // Last page: navigate to genre picker
+                          context.go('/onboarding/genres');
                         }
                       },
                       style: ElevatedButton.styleFrom(
@@ -114,22 +139,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                       ),
                       child: Text(
-                        _currentPage == _pages.length - 1 ? 'Get Started' : 'Next',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        _currentPage == _pages.length - 1
+                            ? 'Get Started'
+                            : 'Next',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  if (_currentPage < _pages.length - 1)
-                    TextButton(
-                      onPressed: _finishOnboarding,
-                      child: const Text(
-                        'Skip',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
-                    )
-                  else
-                    const SizedBox(height: 48), // Placeholder to keep layout stable
+                  const SizedBox(height: 48),
                 ],
               ),
             ),
@@ -167,7 +187,7 @@ class _OnboardingContent extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(40),
             decoration: BoxDecoration(
-              color: AppTheme.primary.withValues(alpha:0.1),
+              color: AppTheme.primary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
