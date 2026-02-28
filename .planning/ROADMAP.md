@@ -35,7 +35,7 @@
 - [ ] **Phase 9: Trust & Safety Foundation** — App Store compliance infrastructure: report/block/moderation pipeline, auth cleanup, and tech debt that must be resolved before new UGC surfaces ship
 - [ ] **Phase 9.1: Content Moderation Enforcement** *(INSERTED — gap closure)* — Wire is_hidden filtering into all content-serving queries so moderated content is actually excluded from feeds
 - [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
-- [ ] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop
+- [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
 - [ ] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
 
@@ -101,7 +101,7 @@ Plans:
   2. User can tap a block button on any user profile to block that user, with confirmation
   3. Blocked state is reflected in the UI (block/unblock toggle)
   4. Report confirmation is shown to the user after submission
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 10.1-01-PLAN.md -- Content reporting UI (ReportRepository + ReportBottomSheet + feed card / check-in detail integration)
 - [ ] 10.1-02-PLAN.md -- Block system UI (BlockRepository + UserProfileScreen rebuild + BlockedUsersScreen + Settings link)
@@ -148,7 +148,7 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 11 -> 12
 | 9. Trust & Safety Foundation | v1.1 | 4/4 | Complete | 2026-02-27 |
 | 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
-| 10.1. Report & Block Mobile UI | 1/2 | In Progress|  | - |
+| 10.1. Report & Block Mobile UI | 2/2 | Complete   | 2026-02-28 | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
