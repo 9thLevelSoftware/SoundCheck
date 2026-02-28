@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/analytics_service.dart';
@@ -55,7 +56,7 @@ class WrappedDetailScreen extends ConsumerWidget {
                     const SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () =>
-                          Navigator.of(context).pushNamed('/pro'),
+                          context.push('/pro'),
                       child: const Text('Learn about Pro'),
                     ),
                   ],
