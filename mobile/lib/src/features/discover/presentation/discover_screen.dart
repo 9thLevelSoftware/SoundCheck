@@ -15,6 +15,7 @@ import '../../venues/domain/venue.dart';
 import '../domain/discovery_models.dart';
 import 'providers/discover_providers.dart';
 import '../../events/presentation/providers/event_providers.dart';
+import '../../trending/presentation/trending_feed_screen.dart';
 
 part 'discover_screen.g.dart';
 
@@ -842,6 +843,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       padding: const EdgeInsets.only(bottom: 100),
       sliver: SliverList(
         delegate: SliverChildListDelegate([
+          // Trending Shows Near You (Wilson-scored composite from /api/trending)
+          const TrendingFeedSection(),
+
           // For You (personalized recommendations, hidden if empty)
           _buildForYouSection(recommendedEventsAsync),
 
