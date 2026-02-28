@@ -43,6 +43,7 @@ import passwordResetRoutes from './routes/passwordResetRoutes';
 import blockRoutes from './routes/blockRoutes';
 import rsvpRoutes from './routes/rsvpRoutes';
 import onboardingRoutes from './routes/onboardingRoutes';
+import shareRoutes from './routes/shareRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -207,6 +208,10 @@ app.use('/api/auth', passwordResetRoutes);
 app.use('/api/blocks', blockRoutes);
 app.use('/api/rsvp', rsvpRoutes);
 app.use('/api/onboarding', onboardingRoutes);
+app.use('/api/share', shareRoutes.api);
+
+// Public share landing pages (no auth, not under /api/)
+app.use('/share', shareRoutes.public);
 
 // Root endpoint
 app.get('/', (req, res) => {

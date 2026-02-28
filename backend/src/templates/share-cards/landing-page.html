@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Open Graph tags -->
+  <meta property="og:title" content="{{TITLE}}">
+  <meta property="og:description" content="{{DESCRIPTION}}">
+  <meta property="og:image" content="{{IMAGE_URL}}">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:url" content="{{PAGE_URL}}">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="SoundCheck">
+
+  <!-- Twitter Card tags -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="{{TITLE}}">
+  <meta name="twitter:description" content="{{DESCRIPTION}}">
+  <meta name="twitter:image" content="{{IMAGE_URL}}">
+
+  <title>{{TITLE}} - SoundCheck</title>
+
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: #0D0D0D;
+      color: #FFFFFF;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+    .container {
+      max-width: 640px;
+      width: 100%;
+      text-align: center;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 32px;
+    }
+    .brand-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background-color: #A855F7;
+    }
+    .brand-name {
+      color: #A855F7;
+      font-size: 16px;
+      letter-spacing: 0.1em;
+      font-weight: 600;
+    }
+    .card-image {
+      width: 100%;
+      max-width: 600px;
+      border-radius: 12px;
+      margin-bottom: 32px;
+      box-shadow: 0 8px 32px rgba(168, 85, 247, 0.15);
+    }
+    .cta-heading {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .cta-subtext {
+      color: #9CA3AF;
+      font-size: 16px;
+      margin-bottom: 24px;
+    }
+    .store-links {
+      display: flex;
+      gap: 16px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .store-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      border-radius: 8px;
+      background-color: #1F1F1F;
+      color: #FFFFFF;
+      text-decoration: none;
+      font-size: 15px;
+      font-weight: 500;
+      transition: background-color 0.2s;
+    }
+    .store-btn:hover {
+      background-color: #2D2D2D;
+    }
+    .store-icon {
+      font-size: 20px;
+    }
+    .footer {
+      margin-top: 48px;
+      color: #4B5563;
+      font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="brand">
+      <div class="brand-dot"></div>
+      <span class="brand-name">SOUNDCHECK</span>
+    </div>
+
+    <img
+      class="card-image"
+      src="{{IMAGE_URL}}"
+      alt="{{TITLE}}"
+      loading="eager"
+    >
+
+    <h1 class="cta-heading">Download SoundCheck</h1>
+    <p class="cta-subtext">Track your live music journey. Check in, rate, and share.</p>
+
+    <div class="store-links">
+      <a href="{{APP_STORE_URL}}" class="store-btn" target="_blank" rel="noopener">
+        <span class="store-icon">&#63743;</span>
+        App Store
+      </a>
+      <a href="{{PLAY_STORE_URL}}" class="store-btn" target="_blank" rel="noopener">
+        <span class="store-icon">&#9654;</span>
+        Google Play
+      </a>
+    </div>
+
+    <p class="footer">&copy; 2026 SoundCheck. All rights reserved.</p>
+  </div>
+</body>
+</html>
