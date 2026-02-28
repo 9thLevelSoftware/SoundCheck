@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 10 (Viral Growth Engine)
-Plan: 3 of 5
+Plan: 5 of 5
 Status: Executing
-Last activity: 2026-02-28 — Completed 10-03 (Onboarding Flow & Genre Picker)
+Last activity: 2026-02-28 — Completed 10-05 (Mobile RSVP & Friends Going UI)
 
-Progress: [████████████████████░░░░] 60%
+Progress: [████████████████████████░] 80%
 
 ## Performance Metrics
 
@@ -41,7 +41,7 @@ Progress: [████████████████████░░░
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
-| 10. Viral Growth | 3/5 | 14min | 4.7min |
+| 10. Viral Growth | 4/5 | 20min | 5.0min |
 | 11. Platform Trust | — | — | — |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
@@ -80,6 +80,10 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [10-03] OnboardingRepository uses DioClient (not raw Dio) matching all other repository patterns
 - [10-03] Genre preferences saved locally during onboarding, synced to backend after login via GenrePersistence
 - [10-03] Router redirect allows /onboarding paths without authentication for pre-login flow
+- [10-05] Used DioClient pattern (not raw Dio) for RsvpRepository matching all existing repositories
+- [10-05] Manual Riverpod providers (not @riverpod code-gen) for simple RSVP cases matching detail screen patterns
+- [10-05] Batch userRsvpsProvider for event list cards prevents N+1 queries; friends-going only on detail screen
+- [10-05] Created events feature directory from scratch (plan referenced non-existent files)
 
 ### Pending Todos
 
@@ -101,5 +105,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 10-03-PLAN.md (Onboarding Flow & Genre Picker)
+Stopped at: Completed 10-05-PLAN.md (Mobile RSVP & Friends Going UI)
 Resume file: None
