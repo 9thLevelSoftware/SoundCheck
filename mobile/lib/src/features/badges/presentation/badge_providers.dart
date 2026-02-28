@@ -17,6 +17,14 @@ Future<List<BadgeRarity>> badgeRarity(Ref ref) async {
   return repo.getRarity();
 }
 
+/// User's earned badges (UserBadge records with award IDs).
+/// Used to look up badge award IDs for sharing.
+@riverpod
+Future<List<UserBadge>> myBadges(Ref ref) async {
+  final repo = ref.watch(badgeRepositoryProvider);
+  return repo.getMyBadges();
+}
+
 /// Combined provider that groups badge progress by category
 @riverpod
 Future<Map<BadgeCategory, List<BadgeProgress>>> badgeCollection(Ref ref) async {

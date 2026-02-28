@@ -13,6 +13,9 @@ import 'providers/checkin_providers.dart';
 import 'photo_upload_sheet.dart';
 import 'rating_bottom_sheet.dart';
 import '../../../shared/utils/a11y_utils.dart';
+import '../../sharing/presentation/share_card_preview.dart';
+import '../../sharing/presentation/share_providers.dart';
+import '../../badges/presentation/badge_providers.dart';
 
 /// Check-in Screen - Event-first quick-tap flow
 ///
@@ -409,6 +412,166 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     );
   }
 
+  // ======== BADGE SECTIONS FOR SUCCESS STATE ========
+
+  Widget _buildEarnedBadgesSection(List<EarnedBadge> badges) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Row(
+          children: [
+            Icon(Icons.emoji_events, color: AppTheme.toastGold, size: 20),
+            SizedBox(width: 8),
+            Text(
+              'Badges Earned!',
+              style: TextStyle(
+                color: AppTheme.toastGold,
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        ...badges.map((badge) {
+          final color = _parseBadgeColor(badge.color);
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppTheme.toastGold.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+              border: Border.all(
+                color: AppTheme.toastGold.withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 36,
+                  height: 36,
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.2),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(Icons.emoji_events, color: color, size: 20),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    badge.name,
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+                const Icon(Icons.star, color: AppTheme.toastGold, size: 18),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  Widget _buildBadgeProgressSection() {
+    final progressAsync = ref.watch(badgeProgressProvider);
+
+    return progressAsync.when(
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
+      data: (allProgress) {
+        final nearCompletion = allProgress.where((bp) {
+          if (bp.isEarned) return false;
+          if (bp.requirementValue <= 0) return false;
+          final pct = bp.currentValue / bp.requirementValue;
+          return pct >= 0.3;
+        }).toList();
+
+        if (nearCompletion.isEmpty) return const SizedBox.shrink();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Badge Progress',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+            ...nearCompletion.take(3).map((bp) {
+              final pct = (bp.currentValue / bp.requirementValue).clamp(0.0, 1.0);
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppTheme.cardDark,
+                  borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            bp.badge.name,
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(3),
+                            child: LinearProgressIndicator(
+                              value: pct,
+                              minHeight: 6,
+                              backgroundColor: AppTheme.surfaceVariantDark,
+                              valueColor: const AlwaysStoppedAnimation<Color>(
+                                AppTheme.voltLime,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Text(
+                      '${bp.currentValue}/${bp.requirementValue}',
+                      style: const TextStyle(
+                        color: AppTheme.textTertiary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
+            const SizedBox(height: 8),
+          ],
+        );
+      },
+    );
+  }
+
+  Color _parseBadgeColor(String? hex) {
+    if (hex == null || hex.isEmpty) return AppTheme.voltLime;
+    final code = hex.replaceAll('#', '');
+    if (code.length != 6) return AppTheme.voltLime;
+    return Color(int.parse('FF$code', radix: 16));
+  }
+
   // ======== SUCCESS STATE ========
 
   Widget _buildSuccessState() {
@@ -493,7 +656,42 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 32),
+          const SizedBox(height: 24),
+
+          // Earned badges section
+          if (_completedCheckIn?.earnedBadges != null &&
+              _completedCheckIn!.earnedBadges!.isNotEmpty) ...[
+            _buildEarnedBadgesSection(_completedCheckIn!.earnedBadges!),
+            const SizedBox(height: 16),
+          ],
+
+          // Badge progress section
+          _buildBadgeProgressSection(),
+
+          // Share card preview
+          if (_completedCheckIn != null) ...[
+            const SizedBox(height: 16),
+            const Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                'Share your check-in',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            ShareCardPreview(
+              cardUrls: ref.watch(checkinCardProvider(_completedCheckIn!.id)),
+              shareText:
+                  'I just checked in at ${event?.venue?.name ?? "the show"} for $eventName!',
+              shareUrl:
+                  'https://soundcheck-app.up.railway.app/share/c/${_completedCheckIn!.id}',
+            ),
+          ],
+          const SizedBox(height: 24),
 
           // Enrichment options
           const Align(

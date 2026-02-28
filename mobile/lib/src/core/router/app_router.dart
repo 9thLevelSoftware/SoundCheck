@@ -19,6 +19,7 @@ import '../../features/venues/presentation/venue_detail_screen.dart';
 import '../../features/bands/presentation/band_detail_screen.dart';
 import '../../features/checkins/presentation/checkin_detail_screen.dart';
 import '../../features/badges/presentation/badge_collection_screen.dart';
+import '../../features/sharing/presentation/celebration_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/onboarding/presentation/genre_picker_screen.dart';
@@ -283,6 +284,31 @@ GoRouter goRouter(Ref ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: const CheckInScreen(),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(0.0, 1.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // Celebration Route (Post Check-in)
+      GoRoute(
+        path: '/celebration',
+        name: 'celebration',
+        pageBuilder: (context, state) {
+          final params = state.extra as CelebrationParams;
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: CelebrationScreen(params: params),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(0.0, 1.0);
               const end = Offset.zero;

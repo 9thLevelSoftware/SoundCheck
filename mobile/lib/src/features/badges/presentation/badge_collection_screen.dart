@@ -10,6 +10,8 @@ import '../../../core/theme/app_theme.dart';
 import '../../../shared/utils/a11y_utils.dart';
 import '../domain/badge.dart';
 import 'badge_providers.dart';
+import '../../sharing/presentation/share_card_preview.dart';
+import '../../sharing/presentation/share_providers.dart';
 
 /// Display name for each badge category
 String categoryDisplayName(BadgeCategory category) {
@@ -253,8 +255,9 @@ class _CategorySection extends StatelessWidget {
   }
 }
 
-/// Individual badge card with progress ring, name, progress text, and rarity
-class _BadgeCard extends StatelessWidget {
+/// Individual badge card with progress ring, name, progress text, and rarity.
+/// Earned badges are tappable to open a share bottom sheet.
+class _BadgeCard extends ConsumerWidget {
   const _BadgeCard({
     required this.progress,
     this.rarity,
@@ -263,8 +266,57 @@ class _BadgeCard extends StatelessWidget {
   final BadgeProgress progress;
   final BadgeRarity? rarity;
 
+  void _showShareSheet(BuildContext context, WidgetRef ref, String badgeAwardId) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: AppTheme.surfaceDark,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      builder: (sheetContext) => Consumer(
+        builder: (ctx, sheetRef, _) {
+          final cardUrls = sheetRef.watch(badgeCardProvider(badgeAwardId));
+          return Padding(
+            padding: const EdgeInsets.fromLTRB(24, 16, 24, 32),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                // Drag handle
+                Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppTheme.textTertiary,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Share ${progress.badge.name}',
+                  style: const TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ShareCardPreview(
+                  cardUrls: cardUrls,
+                  shareText: 'I unlocked the ${progress.badge.name} badge on SoundCheck!',
+                  shareUrl: 'https://soundcheck-app.up.railway.app/share/b/$badgeAwardId',
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final badge = progress.badge;
     final isEarned = progress.isEarned;
     final percent = progress.requirementValue > 0
@@ -273,97 +325,124 @@ class _BadgeCard extends StatelessWidget {
     final progressColor = parseHexColor(badge.color);
     final theme = Theme.of(context);
 
-    return Semantics(
-      label: badgeSemantics(
-        badgeName: badge.name,
-        isEarned: isEarned,
-        progress: progress.currentValue.toInt(),
-        total: progress.requirementValue.toInt(),
-      ),
-      child: Container(
-      width: 120,
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      child: Opacity(
-        opacity: isEarned ? 1.0 : 0.5,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Progress ring with badge icon
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                CircularPercentIndicator(
-                  radius: 35,
-                  lineWidth: 4,
-                  percent: percent,
-                  center: _buildBadgeIcon(badge, progressColor),
-                  progressColor: isEarned
-                      ? progressColor
-                      : progressColor.withValues(alpha: 0.7),
-                  backgroundColor: Colors.grey[300]!,
-                  circularStrokeCap: CircularStrokeCap.round,
-                  animation: true,
-                  animationDuration: 800,
-                ),
-                // Earned checkmark overlay
-                if (isEarned)
-                  Positioned(
-                    right: 8,
-                    bottom: 0,
-                    child: Container(
-                      padding: const EdgeInsets.all(2),
-                      decoration: const BoxDecoration(
-                        color: AppTheme.liveGreen,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.check,
-                        size: 14,
-                        color: Colors.white,
+    return GestureDetector(
+      onTap: isEarned
+          ? () {
+              // Look up the badge award ID from user badges
+              final myBadgesAsync = ref.read(myBadgesProvider);
+              myBadgesAsync.whenData((userBadges) {
+                final award = userBadges.where((ub) => ub.badgeId == badge.id).firstOrNull;
+                if (award != null) {
+                  _showShareSheet(context, ref, award.id);
+                }
+              });
+            }
+          : null,
+      child: Semantics(
+        label: badgeSemantics(
+          badgeName: badge.name,
+          isEarned: isEarned,
+          progress: progress.currentValue.toInt(),
+          total: progress.requirementValue.toInt(),
+        ),
+        child: Container(
+        width: 120,
+        margin: const EdgeInsets.symmetric(horizontal: 4),
+        child: Opacity(
+          opacity: isEarned ? 1.0 : 0.5,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Progress ring with badge icon
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  CircularPercentIndicator(
+                    radius: 35,
+                    lineWidth: 4,
+                    percent: percent,
+                    center: _buildBadgeIcon(badge, progressColor),
+                    progressColor: isEarned
+                        ? progressColor
+                        : progressColor.withValues(alpha: 0.7),
+                    backgroundColor: Colors.grey[300]!,
+                    circularStrokeCap: CircularStrokeCap.round,
+                    animation: true,
+                    animationDuration: 800,
+                  ),
+                  // Earned checkmark overlay
+                  if (isEarned)
+                    Positioned(
+                      right: 8,
+                      bottom: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(2),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.liveGreen,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.check,
+                          size: 14,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            // Badge name
-            Text(
-              badge.name,
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 11,
-                fontWeight: isEarned ? FontWeight.w600 : FontWeight.normal,
-                color: isEarned
-                    ? theme.colorScheme.onSurface
-                    : AppTheme.textSecondary,
+                ],
               ),
-            ),
-            const SizedBox(height: 2),
-            // Progress text
-            Text(
-              '${progress.currentValue}/${progress.requirementValue}',
-              style: const TextStyle(
-                fontSize: 10,
-                color: AppTheme.textTertiary,
-              ),
-            ),
-            // Rarity percentage (earned badges only)
-            if (isEarned && rarity != null)
-              Padding(
-                padding: const EdgeInsets.only(top: 2),
-                child: Text(
-                  '${rarity!.rarityPct.toStringAsFixed(1)}% of users',
-                  style: const TextStyle(
-                    fontSize: 9,
-                    fontStyle: FontStyle.italic,
-                    color: AppTheme.textTertiary,
-                  ),
+              const SizedBox(height: 8),
+              // Badge name
+              Text(
+                badge.name,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: isEarned ? FontWeight.w600 : FontWeight.normal,
+                  color: isEarned
+                      ? theme.colorScheme.onSurface
+                      : AppTheme.textSecondary,
                 ),
               ),
-          ],
-        ),
+              const SizedBox(height: 2),
+              // Progress text
+              Text(
+                '${progress.currentValue}/${progress.requirementValue}',
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: AppTheme.textTertiary,
+                ),
+              ),
+              // Rarity percentage (earned badges only)
+              if (isEarned && rarity != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 2),
+                  child: Text(
+                    '${rarity!.rarityPct.toStringAsFixed(1)}% of users',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontStyle: FontStyle.italic,
+                      color: AppTheme.textTertiary,
+                    ),
+                  ),
+                ),
+              // Share hint for earned badges
+              if (isEarned)
+                const Padding(
+                  padding: EdgeInsets.only(top: 2),
+                  child: Text(
+                    'Tap to share',
+                    style: TextStyle(
+                      fontSize: 9,
+                      color: AppTheme.voltLime,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          ),
         ),
       ),
     );
