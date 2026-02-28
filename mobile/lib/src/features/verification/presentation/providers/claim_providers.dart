@@ -16,3 +16,13 @@ final myClaimsProvider =
     FutureProvider.autoDispose<List<VerificationClaim>>((ref) async {
   return ref.read(claimRepositoryProvider).getMyClaims();
 });
+
+/// Entity stats for a claimed venue or band.
+/// Keyed by "$entityType:$entityId" (e.g., "venue:abc-123").
+final entityStatsProvider = FutureProvider.autoDispose
+    .family<Map<String, dynamic>, String>((ref, key) async {
+  final parts = key.split(':');
+  final entityType = parts[0];
+  final entityId = parts[1];
+  return ref.read(claimRepositoryProvider).getEntityStats(entityType, entityId);
+});

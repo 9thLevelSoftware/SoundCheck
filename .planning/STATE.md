@@ -3,7 +3,7 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-28T15:40:00Z"
+last_updated: "2026-02-28T15:54:39Z"
 progress:
   total_phases: 5
   completed_phases: 5
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 Phase: 11 (Platform Trust & Between-Show Retention)
 Plan: 6 of 6 (all complete)
 Status: Phase Complete
-Last activity: 2026-02-28 — Completed 11-05 (Trending Feed & Search Upgrade, plan 06 was already complete)
+Last activity: 2026-02-28 — Completed 11-06 (Mobile Verification UI)
 
 Progress: [█████████████████████████] 100%
 
@@ -42,7 +42,7 @@ Progress: [███████████████████████
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
 | 10. Viral Growth | 5/5 | 29min | 5.8min |
-| 11. Platform Trust | 5/6 | 21min | 4.2min |
+| 11. Platform Trust | 6/6 | 29min | 4.8min |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
 | Phase 09.1 P01 | 2min | 2 tasks | 4 files |
@@ -53,6 +53,7 @@ Progress: [███████████████████████
 | Phase 10.2 P01 | 2min | 2 tasks | 6 files |
 | Phase 11 P04 | 5min | 2 tasks | 10 files |
 | Phase 11 P05 | 7min | 2 tasks | 6 files |
+| Phase 11 P06 | 8min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -118,6 +119,10 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [11-05] Manual Riverpod providers for trending feature (not @riverpod codegen) consistent with Phase 10 event_providers pattern
 - [11-05] Unified search replaces separate band/venue API calls with single GET /api/search call
 - [11-05] SearchEvent lightweight model instead of reusing DiscoverEvent for search results
+- [11-06] ClaimRepository uses DioClient pattern (not raw Dio) consistent with all other repositories
+- [11-06] Manual Riverpod providers for claim feature per Phase 10 decision [10-05]
+- [11-06] Claimed-owner badge (primary color) takes precedence over organic isVerified badge (info color) on venue detail
+- [11-06] VerificationClaim.fromJson supports both camelCase and snake_case for backend compatibility
 
 ### Pending Todos
 
@@ -139,5 +144,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-05-PLAN.md (Trending Feed & Search Upgrade)
+Stopped at: Completed 11-06-PLAN.md (Mobile Verification UI)
 Resume file: None
