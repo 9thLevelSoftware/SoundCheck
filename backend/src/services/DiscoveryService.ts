@@ -127,14 +127,21 @@ export class DiscoveryService {
 
       const query = `
         WITH user_genres AS (
-          -- User's top 5 genres by check-in count
-          SELECT b.genre, COUNT(DISTINCT c.id) as genre_count
-          FROM checkins c
-          JOIN event_lineup el ON c.event_id = el.event_id
-          JOIN bands b ON el.band_id = b.id
-          WHERE c.user_id = $1 AND b.genre IS NOT NULL
-            AND (c.is_hidden IS NOT TRUE)
-          GROUP BY b.genre
+          -- User's top 5 genres: check-in-derived + explicit onboarding preferences (cold-start)
+          SELECT genre, SUM(genre_count) as genre_count FROM (
+            SELECT b.genre, COUNT(DISTINCT c.id) as genre_count
+            FROM checkins c
+            JOIN event_lineup el ON c.event_id = el.event_id
+            JOIN bands b ON el.band_id = b.id
+            WHERE c.user_id = $1 AND b.genre IS NOT NULL
+              AND (c.is_hidden IS NOT TRUE)
+            GROUP BY b.genre
+            UNION ALL
+            SELECT genre, 1 as genre_count
+            FROM user_genre_preferences
+            WHERE user_id = $1
+          ) combined
+          GROUP BY genre
           ORDER BY genre_count DESC
           LIMIT 5
         ),
