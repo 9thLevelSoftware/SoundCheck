@@ -13,7 +13,7 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 - [x] **SAFE-02**: Reported content enters moderation queue with automated Cloud Vision SafeSearch image scan
 - [x] **SAFE-03**: Admin can review, approve, or remove reported content from moderation queue
 - [x] **SAFE-04**: User can block another user (bilateral — blocks all interactions in both directions)
-- [ ] **SAFE-05**: User can reset forgotten password via email link
+- [x] **SAFE-05**: User can reset forgotten password via email link
 
 ### Auth Cleanup
 
@@ -116,7 +116,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SAFE-02 | Phase 9.1 | Complete |
 | SAFE-03 | Phase 9.1 | Complete |
 | SAFE-04 | Phase 10.1 | Complete |
-| SAFE-05 | Phase 10.2 | Pending |
+| SAFE-05 | Phase 10.2 | Complete |
 | AUTH-01 | Phase 9 | Complete |
 | AUTH-02 | Phase 9 | Complete |
 | ONBD-01 | Phase 10 | Complete |

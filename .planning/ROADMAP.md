@@ -36,7 +36,7 @@
 - [ ] **Phase 9.1: Content Moderation Enforcement** *(INSERTED — gap closure)* — Wire is_hidden filtering into all content-serving queries so moderated content is actually excluded from feeds
 - [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
 - [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
-- [ ] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile
+- [x] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile (completed 2026-02-28)
 - [ ] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
 
@@ -117,7 +117,7 @@ Plans:
   2. User clicks `soundcheck://reset-password?token=X` link from email and app navigates to password reset screen
   3. User enters new password on reset screen and password is updated successfully
   4. Pre-existing discover_providers.dart double-prefix URL fixed (bonus)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
 - [ ] 10.2-01-PLAN.md -- Password reset URL fix + deep link handler + ResetPasswordScreen
 
@@ -164,7 +164,7 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 12
 | 9.1. Content Moderation Enforcement | v1.1 | 0/2 | Not started | - |
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
 | 10.1. Report & Block Mobile UI | 2/2 | Complete    | 2026-02-28 | - |
-| 10.2. Password Reset Mobile Fix | v1.1 | 0/1 | Not started | - |
+| 10.2. Password Reset Mobile Fix | 1/1 | Complete   | 2026-02-28 | - |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
