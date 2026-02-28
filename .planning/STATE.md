@@ -2,26 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
-status: unknown
-last_updated: "2026-02-28T04:18:07.643Z"
-progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
----
-
----
-gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Launch Readiness & Growth Platform
 status: executing
-last_updated: "2026-02-28T04:14:00Z"
+last_updated: "2026-02-28T15:34:00Z"
 progress:
   total_phases: 5
   completed_phases: 5
-  total_plans: 14
-  completed_plans: 14
+  total_plans: 15
+  completed_plans: 15
 ---
 
 # Project State
@@ -31,16 +18,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-02-27)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** Phase 10.2 — Password Reset Mobile Fix
+**Current focus:** Phase 11 — Platform Trust & Between-Show Retention
 
 ## Current Position
 
-Phase: 10.2 (Password Reset Mobile Fix)
-Plan: 1 of 1
-Status: Phase Complete
-Last activity: 2026-02-28 — Completed 10.2-01 (Password Reset Mobile Fix)
+Phase: 11 (Platform Trust & Between-Show Retention)
+Plan: 1 of 6
+Status: Executing
+Last activity: 2026-02-28 — Completed 11-01 (Database Migrations & Types)
 
-Progress: [█████████████████████████] 100%
+Progress: [████░░░░░░░░░░░░░░░░░░░░░] 17%
 
 ## Performance Metrics
 
@@ -55,7 +42,7 @@ Progress: [███████████████████████
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
 | 10. Viral Growth | 5/5 | 29min | 5.8min |
-| 11. Platform Trust | — | — | — |
+| 11. Platform Trust | 1/6 | 3min | 3min |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
 | Phase 09.1 P01 | 2min | 2 tasks | 4 files |
@@ -112,6 +99,10 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [Phase 10.1]: 10.1-01: FeedCard converted from StatelessWidget to ConsumerWidget for authState access
 - [10.2-01] ResetPasswordScreen uses context.go('/login') instead of context.pop() for navigation since deep link entry has no back stack
 - [10.2-01] Lint fix: required parameter before super.key to satisfy always_put_required_named_parameters_first
+- [11-01] Wilson score implemented as PostgreSQL IMMUTABLE STRICT function (not npm package) for SQL-level usage in trending queries
+- [11-01] tsvector columns use GENERATED ALWAYS AS ... STORED (not VIRTUAL) because GIN indexes require materialized data
+- [11-01] Genre migration adds new genres TEXT[] column alongside existing genre VARCHAR — old column kept for backward compatibility
+- [11-01] Owner response added directly to reviews table (not separate table) — matches Google Maps one-response-per-review pattern
 
 ### Pending Todos
 
@@ -133,5 +124,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 10.2-01-PLAN.md (Password Reset Mobile Fix)
+Stopped at: Completed 11-01-PLAN.md (Database Migrations & Types)
 Resume file: None

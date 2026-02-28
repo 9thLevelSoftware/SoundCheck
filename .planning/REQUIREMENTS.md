@@ -42,18 +42,18 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 
 ### Platform Credibility
 
-- [ ] **VERIFY-01**: Venue owner can submit claim request for venue profile
-- [ ] **VERIFY-02**: Artist can submit claim request for band profile
-- [ ] **VERIFY-03**: Admin reviews and approves/denies verification claims
-- [ ] **VERIFY-04**: Verified profiles display verification badge
-- [ ] **VERIFY-05**: Claimed venue owner can view aggregate ratings and respond to reviews
-- [ ] **VERIFY-06**: Claimed artist can update profile and view performance stats
+- [x] **VERIFY-01**: Venue owner can submit claim request for venue profile
+- [x] **VERIFY-02**: Artist can submit claim request for band profile
+- [x] **VERIFY-03**: Admin reviews and approves/denies verification claims
+- [x] **VERIFY-04**: Verified profiles display verification badge
+- [x] **VERIFY-05**: Claimed venue owner can view aggregate ratings and respond to reviews
+- [x] **VERIFY-06**: Claimed artist can update profile and view performance stats
 
 ### Technical Scale
 
-- [ ] **SCALE-01**: Search uses PostgreSQL tsvector + GIN indexes with pg_trgm fuzzy fallback (replaces ILIKE)
+- [x] **SCALE-01**: Search uses PostgreSQL tsvector + GIN indexes with pg_trgm fuzzy fallback (replaces ILIKE)
 - [ ] **SCALE-02**: Feed queries use denormalized toast_count and comment_count columns
-- [ ] **SCALE-03**: Band.genre migrated from single string to array/many-to-many for faceted filtering
+- [x] **SCALE-03**: Band.genre migrated from single string to array/many-to-many for faceted filtering
 
 ### Monetization
 
@@ -130,15 +130,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | EVENT-02 | Phase 10 | Complete |
 | EVENT-03 | Phase 11 | Pending |
 | EVENT-04 | Phase 11 | Pending |
-| VERIFY-01 | Phase 11 | Pending |
-| VERIFY-02 | Phase 11 | Pending |
-| VERIFY-03 | Phase 11 | Pending |
-| VERIFY-04 | Phase 11 | Pending |
-| VERIFY-05 | Phase 11 | Pending |
-| VERIFY-06 | Phase 11 | Pending |
-| SCALE-01 | Phase 11 | Pending |
+| VERIFY-01 | Phase 11 | Complete |
+| VERIFY-02 | Phase 11 | Complete |
+| VERIFY-03 | Phase 11 | Complete |
+| VERIFY-04 | Phase 11 | Complete |
+| VERIFY-05 | Phase 11 | Complete |
+| VERIFY-06 | Phase 11 | Complete |
+| SCALE-01 | Phase 11 | Complete |
 | SCALE-02 | Phase 11 | Pending |
-| SCALE-03 | Phase 11 | Pending |
+| SCALE-03 | Phase 11 | Complete |
 | MONEY-01 | Phase 12 | Pending |
 | MONEY-02 | Phase 12 | Pending |
 | MONEY-03 | Phase 12 | Pending |
