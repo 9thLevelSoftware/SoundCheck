@@ -45,6 +45,7 @@ import rsvpRoutes from './routes/rsvpRoutes';
 import trendingRoutes from './routes/trendingRoutes';
 import onboardingRoutes from './routes/onboardingRoutes';
 import shareRoutes from './routes/shareRoutes';
+import claimRoutes from './routes/claimRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
@@ -211,6 +212,8 @@ app.use('/api/rsvp', rsvpRoutes);
 app.use('/api/trending', trendingRoutes);
 app.use('/api/onboarding', onboardingRoutes);
 app.use('/api/share', shareRoutes.api);
+app.use('/api/claims', claimRoutes.public);
+app.use('/api/admin/claims', claimRoutes.admin);
 
 // Public share landing pages (no auth, not under /api/)
 app.use('/share', shareRoutes.public);
