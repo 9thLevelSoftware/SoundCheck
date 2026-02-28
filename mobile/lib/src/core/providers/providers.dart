@@ -13,6 +13,7 @@ import '../../features/badges/data/badge_repository.dart';
 import '../../features/checkins/data/checkin_repository.dart';
 import '../../features/feed/data/feed_repository.dart';
 import '../../features/notifications/data/notification_repository.dart';
+import '../../features/onboarding/presentation/onboarding_provider.dart';
 import '../../features/profile/data/profile_repository.dart';
 import '../../features/discover/data/discovery_repository.dart';
 
@@ -120,6 +121,9 @@ class AuthState extends _$AuthState {
       // Connect WebSocket after successful login
       _connectWebSocket(authResponse.user.id);
 
+      // Sync onboarding genre preferences to backend if saved locally
+      ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
+
       return authResponse.user;
     });
   }
@@ -146,6 +150,9 @@ class AuthState extends _$AuthState {
 
       // Connect WebSocket after successful registration
       _connectWebSocket(authResponse.user.id);
+
+      // Sync onboarding genre preferences to backend if saved locally
+      ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
 
       return authResponse.user;
     });

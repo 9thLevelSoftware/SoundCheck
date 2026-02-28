@@ -36,7 +36,7 @@ class RsvpRepository {
   /// Get friends who RSVP'd to an event.
   /// GET /api/rsvp/:eventId/friends -> { success: true, data: { count, friends: [...] } }
   Future<FriendsGoingData> getFriendsGoing(String eventId) async {
-    final response = await _dioClient.get('/api/rsvp/$eventId/friends');
+    final response = await _dioClient.get('/rsvp/$eventId/friends');
     final data = response.data['data'] as Map<String, dynamic>;
     return FriendsGoingData(
       count: data['count'] as int,
