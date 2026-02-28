@@ -38,7 +38,7 @@
 - [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
 - [x] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile (completed 2026-02-28)
 - [x] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements (completed 2026-02-28)
-- [ ] **Phase 11.1: Cross-Phase Integration Fixes** *(INSERTED — gap closure)* — Fix 4 backend integration gaps: denormalized count triggers, claimed_by_user_id in API responses, block filter in TrendingService, is_hidden in SearchService
+- [x] **Phase 11.1: Cross-Phase Integration Fixes** *(INSERTED — gap closure)* — Fix 4 backend integration gaps: denormalized count triggers, claimed_by_user_id in API responses, block filter in TrendingService, is_hidden in SearchService (completed 2026-02-28)
 - [ ] **Phase 11.2: Mobile Review Response UI** *(INSERTED — gap closure)* — Add mobile screen for claimed venue owners to respond to reviews, completing the VERIFY-05 requirement
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
 
@@ -152,7 +152,7 @@ Plans:
   2. Verified venues and bands display verification badges in venue/band detail screens (claimed_by_user_id returned in API responses)
   3. Blocked users' check-ins do not appear in or influence the trending feed
   4. Event search result checkin_count excludes hidden/moderated content
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 11.1-01-PLAN.md — Denormalized count triggers migration (PostgreSQL triggers + backfill for toast_count/comment_count)
 - [ ] 11.1-02-PLAN.md — Service query patches (claimed_by_user_id in venue/band APIs, block filter in trending, is_hidden in search)
@@ -201,7 +201,7 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 | 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
 | 11. Platform Trust & Between-Show Retention | v1.1 | 6/6 | Complete | 2026-02-28 |
-| 11.1. Cross-Phase Integration Fixes | 1/2 | In Progress|  | - |
+| 11.1. Cross-Phase Integration Fixes | 2/2 | Complete   | 2026-02-28 | - |
 | 11.2. Mobile Review Response UI | v1.1 | 0/TBD | Not started | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 

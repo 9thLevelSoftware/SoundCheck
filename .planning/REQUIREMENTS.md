@@ -10,9 +10,9 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 ### Trust & Safety
 
 - [x] **SAFE-01**: User can report any check-in, comment, or photo for abuse/spam/inappropriate content
-- [ ] **SAFE-02**: Reported content enters moderation queue with automated Cloud Vision SafeSearch image scan
+- [x] **SAFE-02**: Reported content enters moderation queue with automated Cloud Vision SafeSearch image scan
 - [x] **SAFE-03**: Admin can review, approve, or remove reported content from moderation queue
-- [ ] **SAFE-04**: User can block another user (bilateral — blocks all interactions in both directions)
+- [x] **SAFE-04**: User can block another user (bilateral — blocks all interactions in both directions)
 - [x] **SAFE-05**: User can reset forgotten password via email link
 
 ### Auth Cleanup
@@ -45,7 +45,7 @@ Requirements for v1.1 Launch Readiness & Growth Platform. Each maps to roadmap p
 - [x] **VERIFY-01**: Venue owner can submit claim request for venue profile
 - [x] **VERIFY-02**: Artist can submit claim request for band profile
 - [x] **VERIFY-03**: Admin reviews and approves/denies verification claims
-- [ ] **VERIFY-04**: Verified profiles display verification badge
+- [x] **VERIFY-04**: Verified profiles display verification badge
 - [ ] **VERIFY-05**: Claimed venue owner can view aggregate ratings and respond to reviews
 - [x] **VERIFY-06**: Claimed artist can update profile and view performance stats
 
@@ -113,9 +113,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | SAFE-01 | Phase 10.1 | Complete |
-| SAFE-02 | Phase 11.1 | Pending |
+| SAFE-02 | Phase 11.1 | Complete |
 | SAFE-03 | Phase 9.1 | Complete |
-| SAFE-04 | Phase 11.1 | Pending |
+| SAFE-04 | Phase 11.1 | Complete |
 | SAFE-05 | Phase 10.2 | Complete |
 | AUTH-01 | Phase 9 | Complete |
 | AUTH-02 | Phase 9 | Complete |
@@ -133,7 +133,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VERIFY-01 | Phase 11 | Complete |
 | VERIFY-02 | Phase 11 | Complete |
 | VERIFY-03 | Phase 11 | Complete |
-| VERIFY-04 | Phase 11.1 | Pending |
+| VERIFY-04 | Phase 11.1 | Complete |
 | VERIFY-05 | Phase 11.2 | Pending |
 | VERIFY-06 | Phase 11 | Complete |
 | SCALE-01 | Phase 11 | Complete |

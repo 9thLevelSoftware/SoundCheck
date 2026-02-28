@@ -2,26 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: Launch Readiness & Growth Platform
-status: unknown
-last_updated: "2026-02-28T16:02:28.377Z"
+status: phase-complete
+last_updated: "2026-02-28T16:40:39Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 20
-  completed_plans: 20
----
-
----
-gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: Launch Readiness & Growth Platform
-status: executing
-last_updated: "2026-02-28T15:54:39Z"
-progress:
-  total_phases: 5
-  completed_phases: 5
-  total_plans: 15
-  completed_plans: 15
+  total_phases: 7
+  completed_phases: 7
+  total_plans: 22
+  completed_plans: 22
 ---
 
 # Project State
@@ -36,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 11.1 (Cross-Phase Integration Fixes)
-Plan: 1 of 2
-Status: Executing
-Last activity: 2026-02-28 — Completed 11.1-01 (Denormalized Count Triggers)
+Plan: 2 of 2 (all complete)
+Status: Phase Complete
+Last activity: 2026-02-28 — Completed 11.1-02 (Cross-Phase Service Patches)
 
-Progress: [████████████░░░░░░░░░░░░░] 50%
+Progress: [█████████████████████████] 100%
 
 ## Performance Metrics
 
@@ -68,6 +55,7 @@ Progress: [████████████░░░░░░░░░░░
 | Phase 11 P05 | 7min | 2 tasks | 6 files |
 | Phase 11 P06 | 8min | 2 tasks | 10 files |
 | Phase 11.1 P01 | 1min | 1 task | 1 file |
+| Phase 11.1 P02 | 2min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -140,6 +128,8 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [11.1-01] Used GREATEST(count - 1, 0) in DELETE triggers to prevent negative counts from data inconsistencies
 - [11.1-01] Separate INSERT and DELETE triggers (not combined INSERT OR DELETE) for clarity and independent maintenance
 - [11.1-01] Backfill uses correlated subqueries against full toasts/checkin_comments tables for accuracy
+- [11.1-02] Used || undefined (not || null) in mappers to omit claimedByUserId from JSON when no claim exists
+- [11.1-02] Block filter applied to both velocity_stats and friend_stats LATERAL subqueries for complete block coverage
 
 ### Pending Todos
 
@@ -161,5 +151,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11.1-01-PLAN.md (Denormalized Count Triggers)
+Stopped at: Completed 11.1-02-PLAN.md (Cross-Phase Service Patches)
 Resume file: None
