@@ -37,7 +37,7 @@
 - [x] **Phase 10: Viral Growth Engine** — Onboarding conversion, shareable check-in/badge cards, social platform sharing, RSVP, and the post-check-in celebration loop (completed 2026-02-28)
 - [x] **Phase 10.1: Report & Block Mobile UI** *(INSERTED — gap closure)* — Mobile entry points for content reporting and user blocking, completing the Trust & Safety loop (completed 2026-02-28)
 - [x] **Phase 10.2: Password Reset Mobile Fix** *(INSERTED — gap closure)* — Fix double-prefix URL bug and add deep link handler to complete the password reset flow on mobile (completed 2026-02-28)
-- [ ] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements
+- [x] **Phase 11: Platform Trust & Between-Show Retention** — Trending shows feed, venue/artist verification and claimed profiles, full-text search, and scalability improvements (completed 2026-02-28)
 - [ ] **Phase 12: Monetization & Wrapped** — SoundCheck Wrapped annual recap, premium subscription tier via RevenueCat, and revenue infrastructure (targeting Dec 2026)
 
 ## Phase Details
@@ -131,7 +131,7 @@ Plans:
   3. Artist can submit a claim request, and after admin approval, sees a verification badge on their band profile and can update their profile and view performance stats
   4. Search across bands, venues, and events uses full-text search with fuzzy fallback, returning relevant results for partial matches, typos, and multi-word queries
   5. Feed queries perform consistently under load using denormalized count columns instead of COUNT(DISTINCT) joins
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 Plans:
 - [ ] 11-01-PLAN.md — Database migrations (verification claims, tsvector search, genre array, review responses) + TypeScript types
 - [ ] 11-02-PLAN.md — TrendingService with Wilson scoring + feed denormalized count switchover
@@ -172,7 +172,7 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 12
 | 10. Viral Growth Engine | v1.1 | 5/5 | Complete | 2026-02-28 |
 | 10.1. Report & Block Mobile UI | v1.1 | 2/2 | Complete | 2026-02-28 |
 | 10.2. Password Reset Mobile Fix | v1.1 | 1/1 | Complete | 2026-02-28 |
-| 11. Platform Trust & Between-Show Retention | 4/6 | In Progress|  | - |
+| 11. Platform Trust & Between-Show Retention | 6/6 | Complete   | 2026-02-28 | - |
 | 12. Monetization & Wrapped | v1.1 | 0/TBD | Not started | - |
 
 ---

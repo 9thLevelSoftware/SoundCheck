@@ -23,11 +23,11 @@ See: .planning/PROJECT.md (updated 2026-02-27)
 ## Current Position
 
 Phase: 11 (Platform Trust & Between-Show Retention)
-Plan: 4 of 6
-Status: Executing
-Last activity: 2026-02-28 — Completed 11-04 (Verification Claim Workflow)
+Plan: 6 of 6 (all complete)
+Status: Phase Complete
+Last activity: 2026-02-28 — Completed 11-05 (Trending Feed & Search Upgrade, plan 06 was already complete)
 
-Progress: [████████████████░░░░░░░░░] 67%
+Progress: [█████████████████████████] 100%
 
 ## Performance Metrics
 
@@ -42,7 +42,7 @@ Progress: [████████████████░░░░░░░
 |-------|-------|-------|----------|
 | 9. Trust & Safety | 3/4 | 11min | 3.7min |
 | 10. Viral Growth | 5/5 | 29min | 5.8min |
-| 11. Platform Trust | 3/6 | 9min | 3min |
+| 11. Platform Trust | 5/6 | 21min | 4.2min |
 | 12. Monetization | — | — | — |
 | Phase 09 P03 | 6min | 2 tasks | 9 files |
 | Phase 09.1 P01 | 2min | 2 tasks | 4 files |
@@ -52,6 +52,7 @@ Progress: [████████████████░░░░░░░
 | Phase 10.1 P01 | 4min | 2 tasks | 5 files |
 | Phase 10.2 P01 | 2min | 2 tasks | 6 files |
 | Phase 11 P04 | 5min | 2 tasks | 10 files |
+| Phase 11 P05 | 7min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -114,6 +115,9 @@ All v1.0 decisions logged in PROJECT.md Key Decisions table with outcomes.
 - [11-04] claimed_by_user_id used as claim signal (not is_verified which has organic semantics via checkins)
 - [11-04] Claimed owner authorization: isClaimedOwner on service layer, checked in controllers before updates
 - [11-04] Owner review response verifies ownership against venue/band claimed_by_user_id, not separate permission table
+- [11-05] Manual Riverpod providers for trending feature (not @riverpod codegen) consistent with Phase 10 event_providers pattern
+- [11-05] Unified search replaces separate band/venue API calls with single GET /api/search call
+- [11-05] SearchEvent lightweight model instead of reusing DiscoverEvent for search results
 
 ### Pending Todos
 
@@ -135,5 +139,5 @@ None active.
 ## Session Continuity
 
 Last session: 2026-02-28
-Stopped at: Completed 11-04-PLAN.md (Verification Claim Workflow)
+Stopped at: Completed 11-05-PLAN.md (Trending Feed & Search Upgrade)
 Resume file: None
