@@ -290,10 +290,11 @@ Phase 19 ──────┘
 |-------|----------------|--------|
 | 18. WCAG Contrast & Accessibility | 2/2 | Complete |
 | 19. Touch Targets & Registration UX | 2/2 | Complete |
-| 20. UX Restructuring | 1/3 | In Progress|  | 21. Theme Cleanup & Light Mode Prep | 0/2 | Pending |
+| 20. UX Restructuring | 3/3 | Complete |
+| 21. Theme Cleanup & Light Mode Prep | 0/2 | Pending |
 
-**Total: 19/33 requirements complete**
+**Total: 27/33 requirements complete**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-03-01 — Phase 19 complete (touch targets + registration UX) — 19/33 v3.0 requirements done*
+*Last updated: 2026-03-01 — Phase 20 complete (UX restructuring: feed tabs, profile collapsing, rating UX, vibes) — 27/33 v3.0 requirements done*
