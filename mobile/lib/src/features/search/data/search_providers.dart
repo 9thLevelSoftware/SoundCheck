@@ -15,7 +15,7 @@ class SearchQuery extends _$SearchQuery {
 }
 
 /// Search filter type provider
-enum SearchFilter { all, venues, bands, events }
+enum SearchFilter { all, venues, bands, events, users }
 
 @riverpod
 class SearchFilterState extends _$SearchFilterState {
@@ -49,8 +49,10 @@ Future<SearchResults> unifiedSearch(Ref ref) async {
       types = 'venue';
     case SearchFilter.events:
       types = 'event';
+    case SearchFilter.users:
+      types = 'user';
     case SearchFilter.all:
-      types = 'band,venue,event';
+      types = 'band,venue,event,user';
   }
 
   try {
@@ -83,12 +85,14 @@ SearchResults combinedSearchResults(Ref ref) {
       venues: [],
       bands: [],
       events: [],
+      users: [],
       isLoading: true,
     ),
     error: (error, _) => SearchResults(
       venues: [],
       bands: [],
       events: [],
+      users: [],
       error: error,
     ),
   );
@@ -124,11 +128,44 @@ class SearchEvent {
   }
 }
 
-/// Combined search results with categorized bands, venues, and events.
+/// Lightweight search result model for users returned by unified search.
+class SearchUser {
+  final String id;
+  final String username;
+  final String displayName;
+  final String? profileImageUrl;
+  final String? bio;
+  final int totalCheckins;
+  final bool isVerified;
+
+  const SearchUser({
+    required this.id,
+    required this.username,
+    required this.displayName,
+    this.profileImageUrl,
+    this.bio,
+    this.totalCheckins = 0,
+    this.isVerified = false,
+  });
+
+  factory SearchUser.fromJson(Map<String, dynamic> json) => SearchUser(
+        id: json['id'] as String,
+        username: json['username'] as String,
+        displayName:
+            json['displayName'] as String? ?? json['username'] as String,
+        profileImageUrl: json['profileImageUrl'] as String?,
+        bio: json['bio'] as String?,
+        totalCheckins: json['totalCheckins'] as int? ?? 0,
+        isVerified: json['isVerified'] as bool? ?? false,
+      );
+}
+
+/// Combined search results with categorized bands, venues, events, and users.
 class SearchResults {
   final List<Venue> venues;
   final List<Band> bands;
   final List<SearchEvent> events;
+  final List<SearchUser> users;
   final bool isLoading;
   final Object? error;
 
@@ -136,6 +173,7 @@ class SearchResults {
     required this.venues,
     required this.bands,
     required this.events,
+    required this.users,
     this.isLoading = false,
     this.error,
   });
@@ -144,6 +182,7 @@ class SearchResults {
         venues: [],
         bands: [],
         events: [],
+        users: [],
       );
 
   factory SearchResults.fromJson(Map<String, dynamic> json) {
@@ -160,9 +199,15 @@ class SearchResults {
               ?.map((e) => SearchEvent.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      users: (json['users'] as List<dynamic>?)
+              ?.map((e) => SearchUser.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
-  bool get isEmpty => venues.isEmpty && bands.isEmpty && events.isEmpty;
-  int get totalCount => venues.length + bands.length + events.length;
+  bool get isEmpty =>
+      venues.isEmpty && bands.isEmpty && events.isEmpty && users.isEmpty;
+  int get totalCount =>
+      venues.length + bands.length + events.length + users.length;
 }
