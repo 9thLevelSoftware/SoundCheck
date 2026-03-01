@@ -3,6 +3,7 @@ import { UserService } from '../services/UserService';
 import { StatsService } from '../services/StatsService';
 import { AuditService } from '../services/AuditService';
 import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 // UUID validation regex (supports UUID v1-5)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -36,7 +37,7 @@ export class UserController {
 
       res.status(201).json(response);
     } catch (error) {
-      console.error('Registration error:', error);
+      logger.error('Registration error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -68,7 +69,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Login error:', error);
+      logger.error('Login error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       // Audit log: login failure
       const reason = error instanceof Error ? error.message : 'Unknown error';
@@ -123,7 +124,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get profile error:', error);
+      logger.error('Get profile error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -163,7 +164,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Update profile error:', error);
+      logger.error('Update profile error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -217,7 +218,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get user by username error:', error);
+      logger.error('Get user by username error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -252,7 +253,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Deactivate account error:', error);
+      logger.error('Deactivate account error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -284,7 +285,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Check username error:', error);
+      logger.error('Check username error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -316,7 +317,7 @@ export class UserController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Check email error:', error);
+      logger.error('Check email error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -364,7 +365,7 @@ export class UserController {
       };
       res.json(response);
     } catch (error) {
-      console.error('Error getting user stats:', error);
+      logger.error('Error getting user stats', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: 'Failed to get user stats',
@@ -399,7 +400,7 @@ export class UserController {
       };
       res.json(response);
     } catch (error) {
-      console.error('Error getting concert cred:', error);
+      logger.error('Error getting concert cred', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to get concert cred',
@@ -442,7 +443,7 @@ export class UserController {
 
       res.json(response);
     } catch (error) {
-      console.error('User search error:', error);
+      logger.error('User search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -480,7 +481,7 @@ export class UserController {
         message: 'Profile image uploaded successfully',
       });
     } catch (error) {
-      console.error('Upload profile image error:', error);
+      logger.error('Upload profile image error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to upload image',

@@ -19,12 +19,7 @@ import {
   TicketmasterSearchParams,
   NormalizedEvent,
 } from '../types/ticketmaster';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) => console.log(`[TicketmasterAdapter] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) => console.warn(`[TicketmasterAdapter] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) => console.error(`[TicketmasterAdapter] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 /** Maximum pages to fetch before attempting date-range subdivision */
 const MAX_PAGES = 5;
@@ -141,7 +136,7 @@ export class TicketmasterAdapter {
 
     // If more than 1000 total items, subdivide date range
     if (firstResult.page.totalElements > MAX_DEEP_PAGING_ITEMS) {
-      logger.info('Result set exceeds 1000 items, subdividing date range', {
+      logger.info('[TicketmasterAdapter] Result set exceeds 1000 items, subdividing date range', {
         totalElements: firstResult.page.totalElements,
         startDate,
         endDate,
@@ -224,7 +219,7 @@ export class TicketmasterAdapter {
     // Skip events without embedded venue data
     const tmVenue = tmEvent._embedded?.venues?.[0];
     if (!tmVenue) {
-      logger.warn('Skipping event without venue', {
+      logger.warn('[TicketmasterAdapter] Skipping event without venue', {
         eventId: tmEvent.id,
         eventName: tmEvent.name,
       });
@@ -339,7 +334,7 @@ export class TicketmasterAdapter {
     }
 
     if (this.dailyCallCount >= DAILY_QUOTA_WARN) {
-      logger.warn('Approaching daily API quota', {
+      logger.warn('[TicketmasterAdapter] Approaching daily API quota', {
         current: this.dailyCallCount,
         limit: DAILY_QUOTA,
       });
@@ -354,7 +349,7 @@ export class TicketmasterAdapter {
     if (now >= this.dailyResetTime) {
       this.dailyCallCount = 0;
       this.dailyResetTime = this.getNextMidnightUTC();
-      logger.info('Daily API call counter reset');
+      logger.info('[TicketmasterAdapter] Daily API call counter reset');
     }
   }
 

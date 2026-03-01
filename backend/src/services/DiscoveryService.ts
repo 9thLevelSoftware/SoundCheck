@@ -3,6 +3,7 @@ import { cache, CacheKeys } from '../utils/cache';
 import { BandAggregate, VenueAggregate, Event } from '../types';
 import { EventService } from './EventService';
 import { BlockService } from './BlockService';
+import logger from '../utils/logger';
 
 /**
  * DiscoveryService: Computes aggregate ratings for bands and venues
@@ -219,7 +220,7 @@ export class DiscoveryService {
       }
       return this.eventService.getTrendingEvents(limit);
     } catch (error) {
-      console.error('Compute recommendations error:', error);
+      logger.error('Compute recommendations error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return [];
     }
   }
@@ -255,7 +256,7 @@ export class DiscoveryService {
         uniqueFans: row?.unique_fans ?? 0,
       };
     } catch (error) {
-      console.error('Compute band aggregate error:', error);
+      logger.error('Compute band aggregate error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return { avgPerformanceRating: 0, totalRatings: 0, uniqueFans: 0 };
     }
   }
@@ -286,7 +287,7 @@ export class DiscoveryService {
         uniqueVisitors: row?.unique_visitors ?? 0,
       };
     } catch (error) {
-      console.error('Compute venue aggregate error:', error);
+      logger.error('Compute venue aggregate error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return { avgExperienceRating: 0, totalRatings: 0, uniqueVisitors: 0 };
     }
   }

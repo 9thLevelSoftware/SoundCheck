@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 /**
  * Middleware factory for Zod schema validation
@@ -29,7 +30,7 @@ export const validate = (schema: AnyZodObject) => {
         return;
       }
       
-      console.error('Validation middleware unexpected error:', error);
+      logger.error('Validation middleware unexpected error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Internal server error' });
     }
   };

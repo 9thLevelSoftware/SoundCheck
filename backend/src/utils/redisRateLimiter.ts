@@ -11,6 +11,7 @@
 import Redis from 'ioredis';
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types';
+import logger from './logger';
 
 let redis: Redis | null = null;
 
@@ -22,7 +23,7 @@ export function initRedis(): Redis | null {
   const redisUrl = process.env.REDIS_URL;
 
   if (!redisUrl) {
-    console.log('REDIS_URL not configured, using in-memory rate limiting');
+    logger.info('REDIS_URL not configured, using in-memory rate limiting');
     return null;
   }
 
@@ -37,24 +38,24 @@ export function initRedis(): Redis | null {
     });
 
     redis.on('error', (err) => {
-      console.error('Redis connection error:', err.message);
+      logger.error('Redis connection error', { error: err.message });
     });
 
     redis.on('connect', () => {
-      console.log('Redis connected');
+      logger.info('Redis connected');
     });
 
     redis.on('ready', () => {
-      console.log('Redis ready');
+      logger.info('Redis ready');
     });
 
     redis.on('close', () => {
-      console.log('Redis connection closed');
+      logger.info('Redis connection closed');
     });
 
     return redis;
   } catch (error) {
-    console.error('Failed to initialize Redis:', error);
+    logger.error('Failed to initialize Redis', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     return null;
   }
 }
@@ -116,7 +117,7 @@ export async function checkRateLimit(
       resetAt: now + windowMs,
     };
   } catch (error) {
-    console.error('Rate limit check error:', error);
+    logger.error('Rate limit check error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     // Fail-closed: deny when rate limit check errors
     return { allowed: false, remaining: 0, resetAt: now + windowMs };
   }
@@ -130,9 +131,9 @@ export async function closeRedis(): Promise<void> {
     try {
       await redis.quit();
       redis = null;
-      console.log('Redis connection closed gracefully');
+      logger.info('Redis connection closed gracefully');
     } catch (error) {
-      console.error('Error closing Redis connection:', error);
+      logger.error('Error closing Redis connection', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       redis = null;
     }
   }
@@ -177,7 +178,7 @@ export class RedisRateLimiter {
 
         next();
       } catch (error) {
-        console.error('Rate limiting error:', error);
+        logger.error('Rate limiting error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         // Fail-closed: deny request when rate limiting fails
         const response: ApiResponse = {
           success: false,
@@ -212,7 +213,7 @@ export class RedisRateLimiter {
       await redis.zremrangebyscore(key, 0, windowStart);
       return await redis.zcard(key);
     } catch (error) {
-      console.error('Error getting request count:', error);
+      logger.error('Error getting request count', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return 0;
     }
   }
@@ -227,7 +228,7 @@ export class RedisRateLimiter {
       try {
         await redis.del(key);
       } catch (error) {
-        console.error('Error resetting rate limit:', error);
+        logger.error('Error resetting rate limit', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       }
     }
   }

@@ -5,6 +5,7 @@ import { WrappedService } from '../services/WrappedService';
 import { ShareCardService } from '../services/ShareCardService';
 import { WrappedSummaryData } from '../templates/share-cards/wrapped-summary-card';
 import { WrappedStatData } from '../templates/share-cards/wrapped-stat-card';
+import logger from '../utils/logger';
 
 export class WrappedController {
   private wrappedService = new WrappedService();
@@ -21,7 +22,7 @@ export class WrappedController {
       const stats = await this.wrappedService.getWrappedStats(userId, year);
       res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('WrappedController.getWrapped error:', error);
+      logger.error('WrappedController.getWrapped error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Failed to generate Wrapped stats' });
     }
   };
@@ -37,7 +38,7 @@ export class WrappedController {
       const stats = await this.wrappedService.getWrappedDetailStats(userId, year);
       res.json({ success: true, data: stats });
     } catch (error) {
-      console.error('WrappedController.getWrappedDetail error:', error);
+      logger.error('WrappedController.getWrappedDetail error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Failed to generate Wrapped detail stats' });
     }
   };
@@ -67,7 +68,7 @@ export class WrappedController {
       const urls = await this.shareCardService.generateWrappedCard(userId, year, cardData);
       res.json({ success: true, data: urls });
     } catch (error) {
-      console.error('WrappedController.generateSummaryCard error:', error);
+      logger.error('WrappedController.generateSummaryCard error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Failed to generate Wrapped card' });
     }
   };
@@ -112,7 +113,7 @@ export class WrappedController {
       const urls = await this.shareCardService.generateWrappedStatCard(userId, year, cardData);
       res.json({ success: true, data: urls });
     } catch (error) {
-      console.error('WrappedController.generateStatCard error:', error);
+      logger.error('WrappedController.generateStatCard error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Failed to generate stat card' });
     }
   };
@@ -132,7 +133,7 @@ export class WrappedController {
 
       res.type('html').send(html);
     } catch (error) {
-      console.error('WrappedController.renderWrappedLanding error:', error);
+      logger.error('WrappedController.renderWrappedLanding error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).send('Server error');
     }
   };

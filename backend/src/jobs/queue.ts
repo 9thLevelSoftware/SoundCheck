@@ -14,13 +14,7 @@
 
 import { Queue } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[EventSyncQueue] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[EventSyncQueue] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 /**
  * Event sync queue instance.

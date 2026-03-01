@@ -450,8 +450,8 @@ class _VenueStatsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatItem(
-            value: _formatNumber(venue.totalCheckins),
-            label: 'Check-ins',
+            value: _formatNumber(venue.totalReviews),
+            label: 'Reviews',
           ),
           _StatDivider(),
           _StatItem(

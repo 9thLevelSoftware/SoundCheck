@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { SearchService } from '../services/SearchService';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 /**
  * SearchController: HTTP handler for the unified search endpoint.
@@ -71,7 +72,7 @@ export class SearchController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Search error:', error);
+      logger.error('Search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,

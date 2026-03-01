@@ -1,6 +1,9 @@
 // Mock dependencies before imports
 const mockProcessPendingDeletions = jest.fn();
 const mockDbQuery = jest.fn();
+const mockLoggerInfo = jest.fn();
+const mockLoggerError = jest.fn();
+const mockLoggerWarn = jest.fn();
 
 jest.mock('../../config/database', () => ({
   __esModule: true,
@@ -15,6 +18,16 @@ jest.mock('../../services/DataRetentionService', () => ({
   DataRetentionService: jest.fn().mockImplementation(() => ({
     processPendingDeletions: mockProcessPendingDeletions,
   })),
+}));
+
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: mockLoggerInfo,
+    error: mockLoggerError,
+    warn: mockLoggerWarn,
+    debug: jest.fn(),
+  },
 }));
 
 // Mock process.exit to prevent test from exiting
@@ -159,8 +172,6 @@ describe('retentionJob', () => {
     });
 
     it('should log deletion errors from processPendingDeletions', async () => {
-      const consoleSpy = jest.spyOn(console, 'log').mockImplementation();
-
       mockProcessPendingDeletions.mockResolvedValue({
         processed: 2,
         succeeded: 1,
@@ -176,10 +187,10 @@ describe('retentionJob', () => {
       const { runRetentionJob } = await import('../../scripts/retentionJob');
       await runRetentionJob();
 
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('Errors:'));
-      expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('user-123'));
-
-      consoleSpy.mockRestore();
+      expect(mockLoggerError).toHaveBeenCalledWith(
+        expect.stringContaining('user-123'),
+        expect.objectContaining({ userId: 'user-123' })
+      );
     });
 
     it('should complete all cleanup operations in order', async () => {

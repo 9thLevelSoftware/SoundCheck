@@ -32,6 +32,7 @@ import { AuthUtils } from './auth';
 import WebSocket from 'ws';
 import IORedis from 'ioredis';
 import { createPubSubConnection } from '../config/redis';
+import winstonLogger from './logger';
 
 interface Client {
   ws: WebSocket;
@@ -51,7 +52,7 @@ class WebSocketServer {
 
   init(server: Server): void {
     if (!process.env.ENABLE_WEBSOCKET || process.env.ENABLE_WEBSOCKET !== 'true') {
-      console.log('🔌 WebSocket disabled (set ENABLE_WEBSOCKET=true to enable)');
+      winstonLogger.info('WebSocket disabled (set ENABLE_WEBSOCKET=true to enable)');
       return;
     }
 
@@ -69,7 +70,7 @@ class WebSocketServer {
       };
 
       this.clients.set(clientId, client);
-      console.log(`WebSocket client connected: ${clientId}`);
+      winstonLogger.info(`WebSocket client connected: ${clientId}`);
 
       // Handle messages
       ws.on('message', (message: string) => {
@@ -77,7 +78,7 @@ class WebSocketServer {
           const data = JSON.parse(message.toString());
           this.handleMessage(clientId, data);
         } catch (error) {
-          console.error('Invalid WebSocket message:', error);
+          winstonLogger.error('Invalid WebSocket message', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         }
       });
 
@@ -110,17 +111,17 @@ class WebSocketServer {
           try {
             this.handleCheckinPubSub(JSON.parse(message));
           } catch (err) {
-            console.error('Error handling checkin Pub/Sub message:', err);
+            winstonLogger.error('Error handling checkin Pub/Sub message', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
           }
         }
       });
-      console.log('Redis Pub/Sub subscriber connected for WebSocket fan-out');
+      winstonLogger.info('Redis Pub/Sub subscriber connected for WebSocket fan-out');
     } catch (err) {
-      console.warn('Redis Pub/Sub not available, WebSocket fan-out disabled:', (err as Error).message);
+      winstonLogger.warn('Redis Pub/Sub not available, WebSocket fan-out disabled', { error: (err as Error).message });
       this.subscriber = null;
     }
 
-    console.log('WebSocket server initialized');
+    winstonLogger.info('WebSocket server initialized');
   }
 
   /**
@@ -153,7 +154,7 @@ class WebSocketServer {
     }
 
     if (followerIds.length > 0) {
-      console.log(`Fan-out new_checkin to ${followerIds.length} followers`);
+      winstonLogger.debug(`Fan-out new_checkin to ${followerIds.length} followers`);
     }
   }
 
@@ -205,7 +206,7 @@ class WebSocketServer {
         break;
 
       default:
-        console.warn(`Unknown WebSocket message type: ${type}`);
+        winstonLogger.warn(`Unknown WebSocket message type: ${type}`);
     }
   }
 
@@ -213,7 +214,7 @@ class WebSocketServer {
     const decoded = AuthUtils.verifyToken(token);
 
     if (!decoded || decoded.userId !== userId) {
-      console.warn(`❌ Client ${clientId} failed authentication: Invalid token or user mismatch`);
+      winstonLogger.warn(`Client ${clientId} failed authentication: Invalid token or user mismatch`);
       this.send(clientId, 'error', { message: 'Authentication failed' });
       // Close connection on auth failure
       const client = this.clients.get(clientId);
@@ -228,7 +229,7 @@ class WebSocketServer {
     if (client) {
       client.userId = userId;
       this.send(clientId, 'authenticated', { userId });
-      console.log(`✅ Client ${clientId} authenticated as user ${userId}`);
+      winstonLogger.info(`Client ${clientId} authenticated as user ${userId}`);
     }
   }
 
@@ -244,7 +245,7 @@ class WebSocketServer {
     this.rooms.get(room)!.add(clientId);
 
     this.send(clientId, 'joined_room', { room });
-    console.log(`✅ Client ${clientId} joined room: ${room}`);
+    winstonLogger.info(`Client ${clientId} joined room: ${room}`);
   }
 
   private leaveRoom(clientId: string, room: string): void {
@@ -280,7 +281,7 @@ class WebSocketServer {
     });
 
     this.clients.delete(clientId);
-    console.log(`❌ WebSocket client disconnected: ${clientId}`);
+    winstonLogger.info(`WebSocket client disconnected: ${clientId}`);
   }
 
   /**
@@ -406,7 +407,7 @@ class WebSocketServer {
 
     this.wss?.close();
 
-    console.log('WebSocket server closed');
+    winstonLogger.info('WebSocket server closed');
   }
 }
 

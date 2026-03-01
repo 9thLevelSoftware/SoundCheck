@@ -2,6 +2,7 @@ import Database from '../config/database';
 import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../types';
 import { AuthUtils } from '../utils/auth';
 import { mapDbUserToUser, camelToSnakeCase } from '../utils/dbMappers';
+import logger from '../utils/logger';
 
 export class UserService {
   private db = Database.getInstance();
@@ -340,7 +341,7 @@ export class UserService {
         uniqueBands: parseInt(stats.unique_bands, 10) || 0,
       };
     } catch (error) {
-      console.error('Error getting user stats:', error);
+      logger.error('Error getting user stats', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw new Error('Failed to retrieve user statistics');
     }
   }

@@ -4,6 +4,7 @@ import { MusicBrainzService } from '../services/MusicBrainzService';
 import { DiscoveryService } from '../services/DiscoveryService';
 import { EventService } from '../services/EventService';
 import { CreateBandRequest, SearchQuery, ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 export class BandController {
   private bandService = new BandService();
@@ -39,7 +40,7 @@ export class BandController {
 
       res.status(201).json(response);
     } catch (error) {
-      console.error('Create band error:', error);
+      logger.error('Create band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -75,7 +76,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get bands error:', error);
+      logger.error('Get bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -118,7 +119,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get band by ID error:', error);
+      logger.error('Get band by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -163,7 +164,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Update band error:', error);
+      logger.error('Update band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -191,7 +192,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Delete band error:', error);
+      logger.error('Delete band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -218,7 +219,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get popular bands error:', error);
+      logger.error('Get popular bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -245,7 +246,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get trending bands error:', error);
+      logger.error('Get trending bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -274,7 +275,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get bands by genre error:', error);
+      logger.error('Get bands by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -300,7 +301,7 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get genres error:', error);
+      logger.error('Get genres error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -339,7 +340,7 @@ export class BandController {
 
       res.status(band.alreadyExists ? 200 : 201).json(response);
     } catch (error) {
-      console.error('Import band error:', error);
+      logger.error('Import band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,

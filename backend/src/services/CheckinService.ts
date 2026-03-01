@@ -12,6 +12,7 @@
 
 import Database from '../config/database';
 import { r2Service } from './R2Service';
+import logger from '../utils/logger';
 import {
   CheckinQueryService,
   CheckinCreatorService,
@@ -183,7 +184,7 @@ export class CheckinService {
         params
       );
     } catch (error) {
-      console.error('Add vibe tags error:', error);
+      logger.error('Add vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -209,7 +210,7 @@ export class CheckinService {
         category: row.category,
       }));
     } catch (error) {
-      console.error('Get check-in vibe tags error:', error);
+      logger.error('Get check-in vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -265,7 +266,7 @@ export class CheckinService {
 
       return results;
     } catch (error) {
-      console.error('Request photo upload URLs error:', error);
+      logger.error('Request photo upload URLs error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -319,7 +320,7 @@ export class CheckinService {
 
       return this.getCheckinById(checkinId, userId);
     } catch (error) {
-      console.error('Add photos error:', error);
+      logger.error('Add photos error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

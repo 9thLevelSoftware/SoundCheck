@@ -10,6 +10,7 @@
 
 import Database from '../../config/database';
 import { Toast, Comment } from './types';
+import logger from '../../utils/logger';
 
 export class CheckinToastService {
   private db = Database.getInstance();
@@ -55,7 +56,7 @@ export class CheckinToastService {
         ownerId: result.rows[0]?.owner_id,
       };
     } catch (error) {
-      console.error('Toast check-in error:', error);
+      logger.error('Toast check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -70,7 +71,7 @@ export class CheckinToastService {
         [checkinId, userId]
       );
     } catch (error) {
-      console.error('Untoast check-in error:', error);
+      logger.error('Untoast check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -104,7 +105,7 @@ export class CheckinToastService {
         },
       }));
     } catch (error) {
-      console.error('Get toasts error:', error);
+      logger.error('Get toasts error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -145,7 +146,7 @@ export class CheckinToastService {
         ownerId: checkin.rows[0]?.user_id,
       };
     } catch (error) {
-      console.error('Add comment error:', error);
+      logger.error('Add comment error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -181,7 +182,7 @@ export class CheckinToastService {
         },
       }));
     } catch (error) {
-      console.error('Get comments error:', error);
+      logger.error('Get comments error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -217,7 +218,7 @@ export class CheckinToastService {
 
       await this.db.query('DELETE FROM checkin_comments WHERE id = $1', [commentId]);
     } catch (error) {
-      console.error('Delete comment error:', error);
+      logger.error('Delete comment error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

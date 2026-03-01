@@ -7,6 +7,7 @@ import { generateRefreshToken } from '../utils/auth';
 import { mapDbUserToUser } from '../utils/dbMappers';
 import { PoolClient } from 'pg';
 import crypto from 'crypto';
+import logger from '../utils/logger';
 
 /**
  * Profile information extracted from social auth tokens
@@ -52,7 +53,7 @@ export class SocialAuthService {
     try {
       const googleClientId = process.env.GOOGLE_CLIENT_ID;
       if (!googleClientId) {
-        console.error('GOOGLE_CLIENT_ID not configured');
+        logger.error('GOOGLE_CLIENT_ID not configured');
         return null;
       }
 
@@ -68,7 +69,7 @@ export class SocialAuthService {
 
       // Ensure email is verified
       if (!payload.email_verified) {
-        console.error('Google email not verified');
+        logger.error('Google email not verified');
         return null;
       }
 
@@ -81,7 +82,7 @@ export class SocialAuthService {
         profileImageUrl: payload.picture,
       };
     } catch (error) {
-      console.error('Google token verification failed:', error);
+      logger.error('Google token verification failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return null;
     }
   }
@@ -101,7 +102,7 @@ export class SocialAuthService {
       // Require APPLE_BUNDLE_ID for Apple sign-in
       const appleBundleId = process.env.APPLE_BUNDLE_ID;
       if (!appleBundleId) {
-        console.error('APPLE_BUNDLE_ID environment variable required for Apple sign-in');
+        logger.error('APPLE_BUNDLE_ID environment variable required for Apple sign-in');
         throw new Error('APPLE_BUNDLE_ID environment variable required for Apple sign-in');
       }
 
@@ -112,7 +113,7 @@ export class SocialAuthService {
       });
 
       if (!appleUser.sub) {
-        console.error('Invalid Apple token: missing subject');
+        logger.error('Invalid Apple token: missing subject');
         return null;
       }
 
@@ -128,7 +129,7 @@ export class SocialAuthService {
         lastName: fullName?.familyName,
       };
     } catch (error: any) {
-      console.error('Apple token verification failed:', error);
+      logger.error('Apple token verification failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return null;
     }
   }

@@ -17,7 +17,7 @@ import { ShareCardService } from '../services/ShareCardService';
 import { CheckinService } from '../services/CheckinService';
 import { BadgeService } from '../services/BadgeService';
 import { ApiResponse } from '../types';
-import { logError } from '../utils/logger';
+import { logError, logWarn } from '../utils/logger';
 
 // ============================================
 // HTML sanitization
@@ -47,7 +47,7 @@ try {
     'utf-8'
   );
 } catch {
-  console.warn('ShareController: landing-page.html template not found');
+  logWarn('ShareController: landing-page.html template not found');
   landingTemplate = '<html><body><h1>SoundCheck</h1><p>Download the app to view this content.</p></body></html>';
 }
 

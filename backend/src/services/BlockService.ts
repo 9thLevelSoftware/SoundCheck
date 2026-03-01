@@ -1,6 +1,7 @@
 import Database from '../config/database';
 import { UserBlock } from '../types';
 import { mapDbRowToUserBlock } from '../utils/dbMappers';
+import logger from '../utils/logger';
 
 /**
  * BlockService: Manages user blocking with bilateral content filtering.
@@ -59,7 +60,7 @@ export class BlockService {
     } catch (error: any) {
       // Re-throw custom errors
       if (error.statusCode) throw error;
-      console.error('Block user error:', error);
+      logger.error('Block user error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

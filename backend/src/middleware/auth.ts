@@ -3,6 +3,7 @@ import { AuthUtils } from '../utils/auth';
 import { UserService } from '../services/UserService';
 import { checkRateLimit, getRedis } from '../utils/redisRateLimiter';
 import { ApiResponse, User } from '../types';
+import logger from '../utils/logger';
 
 export interface AuthenticatedRequest extends Request {
   user: User;
@@ -57,7 +58,7 @@ export const authenticateToken = async (
 
     next();
   } catch (error) {
-    console.error('Authentication middleware error:', error);
+    logger.error('Authentication middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     const response: ApiResponse = {
       success: false,
       error: 'Authentication failed',
@@ -92,7 +93,7 @@ export const optionalAuth = async (
 
     next();
   } catch (error) {
-    console.error('Optional auth middleware error:', error);
+    logger.error('Optional auth middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     // Continue without authentication
     next();
   }
@@ -259,7 +260,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
 
       next();
     } catch (error) {
-      console.error('Rate limit error:', error);
+      logger.error('Rate limit error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Fail-closed: deny request when rate limiting is unavailable
       const response: ApiResponse = {
         success: false,

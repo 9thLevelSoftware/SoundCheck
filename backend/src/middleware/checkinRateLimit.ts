@@ -10,6 +10,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import Database from '../config/database';
+import logger from '../utils/logger';
 
 const DAILY_CHECKIN_LIMIT = 10;
 
@@ -46,7 +47,7 @@ export const dailyCheckinRateLimit = async (
 
     next();
   } catch (error) {
-    console.error('Daily check-in rate limit error:', error);
+    logger.error('Daily check-in rate limit error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     // Fail-closed: deny check-in when rate limit check fails
     res.status(429).json({
       success: false,

@@ -4,6 +4,7 @@ import { SetlistFmService } from '../services/SetlistFmService';
 import { DiscoveryService } from '../services/DiscoveryService';
 import { EventService } from '../services/EventService';
 import { CreateVenueRequest, SearchQuery, ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 export class VenueController {
   private venueService = new VenueService();
@@ -39,7 +40,7 @@ export class VenueController {
 
       res.status(201).json(response);
     } catch (error) {
-      console.error('Create venue error:', error);
+      logger.error('Create venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -76,7 +77,7 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get venues error:', error);
+      logger.error('Get venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -119,7 +120,7 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get venue by ID error:', error);
+      logger.error('Get venue by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -164,7 +165,7 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Update venue error:', error);
+      logger.error('Update venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -192,7 +193,7 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Delete venue error:', error);
+      logger.error('Delete venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -219,7 +220,7 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get popular venues error:', error);
+      logger.error('Get popular venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -268,7 +269,7 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get venues near error:', error);
+      logger.error('Get venues near error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -307,7 +308,7 @@ export class VenueController {
 
       res.status(venue.alreadyExists ? 200 : 201).json(response);
     } catch (error) {
-      console.error('Import venue error:', error);
+      logger.error('Import venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,

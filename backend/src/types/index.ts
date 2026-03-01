@@ -62,7 +62,7 @@ export interface Venue {
   imageUrl?: string;
   coverImageUrl?: string;
   averageRating: number;
-  totalCheckins: number;
+  totalReviews: number;
   isActive: boolean;
   claimedByUserId?: string;
   createdAt: string;
@@ -102,7 +102,7 @@ export interface Band {
   imageUrl?: string;
   hometown?: string;
   averageRating: number;
-  totalCheckins: number;
+  totalReviews: number;
   isActive: boolean;
   claimedByUserId?: string;
   createdAt: string;

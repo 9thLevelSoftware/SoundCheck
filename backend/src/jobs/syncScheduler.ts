@@ -13,15 +13,7 @@
  */
 
 import { eventSyncQueue } from './queue';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[SyncScheduler] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[SyncScheduler] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) =>
-    console.error(`[SyncScheduler] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 /**
  * Register repeatable sync jobs in the BullMQ queue.

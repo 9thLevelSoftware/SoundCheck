@@ -1,5 +1,6 @@
 import axios, { AxiosInstance } from 'axios';
 import Database from '../config/database';
+import logger from '../utils/logger';
 
 interface MusicBrainzArtist {
   id: string; // MusicBrainz ID (MBID)
@@ -84,7 +85,7 @@ export class MusicBrainzService {
 
       return response.data.artists || [];
     } catch (error) {
-      console.error('MusicBrainz search error:', error);
+      logger.warn('MusicBrainz search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw new Error('Failed to search artists from MusicBrainz');
     }
   }
@@ -105,7 +106,7 @@ export class MusicBrainzService {
 
       return response.data;
     } catch (error) {
-      console.error('MusicBrainz details error:', error);
+      logger.warn('MusicBrainz details error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw new Error('Failed to get artist details from MusicBrainz');
     }
   }
@@ -199,7 +200,7 @@ export class MusicBrainzService {
         alreadyExists: false,
       };
     } catch (error) {
-      console.error('MusicBrainz import error:', error);
+      logger.warn('MusicBrainz import error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -224,7 +225,7 @@ export class MusicBrainzService {
 
       return response.data.artists || [];
     } catch (error) {
-      console.error('MusicBrainz genre search error:', error);
+      logger.warn('MusicBrainz genre search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw new Error('Failed to search artists by genre');
     }
   }

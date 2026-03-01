@@ -1,6 +1,7 @@
 import Database from '../config/database';
 import { Event, EventLineupEntry } from '../types';
 import { cache, CacheKeys, CacheTTL } from '../utils/cache';
+import logger from '../utils/logger';
 
 interface CreateEventRequest {
   venueId: string;
@@ -134,7 +135,7 @@ export class EventService {
         client.release();
       }
     } catch (error) {
-      console.error('Create event error:', error);
+      logger.error('Create event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -189,7 +190,7 @@ export class EventService {
         parseInt(countResult.rows[0].checkin_count || '0')
       );
     } catch (error) {
-      console.error('Get event error:', error);
+      logger.error('Get event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -226,7 +227,7 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get events by venue error:', error);
+      logger.error('Get events by venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -264,7 +265,7 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get events by band error:', error);
+      logger.error('Get events by band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -291,7 +292,7 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get upcoming events error:', error);
+      logger.error('Get upcoming events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -318,7 +319,7 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Get trending events error:', error);
+      logger.error('Get trending events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -330,7 +331,7 @@ export class EventService {
     try {
       await this.db.query('DELETE FROM events WHERE id = $1', [eventId]);
     } catch (error) {
-      console.error('Delete event error:', error);
+      logger.error('Delete event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -406,7 +407,7 @@ export class EventService {
         client.release();
       }
     } catch (error) {
-      console.error('Find or create event error:', error);
+      logger.error('Find or create event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -438,7 +439,7 @@ export class EventService {
       );
       return result.rows.length > 0 ? result.rows[0].id : null;
     } catch (error) {
-      console.error('Find user-created event at venue+date error:', error);
+      logger.error('Find user-created event at venue+date error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -467,7 +468,7 @@ export class EventService {
       );
       return result.rows.length > 0 ? result.rows[0].id : null;
     } catch (error) {
-      console.error('Promote if verified error:', error);
+      logger.error('Promote if verified error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -517,7 +518,7 @@ export class EventService {
         ],
       );
     } catch (error) {
-      console.error('Merge Ticketmaster into user event error:', error);
+      logger.error('Merge Ticketmaster into user event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -574,7 +575,7 @@ export class EventService {
         distanceKm: parseFloat(result.rows[index].distance_km),
       }));
     } catch (error) {
-      console.error('Get nearby events error:', error);
+      logger.error('Get nearby events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -635,7 +636,7 @@ export class EventService {
           distanceKm: parseFloat(result.rows[index].distance_km),
         }));
       } catch (error) {
-        console.error('Get nearby upcoming events error:', error);
+        logger.error('Get nearby upcoming events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         throw error;
       }
     }, CacheTTL.MEDIUM);
@@ -699,7 +700,7 @@ export class EventService {
           distanceKm: parseFloat(result.rows[index].distance_km),
         }));
       } catch (error) {
-        console.error('Get trending nearby events error:', error);
+        logger.error('Get trending nearby events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         throw error;
       }
     }, CacheTTL.MEDIUM);
@@ -746,7 +747,7 @@ export class EventService {
 
         return this.mapDbEventsWithHeadliner(result.rows);
       } catch (error) {
-        console.error('Get events by genre error:', error);
+        logger.error('Get events by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         throw error;
       }
     }, CacheTTL.MEDIUM);
@@ -792,7 +793,7 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      console.error('Search events error:', error);
+      logger.error('Search events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

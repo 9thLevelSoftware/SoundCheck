@@ -19,6 +19,7 @@ import { evaluatorRegistry, EvalResult } from './BadgeEvaluators';
 import { NotificationService } from './NotificationService';
 import { AuditService } from './AuditService';
 import { sendToUser } from '../utils/websocket';
+import logger from '../utils/logger';
 
 export class BadgeService {
   private db = Database.getInstance();
@@ -146,7 +147,7 @@ export class BadgeService {
           }
         }
       } catch (err) {
-        console.error(`[BadgeService] Evaluator error for type '${type}':`, err);
+        logger.error(`[BadgeService] Evaluator error for type '${type}'`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
         // Continue with other evaluators -- one failure should not block others
       }
     }
@@ -166,7 +167,7 @@ export class BadgeService {
             badgeId: badge.id,
           });
         } catch (err) {
-          console.error(`[BadgeService] Notification create failed for badge ${badge.id}:`, err);
+          logger.error(`[BadgeService] Notification create failed for badge ${badge.id}`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
           // Non-fatal -- badge was already awarded
         }
 
@@ -179,7 +180,7 @@ export class BadgeService {
             badgeIconUrl: badge.iconUrl,
           });
         } catch (err) {
-          console.error(`[BadgeService] WebSocket send failed for badge ${badge.id}:`, err);
+          logger.error(`[BadgeService] WebSocket send failed for badge ${badge.id}`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
           // Non-fatal -- badge was already awarded
         }
       }
@@ -388,7 +389,7 @@ export class BadgeService {
         const result = await evaluator(userId, criteria);
         evalCache.set(groupKey, result);
       } catch (err) {
-        console.error(`[BadgeService] Progress evaluator error for '${type}':`, err);
+        logger.error(`[BadgeService] Progress evaluator error for '${type}'`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
       }
     }
 

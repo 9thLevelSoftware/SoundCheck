@@ -1,6 +1,7 @@
 import Database from '../config/database';
 import { getCache, setCache, cache, CacheTTL } from '../utils/cache';
 import { BlockService } from './BlockService';
+import logger from '../utils/logger';
 
 // ============================================
 // Interfaces
@@ -372,7 +373,7 @@ export class FeedService {
       await cache.delPattern(`feed:friends:${userId}:*`);
       await cache.del(`feed:happening:${userId}`);
     } catch (error) {
-      console.error('Feed cache invalidation error (user):', error);
+      logger.error('Feed cache invalidation error (user)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     }
   }
 
@@ -384,7 +385,7 @@ export class FeedService {
     try {
       await cache.delPattern(`feed:event:${eventId}:*`);
     } catch (error) {
-      console.error('Feed cache invalidation error (event):', error);
+      logger.error('Feed cache invalidation error (event)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     }
   }
 

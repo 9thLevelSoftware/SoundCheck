@@ -19,15 +19,7 @@ import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { ImageModerationService } from '../services/ImageModerationService';
 import { ModerationService } from '../services/ModerationService';
 import { ContentType } from '../types';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[ModerationWorker] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[ModerationWorker] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) =>
-    console.error(`[ModerationWorker] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 interface ModerationJobData {
   contentType: ContentType;

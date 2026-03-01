@@ -64,14 +64,14 @@ import { Worker } from 'bullmq';
 const requiredEnvVars = ['JWT_SECRET'];
 for (const envVar of requiredEnvVars) {
   if (!process.env[envVar]) {
-    console.error(`FATAL: Missing required environment variable: ${envVar}`);
+    logError(`FATAL: Missing required environment variable: ${envVar}`);
     process.exit(1);
   }
 }
 
 // Validate database configuration - need either DATABASE_URL or DB_PASSWORD
 if (!process.env.DATABASE_URL && !process.env.DB_PASSWORD) {
-  console.error('FATAL: Missing database configuration. Set either DATABASE_URL or DB_PASSWORD');
+  logError('FATAL: Missing database configuration. Set either DATABASE_URL or DB_PASSWORD');
   process.exit(1);
 }
 

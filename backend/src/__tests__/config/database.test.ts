@@ -1,9 +1,22 @@
+const mockLoggerWarn = jest.fn();
+
+jest.mock('../../utils/logger', () => ({
+  __esModule: true,
+  default: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: mockLoggerWarn,
+    debug: jest.fn(),
+  },
+}));
+
 describe('Database Configuration', () => {
   const originalEnv = process.env;
 
   beforeEach(() => {
     jest.resetModules();
     process.env = { ...originalEnv };
+    mockLoggerWarn.mockClear();
   });
 
   afterAll(() => {
@@ -52,17 +65,14 @@ describe('Database Configuration', () => {
 
   test('should allow no-verify mode with warning for development', () => {
     process.env.DB_SSL = 'no-verify';
-    const warnSpy = jest.spyOn(console, 'warn').mockImplementation();
 
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
     expect(sslConfig).toEqual({ rejectUnauthorized: false });
-    expect(warnSpy).toHaveBeenCalledWith(
-      'WARNING: DB_SSL=no-verify disables certificate verification. Use only for development.'
+    expect(mockLoggerWarn).toHaveBeenCalledWith(
+      'DB_SSL=no-verify disables certificate verification. Use only for development.'
     );
-
-    warnSpy.mockRestore();
   });
 
   test('should enable SSL verification with DB_SSL=true', () => {

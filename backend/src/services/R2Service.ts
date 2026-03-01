@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import crypto from 'crypto';
+import logger from '../utils/logger';
 
 // ============================================
 // Types
@@ -54,7 +55,7 @@ export class R2Service {
         },
       });
     } else {
-      console.warn('R2Service: Missing R2 credentials, photo uploads disabled');
+      logger.warn('R2Service: Missing R2 credentials, photo uploads disabled');
     }
   }
 

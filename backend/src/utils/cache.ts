@@ -24,6 +24,7 @@
  */
 
 import { getRedis } from './redisRateLimiter';
+import logger from './logger';
 
 // In-memory fallback cache
 const memoryCache = new Map<string, { value: any; expiresAt: number }>();
@@ -39,7 +40,7 @@ export async function getCache<T>(key: string): Promise<T | null> {
       const value = await redis.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      console.error('Redis get error:', error);
+      logger.error('Redis get error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Fall through to memory cache
     }
   }
@@ -67,7 +68,7 @@ export async function setCache<T>(key: string, value: T, ttlSeconds: number): Pr
       await redis.setex(key, ttlSeconds, JSON.stringify(value));
       return;
     } catch (error) {
-      console.error('Redis setex error:', error);
+      logger.error('Redis setex error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Fall through to memory cache
     }
   }
@@ -90,7 +91,7 @@ export async function deleteCache(key: string): Promise<void> {
       await redis.del(key);
       return;
     } catch (error) {
-      console.error('Redis del error:', error);
+      logger.error('Redis del error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Fall through to memory cache
     }
   }
@@ -147,7 +148,7 @@ class CacheService {
       try {
         return (await redis.exists(key)) > 0;
       } catch (error) {
-        console.error('Redis exists error:', error);
+        logger.error('Redis exists error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         // Fall through to memory cache
       }
     }
@@ -175,7 +176,7 @@ class CacheService {
         await redis.flushdb();
         return;
       } catch (error) {
-        console.error('Redis flushdb error:', error);
+        logger.error('Redis flushdb error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       }
     }
 
@@ -219,7 +220,7 @@ class CacheService {
         }
         return;
       } catch (error) {
-        console.error('Redis del pattern error:', error);
+        logger.error('Redis del pattern error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       }
     }
 
@@ -259,7 +260,7 @@ class CacheService {
     });
 
     if (keysToDelete.length > 0) {
-      console.log(`Cleaned up ${keysToDelete.length} expired cache entries`);
+      logger.debug(`Cleaned up ${keysToDelete.length} expired cache entries`);
     }
   }
 

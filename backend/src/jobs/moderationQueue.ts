@@ -13,6 +13,7 @@
 
 import { Queue } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
+import logger from '../utils/logger';
 
 /**
  * Image moderation queue instance.
@@ -31,9 +32,9 @@ try {
       removeOnFail: { count: 200 },
     },
   });
-  console.log('[ModerationQueue] Image moderation queue initialized');
+  logger.info('[ModerationQueue] Image moderation queue initialized');
 } catch {
-  console.warn('[ModerationQueue] REDIS_URL not configured. Image moderation queue is disabled.');
+  logger.warn('[ModerationQueue] REDIS_URL not configured. Image moderation queue is disabled.');
   moderationQueue = null;
 }
 

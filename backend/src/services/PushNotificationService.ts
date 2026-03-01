@@ -10,6 +10,7 @@
  */
 
 import Database from '../config/database';
+import logger from '../utils/logger';
 
 // Firebase Admin SDK - imported dynamically to allow graceful degradation
 let firebaseAdmin: any = null;
@@ -31,12 +32,12 @@ try {
     firebaseAdmin = admin;
     messagingInstance = admin.messaging();
     isConfigured = true;
-    console.log('[PushNotificationService] Firebase Admin initialized for FCM');
+    logger.info('[PushNotificationService] Firebase Admin initialized for FCM');
   } else {
-    console.warn('[PushNotificationService] FIREBASE_SERVICE_ACCOUNT_JSON not set. Push notifications disabled.');
+    logger.warn('[PushNotificationService] FIREBASE_SERVICE_ACCOUNT_JSON not set. Push notifications disabled.');
   }
 } catch (err) {
-  console.error('[PushNotificationService] Failed to initialize Firebase Admin:', (err as Error).message);
+  logger.error('[PushNotificationService] Failed to initialize Firebase Admin', { error: (err as Error).message });
   isConfigured = false;
 }
 
@@ -90,13 +91,11 @@ export class PushNotificationService {
         });
         if (tokensToRemove.length > 0) {
           await this.removeDeviceTokens(userId, tokensToRemove);
-          console.log(
-            `[PushNotificationService] Removed ${tokensToRemove.length} stale token(s) for user ${userId}`
-          );
+          logger.info(`[PushNotificationService] Removed ${tokensToRemove.length} stale token(s) for user ${userId}`);
         }
       }
     } catch (error) {
-      console.error('[PushNotificationService] sendToUser error:', error);
+      logger.error('[PushNotificationService] sendToUser error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Non-fatal: notification failure should not propagate
     }
   }
@@ -112,7 +111,7 @@ export class PushNotificationService {
       );
       return result.rows.map((r: any) => r.token);
     } catch (error) {
-      console.error('[PushNotificationService] getDeviceTokens error:', error);
+      logger.error('[PushNotificationService] getDeviceTokens error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       return [];
     }
   }
@@ -139,7 +138,7 @@ export class PushNotificationService {
         [userId, token, platform]
       );
     } catch (error) {
-      console.error('[PushNotificationService] registerDeviceToken error:', error);
+      logger.error('[PushNotificationService] registerDeviceToken error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -154,7 +153,7 @@ export class PushNotificationService {
         [userId, tokens]
       );
     } catch (error) {
-      console.error('[PushNotificationService] removeDeviceTokens error:', error);
+      logger.error('[PushNotificationService] removeDeviceTokens error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     }
   }
 
@@ -168,7 +167,7 @@ export class PushNotificationService {
         [userId, token]
       );
     } catch (error) {
-      console.error('[PushNotificationService] removeDeviceToken error:', error);
+      logger.error('[PushNotificationService] removeDeviceToken error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     }
   }
 }

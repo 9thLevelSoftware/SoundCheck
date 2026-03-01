@@ -383,8 +383,8 @@ class _StatsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatItem(
-            value: _formatNumber(band.totalCheckins),
-            label: 'Check-ins',
+            value: _formatNumber(band.totalReviews),
+            label: 'Reviews',
           ),
           _StatDivider(),
           _StatItem(

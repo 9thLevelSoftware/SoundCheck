@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 /**
  * Per-user rate limiting middleware
@@ -63,7 +64,7 @@ class PerUserRateLimiter {
     }
 
     if (keysToDelete.length > 0) {
-      console.log(`🧹 Cleaned up ${keysToDelete.length} expired rate limit entries`);
+      logger.debug(`Cleaned up ${keysToDelete.length} expired rate limit entries`);
     }
   }
 

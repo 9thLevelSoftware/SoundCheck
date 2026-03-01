@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { SetlistFmService } from '../services/SetlistFmService';
 import { MusicBrainzService } from '../services/MusicBrainzService';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 export class DiscoveryController {
   private setlistFmService = new SetlistFmService();
@@ -41,7 +42,7 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Search venues error:', error);
+      logger.error('Search venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -83,7 +84,7 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Search setlists error:', error);
+      logger.error('Search setlists error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -121,7 +122,7 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Search bands error:', error);
+      logger.error('Search bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -159,7 +160,7 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Search bands by genre error:', error);
+      logger.error('Search bands by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,

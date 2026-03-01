@@ -1,4 +1,5 @@
 import Database from '../config/database';
+import logger from '../utils/logger';
 
 export interface Notification {
   id: string;
@@ -166,7 +167,7 @@ export class NotificationService {
         hasMore: offset + notifications.length < total,
       };
     } catch (error) {
-      console.error('Get notifications error:', error);
+      logger.error('Get notifications error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -220,7 +221,7 @@ export class NotificationService {
       // Get full notification with related data
       return this.getNotificationById(result.rows[0].id);
     } catch (error) {
-      console.error('Create notification error:', error);
+      logger.error('Create notification error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -239,7 +240,7 @@ export class NotificationService {
         throw new Error('Notification not found or access denied');
       }
     } catch (error) {
-      console.error('Mark as read error:', error);
+      logger.error('Mark as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -256,7 +257,7 @@ export class NotificationService {
 
       return result.rowCount || 0;
     } catch (error) {
-      console.error('Mark all as read error:', error);
+      logger.error('Mark all as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -273,7 +274,7 @@ export class NotificationService {
 
       return parseInt(result.rows[0].count, 10);
     } catch (error) {
-      console.error('Get unread count error:', error);
+      logger.error('Get unread count error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -292,7 +293,7 @@ export class NotificationService {
         throw new Error('Notification not found or access denied');
       }
     } catch (error) {
-      console.error('Delete notification error:', error);
+      logger.error('Delete notification error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

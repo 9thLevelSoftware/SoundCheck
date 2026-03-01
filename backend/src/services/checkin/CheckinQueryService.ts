@@ -19,6 +19,7 @@ import {
   ActivityFeedOptions,
   mapDbCheckinToCheckin,
 } from './types';
+import logger from '../../utils/logger';
 
 export class CheckinQueryService {
   private db = Database.getInstance();
@@ -81,7 +82,7 @@ export class CheckinQueryService {
 
       return checkin;
     } catch (error) {
-      console.error('Get check-in error:', error);
+      logger.error('Get check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -166,7 +167,7 @@ export class CheckinQueryService {
 
       return result.rows.map((row: any) => mapDbCheckinToCheckin(row));
     } catch (error) {
-      console.error('Get activity feed error:', error);
+      logger.error('Get activity feed error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -223,7 +224,7 @@ export class CheckinQueryService {
 
       return result.rows.map((row: any) => mapDbCheckinToCheckin(row));
     } catch (error) {
-      console.error('Get check-ins error:', error);
+      logger.error('Get check-ins error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -248,7 +249,7 @@ export class CheckinQueryService {
         category: row.category,
       }));
     } catch (error) {
-      console.error('Get vibe tags error:', error);
+      logger.error('Get vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

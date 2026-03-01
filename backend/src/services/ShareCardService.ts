@@ -25,6 +25,7 @@ import { checkinCardOG, checkinCardStories, CheckinCardData } from '../templates
 import { badgeCardOG, badgeCardStories, BadgeCardData } from '../templates/share-cards/badge-card';
 import { wrappedSummaryCardOG, wrappedSummaryCardStories, WrappedSummaryData } from '../templates/share-cards/wrapped-summary-card';
 import { wrappedStatCardOG, wrappedStatCardStories, WrappedStatData } from '../templates/share-cards/wrapped-stat-card';
+import logger from '../utils/logger';
 
 // ============================================
 // Font loading (once at module level)
@@ -34,7 +35,7 @@ let fontData: Buffer;
 try {
   fontData = fs.readFileSync(path.join(__dirname, '../fonts/Inter-Bold.ttf'));
 } catch {
-  console.warn('ShareCardService: Inter-Bold.ttf not found, card generation will fail');
+  logger.warn('ShareCardService: Inter-Bold.ttf not found, card generation will fail');
   fontData = Buffer.alloc(0);
 }
 
@@ -55,7 +56,7 @@ export class ShareCardService {
     data: CheckinCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      console.warn('ShareCardService: R2 not configured, returning placeholder URLs');
+      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
 
@@ -83,7 +84,7 @@ export class ShareCardService {
     data: BadgeCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      console.warn('ShareCardService: R2 not configured, returning placeholder URLs');
+      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
 
@@ -108,7 +109,7 @@ export class ShareCardService {
     data: WrappedSummaryData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      console.warn('ShareCardService: R2 not configured, returning placeholder URLs');
+      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
     const ts = Date.now();
@@ -130,7 +131,7 @@ export class ShareCardService {
     data: WrappedStatData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      console.warn('ShareCardService: R2 not configured, returning placeholder URLs');
+      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
     const ts = Date.now();

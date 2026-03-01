@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import Database from '../config/database';
 import { sanitizeForLogging } from '../utils/logSanitizer';
+import logger from '../utils/logger';
 
 interface FoursquareVenueResult {
   fsq_id: string;
@@ -47,7 +48,7 @@ export class FoursquareService {
     this.enabled = !!this.apiKey;
 
     if (!this.enabled) {
-      console.warn('⚠️  FOURSQUARE_API_KEY not configured - Foursquare integration disabled');
+      logger.warn('FOURSQUARE_API_KEY not configured - Foursquare integration disabled');
       // Create a dummy client to prevent errors
       this.client = axios.create({
         baseURL: 'https://places-api.foursquare.com',
@@ -95,18 +96,19 @@ export class FoursquareService {
 
       return response.data.results || [];
     } catch (error: any) {
-      console.error('Foursquare search error:', error.message || error);
-      if (error.response) {
-        console.error('Response status:', error.response.status);
-        console.error('Response data:', JSON.stringify(error.response.data, null, 2));
-        // Sanitize config to prevent API key leakage in logs
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('Foursquare search error', {
+        error: error.message || String(error),
+        ...(error.response ? {
+          status: error.response.status,
+          data: error.response.data,
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to search venues from Foursquare');
     }
   }
@@ -131,15 +133,17 @@ export class FoursquareService {
 
       return response.data;
     } catch (error: any) {
-      console.error('Foursquare getVenueDetails error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('Foursquare getVenueDetails error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to get venue details from Foursquare');
     }
   }
@@ -225,15 +229,17 @@ export class FoursquareService {
         alreadyExists: false,
       };
     } catch (error: any) {
-      console.error('Foursquare importVenue error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('Foursquare importVenue error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw error;
     }
   }
@@ -263,15 +269,17 @@ export class FoursquareService {
 
       return response.data.results || [];
     } catch (error: any) {
-      console.error('Foursquare searchNearbyVenues error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('Foursquare searchNearbyVenues error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to search nearby venues');
     }
   }

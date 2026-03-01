@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { SubscriptionService } from '../services/SubscriptionService';
+import logger from '../utils/logger';
 
 export class SubscriptionController {
   private subscriptionService = new SubscriptionService();
@@ -13,7 +14,7 @@ export class SubscriptionController {
       // 1. Validate Authorization header
       const webhookAuth = process.env.REVENUECAT_WEBHOOK_AUTH;
       if (!webhookAuth) {
-        console.error('SubscriptionController: REVENUECAT_WEBHOOK_AUTH not configured');
+        logger.error('SubscriptionController: REVENUECAT_WEBHOOK_AUTH not configured');
         res.status(200).json({ message: 'Webhook not configured' });
         return;
       }
@@ -21,7 +22,7 @@ export class SubscriptionController {
       const authHeader = req.headers.authorization || '';
       const token = authHeader.replace('Bearer ', '');
       if (token !== webhookAuth) {
-        console.warn('SubscriptionController: Invalid webhook authorization');
+        logger.warn('SubscriptionController: Invalid webhook authorization');
         res.status(401).json({ error: 'Unauthorized' });
         return;
       }
@@ -43,7 +44,7 @@ export class SubscriptionController {
       res.status(200).json({ message: result.reason });
     } catch (error) {
       // Always return 200 to prevent RevenueCat retry storms
-      console.error('SubscriptionController webhook error:', error);
+      logger.error('SubscriptionController webhook error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(200).json({ message: 'Error processed' });
     }
   };
@@ -57,7 +58,7 @@ export class SubscriptionController {
       const status = await this.subscriptionService.getSubscriptionStatus(userId);
       res.json({ success: true, data: status });
     } catch (error) {
-      console.error('SubscriptionController.getStatus error:', error);
+      logger.error('SubscriptionController.getStatus error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Failed to check subscription status' });
     }
   };

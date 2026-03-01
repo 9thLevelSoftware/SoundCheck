@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { NotificationService } from '../services/NotificationService';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 // UUID v4 validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -41,7 +42,7 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get notifications error:', error);
+      logger.error('Get notifications error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -78,7 +79,7 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get unread count error:', error);
+      logger.error('Get unread count error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -126,7 +127,7 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Mark as read error:', error);
+      logger.error('Mark as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -164,7 +165,7 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Mark all as read error:', error);
+      logger.error('Mark all as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -212,7 +213,7 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Delete notification error:', error);
+      logger.error('Delete notification error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,

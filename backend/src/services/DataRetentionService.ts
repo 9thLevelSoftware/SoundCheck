@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import crypto from 'crypto';
+import logger from '../utils/logger';
 
 /**
  * Deletion request status types
@@ -354,7 +355,7 @@ export class DataRetentionService {
           [deletion.id]
         );
 
-        console.error(`Failed to process deletion for user ${deletion.userId}:`, error);
+        logger.error(`Failed to process deletion for user ${deletion.userId}`, { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       }
     }
 

@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import { PoolClient } from 'pg';
 import { JWTPayload } from '../types';
 import Database from '../config/database';
+import logger from './logger';
 
 // Type for database query executor (supports both Database and PoolClient for transactions)
 type QueryExecutor = {
@@ -63,7 +64,7 @@ export class AuthUtils {
       return decoded;
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
-        console.error('JWT verification failed:', error.message);
+        logger.error('JWT verification failed', { error: error.message });
       }
       return null;
     }

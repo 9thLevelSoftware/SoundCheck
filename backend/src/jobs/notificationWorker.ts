@@ -20,15 +20,7 @@ import { Worker, Job } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { pushNotificationService } from '../services/PushNotificationService';
 import { getRedis } from '../utils/redisRateLimiter';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[NotificationWorker] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[NotificationWorker] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) =>
-    console.error(`[NotificationWorker] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 let notificationWorker: Worker | null = null;
 

@@ -1,4 +1,5 @@
 import Database from '../config/database';
+import { BlockService } from './BlockService';
 
 export interface WrappedStats {
   year: number;
@@ -51,6 +52,7 @@ export interface TopRatedSetEntry {
 
 export class WrappedService {
   private db = Database.getInstance();
+  private blockService = new BlockService();
 
   /**
    * Compute basic Wrapped stats for a user and year (free tier).
@@ -271,6 +273,7 @@ export class WrappedService {
        WHERE c1.user_id = $1 AND c1.is_hidden IS NOT TRUE AND c2.is_hidden IS NOT TRUE
          AND EXTRACT(YEAR FROM c1.created_at) = $2
          AND EXTRACT(YEAR FROM c2.created_at) = $2
+         ${this.blockService.getBlockFilterSQL(userId, 'c2.user_id')}
        GROUP BY f_user.id, f_user.username, f_user.profile_image_url
        ORDER BY shared_shows DESC LIMIT 10`,
       [userId, year]

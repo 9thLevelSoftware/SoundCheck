@@ -13,6 +13,7 @@
 
 import { Queue } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
+import logger from '../utils/logger';
 
 /**
  * Notification batch queue instance.
@@ -31,9 +32,9 @@ try {
       removeOnFail: { count: 200 },
     },
   });
-  console.log('[NotificationQueue] Notification batch queue initialized');
+  logger.info('[NotificationQueue] Notification batch queue initialized');
 } catch {
-  console.warn('[NotificationQueue] REDIS_URL not configured. Notification batch queue is disabled.');
+  logger.warn('[NotificationQueue] REDIS_URL not configured. Notification batch queue is disabled.');
   notificationQueue = null;
 }
 

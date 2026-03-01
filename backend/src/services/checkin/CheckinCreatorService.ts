@@ -24,6 +24,7 @@ import {
   CreateEventCheckinRequest,
   mapDbCheckinToCheckin,
 } from './types';
+import logger from '../../utils/logger';
 
 // Venue type radius mapping for location verification
 const VENUE_TYPE_RADIUS_KM: Record<string, number> = {
@@ -156,7 +157,7 @@ export class CheckinCreatorService {
       try {
         await this.eventService.promoteIfVerified(eventId);
       } catch (err) {
-        console.error('Warning: could not check organic verification:', err);
+        logger.debug('Warning: could not check organic verification', { error: err instanceof Error ? err.message : String(err) });
       }
 
       // Enqueue async badge evaluation (30-second delay for anti-farming)
@@ -171,24 +172,24 @@ export class CheckinCreatorService {
             }
           );
         } catch (err) {
-          console.error('Warning: failed to enqueue badge evaluation:', err);
+          logger.debug('Warning: failed to enqueue badge evaluation', { error: err instanceof Error ? err.message : String(err) });
           // Non-fatal -- check-in succeeds even if badge queue fails
         }
       }
 
       // Fire-and-forget: invalidate feed caches for followers and event
       this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
-        console.error('Warning: feed cache invalidation failed:', err)
+        logger.debug('Warning: feed cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate concert cred stats cache
       cache.del(`stats:concert-cred:${userId}`).catch((err) =>
-        console.error('Warning: stats cache invalidation failed:', err)
+        logger.debug('Warning: stats cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
       cache.del(CacheKeys.recommendations(userId)).catch((err) =>
-        console.error('Warning: recommendations cache invalidation failed:', err)
+        logger.debug('Warning: recommendations cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
@@ -201,13 +202,13 @@ export class CheckinCreatorService {
         event.venue_id,
         result.rows[0].created_at
       ).catch((err) =>
-        console.error('Warning: Pub/Sub publish or notification enqueue failed:', err)
+        logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Return full check-in with details
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
-      console.error('Create event check-in error:', error);
+      logger.error('Create event check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -259,7 +260,7 @@ export class CheckinCreatorService {
         eventId = await this.eventService.findOrCreateEvent(venueId, bandId, resolvedEventDate);
       } catch (err) {
         // Non-fatal: if event creation fails, still create the checkin without event_id
-        console.error('Warning: could not find/create event for checkin:', err);
+        logger.debug('Warning: could not find/create event for checkin', { error: err instanceof Error ? err.message : String(err) });
       }
 
       // Dual-write: populate both old AND new columns
@@ -302,7 +303,7 @@ export class CheckinCreatorService {
         );
       } catch (err) {
         // Non-fatal: band rating write failure should not block checkin creation
-        console.error('Warning: could not write checkin_band_rating:', err);
+        logger.debug('Warning: could not write checkin_band_rating', { error: err instanceof Error ? err.message : String(err) });
       }
 
       // Add vibe tags if provided
@@ -312,25 +313,25 @@ export class CheckinCreatorService {
 
       // Update venue and band ratings asynchronously (triggers handle stats)
       this.venueService.updateVenueRating(venueId).catch(err =>
-        console.error('Error updating venue rating:', err)
+        logger.debug('Error updating venue rating', { error: err instanceof Error ? err.message : String(err) })
       );
       this.bandService.updateBandRating(bandId).catch(err =>
-        console.error('Error updating band rating:', err)
+        logger.debug('Error updating band rating', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate feed caches for followers and event
       this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
-        console.error('Warning: feed cache invalidation failed:', err)
+        logger.debug('Warning: feed cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate concert cred stats cache
       cache.del(`stats:concert-cred:${userId}`).catch((err) =>
-        console.error('Warning: stats cache invalidation failed:', err)
+        logger.debug('Warning: stats cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
       cache.del(CacheKeys.recommendations(userId)).catch((err) =>
-        console.error('Warning: recommendations cache invalidation failed:', err)
+        logger.debug('Warning: recommendations cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out (legacy path)
@@ -344,14 +345,14 @@ export class CheckinCreatorService {
           venueId,
           result.rows[0].created_at
         ).catch((err) =>
-          console.error('Warning: Pub/Sub publish or notification enqueue failed:', err)
+          logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
         );
       }
 
       // Return full check-in with details
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
-      console.error('Create check-in error:', error);
+      logger.error('Create check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -393,29 +394,29 @@ export class CheckinCreatorService {
 
       // Fire-and-forget: invalidate concert cred stats cache
       cache.del(`stats:concert-cred:${userId}`).catch((err) =>
-        console.error('Warning: stats cache invalidation failed:', err)
+        logger.debug('Warning: stats cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate recommendation cache (deleted check-in changes genre affinity)
       cache.del(CacheKeys.recommendations(userId)).catch((err) =>
-        console.error('Warning: recommendations cache invalidation failed:', err)
+        logger.debug('Warning: recommendations cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
       // Fire-and-forget: invalidate band aggregate caches
       for (const bandId of bandIds) {
         cache.del(CacheKeys.bandAggregate(bandId)).catch((err) =>
-          console.error('Warning: band aggregate cache invalidation failed:', err)
+          logger.debug('Warning: band aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
         );
       }
 
       // Fire-and-forget: invalidate venue aggregate cache
       if (venueId) {
         cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
-          console.error('Warning: venue aggregate cache invalidation failed:', err)
+          logger.debug('Warning: venue aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
         );
       }
     } catch (error) {
-      console.error('Delete check-in error:', error);
+      logger.error('Delete check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -558,7 +559,7 @@ export class CheckinCreatorService {
       return nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes;
     } catch (error) {
       // On any error, be permissive -- allow the check-in
-      console.error('Time window validation error, allowing check-in:', error);
+      logger.debug('Time window validation error, allowing check-in', { error: error instanceof Error ? error.message : String(error) });
       return true;
     }
   }
@@ -583,7 +584,7 @@ export class CheckinCreatorService {
         params
       );
     } catch (error) {
-      console.error('Add vibe tags error:', error);
+      logger.error('Add vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }
@@ -622,7 +623,7 @@ export class CheckinCreatorService {
 
       await Promise.all(invalidations);
     } catch (error) {
-      console.error('Feed cache invalidation error:', error);
+      logger.error('Feed cache invalidation error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Non-fatal: do not rethrow
     }
   }
@@ -720,11 +721,11 @@ export class CheckinCreatorService {
           }
         } catch (err) {
           // Non-fatal per follower -- continue with others
-          console.error(`Warning: notification enqueue failed for follower ${followerId}:`, err);
+          logger.debug(`Warning: notification enqueue failed for follower ${followerId}`, { error: err instanceof Error ? err.message : String(err) });
         }
       }
     } catch (error) {
-      console.error('Pub/Sub publish + notification enqueue error:', error);
+      logger.error('Pub/Sub publish + notification enqueue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       // Non-fatal: do not rethrow
     }
   }

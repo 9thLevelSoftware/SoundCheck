@@ -11,6 +11,7 @@
 
 import { Queue } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
+import logger from '../utils/logger';
 
 /**
  * Badge evaluation queue instance.
@@ -29,9 +30,9 @@ try {
       removeOnFail: { count: 200 },
     },
   });
-  console.log('[BadgeEvalQueue] Badge evaluation queue initialized');
+  logger.info('[BadgeEvalQueue] Badge evaluation queue initialized');
 } catch {
-  console.warn('[BadgeEvalQueue] REDIS_URL not configured. Badge evaluation queue is disabled.');
+  logger.warn('[BadgeEvalQueue] REDIS_URL not configured. Badge evaluation queue is disabled.');
   badgeEvalQueue = null;
 }
 

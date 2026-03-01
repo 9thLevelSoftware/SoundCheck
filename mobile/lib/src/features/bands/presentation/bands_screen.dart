@@ -61,7 +61,7 @@ final filteredBandsProvider =
       filtered.sort((a, b) => a.averageRating.compareTo(b.averageRating));
       break;
     case BandSortBy.reviewCountDesc:
-      filtered.sort((a, b) => b.totalCheckins.compareTo(a.totalCheckins));
+      filtered.sort((a, b) => b.totalReviews.compareTo(a.totalReviews));
       break;
     case BandSortBy.formedYearDesc:
       filtered.sort((a, b) {

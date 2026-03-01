@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { ReviewService } from '../services/ReviewService';
 import { CreateReviewRequest, SearchQuery, ApiResponse } from '../types';
 import { NotFoundError, ForbiddenError } from '../utils/errors';
+import logger from '../utils/logger';
 
 export class ReviewController {
   private reviewService = new ReviewService();
@@ -72,7 +73,7 @@ export class ReviewController {
 
       res.status(201).json(response);
     } catch (error) {
-      console.error('Create review error:', error);
+      logger.error('Create review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -117,7 +118,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get reviews error:', error);
+      logger.error('Get reviews error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -154,7 +155,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get review by ID error:', error);
+      logger.error('Get review by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -193,7 +194,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Update review error:', error);
+      logger.error('Update review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -234,7 +235,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Delete review error:', error);
+      logger.error('Delete review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -276,7 +277,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Mark review helpful error:', error);
+      logger.error('Mark review helpful error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -332,7 +333,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get my review error:', error);
+      logger.error('Get my review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -370,7 +371,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get reviews by venue error:', error);
+      logger.error('Get reviews by venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -408,7 +409,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get reviews by band error:', error);
+      logger.error('Get reviews by band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -446,7 +447,7 @@ export class ReviewController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get reviews by user error:', error);
+      logger.error('Get reviews by user error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,

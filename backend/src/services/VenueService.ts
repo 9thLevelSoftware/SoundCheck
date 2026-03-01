@@ -410,7 +410,7 @@ export class VenueService {
       imageUrl: row.image_url,
       coverImageUrl: row.cover_image_url || null,
       averageRating: parseFloat(row.average_rating || 0),
-      totalCheckins: parseInt(row.total_reviews || 0),
+      totalReviews: parseInt(row.total_reviews || 0),
       isActive: row.is_active,
       claimedByUserId: row.claimed_by_user_id || undefined,
       createdAt: row.created_at,

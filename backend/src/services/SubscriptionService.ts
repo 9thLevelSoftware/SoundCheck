@@ -1,4 +1,5 @@
 import Database from '../config/database';
+import logger from '../utils/logger';
 
 interface WebhookEvent {
   id: string;
@@ -29,7 +30,7 @@ export class SubscriptionService {
       [event.app_user_id]
     );
     if (userResult.rows.length === 0) {
-      console.warn(`SubscriptionService: User not found for app_user_id=${event.app_user_id}`);
+      logger.warn(`SubscriptionService: User not found for app_user_id=${event.app_user_id}`);
       return { processed: false, reason: 'User not found' };
     }
 
@@ -49,11 +50,11 @@ export class SubscriptionService {
         break;
       case 'TEST':
         // RevenueCat test event -- just log and mark processed
-        console.log(`SubscriptionService: Received TEST event ${event.id}`);
+        logger.info(`SubscriptionService: Received TEST event ${event.id}`);
         break;
       default:
         // Unknown event type -- log but don't fail
-        console.warn(`SubscriptionService: Unknown event type: ${event.type}`);
+        logger.warn(`SubscriptionService: Unknown event type: ${event.type}`);
     }
 
     // 4. Mark event as processed (ON CONFLICT for race condition safety)

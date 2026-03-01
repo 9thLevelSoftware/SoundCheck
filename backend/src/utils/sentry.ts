@@ -6,6 +6,7 @@
  */
 
 import * as Sentry from '@sentry/node';
+import logger from './logger';
 
 let sentryInitialized = false;
 
@@ -17,7 +18,7 @@ export function initSentry(): void {
   const dsn = process.env.SENTRY_DSN;
 
   if (!dsn) {
-    console.log('Sentry DSN not configured, error reporting disabled');
+    logger.info('Sentry DSN not configured, error reporting disabled');
     return;
   }
 
@@ -43,7 +44,7 @@ export function initSentry(): void {
   });
 
   sentryInitialized = true;
-  console.log('Sentry error reporting initialized');
+  logger.info('Sentry error reporting initialized');
 }
 
 /**
@@ -75,7 +76,7 @@ export async function closeSentry(timeout: number = 2000): Promise<void> {
  */
 export function captureException(error: Error, context?: Record<string, any>): void {
   if (!sentryInitialized) {
-    console.error('[Sentry disabled] Would capture:', error.message);
+    logger.error('[Sentry disabled] Would capture', { error: error.message });
     return;
   }
 
@@ -93,7 +94,7 @@ export function captureMessage(
   level: 'info' | 'warning' | 'error' = 'info'
 ): void {
   if (!sentryInitialized) {
-    console.log(`[Sentry disabled] Would capture message (${level}):`, message);
+    logger.info(`[Sentry disabled] Would capture message (${level}): ${message}`);
     return;
   }
 

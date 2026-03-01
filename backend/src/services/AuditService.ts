@@ -13,11 +13,12 @@
  *
  * The log() method returns a Promise but callers should NOT await it.
  * Use the fire-and-forget pattern:
- *   auditService.log(...).catch(err => console.error('[AuditService] Log failed:', err));
+ *   auditService.log(...).catch(err => logger.error('[AuditService] Log failed', { error: err.message }));
  */
 
 import Database from '../config/database';
 import { Request } from 'express';
+import logger from '../utils/logger';
 
 /**
  * Valid audit action types
@@ -82,7 +83,7 @@ export class AuditService {
    * Instead, chain a .catch() to handle errors silently:
    *
    *   auditService.log(userId, 'CREATE', 'checkins', id, {}, req)
-   *     .catch(err => console.error('[AuditService] Log failed:', err));
+   *     .catch(err => logger.error('[AuditService] Log failed', { error: err.message }));
    *
    * @param userId - ID of the user performing the action (null for failed logins)
    * @param action - The action type (CREATE, UPDATE, DELETE, EXPORT, LOGIN, LOGOUT, PERMISSION_CHANGE)
@@ -125,7 +126,7 @@ export class AuditService {
    */
   logUserCreated(userId: string, req?: Request): void {
     this.log(userId, 'CREATE', 'users', userId, {}, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -133,7 +134,7 @@ export class AuditService {
    */
   logProfileUpdated(userId: string, updatedFields: string[], req?: Request): void {
     this.log(userId, 'UPDATE', 'users', userId, { updatedFields }, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -141,7 +142,7 @@ export class AuditService {
    */
   logUserDeleted(userId: string, scheduledAt: Date, req?: Request): void {
     this.log(userId, 'DELETE', 'users', userId, { scheduledAt: scheduledAt.toISOString() }, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -149,7 +150,7 @@ export class AuditService {
    */
   logDataExport(userId: string, req?: Request): void {
     this.log(userId, 'EXPORT', 'users', userId, {}, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -157,7 +158,7 @@ export class AuditService {
    */
   logLoginSuccess(userId: string, method: string, req?: Request): void {
     this.log(userId, 'LOGIN', 'users', userId, { success: true, method }, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -165,7 +166,7 @@ export class AuditService {
    */
   logLoginFailure(email: string, reason: string, req?: Request): void {
     this.log(null, 'LOGIN', 'users', null, { success: false, email, reason }, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -173,7 +174,7 @@ export class AuditService {
    */
   logLogout(userId: string, req?: Request): void {
     this.log(userId, 'LOGOUT', 'refresh_tokens', null, {}, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -181,7 +182,7 @@ export class AuditService {
    */
   logSocialAuthLinked(userId: string, provider: string, req?: Request): void {
     this.log(userId, 'PERMISSION_CHANGE', 'users', userId, { provider, action: 'linked' }, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -189,7 +190,7 @@ export class AuditService {
    */
   logCheckinCreated(userId: string, checkinId: string, metadata: Record<string, any>, req?: Request): void {
     this.log(userId, 'CREATE', 'checkins', checkinId, metadata, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**
@@ -197,7 +198,7 @@ export class AuditService {
    */
   logBadgeAwarded(userId: string, badgeId: string, badgeName: string, req?: Request): void {
     this.log(userId, 'CREATE', 'user_badges', badgeId, { badgeName }, req)
-      .catch(err => console.error('[AuditService] Log failed:', err));
+      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
   }
 
   /**

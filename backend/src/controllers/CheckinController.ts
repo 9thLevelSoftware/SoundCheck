@@ -3,6 +3,7 @@ import { CheckinService } from '../services/CheckinService';
 import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
 import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
+import logger from '../utils/logger';
 
 export class CheckinController {
   private checkinService = new CheckinService();
@@ -102,7 +103,7 @@ export class CheckinController {
         res.status(201).json(response);
       }
     } catch (error: any) {
-      console.error('Create check-in error:', error);
+      logger.error('Create check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       // Determine appropriate status code from error
       const statusCode = error.statusCode || 400;
@@ -135,7 +136,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get check-in error:', error);
+      logger.error('Get check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -183,7 +184,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get activity feed error:', error);
+      logger.error('Get activity feed error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -243,7 +244,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Toast check-in error:', error);
+      logger.error('Toast check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -282,7 +283,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Untoast check-in error:', error);
+      logger.error('Untoast check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -356,7 +357,7 @@ export class CheckinController {
 
       res.status(201).json(response);
     } catch (error) {
-      console.error('Add comment error:', error);
+      logger.error('Add comment error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -384,7 +385,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get comments error:', error);
+      logger.error('Get comments error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -423,7 +424,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Delete check-in error:', error);
+      logger.error('Delete check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -457,7 +458,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get check-ins error:', error);
+      logger.error('Get check-ins error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -483,7 +484,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get vibe tags error:', error);
+      logger.error('Get vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -511,7 +512,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get toasts error:', error);
+      logger.error('Get toasts error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -550,7 +551,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Delete comment error:', error);
+      logger.error('Delete comment error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -630,7 +631,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error: any) {
-      console.error('Request photo upload error:', error);
+      logger.error('Request photo upload error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const statusCode = error.statusCode || 400;
       const message = error instanceof Error ? error.message : 'Failed to generate upload URLs';
@@ -696,7 +697,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error: any) {
-      console.error('Confirm photo upload error:', error);
+      logger.error('Confirm photo upload error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const statusCode = error.statusCode || 400;
       const message = error instanceof Error ? error.message : 'Failed to confirm photo uploads';
@@ -800,7 +801,7 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Update ratings error:', error);
+      logger.error('Update ratings error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,

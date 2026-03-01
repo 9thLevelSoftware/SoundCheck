@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { BadgeService } from '../services/BadgeService';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 export class BadgeController {
   private badgeService = new BadgeService();
@@ -20,7 +21,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get all badges error:', error);
+      logger.error('Get all badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -48,7 +49,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get user badges error:', error);
+      logger.error('Get user badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -83,7 +84,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get my badges error:', error);
+      logger.error('Get my badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -124,7 +125,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Check and award badges error:', error);
+      logger.error('Check and award badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -150,7 +151,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get badge rarity error:', error);
+      logger.error('Get badge rarity error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
@@ -178,7 +179,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get badge leaderboard error:', error);
+      logger.error('Get badge leaderboard error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -213,7 +214,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get badge progress error:', error);
+      logger.error('Get badge progress error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,
@@ -250,7 +251,7 @@ export class BadgeController {
 
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get badge by ID error:', error);
+      logger.error('Get badge by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       
       const response: ApiResponse = {
         success: false,

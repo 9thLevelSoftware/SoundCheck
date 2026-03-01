@@ -22,15 +22,7 @@ import { TicketmasterAdapter } from './TicketmasterAdapter';
 import { BandMatcher } from './BandMatcher';
 import { EventService } from './EventService';
 import { NormalizedEvent, TicketmasterEvent } from '../types/ticketmaster';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[EventSyncService] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[EventSyncService] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) =>
-    console.error(`[EventSyncService] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 interface SyncCounters {
   events_fetched: number;
@@ -62,12 +54,12 @@ export class EventSyncService {
     this.apiKeyConfigured = !!apiKey;
 
     if (!this.apiKeyConfigured) {
-      logger.info('TICKETMASTER_API_KEY not configured. Sync pipeline is disabled.');
+      logger.info('[EventSyncService] TICKETMASTER_API_KEY not configured. Sync pipeline is disabled.');
     } else {
       try {
         this.adapter = new TicketmasterAdapter();
       } catch (err) {
-        logger.error('Failed to initialize TicketmasterAdapter', {
+        logger.error('[EventSyncService] Failed to initialize TicketmasterAdapter', {
           error: (err as Error).message,
         });
         this.apiKeyConfigured = false;
@@ -83,7 +75,7 @@ export class EventSyncService {
    */
   async runSync(regionId?: string): Promise<void> {
     if (!this.apiKeyConfigured || !this.adapter) {
-      logger.info('Sync skipped: Ticketmaster API key not configured');
+      logger.info('[EventSyncService] Sync skipped: Ticketmaster API key not configured');
       return;
     }
 
@@ -110,12 +102,12 @@ export class EventSyncService {
       const regions = await this.loadSyncRegions(regionId);
 
       if (regions.length === 0) {
-        logger.warn('No active sync regions found. Configure sync_regions to enable event sync.');
+        logger.warn('[EventSyncService] No active sync regions found. Configure sync_regions to enable event sync.');
         await this.completeSyncLog(syncLogId, 'completed', counters);
         return;
       }
 
-      logger.info(`Starting sync for ${regions.length} region(s)`);
+      logger.info(`[EventSyncService] Starting sync for ${regions.length} region(s)`);
 
       // Process each region
       for (const region of regions) {
@@ -128,7 +120,7 @@ export class EventSyncService {
             [region.id],
           );
         } catch (regionErr) {
-          logger.error(`Failed to sync region: ${region.label}`, {
+          logger.error(`[EventSyncService] Failed to sync region: ${region.label}`, {
             regionId: region.id,
             error: (regionErr as Error).message,
           });
@@ -139,14 +131,14 @@ export class EventSyncService {
       // Complete sync log
       await this.completeSyncLog(syncLogId, 'completed', counters);
 
-      logger.info('Sync completed', {
+      logger.info('[EventSyncService] Sync completed', {
         ...counters,
         regions: regions.length,
       });
     } catch (err) {
       // Fatal error -- update log with failure
       const errorMessage = (err as Error).message || 'Unknown error';
-      logger.error('Sync pipeline failed', { error: errorMessage });
+      logger.error('[EventSyncService] Sync pipeline failed', { error: errorMessage });
 
       await this.completeSyncLog(syncLogId, 'failed', counters, errorMessage);
     }
@@ -218,7 +210,7 @@ export class EventSyncService {
       .toISOString()
       .replace(/\.\d{3}Z$/, 'Z');
 
-    logger.info(`Fetching events for region: ${region.label}`, {
+    logger.info(`[EventSyncService] Fetching events for region: ${region.label}`, {
       latlong,
       radius: region.radius_miles,
       startDate,
@@ -234,14 +226,14 @@ export class EventSyncService {
 
     counters.events_fetched += events.length;
 
-    logger.info(`Fetched ${events.length} events for region: ${region.label}`);
+    logger.info(`[EventSyncService] Fetched ${events.length} events for region: ${region.label}`);
 
     // Process each event
     for (const event of events) {
       try {
         await this.processEvent(event, counters);
       } catch (eventErr) {
-        logger.error(`Failed to process event: ${event.name}`, {
+        logger.error(`[EventSyncService] Failed to process event: ${event.name}`, {
           externalId: event.externalId,
           error: (eventErr as Error).message,
         });
@@ -322,7 +314,7 @@ export class EventSyncService {
         counters.events_updated++;
       }
 
-      logger.info('Auto-merged Ticketmaster data into user-created event', {
+      logger.info('[EventSyncService] Auto-merged Ticketmaster data into user-created event', {
         userEventId: existingUserEvent,
         externalId: event.externalId,
         eventName: event.name,
@@ -409,7 +401,7 @@ export class EventSyncService {
   ): Promise<void> {
     if (newStatus === oldStatus) return;
 
-    logger.info(`Event status changed: ${oldStatus} -> ${newStatus}`, { eventId });
+    logger.info(`[EventSyncService] Event status changed: ${oldStatus} -> ${newStatus}`, { eventId });
 
     // Only notify for meaningful status changes
     if (newStatus !== 'cancelled' && newStatus !== 'rescheduled') {
@@ -425,7 +417,7 @@ export class EventSyncService {
 
       if (checkinUsers.rows.length === 0) return;
 
-      logger.info(`Notifying ${checkinUsers.rows.length} users of status change`, {
+      logger.info(`[EventSyncService] Notifying ${checkinUsers.rows.length} users of status change`, {
         eventId,
         newStatus,
       });
@@ -446,7 +438,7 @@ export class EventSyncService {
             ],
           );
         } catch (notifErr) {
-          logger.error('Failed to create notification', {
+          logger.error('[EventSyncService] Failed to create notification', {
             userId: row.user_id,
             eventId,
             error: (notifErr as Error).message,
@@ -454,7 +446,7 @@ export class EventSyncService {
         }
       }
     } catch (err) {
-      logger.error('Failed to handle status change notifications', {
+      logger.error('[EventSyncService] Failed to handle status change notifications', {
         eventId,
         error: (err as Error).message,
       });
@@ -498,7 +490,7 @@ export class EventSyncService {
         ],
       );
     } catch (err) {
-      logger.error('Failed to update sync log', {
+      logger.error('[EventSyncService] Failed to update sync log', {
         syncLogId,
         error: (err as Error).message,
       });

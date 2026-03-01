@@ -10,6 +10,7 @@
 import Database from '../../config/database';
 import { cache, CacheKeys } from '../../utils/cache';
 import { Checkin, AddRatingsRequest } from './types';
+import logger from '../../utils/logger';
 
 export class CheckinRatingService {
   private db = Database.getInstance();
@@ -98,7 +99,7 @@ export class CheckinRatingService {
         // Fire-and-forget: invalidate band aggregate cache for each rated band
         for (const br of ratings.bandRatings) {
           cache.del(CacheKeys.bandAggregate(br.bandId)).catch((err) =>
-            console.error('Warning: band aggregate cache invalidation failed:', err)
+            logger.debug('Warning: band aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
           );
         }
       }
@@ -112,14 +113,14 @@ export class CheckinRatingService {
         const venueId = checkinForVenue.rows[0]?.venue_id;
         if (venueId) {
           cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
-            console.error('Warning: venue aggregate cache invalidation failed:', err)
+            logger.debug('Warning: venue aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
           );
         }
       }
 
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
-      console.error('Add ratings error:', error);
+      logger.error('Add ratings error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

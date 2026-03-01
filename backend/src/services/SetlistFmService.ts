@@ -1,6 +1,7 @@
 import axios, { AxiosInstance } from 'axios';
 import Database from '../config/database';
 import { sanitizeForLogging } from '../utils/logSanitizer';
+import logger from '../utils/logger';
 
 interface SetlistFmVenue {
   id: string;
@@ -85,7 +86,7 @@ export class SetlistFmService {
     this.enabled = !!this.apiKey;
 
     if (!this.enabled) {
-      console.warn('⚠️  SETLISTFM_API_KEY not configured - setlist.fm integration disabled');
+      logger.warn('SETLISTFM_API_KEY not configured - setlist.fm integration disabled');
       // Create a dummy client to prevent errors
       this.client = axios.create({
         baseURL: 'https://api.setlist.fm/rest/1.0',
@@ -139,15 +140,17 @@ export class SetlistFmService {
 
       return response.data.venue || [];
     } catch (error: any) {
-      console.error('setlist.fm searchVenues error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('setlist.fm searchVenues error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to search venues from setlist.fm');
     }
   }
@@ -173,15 +176,17 @@ export class SetlistFmService {
 
       return response.data.artist || [];
     } catch (error: any) {
-      console.error('setlist.fm searchArtists error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('setlist.fm searchArtists error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to search artists from setlist.fm');
     }
   }
@@ -220,15 +225,17 @@ export class SetlistFmService {
 
       return response.data.setlist || [];
     } catch (error: any) {
-      console.error('setlist.fm searchSetlists error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('setlist.fm searchSetlists error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to search setlists from setlist.fm');
     }
   }
@@ -248,15 +255,17 @@ export class SetlistFmService {
 
       return response.data;
     } catch (error: any) {
-      console.error('setlist.fm getSetlistById error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('setlist.fm getSetlistById error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw new Error('Failed to get setlist from setlist.fm');
     }
   }
@@ -330,15 +339,17 @@ export class SetlistFmService {
         alreadyExists: false,
       };
     } catch (error: any) {
-      console.error('setlist.fm importVenue error:', error.message || 'Unknown error');
-      if (error.config) {
-        console.error('Request config:', sanitizeForLogging({
-          baseURL: error.config.baseURL,
-          url: error.config.url,
-          params: error.config.params,
-          headers: error.config.headers,
-        }));
-      }
+      logger.warn('setlist.fm importVenue error', {
+        error: error.message || 'Unknown error',
+        ...(error.config ? {
+          config: sanitizeForLogging({
+            baseURL: error.config.baseURL,
+            url: error.config.url,
+            params: error.config.params,
+            headers: error.config.headers,
+          }),
+        } : {}),
+      });
       throw error;
     }
   }

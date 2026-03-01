@@ -14,15 +14,7 @@
 import { Worker, Job } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { BadgeService } from '../services/BadgeService';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[BadgeWorker] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[BadgeWorker] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) =>
-    console.error(`[BadgeWorker] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 /**
  * Start the BullMQ worker for badge evaluation jobs.

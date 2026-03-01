@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { FeedService } from '../services/FeedService';
 import { ApiResponse } from '../types';
+import logger from '../utils/logger';
 
 const VALID_FEED_TYPES = ['friends', 'event', 'happening_now'] as const;
 
@@ -30,7 +31,7 @@ export class FeedController {
       const response: ApiResponse = { success: true, data: result };
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get friends feed error:', error);
+      logger.error('Get friends feed error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch friends feed',
@@ -62,7 +63,7 @@ export class FeedController {
       const response: ApiResponse = { success: true, data: result };
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get event feed error:', error);
+      logger.error('Get event feed error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch event feed',
@@ -90,7 +91,7 @@ export class FeedController {
       const response: ApiResponse = { success: true, data: result };
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get happening now error:', error);
+      logger.error('Get happening now error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch happening now',
@@ -118,7 +119,7 @@ export class FeedController {
       const response: ApiResponse = { success: true, data: result };
       res.status(200).json(response);
     } catch (error) {
-      console.error('Get unseen counts error:', error);
+      logger.error('Get unseen counts error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch unseen counts',
@@ -169,7 +170,7 @@ export class FeedController {
       const response: ApiResponse = { success: true };
       res.status(200).json(response);
     } catch (error) {
-      console.error('Mark feed read error:', error);
+      logger.error('Mark feed read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to mark feed as read',

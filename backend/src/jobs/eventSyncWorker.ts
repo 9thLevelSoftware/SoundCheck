@@ -16,15 +16,7 @@
 import { Worker, Job } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { EventSyncService } from '../services/EventSyncService';
-
-const logger = {
-  info: (msg: string, meta?: Record<string, unknown>) =>
-    console.log(`[EventSyncWorker] ${msg}`, meta || ''),
-  warn: (msg: string, meta?: Record<string, unknown>) =>
-    console.warn(`[EventSyncWorker] ${msg}`, meta || ''),
-  error: (msg: string, meta?: Record<string, unknown>) =>
-    console.error(`[EventSyncWorker] ${msg}`, meta || ''),
-};
+import logger from '../utils/logger';
 
 /**
  * Start the BullMQ worker for event sync jobs.
