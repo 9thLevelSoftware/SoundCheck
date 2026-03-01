@@ -113,7 +113,7 @@ class _CustomBottomNavBar extends StatelessWidget {
                   // Notifications
                   _NavItem(
                     icon: Icons.notifications,
-                    label: 'Alerts',
+                    label: 'Notifications',
                     isSelected: selectedIndex == 4,
                     onTap: () => onTap(4),
                   ),
