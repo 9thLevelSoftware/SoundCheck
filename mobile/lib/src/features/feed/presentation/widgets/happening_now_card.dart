@@ -73,7 +73,7 @@ class HappeningNowCard extends StatelessWidget {
           color: AppTheme.cardDark,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.electricPurple.withValues(alpha: 0.3),
+            color: AppTheme.voltLime.withValues(alpha: 0.3),
             width: 1,
           ),
         ),

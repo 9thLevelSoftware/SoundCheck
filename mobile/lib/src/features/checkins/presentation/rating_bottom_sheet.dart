@@ -105,7 +105,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Ratings saved!'),
-          backgroundColor: AppTheme.liveGreen,
+          backgroundColor: AppTheme.voltLime,
         ),
       );
       Navigator.of(context).pop(true);
@@ -168,7 +168,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                         const SizedBox(width: 6),
                         const Icon(
                             Icons.check_circle,
-                            color: AppTheme.liveGreen,
+                            color: AppTheme.voltLime,
                             size: 16,
                         ),
                       ],
@@ -184,7 +184,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                         const SizedBox(width: 6),
                         const Icon(
                             Icons.check_circle,
-                            color: AppTheme.liveGreen,
+                            color: AppTheme.voltLime,
                             size: 16,
                         ),
                       ],
@@ -232,9 +232,9 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                             ? _submitRatings
                             : null,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.electricPurple,
+                          backgroundColor: AppTheme.voltLime,
                           disabledBackgroundColor:
-                              AppTheme.electricPurple.withValues(alpha: 0.3),
+                              AppTheme.voltLime.withValues(alpha: 0.3),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
@@ -307,7 +307,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
             borderRadius: BorderRadius.circular(16),
             border: currentRating > 0
                 ? Border.all(
-                    color: AppTheme.electricPurple.withValues(alpha: 0.5),)
+                    color: AppTheme.voltLime.withValues(alpha: 0.5),)
                 : null,
           ),
           child: Column(
@@ -343,7 +343,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                           const Text(
                             'Headliner',
                             style: TextStyle(
-                              color: AppTheme.electricPurple,
+                              color: AppTheme.voltLime,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -355,7 +355,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                     Text(
                       currentRating.toStringAsFixed(1),
                       style: const TextStyle(
-                        color: AppTheme.electricPurple,
+                        color: AppTheme.voltLime,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                       ),
@@ -376,7 +376,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                     unratedColor: AppTheme.ratingInactive,
                     itemBuilder: (context, _) => const Icon(
                       Icons.star,
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                     ),
                     onRatingUpdate: (rating) {
                       setState(() {
@@ -406,12 +406,12 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
             width: 80,
             height: 80,
             decoration: BoxDecoration(
-              color: AppTheme.neonPink.withValues(alpha: 0.2),
+              color: AppTheme.hotOrange.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Icon(
               Icons.location_on,
-              color: AppTheme.neonPink,
+              color: AppTheme.hotOrange,
               size: 40,
             ),
           ),
@@ -450,7 +450,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
               unratedColor: AppTheme.ratingInactive,
               itemBuilder: (context, _) => const Icon(
                 Icons.star,
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
               ),
               onRatingUpdate: (rating) {
                 setState(() {
@@ -466,7 +466,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
             Text(
               _getRatingLabel(_venueRating),
               style: const TextStyle(
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
               ),

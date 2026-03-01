@@ -177,16 +177,16 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
                     color: _showMapView
-                        ? AppTheme.electricPurple.withValues(alpha: 0.2)
+                        ? AppTheme.voltLime.withValues(alpha: 0.2)
                         : AppTheme.surfaceVariantDark,
                     borderRadius: BorderRadius.circular(8),
                     border: _showMapView
-                        ? Border.all(color: AppTheme.electricPurple, width: 1.5)
+                        ? Border.all(color: AppTheme.voltLime, width: 1.5)
                         : null,
                   ),
                   child: Icon(
                     _showMapView ? Icons.list : Icons.map,
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                     size: 20,
                   ),
                 ),
@@ -257,7 +257,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             child: Padding(
               padding: EdgeInsets.symmetric(vertical: 40),
               child: CircularProgressIndicator(
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
               ),
             ),
           ),
@@ -279,7 +279,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   Icon(
                     Icons.error_outline,
                     size: 48,
-                    color: AppTheme.neonPink,
+                    color: AppTheme.hotOrange,
                   ),
                   SizedBox(height: 16),
                   Text(
@@ -519,7 +519,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       onTap: () => _showVenueBottomSheet(venue),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.neonPink,
+                          color: AppTheme.hotOrange,
                           shape: BoxShape.circle,
                           border: Border.all(
                             color: Colors.white,
@@ -527,7 +527,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                           ),
                           boxShadow: [
                             BoxShadow(
-                              color: AppTheme.neonPink.withValues(alpha: 0.5),
+                              color: AppTheme.hotOrange.withValues(alpha: 0.5),
                               blurRadius: 8,
                               spreadRadius: 2,
                             ),
@@ -568,7 +568,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         width: 16,
                         height: 16,
                         child: CircularProgressIndicator(
-                          color: AppTheme.electricPurple,
+                          color: AppTheme.voltLime,
                           strokeWidth: 2,
                         ),
                       ),
@@ -599,7 +599,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   color: AppTheme.cardDark,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppTheme.electricPurple.withValues(alpha: 0.3),
+                    color: AppTheme.voltLime.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Row(
@@ -607,7 +607,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   children: [
                     const Icon(
                       Icons.location_on,
-                      color: AppTheme.neonPink,
+                      color: AppTheme.hotOrange,
                       size: 16,
                     ),
                     const SizedBox(width: 6),
@@ -706,8 +706,8 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         decoration: BoxDecoration(
                           gradient: LinearGradient(
                             colors: [
-                              AppTheme.neonPink.withValues(alpha: 0.5),
-                              AppTheme.electricPurple.withValues(alpha: 0.5),
+                              AppTheme.hotOrange.withValues(alpha: 0.5),
+                              AppTheme.voltLime.withValues(alpha: 0.5),
                             ],
                           ),
                           borderRadius: BorderRadius.circular(12),
@@ -806,7 +806,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         context.push('/venues/${venue.id}');
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.electricPurple,
+                        backgroundColor: AppTheme.voltLime,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
@@ -896,7 +896,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               child: Padding(
                 padding: EdgeInsets.all(16),
                 child: CircularProgressIndicator(
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.voltLime,
                 ),
               ),
             ),
@@ -963,7 +963,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 width: 24,
                 height: 24,
                 child: CircularProgressIndicator(
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.voltLime,
                   strokeWidth: 2,
                 ),
               ),
@@ -1044,7 +1044,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       ),
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                   ),
                 ),
                 error: (err, stack) => const Center(
@@ -1057,7 +1057,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             },
             loading: () => const Center(
               child: CircularProgressIndicator(
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
               ),
             ),
             error: (err, stack) => const Center(
@@ -1116,13 +1116,13 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                             ),
                             decoration: BoxDecoration(
                               color: isSelected
-                                  ? AppTheme.electricPurple
+                                  ? AppTheme.voltLime
                                   : AppTheme.surfaceVariantDark,
                               borderRadius: BorderRadius.circular(20),
                               border: isSelected
                                   ? null
                                   : Border.all(
-                                      color: AppTheme.electricPurple.withValues(alpha: 0.3),
+                                      color: AppTheme.voltLime.withValues(alpha: 0.3),
                                     ),
                             ),
                             child: Text(
@@ -1145,7 +1145,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 width: 20,
                 height: 20,
                 child: CircularProgressIndicator(
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.voltLime,
                   strokeWidth: 2,
                 ),
               ),
@@ -1232,7 +1232,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       child: Padding(
                         padding: EdgeInsets.all(32),
                         child: CircularProgressIndicator(
-                          color: AppTheme.electricPurple,
+                          color: AppTheme.voltLime,
                         ),
                       ),
                     ),
@@ -1303,7 +1303,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       ),
                 loading: () => const Center(
                   child: CircularProgressIndicator(
-                    color: AppTheme.neonPink,
+                    color: AppTheme.hotOrange,
                   ),
                 ),
                 error: (err, stack) => const Center(
@@ -1316,7 +1316,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             },
             loading: () => const Center(
               child: CircularProgressIndicator(
-                color: AppTheme.neonPink,
+                color: AppTheme.hotOrange,
               ),
             ),
             error: (err, stack) => const Center(
@@ -1457,11 +1457,11 @@ class _SearchResultItem extends StatelessWidget {
   Color get _color {
     switch (type) {
       case SearchResultType.band:
-        return AppTheme.electricPurple;
+        return AppTheme.voltLime;
       case SearchResultType.venue:
-        return AppTheme.neonPink;
+        return AppTheme.hotOrange;
       case SearchResultType.user:
-        return AppTheme.liveGreen;
+        return AppTheme.voltLime;
       case SearchResultType.event:
         return AppTheme.toastGold;
     }
@@ -1539,8 +1539,8 @@ class _EventCard extends ConsumerWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.electricPurple.withValues(alpha: 0.5),
-                    AppTheme.neonPink.withValues(alpha: 0.5),
+                    AppTheme.voltLime.withValues(alpha: 0.5),
+                    AppTheme.hotOrange.withValues(alpha: 0.5),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
@@ -1579,7 +1579,7 @@ class _EventCard extends ConsumerWidget {
                         child: Text(
                           dateDisplay,
                           style: const TextStyle(
-                            color: AppTheme.electricPurple,
+                            color: AppTheme.voltLime,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1710,8 +1710,8 @@ class _TrendingEventCard extends StatelessWidget {
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
-                    AppTheme.neonPink.withValues(alpha: 0.6),
-                    AppTheme.electricPurple.withValues(alpha: 0.4),
+                    AppTheme.hotOrange.withValues(alpha: 0.6),
+                    AppTheme.voltLime.withValues(alpha: 0.4),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
@@ -1744,7 +1744,7 @@ class _TrendingEventCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.neonPink,
+                          color: AppTheme.hotOrange,
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Row(
@@ -1785,7 +1785,7 @@ class _TrendingEventCard extends StatelessWidget {
                         child: Text(
                           dateDisplay,
                           style: const TextStyle(
-                            color: AppTheme.neonPink,
+                            color: AppTheme.hotOrange,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -1871,8 +1871,8 @@ class _ForYouCard extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    AppTheme.electricPurple.withValues(alpha: 0.6),
-                    AppTheme.neonPink.withValues(alpha: 0.4),
+                    AppTheme.voltLime.withValues(alpha: 0.6),
+                    AppTheme.hotOrange.withValues(alpha: 0.4),
                   ],
                 ),
                 borderRadius: const BorderRadius.vertical(
@@ -1929,7 +1929,7 @@ class _ForYouCard extends StatelessWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.electricPurple,
+                          color: AppTheme.voltLime,
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -2007,12 +2007,12 @@ class _GenreEventListItem extends StatelessWidget {
         width: 48,
         height: 48,
         decoration: BoxDecoration(
-          color: AppTheme.electricPurple.withValues(alpha: 0.2),
+          color: AppTheme.voltLime.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Icon(
           Icons.calendar_today,
-          color: AppTheme.electricPurple,
+          color: AppTheme.voltLime,
           size: 22,
         ),
       ),

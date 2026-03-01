@@ -54,14 +54,14 @@ class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
         title: const Text('Discover People'),
       ),
       body: RefreshIndicator(
-        color: AppTheme.electricPurple,
+        color: AppTheme.voltLime,
         backgroundColor: AppTheme.cardDark,
         onRefresh: () async {
           ref.invalidate(userSuggestionsProvider);
         },
         child: suggestionsAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: AppTheme.electricPurple),
+            child: CircularProgressIndicator(color: AppTheme.voltLime),
           ),
           error: (error, _) => ListView(
             children: [
@@ -73,7 +73,7 @@ class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
                     children: [
                       const Icon(
                         Icons.error_outline,
-                        color: AppTheme.neonPink,
+                        color: AppTheme.hotOrange,
                         size: 48,
                       ),
                       const SizedBox(height: 16),
@@ -99,7 +99,7 @@ class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
                         onPressed: () =>
                             ref.invalidate(userSuggestionsProvider),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.electricPurple,
+                          backgroundColor: AppTheme.voltLime,
                         ),
                         child: const Text('Retry'),
                       ),
@@ -207,13 +207,13 @@ class _SuggestionCard extends StatelessWidget {
               CircleAvatar(
                 radius: 28,
                 backgroundColor:
-                    AppTheme.electricPurple.withValues(alpha: 0.2),
+                    AppTheme.voltLime.withValues(alpha: 0.2),
                 backgroundImage: user.profileImageUrl != null
                     ? NetworkImage(user.profileImageUrl!)
                     : null,
                 child: user.profileImageUrl == null
                     ? const Icon(Icons.person,
-                        color: AppTheme.electricPurple, size: 28)
+                        color: AppTheme.voltLime, size: 28)
                     : null,
               ),
               const SizedBox(width: 16),
@@ -276,7 +276,7 @@ class _SuggestionCard extends StatelessWidget {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppTheme.electricPurple,
+                            color: AppTheme.voltLime,
                           ),
                         ),
                       )
@@ -284,7 +284,7 @@ class _SuggestionCard extends StatelessWidget {
                         ? FilledButton(
                             onPressed: onFollow,
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppTheme.electricPurple,
+                              backgroundColor: AppTheme.voltLime,
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -299,7 +299,7 @@ class _SuggestionCard extends StatelessWidget {
                             onPressed: onFollow,
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(
-                                  color: AppTheme.electricPurple),
+                                  color: AppTheme.voltLime),
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),
@@ -308,7 +308,7 @@ class _SuggestionCard extends StatelessWidget {
                             child: const Text(
                               'Follow',
                               style: TextStyle(
-                                color: AppTheme.electricPurple,
+                                color: AppTheme.voltLime,
                                 fontSize: 13,
                               ),
                             ),

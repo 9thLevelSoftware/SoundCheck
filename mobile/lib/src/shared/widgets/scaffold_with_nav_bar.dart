@@ -167,7 +167,7 @@ class _NavItem extends StatelessWidget {
                   icon,
                   size: 24,
                   color: isSelected
-                      ? AppTheme.electricPurple
+                      ? AppTheme.voltLime
                       : AppTheme.textTertiary,
                 ),
                 const SizedBox(height: 4),
@@ -177,7 +177,7 @@ class _NavItem extends StatelessWidget {
                     fontSize: 11,
                     fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
                     color: isSelected
-                        ? AppTheme.electricPurple
+                        ? AppTheme.voltLime
                         : AppTheme.textTertiary,
                   ),
                 ),
@@ -214,7 +214,7 @@ class _CheckInButton extends StatelessWidget {
               gradient: AppTheme.primaryGradient,
               boxShadow: [
                 BoxShadow(
-                  color: AppTheme.electricPurple.withValues(alpha:0.4),
+                  color: AppTheme.voltLime.withValues(alpha:0.4),
                   blurRadius: 12,
                   offset: const Offset(0, 4),
                 ),

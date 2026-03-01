@@ -64,13 +64,6 @@ class AppTheme {
   // Primary alias for convenience
   static const Color primary = voltLime;
 
-  // Legacy aliases for backward compatibility
-  static const Color electricPurple = voltLime;
-  static const Color electricPurpleLight = voltLimeLight;
-  static const Color electricPurpleDark = voltLimeDark;
-  static const Color neonPink = hotOrange;
-  static const Color liveGreen = voltLime;
-
   // Gradients
   // 2025 Trend: Subtle, "Brand-Centric" gradients rather than generic mesh
   static const LinearGradient primaryGradient = LinearGradient(

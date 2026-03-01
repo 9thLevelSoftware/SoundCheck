@@ -71,7 +71,7 @@ class _OwnerResponseBottomSheetState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Response submitted'),
-          backgroundColor: AppTheme.liveGreen,
+          backgroundColor: AppTheme.voltLime,
         ),
       );
     } on Failure catch (e) {

@@ -73,11 +73,11 @@ class _NewCheckinsBannerState extends State<NewCheckinsBanner>
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           decoration: BoxDecoration(
-            color: AppTheme.electricPurple,
+            color: AppTheme.voltLime,
             borderRadius: BorderRadius.circular(24),
             boxShadow: [
               BoxShadow(
-                color: AppTheme.electricPurple.withValues(alpha: 0.3),
+                color: AppTheme.voltLime.withValues(alpha: 0.3),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),

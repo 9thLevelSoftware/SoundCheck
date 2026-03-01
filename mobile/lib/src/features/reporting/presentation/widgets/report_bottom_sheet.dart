@@ -107,7 +107,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
           content: Text(
             'Report submitted successfully. Our team will review it shortly.',
           ),
-          backgroundColor: AppTheme.liveGreen,
+          backgroundColor: AppTheme.voltLime,
         ),
       );
     } on Failure catch (e) {

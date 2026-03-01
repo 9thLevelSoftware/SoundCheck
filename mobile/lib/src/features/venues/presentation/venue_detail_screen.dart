@@ -36,7 +36,7 @@ class VenueDetailScreen extends ConsumerWidget {
       body: venueAsync.when(
         data: (venue) => _VenueContent(venue: venue, venueId: venueId),
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+          child: CircularProgressIndicator(color: AppTheme.voltLime),
         ),
         error: (error, _) => _buildErrorState(context, ref),
       ),
@@ -303,8 +303,8 @@ class _VenueContent extends ConsumerWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.neonPink.withValues(alpha:0.7),
-            AppTheme.electricPurple.withValues(alpha:0.7),
+            AppTheme.hotOrange.withValues(alpha:0.7),
+            AppTheme.voltLime.withValues(alpha:0.7),
           ],
         ),
       ),
@@ -350,7 +350,7 @@ class _MapStrip extends StatelessWidget {
                 child: Icon(
                   Icons.map,
                   size: 32,
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.voltLime,
                 ),
               ),
             ),
@@ -392,7 +392,7 @@ class _MapStrip extends StatelessWidget {
               padding: const EdgeInsets.all(12),
               child: const Icon(
                 Icons.directions,
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
               ),
             ),
           ],
@@ -581,7 +581,7 @@ class _UpcomingEventsSection extends StatelessWidget {
                 children: [
                   Icon(
                     Icons.event,
-                    color: AppTheme.liveGreen,
+                    color: AppTheme.voltLime,
                     size: 20,
                   ),
                   SizedBox(width: 8),
@@ -602,7 +602,7 @@ class _UpcomingEventsSection extends StatelessWidget {
                 },
                 child: const Text(
                   'See All',
-                  style: TextStyle(color: AppTheme.electricPurple),
+                  style: TextStyle(color: AppTheme.voltLime),
                 ),
               ),
             ],
@@ -685,7 +685,7 @@ class _UpcomingEventItem extends StatelessWidget {
               width: 50,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.electricPurple.withValues(alpha:0.2),
+                color: AppTheme.voltLime.withValues(alpha:0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -693,7 +693,7 @@ class _UpcomingEventItem extends StatelessWidget {
                   Text(
                     monthStr,
                     style: const TextStyle(
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -701,7 +701,7 @@ class _UpcomingEventItem extends StatelessWidget {
                   Text(
                     dayStr,
                     style: const TextStyle(
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
@@ -750,7 +750,7 @@ class _UpcomingEventItem extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: const Text(
@@ -874,7 +874,7 @@ class _RecentBandsSection extends ConsumerWidget {
         children: [
           const Row(
             children: [
-              Icon(Icons.trending_up, color: AppTheme.neonPink, size: 16),
+              Icon(Icons.trending_up, color: AppTheme.hotOrange, size: 16),
               SizedBox(width: 6),
               Text(
                 'Recent Bands',
@@ -897,7 +897,7 @@ class _RecentBandsSection extends ConsumerWidget {
                   height: 14,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                   ),
                 ),
               ),
@@ -1011,7 +1011,7 @@ class _VenueReviewsSection extends ConsumerWidget {
                   height: 24,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                   ),
                 ),
               ),
@@ -1355,7 +1355,7 @@ class _CheckInPreviewCard extends StatelessWidget {
                         text: bands[index],
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.electricPurple,
+                          color: AppTheme.voltLime,
                         ),
                       ),
                     ],

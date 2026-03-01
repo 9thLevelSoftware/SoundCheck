@@ -36,7 +36,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         data: (user) => user == null
             ? const Center(child: Text('Not logged in'))
             : RefreshIndicator(
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
                 backgroundColor: AppTheme.cardDark,
                 onRefresh: () async {
                   ref.invalidate(concertCredProvider(user.id));
@@ -154,7 +154,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               Text(
                                 _showMore ? 'See Less' : 'See More',
                                 style: const TextStyle(
-                                  color: AppTheme.electricPurple,
+                                  color: AppTheme.voltLime,
                                   fontWeight: FontWeight.w600,
                                   fontSize: 14,
                                 ),
@@ -162,7 +162,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                               const SizedBox(width: 4),
                               Icon(
                                 _showMore ? Icons.expand_less : Icons.expand_more,
-                                color: AppTheme.electricPurple,
+                                color: AppTheme.voltLime,
                                 size: 20,
                               ),
                             ],
@@ -213,7 +213,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ),
               ),
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+          child: CircularProgressIndicator(color: AppTheme.voltLime),
         ),
         error: (error, _) => Center(
           child: Column(
@@ -257,9 +257,9 @@ class _ProfileHeader extends ConsumerWidget {
               begin: Alignment.topLeft,
               end: Alignment.bottomRight,
               colors: [
-                AppTheme.electricPurple,
-                AppTheme.electricPurple.withValues(alpha: 0.6),
-                AppTheme.neonPink.withValues(alpha: 0.4),
+                AppTheme.voltLime,
+                AppTheme.voltLime.withValues(alpha: 0.6),
+                AppTheme.hotOrange.withValues(alpha: 0.4),
               ],
             ),
           ),
@@ -279,7 +279,7 @@ class _ProfileHeader extends ConsumerWidget {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
                       content: Text('Share profile coming soon'),
-                      backgroundColor: AppTheme.electricPurple,
+                      backgroundColor: AppTheme.voltLime,
                     ),
                   );
                 },
@@ -326,7 +326,7 @@ class _ProfileHeader extends ConsumerWidget {
                               style: const TextStyle(
                                 fontSize: 36,
                                 fontWeight: FontWeight.bold,
-                                color: AppTheme.electricPurple,
+                                color: AppTheme.voltLime,
                               ),
                             )
                           : null,
@@ -446,14 +446,14 @@ class _MainStatsRow extends ConsumerWidget {
           color: AppTheme.cardDark,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.electricPurple.withValues(alpha: 0.2),
+            color: AppTheme.voltLime.withValues(alpha: 0.2),
           ),
         ),
         child: const Center(
           child: SizedBox(
             height: 60,
             child: CircularProgressIndicator(
-              color: AppTheme.electricPurple,
+              color: AppTheme.voltLime,
               strokeWidth: 2,
             ),
           ),
@@ -491,7 +491,7 @@ class _MainStatsRow extends ConsumerWidget {
           color: AppTheme.cardDark,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.electricPurple.withValues(alpha: 0.2),
+            color: AppTheme.voltLime.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -501,21 +501,21 @@ class _MainStatsRow extends ConsumerWidget {
               value: cred.totalShows.toString(),
               label: 'Shows',
               icon: Icons.music_note,
-              color: AppTheme.electricPurple,
+              color: AppTheme.voltLime,
             ),
             _StatDivider(),
             _StatItem(
               value: cred.uniqueBands.toString(),
               label: 'Bands',
               icon: Icons.album,
-              color: AppTheme.neonPink,
+              color: AppTheme.hotOrange,
             ),
             _StatDivider(),
             _StatItem(
               value: cred.uniqueVenues.toString(),
               label: 'Venues',
               icon: Icons.location_on,
-              color: AppTheme.liveGreen,
+              color: AppTheme.voltLime,
             ),
             _StatDivider(),
             _StatItem(
@@ -773,7 +773,7 @@ class _SectionHeader extends StatelessWidget {
               child: Text(
                 trailing!,
                 style: const TextStyle(
-                  color: AppTheme.electricPurple,
+                  color: AppTheme.voltLime,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -799,7 +799,7 @@ class _GenreBreakdown extends ConsumerWidget {
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Center(
           child: CircularProgressIndicator(
-            color: AppTheme.electricPurple,
+            color: AppTheme.voltLime,
             strokeWidth: 2,
           ),
         ),
@@ -904,7 +904,7 @@ class _GenreBreakdown extends ConsumerWidget {
                         minHeight: 6,
                         backgroundColor: AppTheme.surfaceDark,
                         valueColor: const AlwaysStoppedAnimation<Color>(
-                          AppTheme.electricPurple,
+                          AppTheme.voltLime,
                         ),
                       ),
                     ),
@@ -934,7 +934,7 @@ class _TopRatedBands extends ConsumerWidget {
         height: 160,
         child: Center(
           child: CircularProgressIndicator(
-            color: AppTheme.neonPink,
+            color: AppTheme.hotOrange,
             strokeWidth: 2,
           ),
         ),
@@ -1008,7 +1008,7 @@ class _TopBandCard extends StatelessWidget {
           color: AppTheme.cardDark,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.neonPink.withValues(alpha: 0.15),
+            color: AppTheme.hotOrange.withValues(alpha: 0.15),
           ),
         ),
         child: Column(
@@ -1030,11 +1030,11 @@ class _TopBandCard extends StatelessWidget {
                         fit: BoxFit.cover,
                         errorBuilder: (_, __, ___) => const Icon(
                           Icons.album,
-                          color: AppTheme.neonPink,
+                          color: AppTheme.hotOrange,
                         ),
                       ),
                     )
-                  : const Icon(Icons.album, color: AppTheme.neonPink),
+                  : const Icon(Icons.album, color: AppTheme.hotOrange),
             ),
             const SizedBox(height: 8),
             // Band name
@@ -1063,14 +1063,14 @@ class _TopBandCard extends StatelessWidget {
             // Rating and times seen
             Row(
               children: [
-                const Icon(Icons.star, size: 14, color: AppTheme.neonPink),
+                const Icon(Icons.star, size: 14, color: AppTheme.hotOrange),
                 const SizedBox(width: 2),
                 Text(
                   band.avgRating.toStringAsFixed(1),
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
-                    color: AppTheme.neonPink,
+                    color: AppTheme.hotOrange,
                   ),
                 ),
                 const Spacer(),
@@ -1283,7 +1283,7 @@ class _RecentCheckins extends ConsumerWidget {
       loading: () => const Padding(
         padding: EdgeInsets.symmetric(horizontal: 16, vertical: 24),
         child: Center(
-          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+          child: CircularProgressIndicator(color: AppTheme.voltLime),
         ),
       ),
       error: (error, _) => Padding(
@@ -1423,13 +1423,13 @@ class _CheckinCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => const Icon(
                                 Icons.album,
-                                color: AppTheme.electricPurple,
+                                color: AppTheme.voltLime,
                               ),
                             ),
                           )
                         : const Icon(
                             Icons.album,
-                            color: AppTheme.electricPurple,
+                            color: AppTheme.voltLime,
                           ),
                   ),
                 ),
@@ -1583,17 +1583,17 @@ class _BadgesShowcase extends ConsumerWidget {
   static Color _getBadgeColor(BadgeCategory category) {
     switch (category) {
       case BadgeCategory.checkinCount:
-        return AppTheme.liveGreen;
+        return AppTheme.voltLime;
       case BadgeCategory.genreExplorer:
         return AppTheme.toastGold;
       case BadgeCategory.uniqueVenues:
         return AppTheme.info;
       case BadgeCategory.superfan:
-        return AppTheme.neonPink;
+        return AppTheme.hotOrange;
       case BadgeCategory.festivalWarrior:
-        return AppTheme.electricPurple;
+        return AppTheme.voltLime;
       case BadgeCategory.roadWarrior:
-        return AppTheme.neonPink;
+        return AppTheme.hotOrange;
     }
   }
 
@@ -1605,7 +1605,7 @@ class _BadgesShowcase extends ConsumerWidget {
       loading: () => const SizedBox(
         height: 110,
         child: Center(
-          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+          child: CircularProgressIndicator(color: AppTheme.voltLime),
         ),
       ),
       error: (error, _) => SizedBox(

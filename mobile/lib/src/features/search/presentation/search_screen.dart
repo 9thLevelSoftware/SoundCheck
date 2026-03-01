@@ -358,7 +358,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             title: 'Users',
             count: results.users.length,
             icon: Icons.person,
-            color: AppTheme.electricPurple,
+            color: AppTheme.voltLime,
           ),
           const SizedBox(height: AppTheme.spacing8),
           ...results.users.take(5).map(
@@ -441,12 +441,12 @@ class _UserSearchTile extends StatelessWidget {
         onTap: onTap,
         leading: CircleAvatar(
           radius: 24,
-          backgroundColor: AppTheme.electricPurple.withValues(alpha: 0.2),
+          backgroundColor: AppTheme.voltLime.withValues(alpha: 0.2),
           backgroundImage: user.profileImageUrl != null
               ? NetworkImage(user.profileImageUrl!)
               : null,
           child: user.profileImageUrl == null
-              ? const Icon(Icons.person, color: AppTheme.electricPurple)
+              ? const Icon(Icons.person, color: AppTheme.voltLime)
               : null,
         ),
         title: Row(

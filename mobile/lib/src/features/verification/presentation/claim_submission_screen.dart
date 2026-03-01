@@ -56,7 +56,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Claim submitted! We\'ll review it shortly.'),
-            backgroundColor: AppTheme.electricPurple,
+            backgroundColor: AppTheme.voltLime,
           ),
         );
         context.pop();
@@ -160,7 +160,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                   ),
                 ),
               ),
@@ -199,7 +199,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                   ),
                 ),
                 prefixIcon: const Icon(
@@ -216,10 +216,10 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
               child: ElevatedButton(
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.electricPurple,
+                  backgroundColor: AppTheme.voltLime,
                   foregroundColor: AppTheme.backgroundDark,
                   disabledBackgroundColor:
-                      AppTheme.electricPurple.withValues(alpha: 0.5),
+                      AppTheme.voltLime.withValues(alpha: 0.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

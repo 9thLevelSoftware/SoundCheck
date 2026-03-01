@@ -109,7 +109,7 @@ class EmptyStateWidget extends StatelessWidget {
       case EmptyStateType.noCheckins:
         return _EmptyStateConfig(
           icon: Icons.music_note_outlined,
-          color: AppTheme.electricPurple,
+          color: AppTheme.voltLime,
           title: 'No Check-ins Yet',
           message:
               'Be the first to check in! Share your concert experience with the community.',

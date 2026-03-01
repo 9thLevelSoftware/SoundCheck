@@ -225,7 +225,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: AppTheme.liveGreen,
+                      color: AppTheme.voltLime,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -285,7 +285,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            CircularProgressIndicator(color: AppTheme.electricPurple),
+            CircularProgressIndicator(color: AppTheme.voltLime),
             SizedBox(height: 16),
             Text(
               'Finding shows near you...',
@@ -392,7 +392,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               icon: const Icon(Icons.my_location),
               label: const Text('Grant location access'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricPurple,
+                backgroundColor: AppTheme.voltLime,
                 foregroundColor: AppTheme.backgroundDark,
               ),
             ),
@@ -406,7 +406,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               },
               child: const Text(
                 'Check in manually',
-                style: TextStyle(color: AppTheme.electricPurple),
+                style: TextStyle(color: AppTheme.voltLime),
               ),
             ),
           ],
@@ -618,7 +618,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           Text(
             eventName,
             style: const TextStyle(
-              color: AppTheme.electricPurple,
+              color: AppTheme.voltLime,
               fontSize: 18,
               fontWeight: FontWeight.w600,
             ),
@@ -639,18 +639,18 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
               decoration: BoxDecoration(
-                color: AppTheme.liveGreen.withValues(alpha: 0.2),
+                color: AppTheme.voltLime.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.verified, color: AppTheme.liveGreen, size: 16),
+                  Icon(Icons.verified, color: AppTheme.voltLime, size: 16),
                   SizedBox(width: 4),
                   Text(
                     'Location verified',
                     style: TextStyle(
-                      color: AppTheme.liveGreen,
+                      color: AppTheme.voltLime,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -713,7 +713,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           // Rate bands
           _EnrichmentCard(
             icon: Icons.star,
-            iconColor: AppTheme.electricPurple,
+            iconColor: AppTheme.voltLime,
             label: 'Rate the bands',
             completed: _ratingsCompleted,
             onTap: _openBandRatings,
@@ -723,7 +723,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           // Rate venue
           _EnrichmentCard(
             icon: Icons.location_on,
-            iconColor: AppTheme.neonPink,
+            iconColor: AppTheme.hotOrange,
             label: 'Rate the venue',
             completed: _venueRatingCompleted,
             onTap: _openVenueRating,
@@ -766,7 +766,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             child: ElevatedButton(
               onPressed: () => context.pop(),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricPurple,
+                backgroundColor: AppTheme.voltLime,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -882,12 +882,12 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.electricPurple.withValues(alpha: 0.2),
+                    color: AppTheme.voltLime.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.photo_library,
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                   ),
                 ),
                 title: const Text(
@@ -906,12 +906,12 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                 leading: Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: AppTheme.neonPink.withValues(alpha: 0.2),
+                    color: AppTheme.hotOrange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.camera_alt,
-                    color: AppTheme.neonPink,
+                    color: AppTheme.hotOrange,
                   ),
                 ),
                 title: const Text(
@@ -997,7 +997,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Check-in successful!'),
-          backgroundColor: AppTheme.liveGreen,
+          backgroundColor: AppTheme.voltLime,
         ),
       );
       context.pop();
@@ -1159,7 +1159,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         child: Padding(
           padding: EdgeInsets.all(32),
           child: CircularProgressIndicator(
-            color: AppTheme.electricPurple,
+            color: AppTheme.voltLime,
           ),
         ),
       ),
@@ -1169,7 +1169,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             child: Padding(
               padding: EdgeInsets.all(32),
               child: CircularProgressIndicator(
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
               ),
             ),
           );
@@ -1201,7 +1201,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                       ref.invalidate(searchBandsForCheckinProvider),
                   child: const Text(
                     'Retry',
-                    style: TextStyle(color: AppTheme.electricPurple),
+                    style: TextStyle(color: AppTheme.voltLime),
                   ),
                 ),
               ],
@@ -1317,7 +1317,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             child: ElevatedButton(
               onPressed: _submitCheckIn,
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricPurple,
+                backgroundColor: AppTheme.voltLime,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
@@ -1450,13 +1450,13 @@ class _EventCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.liveGreen.withValues(alpha: 0.2),
+                    color: AppTheme.voltLime.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     '${event.distanceKm!.toStringAsFixed(1)} km',
                     style: const TextStyle(
-                      color: AppTheme.liveGreen,
+                      color: AppTheme.voltLime,
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -1504,14 +1504,14 @@ class _EventCard extends StatelessWidget {
                     border: entry.isHeadliner
                         ? Border.all(
                             color:
-                                AppTheme.electricPurple.withValues(alpha: 0.5),)
+                                AppTheme.voltLime.withValues(alpha: 0.5),)
                         : null,
                   ),
                   child: Text(
                     name,
                     style: TextStyle(
                       color: entry.isHeadliner
-                          ? AppTheme.electricPurple
+                          ? AppTheme.voltLime
                           : AppTheme.textSecondary,
                       fontSize: 12,
                       fontWeight:
@@ -1557,9 +1557,9 @@ class _EventCard extends StatelessWidget {
               child: ElevatedButton(
                 onPressed: isCheckingIn ? null : onCheckIn,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.electricPurple,
+                  backgroundColor: AppTheme.voltLime,
                   disabledBackgroundColor:
-                      AppTheme.electricPurple.withValues(alpha: 0.5),
+                      AppTheme.voltLime.withValues(alpha: 0.5),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -1623,7 +1623,7 @@ class _EnrichmentCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: completed
-                  ? AppTheme.liveGreen.withValues(alpha: 0.5)
+                  ? AppTheme.voltLime.withValues(alpha: 0.5)
                   : AppTheme.surfaceVariantDark,
             ),
           ),
@@ -1649,7 +1649,7 @@ class _EnrichmentCard extends StatelessWidget {
                 ),
               ),
               if (completed)
-                const Icon(Icons.check_circle, color: AppTheme.liveGreen, size: 24)
+                const Icon(Icons.check_circle, color: AppTheme.voltLime, size: 24)
               else
                 const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
             ],
@@ -1709,7 +1709,7 @@ class _BandSearchResult extends StatelessWidget {
         genre,
         style: const TextStyle(color: AppTheme.textTertiary),
       ),
-      trailing: const Icon(Icons.add_circle, color: AppTheme.electricPurple),
+      trailing: const Icon(Icons.add_circle, color: AppTheme.voltLime),
     );
   }
 }
@@ -1815,7 +1815,7 @@ class _VenueSelector extends StatelessWidget {
           color: AppTheme.surfaceVariantDark,
           borderRadius: BorderRadius.circular(12),
           border: selectedVenueName != null
-              ? Border.all(color: AppTheme.electricPurple)
+              ? Border.all(color: AppTheme.voltLime)
               : null,
         ),
         child: Row(
@@ -1823,12 +1823,12 @@ class _VenueSelector extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: AppTheme.electricPurple.withValues(alpha: 0.2),
+                color: AppTheme.voltLime.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: const Icon(
                 Icons.location_on,
-                color: AppTheme.electricPurple,
+                color: AppTheme.voltLime,
               ),
             ),
             const SizedBox(width: 12),
@@ -1882,7 +1882,7 @@ class _RatingSelector extends StatelessWidget {
                   : (isHalf ? Icons.star_half : Icons.star_border),
               size: 48,
               color: isActive || isHalf
-                  ? AppTheme.electricPurple
+                  ? AppTheme.voltLime
                   : AppTheme.ratingInactive,
             ),
           ),
@@ -2070,7 +2070,7 @@ class _VibeSelectorState extends State<_VibeSelector> {
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
                 color: isSelected
-                    ? AppTheme.electricPurple
+                    ? AppTheme.voltLime
                     : AppTheme.surfaceVariantDark,
                 borderRadius: BorderRadius.circular(20),
                 border: isSelected
@@ -2115,18 +2115,18 @@ class _VibeSelectorState extends State<_VibeSelector> {
                 color: AppTheme.surfaceVariantDark,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
-                  color: AppTheme.electricPurple.withValues(alpha: 0.5),
+                  color: AppTheme.voltLime.withValues(alpha: 0.5),
                 ),
               ),
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add, color: AppTheme.electricPurple, size: 16),
+                  Icon(Icons.add, color: AppTheme.voltLime, size: 16),
                   SizedBox(width: 4),
                   Text(
                     'More vibes',
                     style: TextStyle(
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
                     ),
@@ -2221,12 +2221,12 @@ class _VenueSearchSheet extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonPink.withValues(alpha: 0.2),
+                    color: AppTheme.hotOrange.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
                     Icons.location_on,
-                    color: AppTheme.neonPink,
+                    color: AppTheme.hotOrange,
                   ),
                 ),
                 title: Text(

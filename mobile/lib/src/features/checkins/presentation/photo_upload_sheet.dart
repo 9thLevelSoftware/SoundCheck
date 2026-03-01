@@ -78,7 +78,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
                     child: const Text(
                       'Upload',
                       style: TextStyle(
-                        color: AppTheme.electricPurple,
+                        color: AppTheme.voltLime,
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
                       ),
@@ -135,7 +135,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
                     child: _ActionButton(
                       icon: Icons.camera_alt,
                       label: 'Camera',
-                      color: AppTheme.neonPink,
+                      color: AppTheme.hotOrange,
                       onTap: _pickFromCamera,
                     ),
                   ),
@@ -144,7 +144,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
                     child: _ActionButton(
                       icon: Icons.photo_library,
                       label: 'Gallery',
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       onTap: _pickFromGallery,
                     ),
                   ),
@@ -158,7 +158,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
               const Column(
                 children: [
                   LinearProgressIndicator(
-                    color: AppTheme.electricPurple,
+                    color: AppTheme.voltLime,
                     backgroundColor: AppTheme.surfaceVariantDark,
                   ),
                   SizedBox(height: 12),
@@ -233,7 +233,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
                     height: 36,
                     child: CircularProgressIndicator(
                       value: progress,
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       strokeWidth: 3,
                     ),
                   ),
@@ -249,7 +249,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
               child: Container(
                 padding: const EdgeInsets.all(4),
                 decoration: const BoxDecoration(
-                  color: AppTheme.liveGreen,
+                  color: AppTheme.voltLime,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 14),

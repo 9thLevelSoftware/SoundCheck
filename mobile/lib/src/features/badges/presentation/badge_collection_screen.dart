@@ -378,7 +378,7 @@ class _BadgeCard extends ConsumerWidget {
                       child: Container(
                         padding: const EdgeInsets.all(2),
                         decoration: const BoxDecoration(
-                          color: AppTheme.liveGreen,
+                          color: AppTheme.voltLime,
                           shape: BoxShape.circle,
                         ),
                         child: const Icon(

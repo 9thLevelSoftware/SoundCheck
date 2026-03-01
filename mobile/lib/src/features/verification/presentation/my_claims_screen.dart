@@ -26,10 +26,10 @@ class MyClaimsScreen extends ConsumerWidget {
           // Wait for the provider to complete
           await ref.read(myClaimsProvider.future);
         },
-        color: AppTheme.electricPurple,
+        color: AppTheme.voltLime,
         child: claimsAsync.when(
           loading: () => const Center(
-            child: CircularProgressIndicator(color: AppTheme.electricPurple),
+            child: CircularProgressIndicator(color: AppTheme.voltLime),
           ),
           error: (err, _) => Center(
             child: Column(

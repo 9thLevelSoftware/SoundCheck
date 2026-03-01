@@ -55,7 +55,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
       body: bandAsync.when(
         data: (band) => _buildContent(context, band),
         loading: () => const Center(
-          child: CircularProgressIndicator(color: AppTheme.electricPurple),
+          child: CircularProgressIndicator(color: AppTheme.voltLime),
         ),
         error: (error, _) => _buildErrorState(context),
       ),
@@ -127,7 +127,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
                           ? 'Added to wishlist'
                           : 'Removed from wishlist',
                     ),
-                    backgroundColor: AppTheme.electricPurple,
+                    backgroundColor: AppTheme.voltLime,
                   ),
                 );
               },
@@ -135,7 +135,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Find shows coming soon!'),
-                    backgroundColor: AppTheme.electricPurple,
+                    backgroundColor: AppTheme.voltLime,
                   ),
                 );
               },
@@ -278,13 +278,13 @@ class _BandHeader extends StatelessWidget {
                       errorWidget: (_, __, ___) => const Icon(
                         Icons.music_note,
                         size: 40,
-                        color: AppTheme.electricPurple,
+                        color: AppTheme.voltLime,
                       ),
                     )
                   : const Icon(
                       Icons.music_note,
                       size: 40,
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                     ),
             ),
           ),
@@ -523,7 +523,7 @@ class _UpcomingShowsSection extends StatelessWidget {
         children: [
           const _SectionHeader(
             icon: Icons.event,
-            iconColor: AppTheme.liveGreen,
+            iconColor: AppTheme.voltLime,
             title: 'Upcoming Shows',
           ),
           const SizedBox(height: 8),
@@ -579,7 +579,7 @@ class _UpcomingShowItem extends StatelessWidget {
               width: 50,
               padding: const EdgeInsets.symmetric(vertical: 8),
               decoration: BoxDecoration(
-                color: AppTheme.electricPurple.withValues(alpha: 0.2),
+                color: AppTheme.voltLime.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Column(
@@ -587,7 +587,7 @@ class _UpcomingShowItem extends StatelessWidget {
                   Text(
                     monthStr,
                     style: const TextStyle(
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
@@ -595,7 +595,7 @@ class _UpcomingShowItem extends StatelessWidget {
                   Text(
                     dayStr,
                     style: const TextStyle(
-                      color: AppTheme.electricPurple,
+                      color: AppTheme.voltLime,
                       fontWeight: FontWeight.bold,
                       fontSize: 18,
                     ),
@@ -706,7 +706,7 @@ class _ActionBar extends StatelessWidget {
               icon: const Icon(Icons.check_circle),
               label: const Text('Check In'),
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.electricPurple,
+                backgroundColor: AppTheme.voltLime,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 shape: RoundedRectangleBorder(
@@ -730,11 +730,11 @@ class _ActionBar extends StatelessWidget {
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: isOnWishlist
-                    ? AppTheme.electricPurple
+                    ? AppTheme.voltLime
                     : AppTheme.textSecondary,
                 side: BorderSide(
                   color: isOnWishlist
-                      ? AppTheme.electricPurple
+                      ? AppTheme.voltLime
                       : AppTheme.textTertiary,
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -817,7 +817,7 @@ class _DescriptionSectionState extends State<_DescriptionSection> {
                       Text(
                         _isExpanded ? 'Show less' : 'Show more',
                         style: const TextStyle(
-                          color: AppTheme.electricPurple,
+                          color: AppTheme.voltLime,
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
                         ),
@@ -826,7 +826,7 @@ class _DescriptionSectionState extends State<_DescriptionSection> {
                         _isExpanded
                             ? Icons.keyboard_arrow_up
                             : Icons.keyboard_arrow_down,
-                        color: AppTheme.electricPurple,
+                        color: AppTheme.voltLime,
                         size: 20,
                       ),
                     ],
@@ -884,7 +884,7 @@ class _SocialLinksSection extends StatelessWidget {
           if (band.websiteUrl != null)
             _SocialIcon(
               icon: Icons.language,
-              color: AppTheme.electricPurple,
+              color: AppTheme.voltLime,
               onTap: () => _launchUrl(band.websiteUrl!),
               semanticLabel: 'Open website',
             ),
@@ -945,9 +945,9 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
       child: TabBar(
         controller: tabController,
         tabs: tabs.map((t) => Tab(text: t)).toList(),
-        labelColor: AppTheme.electricPurple,
+        labelColor: AppTheme.voltLime,
         unselectedLabelColor: AppTheme.textTertiary,
-        indicatorColor: AppTheme.electricPurple,
+        indicatorColor: AppTheme.voltLime,
         indicatorWeight: 3,
       ),
     );
@@ -1018,7 +1018,7 @@ class _GlobalActivityTab extends ConsumerWidget {
         );
       },
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppTheme.electricPurple),
+        child: CircularProgressIndicator(color: AppTheme.voltLime),
       ),
       error: (error, _) => Center(
         child: Padding(
@@ -1046,7 +1046,7 @@ class _GlobalActivityTab extends ConsumerWidget {
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.electricPurple,
+                  backgroundColor: AppTheme.voltLime,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -1113,7 +1113,7 @@ class _YourActivityTab extends ConsumerWidget {
         );
       },
       loading: () => const Center(
-        child: CircularProgressIndicator(color: AppTheme.electricPurple),
+        child: CircularProgressIndicator(color: AppTheme.voltLime),
       ),
       error: (error, _) => Center(
         child: Padding(
@@ -1141,7 +1141,7 @@ class _YourActivityTab extends ConsumerWidget {
                 icon: const Icon(Icons.refresh, size: 18),
                 label: const Text('Retry'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.electricPurple,
+                  backgroundColor: AppTheme.voltLime,
                   foregroundColor: Colors.white,
                 ),
               ),
@@ -1240,7 +1240,7 @@ class _CheckInPreviewCard extends StatelessWidget {
                           text: venueName,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: AppTheme.electricPurple,
+                            color: AppTheme.voltLime,
                           ),
                         ),
                       ],

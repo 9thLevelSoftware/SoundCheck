@@ -124,8 +124,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
             ],
             bottom: TabBar(
               controller: _tabController,
-              indicatorColor: AppTheme.electricPurple,
-              labelColor: AppTheme.electricPurple,
+              indicatorColor: AppTheme.voltLime,
+              labelColor: AppTheme.voltLime,
               unselectedLabelColor: AppTheme.textTertiary,
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: const TextStyle(
@@ -196,7 +196,7 @@ class _TabWithBadge extends StatelessWidget {
               width: 8,
               height: 8,
               decoration: const BoxDecoration(
-                color: AppTheme.liveGreen,
+                color: AppTheme.voltLime,
                 shape: BoxShape.circle,
               ),
             ),
@@ -212,7 +212,7 @@ class _TabWithBadge extends StatelessWidget {
                   vertical: 2,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.neonPink,
+                  color: AppTheme.hotOrange,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -268,7 +268,7 @@ class _GlobalFeedTabState extends ConsumerState<_GlobalFeedTab> {
     final feedAsync = ref.watch(globalFeedProvider);
 
     return RefreshIndicator(
-      color: AppTheme.electricPurple,
+      color: AppTheme.voltLime,
       backgroundColor: AppTheme.cardDark,
       onRefresh: () async {
         ref.invalidate(globalFeedProvider);
@@ -346,7 +346,7 @@ class _FriendsTabState extends ConsumerState<_FriendsTab> {
     final feedAsync = ref.watch(friendsFeedProvider);
 
     return RefreshIndicator(
-      color: AppTheme.electricPurple,
+      color: AppTheme.voltLime,
       backgroundColor: AppTheme.cardDark,
       onRefresh: () async {
         ref.invalidate(friendsFeedProvider);
@@ -432,7 +432,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
                 label: const Text('Events'),
                 selected: _filter == _EventsFilter.events,
                 onSelected: (_) => setState(() => _filter = _EventsFilter.events),
-                selectedColor: AppTheme.electricPurple,
+                selectedColor: AppTheme.voltLime,
                 backgroundColor: AppTheme.surfaceVariantDark,
                 labelStyle: TextStyle(
                   color: _filter == _EventsFilter.events
@@ -457,7 +457,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
                         height: 6,
                         margin: const EdgeInsets.only(right: 6),
                         decoration: const BoxDecoration(
-                          color: AppTheme.liveGreen,
+                          color: AppTheme.voltLime,
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -467,7 +467,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
                 selected: _filter == _EventsFilter.happeningNow,
                 onSelected: (_) =>
                     setState(() => _filter = _EventsFilter.happeningNow),
-                selectedColor: AppTheme.electricPurple,
+                selectedColor: AppTheme.voltLime,
                 backgroundColor: AppTheme.surfaceVariantDark,
                 labelStyle: TextStyle(
                   color: _filter == _EventsFilter.happeningNow
@@ -498,7 +498,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
     final feedAsync = ref.watch(eventsFeedProvider);
 
     return RefreshIndicator(
-      color: AppTheme.electricPurple,
+      color: AppTheme.voltLime,
       backgroundColor: AppTheme.cardDark,
       onRefresh: () async {
         ref.invalidate(eventsFeedProvider);
@@ -541,7 +541,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
     final groupsAsync = ref.watch(happeningNowProvider);
 
     return RefreshIndicator(
-      color: AppTheme.electricPurple,
+      color: AppTheme.voltLime,
       backgroundColor: AppTheme.cardDark,
       onRefresh: () async {
         ref.invalidate(happeningNowProvider);
@@ -600,7 +600,7 @@ class _FeedLoadingState extends StatelessWidget {
           ),
           child: const Center(
             child: CircularProgressIndicator(
-              color: AppTheme.electricPurple,
+              color: AppTheme.voltLime,
             ),
           ),
         ),
@@ -630,7 +630,7 @@ class _FeedErrorState extends StatelessWidget {
               children: [
                 const Icon(
                   Icons.error_outline,
-                  color: AppTheme.neonPink,
+                  color: AppTheme.hotOrange,
                   size: 48,
                 ),
                 const SizedBox(height: 16),
@@ -655,7 +655,7 @@ class _FeedErrorState extends StatelessWidget {
                 ElevatedButton(
                   onPressed: onRetry,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.electricPurple,
+                    backgroundColor: AppTheme.voltLime,
                   ),
                   child: const Text('Retry'),
                 ),

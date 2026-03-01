@@ -95,7 +95,7 @@ class FeedCard extends ConsumerWidget {
                                 text: item.eventName,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.electricPurple,
+                                  color: AppTheme.voltLime,
                                 ),
                               ),
                               const TextSpan(text: ' @ '),
@@ -103,7 +103,7 @@ class FeedCard extends ConsumerWidget {
                                 text: item.venueName,
                                 style: const TextStyle(
                                   fontWeight: FontWeight.bold,
-                                  color: AppTheme.electricPurple,
+                                  color: AppTheme.voltLime,
                                 ),
                               ),
                             ],
@@ -401,8 +401,8 @@ class _GradientPlaceholder extends StatelessWidget {
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
           colors: [
-            AppTheme.electricPurple.withValues(alpha: 0.3),
-            AppTheme.neonPink.withValues(alpha: 0.3),
+            AppTheme.voltLime.withValues(alpha: 0.3),
+            AppTheme.hotOrange.withValues(alpha: 0.3),
           ],
         ),
       ),
@@ -437,7 +437,7 @@ class _ActionButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = isActive
-        ? (activeColor ?? AppTheme.electricPurple)
+        ? (activeColor ?? AppTheme.voltLime)
         : AppTheme.textTertiary;
 
     return Semantics(
