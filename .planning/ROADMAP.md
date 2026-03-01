@@ -4,6 +4,7 @@
 
 - ✅ **v1.0 MVP** — Phases 1-8 (shipped 2026-02-27)
 - ✅ **v1.1 Launch Readiness & Growth Platform** — Phases 9-12 (shipped 2026-02-28)
+- ✅ **v2.0 Beta Launch** — Phases 13-17 (shipped 2026-03-01)
 
 ## Phases
 
@@ -23,15 +24,14 @@
 
 </details>
 
-### v2.0 Beta Launch
+<details>
+<summary>✅ v2.0 Beta Launch (Phases 13-17) — SHIPPED 2026-03-01</summary>
 
-#### Phase 17: Social Graph & Beta Onramp
-**Goal**: User discovery, global feed, and multi-account demo seeding for beta launch
-**Depends on**: Phases 14, 15
-**Plans:** 2/2 plans complete
-Plans:
-- [x] 17-01-PLAN.md -- Backend: user discovery + global feed + seed content
-- [ ] 17-02-PLAN.md -- Mobile: user discovery UI + global feed tab
+**Total: 5 phases, 10 plans, 28 requirements — all complete**
+**Archive:** `.planning/milestones/v2.0-ROADMAP.md`, `.planning/milestones/v2.0-REQUIREMENTS.md`
+**Audit:** `.planning/milestones/v2.0-AUDIT.md`
+
+</details>
 
 ---
 

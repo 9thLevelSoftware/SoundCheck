@@ -63,13 +63,13 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 
 ### Active
 
-**v2.0 Beta Launch** (Board of Directors assessment, 2026-03-01 — 28 requirements)
-- [ ] Security hardening: rotate secrets, trust proxy, fail-closed rate limiting, secret detection hooks
-- [ ] Production environment: NODE_ENV=production, all env vars configured, CI pipeline fix
-- [ ] Mobile UX: wire onboarding router, fix legal links, dark-only theme, actionable empty states, a11y
-- [ ] Backend integrity: block filter on Wrapped, VenueService fix, idempotency guard, structured logging
-- [ ] Operations: Sentry, uptime monitoring, deployment runbook, smoke tests, staging environment
-- [ ] Social bootstrap: friend discovery screen, share CTA elevation, seed content, RevenueCat API update
+**v2.0 Beta Launch** (Board of Directors assessment, 2026-03-01 — 28 requirements) — **SHIPPED**
+- ✓ Security hardening: trust proxy, fail-closed rate limiting, bcrypt social auth, CI secret scanning — v2.0
+- ✓ Production environment: Railway env documentation, CI pipeline fix, gitleaks — v2.0
+- ✓ Mobile UX: onboarding router, legal links, dark-only, empty states, a11y — v2.0
+- ✓ Backend integrity: block filter on Wrapped, totalReviews fix, idempotency guard, winston logging — v2.0
+- ✓ Operations: Sentry user context, smoke tests, deployment runbook, staging docs — v2.0
+- ✓ Social bootstrap: user discovery, global feed, 5 demo accounts, share CTA elevation, RevenueCat v9 — v2.0
 
 **Future (post-beta)**
 - [ ] Collaborative filtering for recommendations
@@ -90,30 +90,32 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 
 ## Context
 
-**Current State (v1.1 shipped 2026-02-28):**
-- Monorepo: `/backend` (Node.js/Express/TypeScript, 28.7k LOC) and `/mobile` (Flutter/Dart, 32.9k LOC excl. generated)
-- PostgreSQL with 38 migrations, Redis caching, BullMQ job processing
-- 353 tests passing
+**Current State (v2.0 shipped 2026-03-01):**
+- Monorepo: `/backend` (Node.js/Express/TypeScript) and `/mobile` (Flutter/Dart)
+- PostgreSQL with 39 migrations, Redis caching, BullMQ job processing
 - Clean architecture on mobile (data/domain/presentation), MVC + service layer on backend
 - Deployed on Railway.app (single instance)
 - External integrations: Ticketmaster, Foursquare, MusicBrainz, SetlistFM, Firebase, Cloudflare R2, Sentry, RevenueCat, Resend (email), Cloud Vision SafeSearch
 - Full trust & safety pipeline (report/block/moderation/verification)
 - SoundCheck Wrapped + Pro subscription tier
+- User discovery (search + suggestions) and global feed
+- Structured winston logging with Sentry error tracking
+- Smoke tests, deployment runbook, CI with gitleaks
 
-**Known Technical Debt (from v1.1 audit + v2.0 board review):**
+**Remaining Technical Debt:**
 - CheckinService still 1,400 LOC (facade pattern started, ~70% extraction deferred)
 - Legacy `reviews` table coexists with `checkin_band_ratings`
 - 686 hardcoded AppTheme.*Dark color references break light mode (shipping dark-only for beta)
-- Onboarding exists but router never redirects to it (hasSeenOnboarding not checked)
 - No mobile screen for claimed owner stats or band profile edit
-- No friend discovery / suggested users mechanism
-- No staging environment, no load testing
+- No load testing or horizontal scaling
+- 10 pre-existing test failures (CheckinService + UserService UUID validation)
 
 **Shipped Milestones:**
 - v1.0 MVP (2026-02-27): 8 phases, 22 plans, 77 requirements
 - v1.1 Launch Readiness (2026-02-28): 9 phases, 30 plans, 32 requirements
+- v2.0 Beta Launch (2026-03-01): 5 phases, 10 plans, 28 requirements
 
-## Current Milestone: v2.0 Beta Launch (started 2026-03-01)
+## Current Milestone: None (v2.0 complete — ready for next milestone)
 
 ## Constraints
 
