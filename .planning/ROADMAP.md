@@ -23,9 +23,15 @@
 
 </details>
 
-### Next Milestone (TBD)
+### v2.0 Beta Launch
 
-Use `/gsd:new-milestone` to define the next milestone with requirements and roadmap.
+#### Phase 17: Social Graph & Beta Onramp
+**Goal**: User discovery, global feed, and multi-account demo seeding for beta launch
+**Depends on**: Phases 14, 15
+**Plans:** 1/2 plans complete
+Plans:
+- [x] 17-01-PLAN.md -- Backend: user discovery + global feed + seed content
+- [ ] 17-02-PLAN.md -- Mobile: user discovery UI + global feed tab
 
 ---
 
@@ -209,4 +215,4 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-02-28 — v1.1 milestone archived*
+*Last updated: 2026-03-01 — Phase 17-01 complete (user discovery + global feed backend)*

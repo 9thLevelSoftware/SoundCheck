@@ -35,12 +35,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 (Security & Infrastructure Hardening) — COMPLETE
-Plan: 2 of 2 (all plans complete)
+Phase: 17 (Social Graph & Beta Onramp)
+Plan: 1 of 2 (17-01 complete)
 Status: Executing
-Last activity: 2026-03-01 — Completed 13-01 (security hardening: trust proxy, fail-closed, sentinel removal)
+Last activity: 2026-03-01 — Completed 17-01 (backend user discovery, global feed, multi-account demo seeding)
 
-Progress: [█████████████░░░░░░░░░░░░] 20% (phase 13 complete, 2/2 plans done)
+Progress: [█████████████░░░░░░░░░░░░] 25% (phase 17 in progress, 1/2 plans done)
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [█████████████░░░░░░░░░░
 |-------|------|----------|-------|-------|
 | 13 | 01 | 4 min | 3 | 8 |
 | 13 | 02 | 2 min | 3 | 3 |
+| 17 | 01 | 4 min | 7 | 11 |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 - [13-02] CI-based gitleaks over local pre-commit hook for portability and reproducibility
 - [13-02] 4-tier env var organization (startup, core features, full features, optional) for Railway config prioritization
 - [13-02] Keep main/develop in CI triggers alongside master for future branch strategy flexibility
+- [17-01] ILIKE with smart ranking for user search (no tsvector on users table)
+- [17-01] Global feed cache keyed per-user due to block filter being user-specific
+- [17-01] Suggestion scoring: shared bands 3x > shared venues 2x > activity 0.1x
 
 ### Pending Todos
 
@@ -97,6 +101,6 @@ All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-01T16:18:25Z
-Stopped at: Completed 13-01-PLAN.md (security hardening — phase 13 fully complete)
+Last session: 2026-03-01T20:59:21Z
+Stopped at: Completed 17-01-PLAN.md (backend user discovery, global feed, multi-account demo seeding)
 Resume file: None
