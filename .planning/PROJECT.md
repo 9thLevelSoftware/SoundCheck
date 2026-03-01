@@ -48,38 +48,35 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - ✓ Demo account for App Store review — v1.0
 - ✓ Cursor-based pagination on all feed endpoints — v1.0
 - ✓ Audit logging with fire-and-forget pattern — v1.0
+- ✓ Report/flag mechanism, content moderation, venue/artist verification — v1.1
+- ✓ Password reset via email deep link — v1.1
+- ✓ Onboarding carousel + genre picker — v1.1
+- ✓ Social sharing (Instagram Stories, X, TikTok share cards) — v1.1
+- ✓ Event RSVP with friends going — v1.1
+- ✓ Trending shows with Wilson score — v1.1
+- ✓ tsvector + GIN full-text search with fuzzy fallback — v1.1
+- ✓ Denormalized counts with PostgreSQL triggers — v1.1
+- ✓ Genre array migration — v1.1
+- ✓ Venue/artist claim and verification system — v1.1
+- ✓ SoundCheck Wrapped annual recap — v1.1
+- ✓ SoundCheck Pro subscription via RevenueCat — v1.1
 
 ### Active
 
-**Growth & Retention** (identified by Board of Directors gap analysis, 2026-02-27)
-- [ ] Event RSVP / "I'm going" feature for pre-show social loop
-- [ ] External social sharing (Instagram Stories, X, TikTok share cards)
-- [ ] "Trending shows near you this week" between-concert retention feed
-- [ ] Onboarding flow (3-screen carousel for first-time users)
-- [ ] Post-check-in celebration screen with share CTA
+**v2.0 Beta Launch** (Board of Directors assessment, 2026-03-01 — 28 requirements)
+- [ ] Security hardening: rotate secrets, trust proxy, fail-closed rate limiting, secret detection hooks
+- [ ] Production environment: NODE_ENV=production, all env vars configured, CI pipeline fix
+- [ ] Mobile UX: wire onboarding router, fix legal links, dark-only theme, actionable empty states, a11y
+- [ ] Backend integrity: block filter on Wrapped, VenueService fix, idempotency guard, structured logging
+- [ ] Operations: Sentry, uptime monitoring, deployment runbook, smoke tests, staging environment
+- [ ] Social bootstrap: friend discovery screen, share CTA elevation, seed content, RevenueCat API update
 
-**Platform Trust & Safety**
-- [ ] Report/flag mechanism for UGC (App Store Guideline 1.2 requirement)
-- [ ] Content moderation pipeline (image scanning, admin review queue)
-- [ ] Venue/artist verification system
-- [ ] Forgot Password flow (currently stubbed)
-
-**Monetization & B2B**
-- [ ] Artist/venue accounts with claimed profiles
-- [ ] Premium tier ("SoundCheck Pro") design
-- [ ] Venue owner dashboard
-
-**Technical Scale**
-- [ ] PostgreSQL full-text search (tsvector + GIN) replacing ILIKE
-- [ ] Denormalized feed counts (toast_count, comment_count)
-- [ ] Band.genre expanded to array or many-to-many
+**Future (post-beta)**
 - [ ] Collaborative filtering for recommendations
-- [ ] WebSocket horizontal scaling (complete Redis Pub/Sub wiring)
+- [ ] WebSocket horizontal scaling (multi-instance)
 - [ ] Public API with OAuth2 scopes
-
-**Year in Review**
-- [ ] "Year in Shows" / SoundCheck Wrapped annual recap
-- [ ] Shareable recap cards for social media
+- [ ] Venue owner dashboard / B2B tools
+- [ ] Web presence for SEO/sharing
 
 ### Out of Scope
 
@@ -103,22 +100,20 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - Full trust & safety pipeline (report/block/moderation/verification)
 - SoundCheck Wrapped + Pro subscription tier
 
-**Known Technical Debt (from v1.1 audit):**
+**Known Technical Debt (from v1.1 audit + v2.0 board review):**
 - CheckinService still 1,400 LOC (facade pattern started, ~70% extraction deferred)
 - Legacy `reviews` table coexists with `checkin_band_ratings`
-- VenueService maps `total_reviews` to `totalCheckins` (semantic mismatch)
-- purchases_flutter `purchasePackage()` deprecated API
-- Dead code: `showPremiumPaywallSheet`, `serverSubscriptionStatusProvider`
-- WrappedService.getFriendOverlap missing block filter (P3)
+- 686 hardcoded AppTheme.*Dark color references break light mode (shipping dark-only for beta)
+- Onboarding exists but router never redirects to it (hasSeenOnboarding not checked)
 - No mobile screen for claimed owner stats or band profile edit
-- ReviewService.respondToReview has no idempotency guard
+- No friend discovery / suggested users mechanism
 - No staging environment, no load testing
 
 **Shipped Milestones:**
 - v1.0 MVP (2026-02-27): 8 phases, 22 plans, 77 requirements
 - v1.1 Launch Readiness (2026-02-28): 9 phases, 30 plans, 32 requirements
 
-## Current Milestone: None (use `/gsd:new-milestone` to start next)
+## Current Milestone: v2.0 Beta Launch (started 2026-03-01)
 
 ## Constraints
 
@@ -146,4 +141,4 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 | JSONB badge criteria | New badges without code changes | ✓ Good — 37 badges, zero custom code per type |
 
 ---
-*Last updated: 2026-02-27 after v1.1 milestone started*
+*Last updated: 2026-03-01 after v2.0 Beta Launch milestone started*
