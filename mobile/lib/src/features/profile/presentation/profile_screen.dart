@@ -16,11 +16,18 @@ import 'providers/profile_providers.dart';
 /// Profile Screen - Concert resume / concert cred
 /// Modeled after Untappd's profile with stats emphasis.
 /// Consumes the concert cred endpoint for server-side aggregate stats.
-class ProfileScreen extends ConsumerWidget {
+class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  bool _showMore = false;
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
@@ -49,87 +56,122 @@ class ProfileScreen extends ConsumerWidget {
                       child: _MainStatsRow(userId: user.id),
                     ),
 
-                    // Your Wrapped entry point
+                    // Collapsible secondary sections
+                    if (_showMore) ...[
+                      // Your Wrapped entry point
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                          child: InkWell(
+                            onTap: () => context.push('/wrapped/${DateTime.now().year}'),
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: AppTheme.cardDark,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: AppTheme.voltLime.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: AppTheme.voltLime.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(Icons.auto_awesome, color: AppTheme.voltLime, size: 24),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text('Your ${DateTime.now().year} Wrapped',
+                                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                                        const SizedBox(height: 4),
+                                        const Text('See your year in concerts',
+                                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      // Level Progress
+                      SliverToBoxAdapter(
+                        child: _LevelProgress(totalCheckins: user.totalCheckins),
+                      ),
+
+                      // Section: Genre Breakdown
+                      const SliverToBoxAdapter(
+                        child: _SectionHeader(title: 'Top Genres'),
+                      ),
+
+                      // Genre Breakdown (from concert cred)
+                      SliverToBoxAdapter(
+                        child: _GenreBreakdown(userId: user.id),
+                      ),
+
+                      // Section: Top Rated Bands
+                      const SliverToBoxAdapter(
+                        child: _SectionHeader(title: 'Favorite Bands'),
+                      ),
+
+                      // Top Rated Bands
+                      SliverToBoxAdapter(
+                        child: _TopRatedBands(userId: user.id),
+                      ),
+
+                      // Section: Top Rated Venues
+                      const SliverToBoxAdapter(
+                        child: _SectionHeader(title: 'Favorite Venues'),
+                      ),
+
+                      // Top Rated Venues
+                      SliverToBoxAdapter(
+                        child: _TopRatedVenues(userId: user.id),
+                      ),
+                    ],
+
+                    // See More / See Less toggle button
                     SliverToBoxAdapter(
                       child: Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: InkWell(
-                          onTap: () => context.push('/wrapped/${DateTime.now().year}'),
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: AppTheme.cardDark,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.voltLime.withValues(alpha: 0.3)),
-                            ),
-                            child: Row(
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(10),
-                                  decoration: BoxDecoration(
-                                    color: AppTheme.voltLime.withValues(alpha: 0.15),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: const Icon(Icons.auto_awesome, color: AppTheme.voltLime, size: 24),
+                        child: TextButton(
+                          onPressed: () => setState(() => _showMore = !_showMore),
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(0, 44),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                _showMore ? 'See Less' : 'See More',
+                                style: const TextStyle(
+                                  color: AppTheme.electricPurple,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text('Your ${DateTime.now().year} Wrapped',
-                                        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
-                                      const SizedBox(height: 4),
-                                      const Text('See your year in concerts',
-                                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-                                    ],
-                                  ),
-                                ),
-                                const Icon(Icons.chevron_right, color: AppTheme.textTertiary),
-                              ],
-                            ),
+                              ),
+                              const SizedBox(width: 4),
+                              Icon(
+                                _showMore ? Icons.expand_less : Icons.expand_more,
+                                color: AppTheme.electricPurple,
+                                size: 20,
+                              ),
+                            ],
                           ),
                         ),
                       ),
                     ),
 
-                    // Level Progress
-                    SliverToBoxAdapter(
-                      child: _LevelProgress(totalCheckins: user.totalCheckins),
-                    ),
-
-                    // Section: Genre Breakdown
-                    const SliverToBoxAdapter(
-                      child: _SectionHeader(title: 'Top Genres'),
-                    ),
-
-                    // Genre Breakdown (from concert cred)
-                    SliverToBoxAdapter(
-                      child: _GenreBreakdown(userId: user.id),
-                    ),
-
-                    // Section: Top Rated Bands
-                    const SliverToBoxAdapter(
-                      child: _SectionHeader(title: 'Favorite Bands'),
-                    ),
-
-                    // Top Rated Bands
-                    SliverToBoxAdapter(
-                      child: _TopRatedBands(userId: user.id),
-                    ),
-
-                    // Section: Top Rated Venues
-                    const SliverToBoxAdapter(
-                      child: _SectionHeader(title: 'Favorite Venues'),
-                    ),
-
-                    // Top Rated Venues
-                    SliverToBoxAdapter(
-                      child: _TopRatedVenues(userId: user.id),
-                    ),
-
-                    // Section: Badges
+                    // Section: Badges (always visible)
                     SliverToBoxAdapter(
                       child: _SectionHeader(
                         title: 'Badges',
@@ -146,11 +188,15 @@ class ProfileScreen extends ConsumerWidget {
                       child: _BadgesShowcase(userId: user.id),
                     ),
 
-                    // Section: Recent Activity
-                    const SliverToBoxAdapter(
+                    // Section: Recent Activity (always visible)
+                    SliverToBoxAdapter(
                       child: _SectionHeader(
                         title: 'Recent Activity',
                         trailing: 'View All',
+                        onTrailingTap: () {
+                          HapticFeedbackUtil.selectionClick();
+                          context.go('/feed');
+                        },
                       ),
                     ),
 

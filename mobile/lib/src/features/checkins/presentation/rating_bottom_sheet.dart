@@ -158,9 +158,39 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
             // Tab bar
             TabBar(
               controller: _tabController,
-              tabs: const [
-                Tab(text: 'Rate Bands'),
-                Tab(text: 'Rate Venue'),
+              tabs: [
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Rate Bands'),
+                      if (_bandRatings.values.any((r) => r > 0)) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.liveGreen,
+                            size: 16,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+                Tab(
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Text('Rate Venue'),
+                      if (_venueRating > 0) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                            Icons.check_circle,
+                            color: AppTheme.liveGreen,
+                            size: 16,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
               ],
             ),
 
@@ -175,45 +205,62 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
               ),
             ),
 
-            // Submit button
+            // Submit button + helper text
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _hasAnyRatings && !_isSubmitting
-                        ? _submitRatings
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.electricPurple,
-                      disabledBackgroundColor:
-                          AppTheme.electricPurple.withValues(alpha: 0.3),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (!_hasAnyRatings)
+                      const Padding(
+                        padding: EdgeInsets.only(bottom: 8),
+                        child: Text(
+                          'Rate at least one band or the venue to submit',
+                          style: TextStyle(
+                            color: AppTheme.textTertiary,
+                            fontSize: 13,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _hasAnyRatings && !_isSubmitting
+                            ? _submitRatings
+                            : null,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.electricPurple,
+                          disabledBackgroundColor:
+                              AppTheme.electricPurple.withValues(alpha: 0.3),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                        ),
+                        child: _isSubmitting
+                            ? const SizedBox(
+                                width: 24,
+                                height: 24,
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : Text(
+                                'Submit Ratings',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: _hasAnyRatings
+                                      ? AppTheme.backgroundDark
+                                      : AppTheme.textTertiary,
+                                ),
+                              ),
                       ),
                     ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Text(
-                            'Submit Ratings',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: _hasAnyRatings
-                                  ? AppTheme.backgroundDark
-                                  : AppTheme.textTertiary,
-                            ),
-                          ),
-                  ),
+                  ],
                 ),
               ),
             ),
