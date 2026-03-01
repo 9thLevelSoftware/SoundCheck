@@ -240,25 +240,25 @@ class _GlobalFeedTabState extends ConsumerState<_GlobalFeedTab> {
   void _onScroll() {
     if (_scrollController.position.pixels >=
         _scrollController.position.maxScrollExtent - 200) {
-      ref.read(globalFeedNotifierProvider.notifier).loadMore();
+      ref.read(globalFeedProvider.notifier).loadMore();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final feedAsync = ref.watch(globalFeedNotifierProvider);
+    final feedAsync = ref.watch(globalFeedProvider);
 
     return RefreshIndicator(
       color: AppTheme.electricPurple,
       backgroundColor: AppTheme.cardDark,
       onRefresh: () async {
-        ref.invalidate(globalFeedNotifierProvider);
+        ref.invalidate(globalFeedProvider);
       },
       child: feedAsync.when(
         loading: () => const _FeedLoadingState(),
         error: (error, stack) => _FeedErrorState(
           error: error,
-          onRetry: () => ref.invalidate(globalFeedNotifierProvider),
+          onRetry: () => ref.invalidate(globalFeedProvider),
         ),
         data: (items) {
           if (items.isEmpty) {

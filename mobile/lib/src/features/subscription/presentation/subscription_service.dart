@@ -66,7 +66,7 @@ class SubscriptionService {
   /// cancellation. Rethrows PlatformException for actual errors.
   static Future<CustomerInfo?> purchase(Package package) async {
     try {
-      final result = await Purchases.purchasePackage(package);
+      final result = await Purchases.purchase(PurchaseParams.package(package));
       return result.customerInfo;
     } on PlatformException catch (e) {
       final errorCode = PurchasesErrorHelper.getErrorCode(e);
