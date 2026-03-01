@@ -76,6 +76,8 @@ if (!process.env.DATABASE_URL && !process.env.DB_PASSWORD) {
 }
 
 const app = express();
+// Trust first proxy hop (Railway reverse proxy) so req.ip returns real client IP
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Security middleware

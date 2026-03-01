@@ -82,8 +82,8 @@ export async function checkRateLimit(
   windowMs: number
 ): Promise<RateLimitResult> {
   if (!redis) {
-    // Fallback to allowing (in-memory handled by existing middleware)
-    return { allowed: true, remaining: maxRequests, resetAt: Date.now() + windowMs };
+    // Fail-closed: deny when Redis is unavailable (in-memory fallback handled by caller)
+    return { allowed: false, remaining: 0, resetAt: Date.now() + windowMs };
   }
 
   const now = Date.now();
@@ -99,7 +99,8 @@ export async function checkRateLimit(
 
     const results = await pipeline.exec();
     if (!results) {
-      return { allowed: true, remaining: maxRequests, resetAt: now + windowMs };
+      // Fail-closed: deny when pipeline returns no results
+      return { allowed: false, remaining: 0, resetAt: now + windowMs };
     }
 
     // Results format: [[error, result], [error, result], ...]
@@ -116,8 +117,8 @@ export async function checkRateLimit(
     };
   } catch (error) {
     console.error('Rate limit check error:', error);
-    // On error, allow the request through (fail-open)
-    return { allowed: true, remaining: maxRequests, resetAt: now + windowMs };
+    // Fail-closed: deny when rate limit check errors
+    return { allowed: false, remaining: 0, resetAt: now + windowMs };
   }
 }
 
@@ -177,8 +178,12 @@ export class RedisRateLimiter {
         next();
       } catch (error) {
         console.error('Rate limiting error:', error);
-        // On error, allow the request through (fail-open)
-        next();
+        // Fail-closed: deny request when rate limiting fails
+        const response: ApiResponse = {
+          success: false,
+          error: 'Service temporarily unavailable, please try again later',
+        };
+        res.status(429).json(response);
       }
     };
   }

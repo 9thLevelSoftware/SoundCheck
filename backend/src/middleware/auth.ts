@@ -259,9 +259,13 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
 
       next();
     } catch (error) {
-      // On any error, fail-open (allow request through)
       console.error('Rate limit error:', error);
-      next();
+      // Fail-closed: deny request when rate limiting is unavailable
+      const response: ApiResponse = {
+        success: false,
+        error: 'Service temporarily unavailable, please try again later',
+      };
+      res.status(429).json(response);
     }
   };
 };
