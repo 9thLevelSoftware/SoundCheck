@@ -31,6 +31,7 @@ import '../../features/verification/presentation/my_claims_screen.dart';
 import '../../features/wrapped/presentation/wrapped_story_screen.dart';
 import '../../features/wrapped/presentation/wrapped_detail_screen.dart';
 import '../../features/subscription/presentation/pro_feature_screen.dart';
+import '../../features/search/presentation/discover_users_screen.dart';
 import '../../shared/widgets/scaffold_with_nav_bar.dart';
 
 part 'app_router.g.dart';
@@ -617,6 +618,30 @@ GoRouter goRouter(Ref ref) {
           return CustomTransitionPage(
             key: state.pageKey,
             child: WrappedDetailScreen(year: year),
+            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+              const begin = Offset(1.0, 0.0);
+              const end = Offset.zero;
+              const curve = Curves.easeInOut;
+              final tween = Tween(begin: begin, end: end).chain(
+                CurveTween(curve: curve),
+              );
+              return SlideTransition(
+                position: animation.drive(tween),
+                child: child,
+              );
+            },
+          );
+        },
+      ),
+
+      // Discover Users Route
+      GoRoute(
+        path: '/discover/users',
+        name: 'discover-users',
+        pageBuilder: (context, state) {
+          return CustomTransitionPage(
+            key: state.pageKey,
+            child: const DiscoverUsersScreen(),
             transitionsBuilder: (context, animation, secondaryAnimation, child) {
               const begin = Offset(1.0, 0.0);
               const end = Offset.zero;

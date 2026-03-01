@@ -262,7 +262,7 @@ class _FriendsTabState extends ConsumerState<_FriendsTab> {
                   customTitle: 'No friend activity yet',
                   customMessage: 'Follow friends to see their check-ins here!',
                   actionLabel: 'Find Friends',
-                  onAction: () => context.go('/discover'),
+                  onAction: () => context.push('/discover/users'),
                 ),
               ],
             );
