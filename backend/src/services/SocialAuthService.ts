@@ -6,9 +6,7 @@ import { AuthUtils } from '../utils/auth';
 import { generateRefreshToken } from '../utils/auth';
 import { mapDbUserToUser } from '../utils/dbMappers';
 import { PoolClient } from 'pg';
-
-// Placeholder password for social auth users (they authenticate via provider, not password)
-const SOCIAL_AUTH_NO_PASSWORD = '$SOCIAL_AUTH$';
+import crypto from 'crypto';
 
 /**
  * Profile information extracted from social auth tokens
@@ -283,7 +281,11 @@ export class SocialAuthService {
       const baseUsername = this.generateBaseUsername(profile);
       const username = await this.generateUniqueUsernameWithClient(client, baseUsername);
 
-      // Create user with placeholder password (social-only auth)
+      // Generate random password hash for social auth users (not guessable, not plaintext)
+      const randomPassword = crypto.randomBytes(32).toString('hex');
+      const hashedPlaceholder = await AuthUtils.hashPassword(randomPassword);
+
+      // Create user with random bcrypt hash (social auth users authenticate via provider)
       const result = await client.query(
         `INSERT INTO users (email, password_hash, username, first_name, last_name, profile_image_url, is_verified)
          VALUES ($1, $2, $3, $4, $5, $6, true)
@@ -291,7 +293,7 @@ export class SocialAuthService {
                    location, date_of_birth, is_verified, is_active, created_at, updated_at`,
         [
           profile.email.toLowerCase(),
-          SOCIAL_AUTH_NO_PASSWORD, // Recognizable placeholder for social auth users
+          hashedPlaceholder, // Random bcrypt hash (social auth users authenticate via provider)
           username,
           profile.firstName || null,
           profile.lastName || null,

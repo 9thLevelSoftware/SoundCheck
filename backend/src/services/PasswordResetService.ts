@@ -1,13 +1,9 @@
 import crypto from 'crypto';
-import bcrypt from 'bcryptjs';
 import Database from '../config/database';
 import { EmailService } from './EmailService';
 import { AuthUtils } from '../utils/auth';
 import { revokeAllUserTokens } from '../utils/auth';
 import logger, { logInfo, logWarn, logError } from '../utils/logger';
-
-// Placeholder password for social auth users (matches SocialAuthService constant)
-const SOCIAL_AUTH_NO_PASSWORD = '$SOCIAL_AUTH$';
 
 /**
  * PasswordResetService handles the full forgot-password lifecycle:
@@ -39,7 +35,7 @@ export class PasswordResetService {
     try {
       // Look up user by email
       const userResult = await this.db.query(
-        'SELECT id, password FROM users WHERE LOWER(email) = $1 AND is_active = true',
+        'SELECT id, password_hash FROM users WHERE LOWER(email) = $1 AND is_active = true',
         [normalizedEmail]
       );
 
@@ -51,8 +47,12 @@ export class PasswordResetService {
 
       const user = userResult.rows[0];
 
-      // Check if social-auth-only user
-      if (user.password === SOCIAL_AUTH_NO_PASSWORD) {
+      // Check if social-auth-only user (via social accounts table, not password sentinel)
+      const socialResult = await this.db.query(
+        'SELECT 1 FROM user_social_accounts WHERE user_id = $1 LIMIT 1',
+        [user.id]
+      );
+      if (socialResult.rows.length > 0) {
         logInfo('Password reset requested for social auth user', { userId: user.id });
         return {
           sent: false,
@@ -127,7 +127,7 @@ export class PasswordResetService {
 
     // Update user password
     await this.db.query(
-      'UPDATE users SET password = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       [passwordHash, userId]
     );
 
