@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../core/theme/app_theme.dart';
+import '../../features/notifications/presentation/providers/notification_providers.dart';
 
 /// A scaffold with a custom bottom navigation bar featuring:
 /// - 5 tabs: Feed, Discover, [Check-In Button], Profile, Notifications
@@ -111,11 +113,17 @@ class _CustomBottomNavBar extends StatelessWidget {
                     onTap: () => onTap(3),
                   ),
                   // Notifications
-                  _NavItem(
-                    icon: Icons.notifications,
-                    label: 'Notifications',
-                    isSelected: selectedIndex == 4,
-                    onTap: () => onTap(4),
+                  Consumer(
+                    builder: (context, ref, child) {
+                      final unreadCount = ref.watch(unreadNotificationCountProvider);
+                      return _NavItem(
+                        icon: Icons.notifications,
+                        label: 'Notifications',
+                        isSelected: selectedIndex == 4,
+                        onTap: () => onTap(4),
+                        badgeCount: unreadCount.asData?.value ?? 0,
+                      );
+                    },
                   ),
                 ],
               ),
@@ -140,12 +148,14 @@ class _NavItem extends StatelessWidget {
     required this.label,
     required this.isSelected,
     required this.onTap,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final String label;
   final bool isSelected;
   final VoidCallback onTap;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
@@ -163,12 +173,31 @@ class _NavItem extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  icon,
-                  size: 24,
-                  color: isSelected
-                      ? AppTheme.voltLime
-                      : AppTheme.textTertiary,
+                Builder(
+                  builder: (context) {
+                    final iconSize = IconTheme.of(context).size ?? 24;
+                    final iconWidget = Icon(
+                      icon,
+                      size: iconSize,
+                      color: isSelected
+                          ? AppTheme.voltLime
+                          : AppTheme.textTertiary,
+                    );
+                    return badgeCount > 0
+                        ? Badge(
+                            label: Text(
+                              badgeCount > 99 ? '99+' : '$badgeCount',
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            backgroundColor: AppTheme.hotOrange,
+                            child: iconWidget,
+                          )
+                        : iconWidget;
+                  },
                 ),
                 const SizedBox(height: 4),
                 Text(
