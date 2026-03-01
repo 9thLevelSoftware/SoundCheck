@@ -162,7 +162,17 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
             ),
             const SizedBox(height: 24),
 
-            // Badge progress section
+            // Share card preview - PRIMARY CTA (elevated above badges)
+            ShareCardPreview(
+              cardUrls: cardUrls,
+              shareText:
+                  'I just checked in at ${params.venueName} for ${params.bandName}!',
+              shareUrl:
+                  'https://soundcheck-app.up.railway.app/share/c/${params.checkinId}',
+            ),
+            const SizedBox(height: 24),
+
+            // Badge progress section (secondary)
             if (params.earnedBadges.isNotEmpty) ...[
               _buildBadgeSection(params.earnedBadges),
               const SizedBox(height: 16),
@@ -172,36 +182,14 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
             _buildBadgeProgressSection(),
             const SizedBox(height: 24),
 
-            // Share card preview
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Share your check-in',
-                style: TextStyle(
-                  color: AppTheme.textSecondary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ),
-            const SizedBox(height: 12),
-            ShareCardPreview(
-              cardUrls: cardUrls,
-              shareText:
-                  'I just checked in at ${params.venueName} for ${params.bandName}!',
-              shareUrl:
-                  'https://soundcheck-app.up.railway.app/share/c/${params.checkinId}',
-            ),
-            const SizedBox(height: 32),
-
-            // Done button
+            // Done button - DEMOTED to ghost/outlined style
             SizedBox(
               width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
+              height: 48,
+              child: OutlinedButton(
                 onPressed: () => context.pop(),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.voltLime,
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: AppTheme.textTertiary),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
@@ -209,9 +197,8 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
                 child: const Text(
                   'Done',
                   style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppTheme.backgroundDark,
+                    fontSize: 16,
+                    color: AppTheme.textSecondary,
                   ),
                 ),
               ),
