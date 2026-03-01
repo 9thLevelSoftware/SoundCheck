@@ -59,10 +59,10 @@
 
 ## Color & Theme Cleanup (4)
 
-- [ ] **UIUX-28**: Remove `electricPurple` alias — replace all references with `voltLime` (they resolve to the same `0xFFD2FF00`) to eliminate maintenance confusion (`app_theme.dart:68`)
-- [ ] **UIUX-29**: Remove `liveGreen` alias — replace all references with `voltLime` (`app_theme.dart:72`)
-- [ ] **UIUX-30**: Rename bottom nav "Alerts" label to "Notifications" — platform convention per Jakob's Law (`scaffold_with_nav_bar.dart:116`)
-- [ ] **UIUX-31**: Add unread notification count badge to bottom nav Notifications tab — Feed tabs have badges but Notifications does not (`scaffold_with_nav_bar.dart`)
+- [x] **UIUX-28**: Remove `electricPurple` alias — replace all references with `voltLime` (they resolve to the same `0xFFD2FF00`) to eliminate maintenance confusion (`app_theme.dart:68`)
+- [x] **UIUX-29**: Remove `liveGreen` alias — replace all references with `voltLime` (`app_theme.dart:72`)
+- [x] **UIUX-30**: Rename bottom nav "Alerts" label to "Notifications" — platform convention per Jakob's Law (`scaffold_with_nav_bar.dart:116`)
+- [x] **UIUX-31**: Add unread notification count badge to bottom nav Notifications tab — Feed tabs have badges but Notifications does not (`scaffold_with_nav_bar.dart`)
 
 ## Light Mode Preparation (2)
 
@@ -112,10 +112,10 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | UIUX-25 | Phase 20 | Pending |
 | UIUX-26 | Phase 20 | Pending |
 | UIUX-27 | Phase 20 | Pending |
-| UIUX-28 | Phase 21 | Pending |
-| UIUX-29 | Phase 21 | Pending |
-| UIUX-30 | Phase 21 | Pending |
-| UIUX-31 | Phase 21 | Pending |
+| UIUX-28 | Phase 21 | Complete |
+| UIUX-29 | Phase 21 | Complete |
+| UIUX-30 | Phase 21 | Complete |
+| UIUX-31 | Phase 21 | Complete |
 | UIUX-32 | Phase 21 | Pending |
 | UIUX-33 | Phase 21 | Pending |
 
