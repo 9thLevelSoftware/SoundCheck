@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/empty_state_widget.dart';
 import 'providers/feed_providers.dart';
 import 'widgets/feed_card.dart';
 import 'widgets/happening_now_card.dart';
@@ -102,6 +103,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
             actions: [
               IconButton(
                 icon: const Icon(Icons.search),
+                tooltip: 'Search',
                 onPressed: () => context.push('/discover'),
               ),
             ],
@@ -253,10 +255,16 @@ class _FriendsTabState extends ConsumerState<_FriendsTab> {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return const _FeedEmptyState(
-              icon: Icons.music_note,
-              title: 'No check-ins yet',
-              message: 'Follow friends to see their check-ins here!',
+            return ListView(
+              children: [
+                EmptyStateWidget(
+                  type: EmptyStateType.general,
+                  customTitle: 'No friend activity yet',
+                  customMessage: 'Follow friends to see their check-ins here!',
+                  actionLabel: 'Find Friends',
+                  onAction: () => context.go('/discover'),
+                ),
+              ],
             );
           }
 
@@ -315,10 +323,16 @@ class _EventsTab extends ConsumerWidget {
         ),
         data: (items) {
           if (items.isEmpty) {
-            return const _FeedEmptyState(
-              icon: Icons.event,
-              title: 'No event activity yet',
-              message: 'Check in to a show to see who else was there!',
+            return ListView(
+              children: [
+                EmptyStateWidget(
+                  type: EmptyStateType.general,
+                  customTitle: 'No event activity yet',
+                  customMessage: 'RSVP to upcoming events to see activity here!',
+                  actionLabel: 'Discover Events',
+                  onAction: () => context.go('/discover'),
+                ),
+              ],
             );
           }
 
@@ -357,10 +371,16 @@ class _HappeningNowTab extends ConsumerWidget {
         ),
         data: (groups) {
           if (groups.isEmpty) {
-            return const _FeedEmptyState(
-              icon: Icons.nightlife,
-              title: 'No one is out right now',
-              message: 'None of your friends are at shows right now',
+            return ListView(
+              children: [
+                EmptyStateWidget(
+                  type: EmptyStateType.general,
+                  customTitle: 'No one\'s checked in right now',
+                  customMessage: 'Check in to a show to be the first! Your friends will see you here when they follow you.',
+                  actionLabel: 'Explore Events',
+                  onAction: () => context.go('/discover'),
+                ),
+              ],
             );
           }
 
@@ -464,55 +484,3 @@ class _FeedErrorState extends StatelessWidget {
   }
 }
 
-class _FeedEmptyState extends StatelessWidget {
-  const _FeedEmptyState({
-    required this.icon,
-    required this.title,
-    required this.message,
-  });
-
-  final IconData icon;
-  final String title;
-  final String message;
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  icon,
-                  color: AppTheme.textTertiary,
-                  size: 64,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  message,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}

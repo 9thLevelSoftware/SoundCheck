@@ -187,7 +187,7 @@ class _OwnerResponseBottomSheetState
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                            color: Colors.white,
+                            color: AppTheme.backgroundDark,
                             strokeWidth: 2,
                           ),
                         )
@@ -197,7 +197,7 @@ class _OwnerResponseBottomSheetState
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: text.isNotEmpty
-                                ? Colors.white
+                                ? AppTheme.backgroundDark
                                 : AppTheme.textTertiary,
                           ),
                         ),

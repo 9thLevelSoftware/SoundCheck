@@ -182,6 +182,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
         backgroundColor: AppTheme.backgroundDark,
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: 'Close',
           onPressed: () => context.pop(),
         ),
         title: const Text(

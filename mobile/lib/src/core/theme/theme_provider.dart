@@ -18,7 +18,7 @@ class ThemeSetting extends _$ThemeSetting {
   @override
   AppThemeMode build() {
     _loadTheme();
-    return AppThemeMode.system; // Default value
+    return AppThemeMode.dark; // Beta: dark-only
   }
 
   Future<void> _loadTheme() async {
@@ -53,17 +53,8 @@ class ThemeSetting extends _$ThemeSetting {
   }
 
   Future<void> setTheme(AppThemeMode mode) async {
-    switch (mode) {
-      case AppThemeMode.light:
-        await setLightTheme();
-        break;
-      case AppThemeMode.dark:
-        await setDarkTheme();
-        break;
-      case AppThemeMode.system:
-        await setSystemTheme();
-        break;
-    }
+    // Beta: force dark-only regardless of input
+    await setDarkTheme();
   }
 
   Future<void> toggleTheme() async {

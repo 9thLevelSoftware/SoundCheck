@@ -25,6 +25,7 @@ import '../../features/sharing/presentation/celebration_screen.dart';
 import '../../features/events/presentation/event_detail_screen.dart';
 import '../../features/onboarding/presentation/onboarding_screen.dart';
 import '../../features/onboarding/presentation/genre_picker_screen.dart';
+import '../../features/onboarding/presentation/onboarding_provider.dart';
 import '../../features/verification/presentation/claim_submission_screen.dart';
 import '../../features/verification/presentation/my_claims_screen.dart';
 import '../../features/wrapped/presentation/wrapped_story_screen.dart';
@@ -48,6 +49,8 @@ class _AuthStateNotifier extends ChangeNotifier {
 @riverpod
 GoRouter goRouter(Ref ref) {
   final authState = ref.watch(authStateProvider);
+  final onboardingState = ref.watch(onboardingStateProvider);
+  final hasSeenOnboarding = onboardingState.asData?.value ?? true; // default true to avoid blocking on load
   final notifier = _AuthStateNotifier(ref);
 
   return GoRouter(
@@ -72,8 +75,8 @@ GoRouter goRouter(Ref ref) {
         return null;
       }
 
-      // Allow onboarding pages without authentication
-      if (isOnOnboardingPage) {
+      // Allow onboarding pages for unauthenticated users
+      if (isOnOnboardingPage && !isAuthenticated) {
         return null;
       }
 
@@ -82,11 +85,16 @@ GoRouter goRouter(Ref ref) {
         return '/splash';
       }
 
+      // First-time user: show onboarding before login
+      if (!isAuthenticated && !hasSeenOnboarding && !isOnOnboardingPage && !isOnAuthPage) {
+        return '/onboarding';
+      }
+
       if (!isAuthenticated && !isOnAuthPage) {
         return '/login';
       }
 
-      if (isAuthenticated && isOnAuthPage) {
+      if (isAuthenticated && (isOnAuthPage || isOnOnboardingPage)) {
         return '/feed';
       }
 

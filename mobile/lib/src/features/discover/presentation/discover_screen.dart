@@ -151,6 +151,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                                     Icons.clear,
                                     color: AppTheme.textTertiary,
                                   ),
+                                  tooltip: 'Clear Search',
                                   onPressed: _clearSearch,
                                 )
                               : null,
@@ -171,6 +172,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
             actions: [
               // Map Toggle Button
               IconButton(
+                tooltip: 'Toggle Map View',
                 icon: Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(

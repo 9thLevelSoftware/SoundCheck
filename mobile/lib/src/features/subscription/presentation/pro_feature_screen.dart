@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/analytics_service.dart';
@@ -16,6 +17,13 @@ class ProFeatureScreen extends ConsumerStatefulWidget {
 class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
   bool _isPurchasing = false;
   bool _isRestoring = false;
+
+  Future<void> _launchUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   void initState() {
@@ -180,14 +188,14 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => _launchUrl('https://soundcheck.app/terms'),
                   child: const Text('Terms of Service',
                       style: TextStyle(fontSize: 12)),
                 ),
                 const Text(' | ',
                     style: TextStyle(color: AppTheme.textTertiary)),
                 TextButton(
-                  onPressed: () {},
+                  onPressed: () => _launchUrl('https://soundcheck.app/privacy'),
                   child: const Text('Privacy Policy',
                       style: TextStyle(fontSize: 12)),
                 ),

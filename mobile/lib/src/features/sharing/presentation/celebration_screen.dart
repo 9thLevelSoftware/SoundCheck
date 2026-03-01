@@ -87,6 +87,7 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
         backgroundColor: AppTheme.backgroundDark,
         leading: IconButton(
           icon: const Icon(Icons.close),
+          tooltip: 'Close',
           onPressed: () => context.pop(),
         ),
         title: const Text(

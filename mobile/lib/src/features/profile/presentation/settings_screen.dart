@@ -5,7 +5,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'settings_provider.dart';
 import 'providers/profile_providers.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/theme/theme_provider.dart' as theme_provider;
 import '../../../core/providers/providers.dart';
 import '../../../core/utils/app_info.dart';
 
@@ -21,7 +20,6 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final themeMode = ref.watch(theme_provider.themeSettingProvider);
     final notificationSettings = ref.watch(notificationSettingsProvider);
 
     return Scaffold(
@@ -43,31 +41,10 @@ class SettingsScreen extends ConsumerWidget {
               const _SectionHeader(title: 'Appearance'),
               _SettingsTile(
                 title: 'Theme',
-                subtitle: _getThemeModeLabel(themeMode),
+                subtitle: 'Dark',
                 leading: const Icon(Icons.palette_outlined),
-                trailing: DropdownButton<theme_provider.AppThemeMode>(
-                  value: themeMode,
-                  underline: const SizedBox(),
-                  items: const [
-                    DropdownMenuItem(
-                      value: theme_provider.AppThemeMode.system,
-                      child: Text('System'),
-                    ),
-                    DropdownMenuItem(
-                      value: theme_provider.AppThemeMode.light,
-                      child: Text('Light'),
-                    ),
-                    DropdownMenuItem(
-                      value: theme_provider.AppThemeMode.dark,
-                      child: Text('Dark'),
-                    ),
-                  ],
-                  onChanged: (theme_provider.AppThemeMode? mode) {
-                    if (mode != null) {
-                      ref.read(theme_provider.themeSettingProvider.notifier).setTheme(mode);
-                    }
-                  },
-                ),
+                trailing: const Text('Dark',
+                    style: TextStyle(color: AppTheme.textSecondary)),
               ),
               const Divider(),
 
@@ -265,16 +242,6 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  String _getThemeModeLabel(theme_provider.AppThemeMode mode) {
-    switch (mode) {
-      case theme_provider.AppThemeMode.light:
-        return 'Light';
-      case theme_provider.AppThemeMode.dark:
-        return 'Dark';
-      case theme_provider.AppThemeMode.system:
-        return 'System';
-    }
-  }
 }
 
 class _SectionHeader extends StatelessWidget {

@@ -147,6 +147,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           else
             IconButton(
               icon: const Icon(Icons.check),
+              tooltip: 'Save',
               onPressed: _saveProfile,
             ),
         ],
@@ -191,6 +192,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                             size: 20,
                             color: Colors.white,
                           ),
+                          tooltip: 'Change Photo',
                           onPressed: _pickImage,
                         ),
                       ),

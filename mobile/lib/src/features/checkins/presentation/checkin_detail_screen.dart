@@ -145,6 +145,7 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
                 children: [
                   IconButton(
                     icon: const Icon(Icons.share),
+                    tooltip: 'Share',
                     onPressed: () => _handleShare(checkIn),
                   ),
                   if (!isOwnContent)

@@ -227,6 +227,7 @@ class _ProfileHeader extends ConsumerWidget {
             children: [
               IconButton(
                 icon: const Icon(Icons.share, color: Colors.white),
+                tooltip: 'Share Profile',
                 onPressed: () {
                   HapticFeedbackUtil.selectionClick();
                   ScaffoldMessenger.of(context).showSnackBar(
@@ -239,6 +240,7 @@ class _ProfileHeader extends ConsumerWidget {
               ),
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white),
+                tooltip: 'Settings',
                 onPressed: () {
                   HapticFeedbackUtil.selectionClick();
                   context.push('/profile/settings');
