@@ -156,6 +156,7 @@ class _PremiumPaywallSheetState extends ConsumerState<PremiumPaywallSheet> {
             ),
             const SizedBox(height: 8),
             TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
               onPressed: _isRestoring ? null : _onRestore,
               child:
                   Text(_isRestoring ? 'Restoring...' : 'Restore Purchases'),

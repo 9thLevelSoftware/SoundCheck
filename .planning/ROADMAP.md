@@ -244,7 +244,10 @@ Plans:
   3. First Name and Last Name fields labeled "(optional)"
   4. Password field shows strength indicator (weak/medium/strong)
   5. Email format and confirm-password mismatch validated inline before submit
-**Plans**: 2 plans (1: touch target sweep, 2: registration form UX)
+**Plans**: 2/2 plans complete
+Plans:
+- [x] 19-01-PLAN.md — Touch target sweep (Clear, Restore Purchases, See All, Mark all read TextButtons → 44px; venue verified badge padding)
+- [x] 19-02-PLAN.md — Registration form UX (optional labels, password strength indicator, username availability check, inline validation)
 
 ### Phase 20: UX Restructuring
 **Goal**: Reduce cognitive overload on feed, profile, check-in rating, and check-in vibes by consolidating tabs, collapsing sections, clarifying the rating sheet, and reducing vibe choices.
@@ -282,12 +285,12 @@ Phase 19 ──────┘
 | Phase | Plans Complete | Status |
 |-------|----------------|--------|
 | 18. WCAG Contrast & Accessibility | 2/2 | Complete |
-| 19. Touch Targets & Registration UX | 0/2 | Pending |
+| 19. Touch Targets & Registration UX | 2/2 | Complete |
 | 20. UX Restructuring | 0/3 | Pending |
 | 21. Theme Cleanup & Light Mode Prep | 0/2 | Pending |
 
-**Total: 10/33 requirements complete**
+**Total: 19/33 requirements complete**
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-03-01 — v3.0 UI/UX Design Audit milestone started (Phases 18-21, 33 requirements)*
+*Last updated: 2026-03-01 — Phase 19 complete (touch targets + registration UX) — 19/33 v3.0 requirements done*

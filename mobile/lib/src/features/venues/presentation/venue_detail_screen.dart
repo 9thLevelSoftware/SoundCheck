@@ -139,19 +139,19 @@ class _VenueContent extends ConsumerWidget {
                               message: 'Verified venue',
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 10,
+                                  vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppTheme.primary.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: const Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Icon(
                                       Icons.verified,
-                                      size: 16,
+                                      size: 20,
                                       color: AppTheme.primary,
                                     ),
                                     SizedBox(width: 4),
@@ -172,19 +172,19 @@ class _VenueContent extends ConsumerWidget {
                               message: 'Verified venue',
                               child: Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 8,
-                                  vertical: 4,
+                                  horizontal: 10,
+                                  vertical: 12,
                                 ),
                                 decoration: BoxDecoration(
                                   color: AppTheme.info.withValues(alpha: 0.2),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(16),
                                 ),
                                 child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: const [
                                     Icon(
                                       Icons.verified,
-                                      size: 16,
+                                      size: 20,
                                       color: AppTheme.info,
                                     ),
                                     SizedBox(width: 4),
@@ -596,6 +596,7 @@ class _UpcomingEventsSection extends StatelessWidget {
                 ],
               ),
               TextButton(
+                style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
                 onPressed: () {
                   context.push('/venues/$venueId/shows');
                 },

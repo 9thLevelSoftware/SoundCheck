@@ -226,6 +226,7 @@ class VenueFiltersSheet extends ConsumerWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
               onPressed: () => notifier.setMinRating(null),
               child: const Text('Clear'),
             ),
@@ -302,6 +303,7 @@ class VenueFiltersSheet extends ConsumerWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
               onPressed: () => notifier.setCapacityRange(min: null, max: null),
               child: const Text('Clear'),
             ),

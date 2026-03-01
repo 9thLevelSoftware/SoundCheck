@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -24,9 +26,82 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   bool _isLoading = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  double _passwordStrength = 0.0;
+  String _passwordStrengthLabel = '';
+  Color _passwordStrengthColor = Colors.transparent;
+  String? _usernameAvailabilityMessage;
+  bool _isCheckingUsername = false;
+  Timer? _usernameDebounce;
+
+  @override
+  void initState() {
+    super.initState();
+    _passwordController.addListener(() {
+      _updatePasswordStrength();
+      if (_confirmPasswordController.text.isNotEmpty) {
+        _formKey.currentState?.validate();
+      }
+    });
+    _usernameController.addListener(_checkUsernameAvailability);
+  }
+
+  void _updatePasswordStrength() {
+    final password = _passwordController.text;
+    int score = 0;
+    if (password.length >= 8) score++;
+    if (RegExp(r'[a-z]').hasMatch(password)) score++;
+    if (RegExp(r'[A-Z]').hasMatch(password)) score++;
+    if (RegExp(r'\d').hasMatch(password)) score++;
+    if (RegExp(r'[@$!%*?&]').hasMatch(password)) score++;
+
+    setState(() {
+      _passwordStrength = score / 5.0;
+      if (score <= 1) {
+        _passwordStrengthLabel = 'Weak';
+        _passwordStrengthColor = AppTheme.error;
+      } else if (score <= 3) {
+        _passwordStrengthLabel = 'Medium';
+        _passwordStrengthColor = AppTheme.warning;
+      } else {
+        _passwordStrengthLabel = 'Strong';
+        _passwordStrengthColor = AppTheme.success;
+      }
+    });
+  }
+
+  void _checkUsernameAvailability() {
+    _usernameDebounce?.cancel();
+
+    final username = _usernameController.text.trim();
+
+    if (username.length < 3 || Validators.username(username) != null) {
+      setState(() {
+        _usernameAvailabilityMessage = null;
+        _isCheckingUsername = false;
+      });
+      return;
+    }
+
+    setState(() => _isCheckingUsername = true);
+
+    _usernameDebounce = Timer(const Duration(milliseconds: 500), () async {
+      final authRepo = ref.read(authRepositoryProvider);
+      final available = await authRepo.checkUsernameAvailability(username);
+
+      if (mounted && _usernameController.text.trim() == username) {
+        setState(() {
+          _isCheckingUsername = false;
+          _usernameAvailabilityMessage = available
+              ? null
+              : 'Username is already taken';
+        });
+      }
+    });
+  }
 
   @override
   void dispose() {
+    _usernameDebounce?.cancel();
     _emailController.dispose();
     _usernameController.dispose();
     _passwordController.dispose();
@@ -122,6 +197,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
           padding: const EdgeInsets.all(AppTheme.spacing24),
           child: Form(
             key: _formKey,
+            autovalidateMode: AutovalidateMode.onUserInteraction,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -164,12 +240,31 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   keyboardType: TextInputType.text,
                   autofillHints: const [AutofillHints.username],
                   textInputAction: TextInputAction.next,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Username *',
                     hintText: 'Choose a username',
-                    prefixIcon: Icon(Icons.person_outlined),
+                    prefixIcon: const Icon(Icons.person_outlined),
+                    suffixIcon: _isCheckingUsername
+                        ? const Padding(
+                            padding: EdgeInsets.all(12),
+                            child: SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                          )
+                        : _usernameAvailabilityMessage != null
+                            ? const Icon(Icons.error_outline, color: AppTheme.error)
+                            : _usernameController.text.trim().length >= 3
+                                ? const Icon(Icons.check_circle_outline, color: AppTheme.success)
+                                : null,
                   ),
-                  validator: Validators.username,
+                  validator: (value) {
+                    final formatError = Validators.username(value);
+                    if (formatError != null) return formatError;
+                    if (_usernameAvailabilityMessage != null) return _usernameAvailabilityMessage;
+                    return null;
+                  },
                 ),
                 const SizedBox(height: AppTheme.spacing16),
 
@@ -181,7 +276,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'First Name',
+                    labelText: 'First Name (optional)',
                     hintText: 'Enter your first name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
@@ -196,7 +291,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   textInputAction: TextInputAction.next,
                   textCapitalization: TextCapitalization.words,
                   decoration: const InputDecoration(
-                    labelText: 'Last Name',
+                    labelText: 'Last Name (optional)',
                     hintText: 'Enter your last name',
                     prefixIcon: Icon(Icons.person_outline),
                   ),
@@ -227,8 +322,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   validator: Validators.password,
                 ),
+                if (_passwordController.text.isNotEmpty) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: _passwordStrength,
+                            backgroundColor: AppTheme.cardDark,
+                            valueColor: AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
+                            minHeight: 4,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        _passwordStrengthLabel,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: _passwordStrengthColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
                 const SizedBox(height: AppTheme.spacing16),
-                
+
                 // Confirm Password Field
                 TextFormField(
                   controller: _confirmPasswordController,

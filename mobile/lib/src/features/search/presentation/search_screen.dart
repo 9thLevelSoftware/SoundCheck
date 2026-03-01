@@ -409,6 +409,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
     return Padding(
       padding: const EdgeInsets.only(top: AppTheme.spacing4),
       child: TextButton(
+        style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
         onPressed: onTap,
         child: Text(
           label,

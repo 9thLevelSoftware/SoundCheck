@@ -30,6 +30,7 @@ class NotificationsScreen extends ConsumerWidget {
           notificationFeedAsync.when(
             data: (feed) => feed.unreadCount > 0
                 ? TextButton(
+                    style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
                     onPressed: () async {
                       await ref
                           .read(markAllNotificationsAsReadProvider.notifier)

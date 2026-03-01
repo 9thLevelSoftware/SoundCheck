@@ -234,6 +234,7 @@ class BandFiltersSheet extends ConsumerWidget {
           Align(
             alignment: Alignment.centerRight,
             child: TextButton(
+              style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
               onPressed: () => notifier.setMinRating(null),
               child: const Text('Clear'),
             ),

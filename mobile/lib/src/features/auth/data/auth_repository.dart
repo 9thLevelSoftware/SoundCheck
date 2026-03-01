@@ -143,4 +143,17 @@ class AuthRepository {
     final token = await getToken();
     return token != null;
   }
+
+  /// Check username availability
+  Future<bool> checkUsernameAvailability(String username) async {
+    try {
+      final response = await _dioClient.get(
+        '${ApiConfig.auth}/check-username/$username',
+      );
+      final data = response.data['data'] as Map<String, dynamic>;
+      return data['available'] as bool;
+    } catch (e) {
+      return true;
+    }
+  }
 }

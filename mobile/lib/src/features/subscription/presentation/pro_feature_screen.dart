@@ -189,6 +189,7 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
               ),
               const SizedBox(height: 12),
               TextButton(
+                style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
                 onPressed: _isRestoring ? null : _onRestore,
                 child: Text(_isRestoring
                     ? 'Restoring...'
