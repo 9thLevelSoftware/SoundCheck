@@ -14,6 +14,7 @@ import Database from '../../config/database';
 import { VenueService } from '../VenueService';
 import { BandService } from '../BandService';
 import { EventService } from '../EventService';
+import { FeedService } from '../FeedService';
 import { badgeEvalQueue } from '../../jobs/badgeQueue';
 import { cache, CacheKeys } from '../../utils/cache';
 import { getRedis } from '../../utils/redisRateLimiter';
@@ -44,6 +45,7 @@ export class CheckinCreatorService {
   private venueService = new VenueService();
   private bandService = new BandService();
   private eventService = new EventService();
+  private feedService = new FeedService();
 
   // Callback to get check-in by ID (injected by facade to avoid circular dependency)
   private getCheckinByIdFn: (checkinId: string, userId?: string) => Promise<Checkin>;
@@ -620,6 +622,9 @@ export class CheckinCreatorService {
       // Invalidate the creator's own caches (they may see their own check-in in event feed)
       invalidations.push(cache.delPattern(`feed:friends:${userId}:*`));
       invalidations.push(cache.del(`feed:happening:${userId}`));
+
+      // Invalidate global feed cache so new check-in appears promptly
+      invalidations.push(this.feedService.invalidateGlobalFeedCache());
 
       await Promise.all(invalidations);
     } catch (error) {
