@@ -35,3 +35,9 @@ backend/logs/
 .externalNativeBuild
 .cxx
 local.propertiescal.properties
+
+# Backup and temporary files
+*.bak
+*.backup
+*.orig
+*.old
