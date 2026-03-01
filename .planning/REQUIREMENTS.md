@@ -66,8 +66,8 @@
 
 ## Light Mode Preparation (2)
 
-- [ ] **UIUX-32**: Audit all light theme color pairs for WCAG AA compliance — primary green `#2E7D32` on white is borderline. Document results before enabling light mode.
-- [ ] **UIUX-33**: Replace hardcoded `size: 24` in `_NavItem` icon with `IconThemeData` inheritance from theme — prep for theme-responsive sizing (`scaffold_with_nav_bar.dart:168`)
+- [x] **UIUX-32**: Audit all light theme color pairs for WCAG AA compliance — primary green `#2E7D32` on white is borderline. Document results before enabling light mode.
+- [x] **UIUX-33**: Replace hardcoded `size: 24` in `_NavItem` icon with `IconThemeData` inheritance from theme — prep for theme-responsive sizing (`scaffold_with_nav_bar.dart:168`)
 
 ---
 
@@ -116,8 +116,8 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | UIUX-29 | Phase 21 | Complete |
 | UIUX-30 | Phase 21 | Complete |
 | UIUX-31 | Phase 21 | Complete |
-| UIUX-32 | Phase 21 | Pending |
-| UIUX-33 | Phase 21 | Pending |
+| UIUX-32 | Phase 21 | Complete |
+| UIUX-33 | Phase 21 | Complete |
 
 **Coverage:**
 - v3.0 requirements: 33 total
