@@ -1,0 +1,28 @@
+# Gitleaks configuration for SoundCheck
+# Run: gitleaks protect --staged (pre-commit)
+# Run: gitleaks detect (full repo scan)
+# See: https://github.com/gitleaks/gitleaks
+
+title = "SoundCheck Secret Detection"
+
+[extend]
+# Use the default gitleaks ruleset (covers API keys, tokens, passwords, etc.)
+# No custom rules needed — the defaults catch the patterns we care about.
+
+[allowlist]
+description = "Global allowlist for test fixtures and example files"
+paths = [
+  '''\.env\.example$''',
+  '''backend/\.env\.example$''',
+  '''\.gitleaks\.toml$''',
+  '''node_modules/''',
+  '''backend/dist/''',
+  '''mobile/build/''',
+  '''\.planning/''',
+]
+
+# Allow the bcrypt sentinel reference in migration comments/strings
+# (the migration intentionally references '$SOCIAL_AUTH$' to find and replace it)
+regexes = [
+  '''SOCIAL_AUTH''',
+]
