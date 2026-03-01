@@ -461,8 +461,8 @@ class _StatItem extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 11,
-            color: AppTheme.textTertiary,
+            fontSize: 13,
+            color: AppTheme.textSecondary,
           ),
         ),
       ],
@@ -865,24 +865,28 @@ class _SocialLinksSection extends StatelessWidget {
               icon: Icons.audiotrack,
               color: const Color(0xFF1DB954),
               onTap: () => _launchUrl(band.spotifyUrl!),
+              semanticLabel: 'Open Spotify',
             ),
           if (band.instagramUrl != null)
             _SocialIcon(
               icon: Icons.camera_alt,
               color: const Color(0xFFE4405F),
               onTap: () => _launchUrl(band.instagramUrl!),
+              semanticLabel: 'Open Instagram',
             ),
           if (band.facebookUrl != null)
             _SocialIcon(
               icon: Icons.facebook,
               color: const Color(0xFF1877F2),
               onTap: () => _launchUrl(band.facebookUrl!),
+              semanticLabel: 'Open Facebook',
             ),
           if (band.websiteUrl != null)
             _SocialIcon(
               icon: Icons.language,
               color: AppTheme.electricPurple,
               onTap: () => _launchUrl(band.websiteUrl!),
+              semanticLabel: 'Open website',
             ),
         ],
       ),
@@ -894,28 +898,34 @@ class _SocialIcon extends StatelessWidget {
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
+  final String semanticLabel;
 
   const _SocialIcon({
     required this.icon,
     required this.color,
     required this.onTap,
+    required this.semanticLabel,
   });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(24),
-        child: Container(
-          width: 48,
-          height: 48,
-          decoration: BoxDecoration(
-            color: color.withValues(alpha:0.15),
-            shape: BoxShape.circle,
+      child: Semantics(
+        label: semanticLabel,
+        button: true,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.3),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(icon, color: color, size: 24),
           ),
-          child: Icon(icon, color: color, size: 24),
         ),
       ),
     );

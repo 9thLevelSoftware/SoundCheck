@@ -299,6 +299,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                                   ? Icons.visibility_outlined
                                   : Icons.visibility_off_outlined,
                             ),
+                            tooltip: 'Toggle password visibility',
                             onPressed: () async {
                               await HapticFeedbackUtil.selectionClick();
                               setState(() => _obscurePassword = !_obscurePassword);

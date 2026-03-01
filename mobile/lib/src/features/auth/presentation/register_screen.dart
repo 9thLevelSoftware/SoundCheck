@@ -219,6 +219,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                       ),
+                      tooltip: 'Toggle password visibility',
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
                       },
@@ -245,6 +246,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                             ? Icons.visibility_outlined
                             : Icons.visibility_off_outlined,
                       ),
+                      tooltip: 'Toggle password visibility',
                       onPressed: () {
                         setState(
                           () => _obscureConfirmPassword = !_obscureConfirmPassword,

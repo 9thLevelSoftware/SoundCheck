@@ -168,33 +168,36 @@ class _VenueContent extends ConsumerWidget {
                               ),
                             )
                           else if (venue.isVerified)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.info.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    Icons.verified,
-                                    size: 16,
-                                    color: AppTheme.info,
-                                  ),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Verified',
-                                    style: TextStyle(
+                            Tooltip(
+                              message: 'Verified venue',
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppTheme.info.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: const [
+                                    Icon(
+                                      Icons.verified,
+                                      size: 16,
                                       color: AppTheme.info,
-                                      fontSize: 12,
-                                      fontWeight: FontWeight.w600,
                                     ),
-                                  ),
-                                ],
+                                    SizedBox(width: 4),
+                                    Text(
+                                      'Verified',
+                                      style: TextStyle(
+                                        color: AppTheme.info,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                         ],
@@ -374,8 +377,8 @@ class _MapStrip extends StatelessWidget {
                     Text(
                       _formatFullAddress(),
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -535,8 +538,8 @@ class _StatItem extends StatelessWidget {
         Text(
           label,
           style: const TextStyle(
-            fontSize: 11,
-            color: AppTheme.textTertiary,
+            fontSize: 13,
+            color: AppTheme.textSecondary,
           ),
         ),
       ],
@@ -726,8 +729,8 @@ class _UpcomingEventItem extends StatelessWidget {
                     Text(
                       timeInfo,
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -901,8 +904,8 @@ class _RecentBandsSection extends ConsumerWidget {
             error: (_, __) => const Text(
               'Unable to load',
               style: TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 12,
+                color: AppTheme.textSecondary,
+                fontSize: 14,
               ),
             ),
           ),
@@ -916,8 +919,8 @@ class _RecentBandsSection extends ConsumerWidget {
       return const Text(
         'No recent check-ins',
         style: TextStyle(
-          color: AppTheme.textTertiary,
-          fontSize: 12,
+          color: AppTheme.textSecondary,
+          fontSize: 14,
         ),
       );
     }
@@ -1129,8 +1132,8 @@ class _ReviewCard extends StatelessWidget {
                     Text(
                       _timeAgo(review.createdAt),
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
                   ],
@@ -1198,8 +1201,8 @@ class _ReviewCard extends StatelessWidget {
                     Text(
                       _timeAgo(review.ownerResponseAt!),
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 11,
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
                       ),
                     ),
                   ],
@@ -1373,8 +1376,8 @@ class _CheckInPreviewCard extends StatelessWidget {
                     Text(
                       times[index],
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontSize: 14,
                       ),
                     ),
                   ],

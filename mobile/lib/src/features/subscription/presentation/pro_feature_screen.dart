@@ -210,14 +210,14 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
                 TextButton(
                   onPressed: () => _launchUrl('https://soundcheck.app/terms'),
                   child: const Text('Terms of Service',
-                      style: TextStyle(fontSize: 12)),
+                      style: TextStyle(fontSize: 14)),
                 ),
                 const Text(' | ',
                     style: TextStyle(color: AppTheme.textTertiary)),
                 TextButton(
                   onPressed: () => _launchUrl('https://soundcheck.app/privacy'),
                   child: const Text('Privacy Policy',
-                      style: TextStyle(fontSize: 12)),
+                      style: TextStyle(fontSize: 14)),
                 ),
               ],
             ),

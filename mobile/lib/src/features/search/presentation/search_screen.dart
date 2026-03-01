@@ -56,7 +56,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           decoration: const InputDecoration(
             hintText: 'Search bands, venues, events, people...',
             border: InputBorder.none,
-            hintStyle: TextStyle(color: AppTheme.textSecondary),
+            hintStyle: TextStyle(color: AppTheme.textSecondary, fontSize: 18),
           ),
           style: const TextStyle(color: AppTheme.textPrimary, fontSize: 18),
         ),
@@ -64,6 +64,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           if (_searchController.text.isNotEmpty)
             IconButton(
               icon: const Icon(Icons.clear),
+              tooltip: 'Clear search',
               onPressed: () {
                 _searchController.clear();
                 ref.read(searchQueryProvider.notifier).setQuery('');

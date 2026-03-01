@@ -317,22 +317,26 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
               ),
               const SizedBox(height: 12),
               Center(
-                child: RatingBar.builder(
-                  initialRating: currentRating,
-                  minRating: 0.5,
-                  allowHalfRating: true,
-                  itemCount: 5,
-                  itemSize: 36,
-                  unratedColor: AppTheme.ratingInactive,
-                  itemBuilder: (context, _) => const Icon(
-                    Icons.star,
-                    color: AppTheme.electricPurple,
+                child: Semantics(
+                  label: 'Band rating: ${currentRating > 0 ? '$currentRating out of 5 stars' : 'not yet rated'}',
+                  liveRegion: true,
+                  child: RatingBar.builder(
+                    initialRating: currentRating,
+                    minRating: 0.5,
+                    allowHalfRating: true,
+                    itemCount: 5,
+                    itemSize: 36,
+                    unratedColor: AppTheme.ratingInactive,
+                    itemBuilder: (context, _) => const Icon(
+                      Icons.star,
+                      color: AppTheme.electricPurple,
+                    ),
+                    onRatingUpdate: (rating) {
+                      setState(() {
+                        _bandRatings[bandId] = rating;
+                      });
+                    },
                   ),
-                  onRatingUpdate: (rating) {
-                    setState(() {
-                      _bandRatings[bandId] = rating;
-                    });
-                  },
                 ),
               ),
             ],
@@ -387,22 +391,26 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
           const SizedBox(height: 32),
 
           // Venue rating
-          RatingBar.builder(
-            initialRating: _venueRating,
-            minRating: 0.5,
-            allowHalfRating: true,
-            itemCount: 5,
-            itemSize: 48,
-            unratedColor: AppTheme.ratingInactive,
-            itemBuilder: (context, _) => const Icon(
-              Icons.star,
-              color: AppTheme.electricPurple,
+          Semantics(
+            label: 'Venue rating: ${_venueRating > 0 ? '$_venueRating out of 5 stars' : 'not yet rated'}',
+            liveRegion: true,
+            child: RatingBar.builder(
+              initialRating: _venueRating,
+              minRating: 0.5,
+              allowHalfRating: true,
+              itemCount: 5,
+              itemSize: 48,
+              unratedColor: AppTheme.ratingInactive,
+              itemBuilder: (context, _) => const Icon(
+                Icons.star,
+                color: AppTheme.electricPurple,
+              ),
+              onRatingUpdate: (rating) {
+                setState(() {
+                  _venueRating = rating;
+                });
+              },
             ),
-            onRatingUpdate: (rating) {
-              setState(() {
-                _venueRating = rating;
-              });
-            },
           ),
           const SizedBox(height: 16),
 

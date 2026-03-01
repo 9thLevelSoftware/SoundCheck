@@ -323,8 +323,8 @@ class _NotificationItem extends StatelessWidget {
                     Text(
                       _formatTimestamp(notification.createdAt),
                       style: const TextStyle(
-                        fontSize: 12,
-                        color: AppTheme.textTertiary,
+                        fontSize: 13,
+                        color: AppTheme.textSecondary,
                       ),
                     ),
                   ],
