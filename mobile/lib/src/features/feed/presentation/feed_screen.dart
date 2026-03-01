@@ -26,7 +26,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 4, vsync: this);
     _tabController.addListener(_onTabChanged);
     // Start WebSocket listeners for real-time feed updates
     initFeedWebSocketListeners();
@@ -48,13 +48,18 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   }
 
   void _markTabRead(int tabIndex) {
+    // Index 0 is Discover (global feed) — no mark-read needed
+    if (tabIndex == 0) return;
+
     final feedItems = ref.read(friendsFeedProvider).value;
     if (feedItems == null || feedItems.isEmpty) return;
 
+    // Shift index by 1 to account for Discover tab at index 0
     final feedTypes = ['friends', 'event', 'happening_now'];
-    if (tabIndex < feedTypes.length) {
+    final adjustedIndex = tabIndex - 1;
+    if (adjustedIndex >= 0 && adjustedIndex < feedTypes.length) {
       ref.read(feedRepositoryProvider).markFeedRead(
-            feedTypes[tabIndex],
+            feedTypes[adjustedIndex],
             feedItems.first.createdAt,
             lastSeenCheckinId: feedItems.first.id,
           );
@@ -122,6 +127,10 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
                 fontWeight: FontWeight.w500,
               ),
               tabs: [
+                const _TabWithBadge(
+                  label: 'Discover',
+                  count: 0,
+                ),
                 _TabWithBadge(
                   label: 'Friends',
                   count: unseenAsync.value?.friends ?? 0,
@@ -141,6 +150,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
         body: TabBarView(
           controller: _tabController,
           children: [
+            // Discover (global) tab
+            const _GlobalFeedTab(),
             // Friends tab
             _FriendsTab(newCheckinCount: newCheckinCount),
             // Events tab
@@ -197,6 +208,81 @@ class _TabWithBadge extends StatelessWidget {
             ),
           ],
         ],
+      ),
+    );
+  }
+}
+
+/// Global discovery feed tab with infinite scroll and pull-to-refresh
+class _GlobalFeedTab extends ConsumerStatefulWidget {
+  const _GlobalFeedTab();
+
+  @override
+  ConsumerState<_GlobalFeedTab> createState() => _GlobalFeedTabState();
+}
+
+class _GlobalFeedTabState extends ConsumerState<_GlobalFeedTab> {
+  final ScrollController _scrollController = ScrollController();
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) {
+      ref.read(globalFeedNotifierProvider.notifier).loadMore();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final feedAsync = ref.watch(globalFeedNotifierProvider);
+
+    return RefreshIndicator(
+      color: AppTheme.electricPurple,
+      backgroundColor: AppTheme.cardDark,
+      onRefresh: () async {
+        ref.invalidate(globalFeedNotifierProvider);
+      },
+      child: feedAsync.when(
+        loading: () => const _FeedLoadingState(),
+        error: (error, stack) => _FeedErrorState(
+          error: error,
+          onRetry: () => ref.invalidate(globalFeedNotifierProvider),
+        ),
+        data: (items) {
+          if (items.isEmpty) {
+            return ListView(
+              children: const [
+                EmptyStateWidget(
+                  type: EmptyStateType.general,
+                  customTitle: 'No activity yet',
+                  customMessage:
+                      'Check in to a show and it\'ll appear here!',
+                ),
+              ],
+            );
+          }
+
+          return ListView.builder(
+            controller: _scrollController,
+            padding: const EdgeInsets.only(bottom: 100),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              return FeedCard(item: items[index]);
+            },
+          );
+        },
       ),
     );
   }

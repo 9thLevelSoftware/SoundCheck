@@ -14,6 +14,36 @@ export '../../../../core/providers/providers.dart' show feedRepositoryProvider;
 
 part 'feed_providers.g.dart';
 
+/// Global discovery feed with cursor-based pagination
+@riverpod
+class GlobalFeedNotifier extends _$GlobalFeedNotifier {
+  String? _nextCursor;
+  bool _hasMore = true;
+  List<FeedItem> _items = [];
+
+  @override
+  Future<List<FeedItem>> build() async {
+    _nextCursor = null;
+    _hasMore = true;
+    _items = [];
+    return _fetchPage();
+  }
+
+  Future<List<FeedItem>> _fetchPage() async {
+    final repo = ref.read(feedRepositoryProvider);
+    final page = await repo.getGlobalFeed(cursor: _nextCursor);
+    _nextCursor = page.nextCursor;
+    _hasMore = page.hasMore;
+    _items = [..._items, ...page.items];
+    return _items;
+  }
+
+  Future<void> loadMore() async {
+    if (!_hasMore) return;
+    state = AsyncValue.data(await _fetchPage());
+  }
+}
+
 /// Friends feed with cursor-based pagination
 @riverpod
 class FriendsFeedNotifier extends _$FriendsFeedNotifier {

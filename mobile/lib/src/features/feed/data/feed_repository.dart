@@ -8,6 +8,24 @@ class FeedRepository {
 
   FeedRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
+  /// Get global discovery feed with cursor-based pagination
+  /// GET /feed/global?cursor=X&limit=N
+  Future<FeedPage> getGlobalFeed({String? cursor, int limit = 20}) async {
+    try {
+      final queryParams = <String, dynamic>{'limit': limit};
+      if (cursor != null) queryParams['cursor'] = cursor;
+
+      final response = await _dioClient.get(
+        '/feed/global',
+        queryParameters: queryParams,
+      );
+
+      return FeedPage.fromJson(response.data['data'] as Map<String, dynamic>);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Get friends feed with cursor-based pagination
   /// GET /feed/friends?cursor=X&limit=N
   Future<FeedPage> getFriendsFeed({String? cursor, int limit = 20}) async {
