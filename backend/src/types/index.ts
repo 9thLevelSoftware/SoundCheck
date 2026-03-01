@@ -478,10 +478,21 @@ export interface TrendingEvent {
   lineupBands?: string[];
 }
 
+export interface SearchUserResult {
+  id: string;
+  username: string;
+  displayName: string;
+  profileImageUrl: string | null;
+  bio: string | null;
+  totalCheckins: number;
+  isVerified: boolean;
+}
+
 export interface SearchResults {
   bands: Band[];
   venues: Venue[];
   events: Event[];
+  users?: SearchUserResult[];
 }
 
 export interface OwnerReviewResponse {

@@ -35,19 +35,19 @@ export class SearchController {
       }
 
       // Parse optional types filter
-      const validTypes = ['band', 'venue', 'event'] as const;
-      let types: ('band' | 'venue' | 'event')[] | undefined;
+      const validTypes = ['band', 'venue', 'event', 'user'] as const;
+      let types: ('band' | 'venue' | 'event' | 'user')[] | undefined;
 
       if (req.query.types) {
         const rawTypes = (req.query.types as string).split(',').map(t => t.trim().toLowerCase());
-        types = rawTypes.filter((t): t is 'band' | 'venue' | 'event' =>
+        types = rawTypes.filter((t): t is 'band' | 'venue' | 'event' | 'user' =>
           validTypes.includes(t as any)
         );
 
         if (types.length === 0) {
           const response: ApiResponse = {
             success: false,
-            error: 'Invalid types parameter. Valid values: band, venue, event',
+            error: 'Invalid types parameter. Valid values: band, venue, event, user',
           };
           res.status(400).json(response);
           return;

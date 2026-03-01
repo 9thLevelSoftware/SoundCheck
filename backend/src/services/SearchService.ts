@@ -1,5 +1,5 @@
 import Database from '../config/database';
-import { Band, Venue, Event, SearchResults } from '../types';
+import { Band, Venue, Event, SearchResults, SearchUserResult } from '../types';
 import { EventService } from './EventService';
 
 /**
@@ -26,18 +26,23 @@ export class SearchService {
    */
   async search(
     query: string,
-    options?: { types?: ('band' | 'venue' | 'event')[]; limit?: number }
+    options?: { types?: ('band' | 'venue' | 'event' | 'user')[]; limit?: number }
   ): Promise<SearchResults> {
     const types = options?.types ?? ['band', 'venue', 'event'];
     const limit = Math.min(options?.limit ?? 10, 50);
 
-    const [bands, venues, events] = await Promise.all([
+    const [bands, venues, events, users] = await Promise.all([
       types.includes('band') ? this.searchBands(query, limit) : [],
       types.includes('venue') ? this.searchVenues(query, limit) : [],
       types.includes('event') ? this.searchEvents(query, limit) : [],
+      types.includes('user') ? this.searchUsers(query, limit) : [],
     ]);
 
-    return { bands, venues, events };
+    const result: SearchResults = { bands, venues, events };
+    if (types.includes('user')) {
+      result.users = users;
+    }
+    return result;
   }
 
   /**
@@ -170,6 +175,46 @@ export class SearchService {
 
     // Hydrate with lineup data using EventService helper
     return this.eventService.mapDbEventsWithHeadliner(result.rows);
+  }
+
+  /**
+   * Search users using ILIKE on username, first_name, last_name.
+   * Exact username matches rank first, then prefix matches, then partial matches.
+   */
+  private async searchUsers(query: string, limit: number): Promise<SearchUserResult[]> {
+    const searchTerm = `%${query.toLowerCase()}%`;
+    const exactTerm = query.toLowerCase();
+    const prefixTerm = `${query.toLowerCase()}%`;
+
+    const sql = `
+      SELECT u.id, u.username, u.first_name, u.last_name,
+        u.profile_image_url, u.bio, u.is_verified,
+        (SELECT COUNT(*)::int FROM checkins WHERE user_id = u.id) AS total_checkins
+      FROM users u
+      WHERE u.is_active = true
+        AND (LOWER(u.username) LIKE $1
+             OR LOWER(u.first_name) LIKE $1
+             OR LOWER(u.last_name) LIKE $1
+             OR LOWER(COALESCE(u.first_name || ' ' || u.last_name, '')) LIKE $1)
+      ORDER BY
+        CASE WHEN LOWER(u.username) = $3 THEN 0
+             WHEN LOWER(u.username) LIKE $4 THEN 1
+             ELSE 2 END,
+        total_checkins DESC
+      LIMIT $2
+    `;
+
+    const result = await this.db.query(sql, [searchTerm, limit, exactTerm, prefixTerm]);
+
+    return result.rows.map((row: any) => ({
+      id: row.id,
+      username: row.username,
+      displayName: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.username,
+      profileImageUrl: row.profile_image_url || null,
+      bio: row.bio || null,
+      totalCheckins: row.total_checkins || 0,
+      isVerified: row.is_verified === true,
+    }));
   }
 
   /**
