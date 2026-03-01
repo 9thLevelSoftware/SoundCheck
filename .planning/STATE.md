@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Beta Launch
 status: executing
-last_updated: "2026-03-01T16:16:08Z"
+last_updated: "2026-03-01T16:18:25Z"
 progress:
   total_phases: 5
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 (Security & Infrastructure Hardening) — in progress
-Plan: 2 of 2 (13-02 complete)
+Phase: 13 (Security & Infrastructure Hardening) — COMPLETE
+Plan: 2 of 2 (all plans complete)
 Status: Executing
-Last activity: 2026-03-01 — Completed 13-02 (CI + gitleaks + env docs)
+Last activity: 2026-03-01 — Completed 13-01 (security hardening: trust proxy, fail-closed, sentinel removal)
 
-Progress: [██████░░░░░░░░░░░░░░░░░░░] 10% (1/2 phase 13 plans, need 13-01 still)
+Progress: [█████████████░░░░░░░░░░░░] 20% (phase 13 complete, 2/2 plans done)
 
 ## Performance Metrics
 
@@ -45,6 +45,7 @@ Progress: [██████░░░░░░░░░░░░░░░░░
 
 | Phase | Plan | Duration | Tasks | Files |
 |-------|------|----------|-------|-------|
+| 13 | 01 | 4 min | 3 | 8 |
 | 13 | 02 | 2 min | 3 | 3 |
 
 ## Accumulated Context
@@ -54,6 +55,8 @@ Progress: [██████░░░░░░░░░░░░░░░░░
 All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 
 **v2.0 decisions:**
+- [13-01] Used bcryptjs in TypeScript migration (portable) instead of pgcrypto SQL extension for Railway compatibility
+- [13-01] Social auth detection via user_social_accounts table join instead of password sentinel comparison
 - [13-02] CI-based gitleaks over local pre-commit hook for portability and reproducibility
 - [13-02] 4-tier env var organization (startup, core features, full features, optional) for Railway config prioritization
 - [13-02] Keep main/develop in CI triggers alongside master for future branch strategy flexibility
@@ -81,6 +84,6 @@ All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-01T16:16:08Z
-Stopped at: Completed 13-02-PLAN.md (CI pipeline fix + gitleaks + env docs)
+Last session: 2026-03-01T16:18:25Z
+Stopped at: Completed 13-01-PLAN.md (security hardening — phase 13 fully complete)
 Resume file: None
