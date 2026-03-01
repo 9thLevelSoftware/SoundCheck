@@ -452,6 +452,7 @@ class AppTheme {
     // Icon Theme
     iconTheme: const IconThemeData(
       color: textPrimary,
+      size: 24,
     ),
 
     // Progress Indicator Theme
@@ -546,6 +547,12 @@ class AppTheme {
         letterSpacing: -0.5,
       ),
       iconTheme: IconThemeData(color: Color(0xFF0D0F11)),
+    ),
+
+    // Icon Theme
+    iconTheme: const IconThemeData(
+      color: Color(0xFF0D0F11),
+      size: 24,
     ),
 
     cardTheme: CardThemeData(
