@@ -63,15 +63,16 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 
 ### Active
 
-**v2.0 Beta Launch** (Board of Directors assessment, 2026-03-01 — 28 requirements) — **SHIPPED**
-- ✓ Security hardening: trust proxy, fail-closed rate limiting, bcrypt social auth, CI secret scanning — v2.0
-- ✓ Production environment: Railway env documentation, CI pipeline fix, gitleaks — v2.0
-- ✓ Mobile UX: onboarding router, legal links, dark-only, empty states, a11y — v2.0
-- ✓ Backend integrity: block filter on Wrapped, totalReviews fix, idempotency guard, winston logging — v2.0
-- ✓ Operations: Sentry user context, smoke tests, deployment runbook, staging docs — v2.0
-- ✓ Social bootstrap: user discovery, global feed, 5 demo accounts, share CTA elevation, RevenueCat v9 — v2.0
+**v3.0 UI/UX Design Audit** (UI Audit Report 78/100 B+, 2026-03-01 — 33 requirements)
+- [ ] WCAG contrast fixes: social icon alpha, textTertiary→textSecondary at 14px, minimum 13px font
+- [ ] Accessibility: semantic labels on all interactive elements (social icons, star ratings, password toggle, verified badges)
+- [ ] Touch targets: all TextButtons to 44px minimum (Clear, Restore Purchases, See All, Mark all read)
+- [ ] Registration form: optional field labels, password strength indicator, inline validation
+- [ ] UX restructuring: feed tabs 4→3, profile section collapsing, rating sheet clarity, vibes 10→6
+- [ ] Theme cleanup: remove electricPurple/liveGreen aliases, rename "Alerts"→"Notifications", add notification badge
+- [ ] Light mode prep: color pair audit, icon theme inheritance
 
-**Future (post-beta)**
+**Future (post-audit)**
 - [ ] Collaborative filtering for recommendations
 - [ ] WebSocket horizontal scaling (multi-instance)
 - [ ] Public API with OAuth2 scopes
@@ -90,7 +91,7 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 
 ## Context
 
-**Current State (v2.0 shipped 2026-03-01):**
+**Current State (v3.0 started 2026-03-01):**
 - Monorepo: `/backend` (Node.js/Express/TypeScript) and `/mobile` (Flutter/Dart)
 - PostgreSQL with 39 migrations, Redis caching, BullMQ job processing
 - Clean architecture on mobile (data/domain/presentation), MVC + service layer on backend
@@ -115,7 +116,10 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - v1.1 Launch Readiness (2026-02-28): 9 phases, 30 plans, 32 requirements
 - v2.0 Beta Launch (2026-03-01): 5 phases, 10 plans, 28 requirements
 
-## Current Milestone: None (v2.0 complete — ready for next milestone)
+**Active Milestone:**
+- v3.0 UI/UX Design Audit: 4 phases, 9 plans, 33 requirements
+
+## Current Milestone: v3.0 UI/UX Design Audit (Phases 18-21, 33 requirements)
 
 ## Constraints
 
@@ -143,4 +147,4 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 | JSONB badge criteria | New badges without code changes | ✓ Good — 37 badges, zero custom code per type |
 
 ---
-*Last updated: 2026-03-01 after v2.0 Beta Launch milestone started*
+*Last updated: 2026-03-01 after v3.0 UI/UX Design Audit milestone started*
