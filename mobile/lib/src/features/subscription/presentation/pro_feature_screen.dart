@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -43,12 +44,23 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
         }
         return;
       }
-      final success = await SubscriptionService.purchase(packages.first);
-      if (success && mounted) {
-        ref.read(isPremiumProvider.notifier).set(true);
-        AnalyticsService.logEvent(name: 'subscription_started');
+      final customerInfo = await SubscriptionService.purchase(packages.first);
+      if (customerInfo != null && mounted) {
+        final hasPro =
+            customerInfo.entitlements.all['pro']?.isActive ?? false;
+        if (hasPro) {
+          ref.read(isPremiumProvider.notifier).set(true);
+          AnalyticsService.logEvent(name: 'subscription_started');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Welcome to SoundCheck Pro!')),
+          );
+        }
+      }
+      // null = user cancelled, do nothing silently
+    } on PlatformException catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Welcome to SoundCheck Pro!')),
+          SnackBar(content: Text('Purchase failed: ${e.message}')),
         );
       }
     } finally {
@@ -59,14 +71,22 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
   Future<void> _onRestore() async {
     setState(() => _isRestoring = true);
     try {
-      final success = await SubscriptionService.restorePurchases();
+      final customerInfo = await SubscriptionService.restorePurchases();
       if (mounted) {
-        if (success) {
-          ref.read(isPremiumProvider.notifier).set(true);
-          AnalyticsService.logEvent(name: 'subscription_restored');
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Purchases restored!')),
-          );
+        if (customerInfo != null) {
+          final hasPro =
+              customerInfo.entitlements.all['pro']?.isActive ?? false;
+          if (hasPro) {
+            ref.read(isPremiumProvider.notifier).set(true);
+            AnalyticsService.logEvent(name: 'subscription_restored');
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Purchases restored!')),
+            );
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('No active subscription found')),
+            );
+          }
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('No previous purchases found')),
