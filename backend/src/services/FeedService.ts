@@ -227,6 +227,85 @@ export class FeedService {
   }
 
   /**
+   * Get global feed: all users' check-ins with cursor pagination.
+   * Shows all non-hidden check-ins from non-blocked users.
+   * Uses cache-aside pattern with Redis (60s TTL, keyed per user due to block filter).
+   */
+  async getGlobalFeed(userId: string, cursor?: string, limit: number = 20): Promise<FeedPage> {
+    const cacheKey = `feed:global:${userId}:${cursor || 'head'}`;
+
+    const cached = await getCache<FeedPage>(cacheKey);
+    if (cached) return cached;
+
+    const cursorData = cursor ? decodeCursor(cursor) : null;
+
+    const cursorClause = cursorData
+      ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)'
+      : '';
+
+    const query = `
+      SELECT
+        c.id,
+        c.user_id,
+        c.event_id,
+        c.created_at,
+        c.photo_url,
+        u.username,
+        u.profile_image_url AS user_avatar_url,
+        e.event_name,
+        v.name AS venue_name,
+        c.toast_count,
+        c.comment_count,
+        EXISTS(
+          SELECT 1 FROM user_badges ub
+          WHERE ub.user_id = c.user_id
+            AND ub.earned_at >= c.created_at - INTERVAL '1 minute'
+            AND ub.earned_at <= c.created_at + INTERVAL '1 hour'
+        ) AS has_badge_earned,
+        EXISTS(
+          SELECT 1 FROM toasts t2
+          WHERE t2.checkin_id = c.id AND t2.user_id = $1
+        ) AS has_user_toasted
+      FROM checkins c
+      JOIN users u ON c.user_id = u.id
+      LEFT JOIN events e ON c.event_id = e.id
+      LEFT JOIN venues v ON e.venue_id = v.id
+      WHERE (c.is_hidden IS NOT TRUE)
+        ${this.blockService.getBlockFilterSQL(userId, 'c.user_id')}
+        ${cursorClause}
+      ORDER BY c.created_at DESC, c.id DESC
+      LIMIT $2
+    `;
+
+    const params: any[] = cursorData
+      ? [userId, limit + 1, cursorData.createdAt, cursorData.id]
+      : [userId, limit + 1];
+
+    const result = await this.db.query(query, params);
+    const rows = result.rows;
+
+    const hasMore = rows.length > limit;
+    if (hasMore) rows.pop();
+
+    const items: FeedItem[] = rows.map((row: any) => this.mapRowToFeedItem(row));
+
+    const nextCursor = items.length > 0
+      ? encodeCursor({
+          createdAt: rows[rows.length - 1].created_at instanceof Date
+            ? rows[rows.length - 1].created_at.toISOString()
+            : rows[rows.length - 1].created_at,
+          id: rows[rows.length - 1].id,
+        })
+      : null;
+
+    const feedPage: FeedPage = { items, nextCursor, hasMore };
+
+    await setCache(cacheKey, feedPage, CacheTTL.SHORT);
+
+    return feedPage;
+  }
+
+  /**
    * Get "Happening Now": friends checked in to events happening today,
    * grouped by event. Uses event end_time / start_time + 4h / event_date + 1 day
    * for expiry. Cache 30s TTL (shorter for live data).
@@ -386,6 +465,18 @@ export class FeedService {
       await cache.delPattern(`feed:event:${eventId}:*`);
     } catch (error) {
       logger.error('Feed cache invalidation error (event)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    }
+  }
+
+  /**
+   * Invalidate global feed cache for all users.
+   * Called when a new check-in is created.
+   */
+  async invalidateGlobalFeedCache(): Promise<void> {
+    try {
+      await cache.delPattern('feed:global:*');
+    } catch (error) {
+      logger.error('Feed cache invalidation error (global)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     }
   }
 
