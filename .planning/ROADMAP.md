@@ -28,7 +28,7 @@
 #### Phase 17: Social Graph & Beta Onramp
 **Goal**: User discovery, global feed, and multi-account demo seeding for beta launch
 **Depends on**: Phases 14, 15
-**Plans:** 1/2 plans complete
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 17-01-PLAN.md -- Backend: user discovery + global feed + seed content
 - [ ] 17-02-PLAN.md -- Mobile: user discovery UI + global feed tab

@@ -1,5 +1,31 @@
 ---
 gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: Beta Launch
+status: unknown
+last_updated: "2026-03-01T21:18:47.319Z"
+progress:
+  total_phases: 14
+  completed_phases: 11
+  total_plans: 40
+  completed_plans: 30
+---
+
+---
+gsd_state_version: 1.0
+milestone: v2.0
+milestone_name: Beta Launch
+status: unknown
+last_updated: "2026-03-01T21:18:30.943Z"
+progress:
+  total_phases: 14
+  completed_phases: 11
+  total_plans: 40
+  completed_plans: 30
+---
+
+---
+gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: unknown
@@ -36,11 +62,11 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 ## Current Position
 
 Phase: 17 (Social Graph & Beta Onramp)
-Plan: 1 of 2 (17-01 complete)
-Status: Executing
-Last activity: 2026-03-01 — Completed 17-01 (backend user discovery, global feed, multi-account demo seeding)
+Plan: 2 of 2 (17-02 complete)
+Status: Phase Complete
+Last activity: 2026-03-01 — Completed 17-02 (mobile user discovery, global feed tab, share CTA elevation, RevenueCat modernization)
 
-Progress: [█████████████░░░░░░░░░░░░] 25% (phase 17 in progress, 1/2 plans done)
+Progress: [██████████████████████████] 100% (phase 17 complete, 2/2 plans done)
 
 ## Performance Metrics
 
@@ -61,6 +87,7 @@ Progress: [█████████████░░░░░░░░░░
 | 13 | 01 | 4 min | 3 | 8 |
 | 13 | 02 | 2 min | 3 | 3 |
 | 17 | 01 | 4 min | 7 | 11 |
+| 17 | 02 | 11 min | 8 | 13 |
 
 ## Accumulated Context
 
@@ -77,6 +104,9 @@ All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 - [17-01] ILIKE with smart ranking for user search (no tsvector on users table)
 - [17-01] Global feed cache keyed per-user due to block filter being user-specific
 - [17-01] Suggestion scoring: shared bands 3x > shared venues 2x > activity 0.1x
+- [Phase 17]: Riverpod codegen names GlobalFeedNotifier as globalFeedProvider (convention strips Notifier suffix)
+- [Phase 17]: CustomerInfo? null pattern for purchase cancellation vs PlatformException for errors
+- [Phase 17]: PurchaseParams.package() named constructor required by RevenueCat v9.12+
 
 ### Pending Todos
 
@@ -101,6 +131,6 @@ All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-01T20:59:21Z
-Stopped at: Completed 17-01-PLAN.md (backend user discovery, global feed, multi-account demo seeding)
+Last session: 2026-03-01T21:19:00Z
+Stopped at: Completed 17-02-PLAN.md (mobile user discovery, global feed tab, share CTA elevation, RevenueCat modernization)
 Resume file: None
