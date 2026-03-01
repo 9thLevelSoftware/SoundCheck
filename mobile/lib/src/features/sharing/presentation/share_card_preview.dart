@@ -32,6 +32,16 @@ class ShareCardPreview extends StatelessWidget {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
+        // Share header
+        const Text(
+          'Share your check-in',
+          style: TextStyle(
+            color: AppTheme.textPrimary,
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
         // Card image preview
         _buildCardImage(context),
         const SizedBox(height: 16),
@@ -174,8 +184,8 @@ class _ShareButton extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              width: 52,
-              height: 52,
+              width: 56,
+              height: 56,
               decoration: BoxDecoration(
                 color: AppTheme.surfaceVariantDark,
                 shape: BoxShape.circle,
