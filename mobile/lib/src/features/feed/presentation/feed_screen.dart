@@ -10,7 +10,7 @@ import 'widgets/happening_now_card.dart';
 import 'widgets/new_checkins_banner.dart';
 
 /// Social Activity Feed - The Home Screen
-/// Three tabs: Friends, Events, Happening Now
+/// Three tabs: Discover, Friends, Events (with Happening Now filter)
 /// Real-time updates via WebSocket with "N new check-ins" banner
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -26,7 +26,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(_onTabChanged);
     // Start WebSocket listeners for real-time feed updates
     initFeedWebSocketListeners();
@@ -54,18 +54,28 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
     final feedItems = ref.read(friendsFeedProvider).value;
     if (feedItems == null || feedItems.isEmpty) return;
 
-    // Shift index by 1 to account for Discover tab at index 0
-    final feedTypes = ['friends', 'event', 'happening_now'];
-    final adjustedIndex = tabIndex - 1;
-    if (adjustedIndex >= 0 && adjustedIndex < feedTypes.length) {
+    if (tabIndex == 1) {
+      // Friends tab
       ref.read(feedRepositoryProvider).markFeedRead(
-            feedTypes[adjustedIndex],
+            'friends',
             feedItems.first.createdAt,
             lastSeenCheckinId: feedItems.first.id,
           );
-      // Refresh unseen counts
-      ref.invalidate(unseenCountsProvider);
+    } else if (tabIndex == 2) {
+      // Merged Events tab — mark both event and happening_now as read
+      ref.read(feedRepositoryProvider).markFeedRead(
+            'event',
+            feedItems.first.createdAt,
+            lastSeenCheckinId: feedItems.first.id,
+          );
+      ref.read(feedRepositoryProvider).markFeedRead(
+            'happening_now',
+            feedItems.first.createdAt,
+            lastSeenCheckinId: feedItems.first.id,
+          );
     }
+    // Refresh unseen counts
+    ref.invalidate(unseenCountsProvider);
   }
 
   @override
@@ -137,11 +147,9 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
                 ),
                 _TabWithBadge(
                   label: 'Events',
-                  count: unseenAsync.value?.event ?? 0,
-                ),
-                _TabWithBadge(
-                  label: 'Happening Now',
-                  count: unseenAsync.value?.happeningNow ?? 0,
+                  count: (unseenAsync.value?.event ?? 0) +
+                      (unseenAsync.value?.happeningNow ?? 0),
+                  showLiveDot: (unseenAsync.value?.happeningNow ?? 0) > 0,
                 ),
               ],
             ),
@@ -154,10 +162,8 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
             const _GlobalFeedTab(),
             // Friends tab
             _FriendsTab(newCheckinCount: newCheckinCount),
-            // Events tab
-            const _EventsTab(),
-            // Happening Now tab
-            const _HappeningNowTab(),
+            // Events + Happening Now merged tab
+            const _MergedEventsTab(),
           ],
         ),
       ),
@@ -165,15 +171,17 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
   }
 }
 
-/// Tab label with optional unseen count badge
+/// Tab label with optional unseen count badge and live indicator dot
 class _TabWithBadge extends StatelessWidget {
   const _TabWithBadge({
     required this.label,
     required this.count,
+    this.showLiveDot = false,
   });
 
   final String label;
   final int count;
+  final bool showLiveDot;
 
   @override
   Widget build(BuildContext context) {
@@ -182,6 +190,17 @@ class _TabWithBadge extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(label),
+          if (showLiveDot && count == 0) ...[
+            const SizedBox(width: 6),
+            Container(
+              width: 8,
+              height: 8,
+              decoration: const BoxDecoration(
+                color: AppTheme.liveGreen,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
           if (count > 0) ...[
             const SizedBox(width: 6),
             AnimatedSwitcher(
@@ -387,12 +406,95 @@ class _FriendsTabState extends ConsumerState<_FriendsTab> {
   }
 }
 
-/// Events feed tab -- shows check-ins at events the user has attended
-class _EventsTab extends ConsumerWidget {
-  const _EventsTab();
+/// Merged Events + Happening Now tab with ChoiceChip filter
+enum _EventsFilter { events, happeningNow }
+
+class _MergedEventsTab extends ConsumerStatefulWidget {
+  const _MergedEventsTab();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_MergedEventsTab> createState() => _MergedEventsTabState();
+}
+
+class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
+  _EventsFilter _filter = _EventsFilter.events;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Filter chips row
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: Row(
+            children: [
+              ChoiceChip(
+                label: const Text('Events'),
+                selected: _filter == _EventsFilter.events,
+                onSelected: (_) => setState(() => _filter = _EventsFilter.events),
+                selectedColor: AppTheme.electricPurple,
+                backgroundColor: AppTheme.surfaceVariantDark,
+                labelStyle: TextStyle(
+                  color: _filter == _EventsFilter.events
+                      ? AppTheme.backgroundDark
+                      : AppTheme.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+              const SizedBox(width: 8),
+              ChoiceChip(
+                label: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (_filter != _EventsFilter.happeningNow)
+                      Container(
+                        width: 6,
+                        height: 6,
+                        margin: const EdgeInsets.only(right: 6),
+                        decoration: const BoxDecoration(
+                          color: AppTheme.liveGreen,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    const Text('Happening Now'),
+                  ],
+                ),
+                selected: _filter == _EventsFilter.happeningNow,
+                onSelected: (_) =>
+                    setState(() => _filter = _EventsFilter.happeningNow),
+                selectedColor: AppTheme.electricPurple,
+                backgroundColor: AppTheme.surfaceVariantDark,
+                labelStyle: TextStyle(
+                  color: _filter == _EventsFilter.happeningNow
+                      ? AppTheme.backgroundDark
+                      : AppTheme.textSecondary,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
+                side: BorderSide.none,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+              ),
+            ],
+          ),
+        ),
+        // Content
+        Expanded(
+          child: _filter == _EventsFilter.events
+              ? _buildEventsContent()
+              : _buildHappeningNowContent(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEventsContent() {
     final feedAsync = ref.watch(eventsFeedProvider);
 
     return RefreshIndicator(
@@ -414,7 +516,8 @@ class _EventsTab extends ConsumerWidget {
                 EmptyStateWidget(
                   type: EmptyStateType.general,
                   customTitle: 'No event activity yet',
-                  customMessage: 'RSVP to upcoming events to see activity here!',
+                  customMessage:
+                      'RSVP to upcoming events to see activity here!',
                   actionLabel: 'Discover Events',
                   onAction: () => context.go('/discover'),
                 ),
@@ -433,14 +536,8 @@ class _EventsTab extends ConsumerWidget {
       ),
     );
   }
-}
 
-/// Happening Now tab -- shows friends grouped by event
-class _HappeningNowTab extends ConsumerWidget {
-  const _HappeningNowTab();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  Widget _buildHappeningNowContent() {
     final groupsAsync = ref.watch(happeningNowProvider);
 
     return RefreshIndicator(
@@ -462,7 +559,8 @@ class _HappeningNowTab extends ConsumerWidget {
                 EmptyStateWidget(
                   type: EmptyStateType.general,
                   customTitle: 'No one\'s checked in right now',
-                  customMessage: 'Check in to a show to be the first! Your friends will see you here when they follow you.',
+                  customMessage:
+                      'Check in to a show to be the first! Your friends will see you here when they follow you.',
                   actionLabel: 'Explore Events',
                   onAction: () => context.go('/discover'),
                 ),
