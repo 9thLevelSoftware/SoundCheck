@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Beta Launch
-status: planning
-last_updated: "2026-03-01T00:00:00Z"
+status: executing
+last_updated: "2026-03-01T16:16:08Z"
 progress:
   total_phases: 5
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # Project State
@@ -22,12 +22,12 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 13 (Security & Infrastructure Hardening) — not yet started
-Plan: 0 of ? (planning phase)
-Status: Planning
-Last activity: 2026-03-01 — Board of Directors assessment complete, milestone created
+Phase: 13 (Security & Infrastructure Hardening) — in progress
+Plan: 2 of 2 (13-02 complete)
+Status: Executing
+Last activity: 2026-03-01 — Completed 13-02 (CI + gitleaks + env docs)
 
-Progress: [░░░░░░░░░░░░░░░░░░░░░░░░░] 0%
+Progress: [██████░░░░░░░░░░░░░░░░░░░] 10% (1/2 phase 13 plans, need 13-01 still)
 
 ## Performance Metrics
 
@@ -41,11 +41,22 @@ Progress: [░░░░░░░░░░░░░░░░░░░░░░░
 - Total phases: 9
 - Timeline: 2026-02-27 → 2026-02-28
 
+**v2.0 stats:**
+
+| Phase | Plan | Duration | Tasks | Files |
+|-------|------|----------|-------|-------|
+| 13 | 02 | 2 min | 3 | 3 |
+
 ## Accumulated Context
 
 ### Decisions
 
 All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
+
+**v2.0 decisions:**
+- [13-02] CI-based gitleaks over local pre-commit hook for portability and reproducibility
+- [13-02] 4-tier env var organization (startup, core features, full features, optional) for Railway config prioritization
+- [13-02] Keep main/develop in CI triggers alongside master for future branch strategy flexibility
 
 ### Pending Todos
 
@@ -70,6 +81,6 @@ All v1.0/v1.1 decisions logged in PROJECT.md Key Decisions table.
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: Created v2.0 milestone (REQUIREMENTS.md + ROADMAP.md)
+Last session: 2026-03-01T16:16:08Z
+Stopped at: Completed 13-02-PLAN.md (CI pipeline fix + gitleaks + env docs)
 Resume file: None
