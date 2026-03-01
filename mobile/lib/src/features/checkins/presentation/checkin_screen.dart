@@ -56,14 +56,16 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   static const int _maxImages = 4;
 
   final List<Map<String, String>> _vibeOptions = [
+    // Primary vibes (shown initially)
+    {'id': 'great_sound', 'name': 'Great Sound', 'icon': '\u{1F50A}'},
+    {'id': 'good_vibes', 'name': 'Good Vibes', 'icon': '\u{270C}'},
+    {'id': 'epic_lighting', 'name': 'Epic Lighting', 'icon': '\u{2728}'},
+    {'id': 'packed', 'name': 'Packed House', 'icon': '\u{1F465}'},
+    {'id': 'intimate', 'name': 'Intimate', 'icon': '\u{1F56F}'},
+    {'id': 'singing_along', 'name': 'Singing Along', 'icon': '\u{1F3A4}'},
+    // Expanded vibes (behind "More vibes")
     {'id': 'mosh_pit', 'name': 'Mosh Pit', 'icon': '\u{1F918}'},
     {'id': 'crowd_surfing', 'name': 'Crowd Surfing', 'icon': '\u{1F3C4}'},
-    {'id': 'great_sound', 'name': 'Great Sound', 'icon': '\u{1F50A}'},
-    {'id': 'epic_lighting', 'name': 'Epic Lighting', 'icon': '\u{2728}'},
-    {'id': 'intimate', 'name': 'Intimate', 'icon': '\u{1F56F}'},
-    {'id': 'packed', 'name': 'Packed House', 'icon': '\u{1F465}'},
-    {'id': 'good_vibes', 'name': 'Good Vibes', 'icon': '\u{270C}'},
-    {'id': 'singing_along', 'name': 'Singing Along', 'icon': '\u{1F3A4}'},
     {'id': 'headbanging', 'name': 'Headbanging', 'icon': '\u{1F3B8}'},
     {'id': 'pyro', 'name': 'Pyro', 'icon': '\u{1F525}'},
   ];
@@ -2025,7 +2027,7 @@ class _PhotoSelector extends StatelessWidget {
   }
 }
 
-class _VibeSelector extends StatelessWidget {
+class _VibeSelector extends StatefulWidget {
   const _VibeSelector({
     required this.vibes,
     required this.selectedVibes,
@@ -2037,47 +2039,103 @@ class _VibeSelector extends StatelessWidget {
   final Function(String) onToggle;
 
   @override
+  State<_VibeSelector> createState() => _VibeSelectorState();
+}
+
+class _VibeSelectorState extends State<_VibeSelector> {
+  static const int _initialCount = 6;
+  bool _expanded = false;
+
+  @override
   Widget build(BuildContext context) {
+    // Auto-expand if any hidden vibe is already selected
+    final hasHiddenSelection = widget.vibes.length > _initialCount &&
+        widget.vibes
+            .skip(_initialCount)
+            .any((v) => widget.selectedVibes.contains(v['id']));
+    final showAll = _expanded || hasHiddenSelection;
+    final visibleVibes =
+        showAll ? widget.vibes : widget.vibes.take(_initialCount).toList();
+
     return Wrap(
       spacing: 8,
       runSpacing: 8,
-      children: vibes.map((vibe) {
-        final isSelected = selectedVibes.contains(vibe['id']);
-        return GestureDetector(
-          onTap: () => onToggle(vibe['id']!),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected
-                  ? AppTheme.electricPurple
-                  : AppTheme.surfaceVariantDark,
-              borderRadius: BorderRadius.circular(20),
-              border: isSelected
-                  ? null
-                  : Border.all(
-                      color: AppTheme.textTertiary.withValues(alpha: 0.3),),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(vibe['icon']!, style: const TextStyle(fontSize: 14)),
-                const SizedBox(width: 6),
-                Text(
-                  vibe['name']!,
-                  style: TextStyle(
-                    color: isSelected
-                        ? AppTheme.backgroundDark
-                        : AppTheme.textSecondary,
-                    fontWeight:
-                        isSelected ? FontWeight.w600 : FontWeight.w500,
-                    fontSize: 13,
+      children: [
+        ...visibleVibes.map((vibe) {
+          final isSelected = widget.selectedVibes.contains(vibe['id']);
+          return GestureDetector(
+            onTap: () => widget.onToggle(vibe['id']!),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? AppTheme.electricPurple
+                    : AppTheme.surfaceVariantDark,
+                borderRadius: BorderRadius.circular(20),
+                border: isSelected
+                    ? null
+                    : Border.all(
+                        color:
+                            AppTheme.textTertiary.withValues(alpha: 0.3),
+                      ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    vibe['icon']!,
+                    style: const TextStyle(fontSize: 14),
                   ),
+                  const SizedBox(width: 6),
+                  Text(
+                    vibe['name']!,
+                    style: TextStyle(
+                      color: isSelected
+                          ? AppTheme.backgroundDark
+                          : AppTheme.textSecondary,
+                      fontWeight:
+                          isSelected ? FontWeight.w600 : FontWeight.w500,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }),
+        // "More vibes" chip when collapsed and there are hidden vibes
+        if (!showAll && widget.vibes.length > _initialCount)
+          GestureDetector(
+            onTap: () => setState(() => _expanded = true),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: AppTheme.surfaceVariantDark,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: AppTheme.electricPurple.withValues(alpha: 0.5),
                 ),
-              ],
+              ),
+              child: const Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, color: AppTheme.electricPurple, size: 16),
+                  SizedBox(width: 4),
+                  Text(
+                    'More vibes',
+                    style: TextStyle(
+                      color: AppTheme.electricPurple,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        );
-      }).toList(),
+      ],
     );
   }
 }
