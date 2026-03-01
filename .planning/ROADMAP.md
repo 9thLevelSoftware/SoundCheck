@@ -230,7 +230,9 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
   3. Star rating in rating sheet announces current value to screen readers
   4. Password toggle, search clear, and verified badges all have accessible labels or tooltips
   5. No font size below 13px on any user-visible text element
-**Plans**: 2 plans (1: contrast fixes, 2: semantic labels)
+Plans:
+- [x] 18-01-PLAN.md — WCAG contrast & typography fixes (social icon alpha, textTertiary→textSecondary, fontSize bumps, search hint)
+- [x] 18-02-PLAN.md — Semantic accessibility labels (_SocialIcon labels, star rating Semantics, search clear tooltip, password toggle tooltips, venue verified badge Tooltip)
 
 ### Phase 19: Touch Targets & Registration UX
 **Goal**: Bring every interactive element to the 44px minimum touch target and improve registration form clarity with optional field labels, password strength, and inline validation — without changing the single-page layout.
@@ -279,12 +281,12 @@ Phase 19 ──────┘
 
 | Phase | Plans Complete | Status |
 |-------|----------------|--------|
-| 18. WCAG Contrast & Accessibility | 0/2 | Pending |
+| 18. WCAG Contrast & Accessibility | 2/2 | Complete |
 | 19. Touch Targets & Registration UX | 0/2 | Pending |
 | 20. UX Restructuring | 0/3 | Pending |
 | 21. Theme Cleanup & Light Mode Prep | 0/2 | Pending |
 
-**Total: 0/33 requirements complete**
+**Total: 10/33 requirements complete**
 
 ---
 *Roadmap created: 2026-02-02*
