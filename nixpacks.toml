@@ -11,6 +11,3 @@ cmds = ["(cd backend && npm ci --production=false)"]
 
 [phases.build]
 cmds = ["(cd backend && rm -rf dist && npm run build)"]
-
-[start]
-cmd = "cd backend && node dist/index.js"

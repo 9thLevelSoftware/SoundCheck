@@ -4,6 +4,7 @@ import { UserService } from '../services/UserService';
 import { checkRateLimit, getRedis } from '../utils/redisRateLimiter';
 import { ApiResponse, User } from '../types';
 import logger from '../utils/logger';
+import { setUser as sentrySetUser } from '../utils/sentry';
 
 export interface AuthenticatedRequest extends Request {
   user: User;
@@ -55,6 +56,8 @@ export const authenticateToken = async (
 
     // Attach user info to request
     req.user = user;
+    // Enrich Sentry error context with authenticated user
+    sentrySetUser({ id: user.id, email: user.email, username: user.username });
 
     next();
   } catch (error) {
@@ -87,6 +90,7 @@ export const optionalAuth = async (
         
         if (user && user.isActive) {
           req.user = user;
+          sentrySetUser({ id: user.id, email: user.email, username: user.username });
         }
       }
     }

@@ -58,6 +58,13 @@ import { startNotificationWorker, stopNotificationWorker } from './jobs/notifica
 import { startModerationWorker, stopModerationWorker } from './jobs/moderationWorker';
 import { registerSyncJobs } from './jobs/syncScheduler';
 import { Worker } from 'bullmq';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { authenticateToken, requireAdmin } from './middleware/auth';
+
+// Read package version for health endpoint
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
+const APP_VERSION = packageJson.version;
 
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
@@ -171,7 +178,7 @@ app.get('/health', async (req, res) => {
       data: {
         status: 'healthy',
         timestamp: new Date().toISOString(),
-        version: '1.0.0',
+        version: APP_VERSION,
         database: isDbHealthy ? 'connected' : 'disconnected',
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
@@ -231,11 +238,16 @@ app.get('/', (req, res) => {
     success: true,
     data: {
       message: 'SoundCheck API Server',
-      version: '1.0.0',
+      version: APP_VERSION,
       timestamp: new Date().toISOString(),
     },
   };
   res.json(response);
+});
+
+// Debug: Sentry test route (admin-only) — throws intentional error for verification
+app.get('/api/debug/sentry-test', authenticateToken, requireAdmin(), (req: express.Request, res: express.Response) => {
+  throw new Error('Sentry test error — this is intentional');
 });
 
 // 404 handler

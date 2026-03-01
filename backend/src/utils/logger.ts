@@ -56,8 +56,19 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-// File transport for production
+// Production transports
 if (process.env.NODE_ENV === 'production') {
+  // JSON console transport for container platforms (Railway, Docker)
+  // Container hosts capture stdout — file transports alone are invisible
+  transports.push(
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.json()
+      ),
+    })
+  );
+
   // General logs with rotation
   transports.push(
     new DailyRotateFile({
