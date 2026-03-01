@@ -1,6 +1,9 @@
 import 'dart:io' show Platform;
 
+import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+
+import '../../../core/services/log_service.dart';
 
 class SubscriptionService {
   static const _appleApiKey = String.fromEnvironment('RC_APPLE_KEY');
@@ -12,8 +15,7 @@ class SubscriptionService {
 
     final apiKey = Platform.isIOS ? _appleApiKey : _googleApiKey;
     if (apiKey.isEmpty) {
-      // ignore: avoid_print
-      print('SubscriptionService: No RevenueCat API key — subscriptions disabled');
+      LogService.w('SubscriptionService: No RevenueCat API key -- subscriptions disabled');
       return;
     }
 
@@ -25,9 +27,8 @@ class SubscriptionService {
     try {
       if (!Platform.isIOS && !Platform.isAndroid) return;
       await Purchases.logIn(userId);
-    } catch (e) {
-      // ignore: avoid_print
-      print('SubscriptionService.login error: $e');
+    } on PlatformException catch (e) {
+      LogService.e('SubscriptionService.login error: $e');
     }
   }
 
@@ -35,9 +36,8 @@ class SubscriptionService {
     try {
       if (!Platform.isIOS && !Platform.isAndroid) return;
       await Purchases.logOut();
-    } catch (e) {
-      // ignore: avoid_print
-      print('SubscriptionService.logout error: $e');
+    } on PlatformException catch (e) {
+      LogService.e('SubscriptionService.logout error: $e');
     }
   }
 
@@ -46,7 +46,8 @@ class SubscriptionService {
       if (!Platform.isIOS && !Platform.isAndroid) return false;
       final customerInfo = await Purchases.getCustomerInfo();
       return customerInfo.entitlements.all[_entitlementId]?.isActive ?? false;
-    } catch (e) {
+    } on PlatformException catch (e) {
+      LogService.e('SubscriptionService.isPremium error: $e');
       return false;
     }
   }
@@ -55,27 +56,35 @@ class SubscriptionService {
     try {
       final offerings = await Purchases.getOfferings();
       return offerings.current?.availablePackages ?? [];
-    } catch (e) {
+    } on PlatformException catch (e) {
+      LogService.e('SubscriptionService.getPackages error: $e');
       return [];
     }
   }
 
-  static Future<bool> purchase(Package package) async {
+  /// Purchase a package. Returns CustomerInfo on success, null on user
+  /// cancellation. Rethrows PlatformException for actual errors.
+  static Future<CustomerInfo?> purchase(Package package) async {
     try {
-      await Purchases.purchasePackage(package);
-      final customerInfo = await Purchases.getCustomerInfo();
-      return customerInfo.entitlements.all[_entitlementId]?.isActive ?? false;
-    } catch (e) {
-      return false;
+      final result = await Purchases.purchasePackage(package);
+      return result.customerInfo;
+    } on PlatformException catch (e) {
+      final errorCode = PurchasesErrorHelper.getErrorCode(e);
+      if (errorCode == PurchasesErrorCode.purchaseCancelledError) {
+        return null; // User cancelled -- not an error
+      }
+      rethrow; // Actual error -- let caller handle
     }
   }
 
-  static Future<bool> restorePurchases() async {
+  /// Restore purchases. Returns CustomerInfo on success, null on error.
+  static Future<CustomerInfo?> restorePurchases() async {
     try {
-      final customerInfo = await Purchases.restorePurchases();
-      return customerInfo.entitlements.all[_entitlementId]?.isActive ?? false;
-    } catch (e) {
-      return false;
+      return await Purchases.restorePurchases();
+    } on PlatformException catch (e) {
+      final errorCode = PurchasesErrorHelper.getErrorCode(e);
+      LogService.e('SubscriptionService.restorePurchases error: $errorCode');
+      return null;
     }
   }
 }
