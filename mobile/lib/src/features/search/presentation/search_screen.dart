@@ -54,7 +54,7 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
           controller: _searchController,
           autofocus: true,
           decoration: const InputDecoration(
-            hintText: 'Search bands, venues, events...',
+            hintText: 'Search bands, venues, events, people...',
             border: InputBorder.none,
             hintStyle: TextStyle(color: AppTheme.textSecondary),
           ),
@@ -127,6 +127,18 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                         ref
                             .read(searchFilterStateProvider.notifier)
                             .setFilter(SearchFilter.events);
+                      }
+                    },
+                  ),
+                  const SizedBox(width: AppTheme.spacing8),
+                  FilterChip(
+                    label: const Text('Users'),
+                    selected: currentFilter == SearchFilter.users,
+                    onSelected: (selected) {
+                      if (selected) {
+                        ref
+                            .read(searchFilterStateProvider.notifier)
+                            .setFilter(SearchFilter.users);
                       }
                     },
                   ),
@@ -335,6 +347,35 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
                     .setFilter(SearchFilter.events);
               },
             ),
+          const SizedBox(height: AppTheme.spacing16),
+        ],
+
+        // Users Section
+        if (results.users.isNotEmpty) ...[
+          _buildSectionHeader(
+            context,
+            title: 'Users',
+            count: results.users.length,
+            icon: Icons.person,
+            color: AppTheme.electricPurple,
+          ),
+          const SizedBox(height: AppTheme.spacing8),
+          ...results.users.take(5).map(
+                (user) => _UserSearchTile(
+                  user: user,
+                  onTap: () => context.push('/users/${user.id}'),
+                ),
+              ),
+          if (results.users.length > 5)
+            _buildSeeAllButton(
+              context,
+              label: 'See all ${results.users.length} users',
+              onTap: () {
+                ref
+                    .read(searchFilterStateProvider.notifier)
+                    .setFilter(SearchFilter.users);
+              },
+            ),
         ],
       ],
     );
@@ -375,6 +416,73 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             fontWeight: FontWeight.w600,
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// User search result tile.
+class _UserSearchTile extends StatelessWidget {
+  const _UserSearchTile({
+    required this.user,
+    required this.onTap,
+  });
+
+  final SearchUser user;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: AppTheme.spacing8),
+      child: ListTile(
+        onTap: onTap,
+        leading: CircleAvatar(
+          radius: 24,
+          backgroundColor: AppTheme.electricPurple.withValues(alpha: 0.2),
+          backgroundImage: user.profileImageUrl != null
+              ? NetworkImage(user.profileImageUrl!)
+              : null,
+          child: user.profileImageUrl == null
+              ? const Icon(Icons.person, color: AppTheme.electricPurple)
+              : null,
+        ),
+        title: Row(
+          children: [
+            Flexible(
+              child: Text(
+                user.displayName,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+            if (user.isVerified) ...[
+              const SizedBox(width: 4),
+              const Icon(Icons.verified, color: AppTheme.electricBlue, size: 16),
+            ],
+          ],
+        ),
+        subtitle: Text(
+          '@${user.username} \u00B7 ${user.totalCheckins} shows',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(color: AppTheme.textTertiary),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right,
+          color: AppTheme.textTertiary,
+        ),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: AppTheme.spacing8,
+        ),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
+        ),
+        tileColor: AppTheme.cardDark,
       ),
     );
   }
