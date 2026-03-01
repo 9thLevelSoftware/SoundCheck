@@ -3,7 +3,7 @@ import { FeedService } from '../services/FeedService';
 import { ApiResponse } from '../types';
 import logger from '../utils/logger';
 
-const VALID_FEED_TYPES = ['friends', 'event', 'happening_now'] as const;
+const VALID_FEED_TYPES = ['friends', 'event', 'happening_now', 'global'] as const;
 
 export class FeedController {
   private feedService = new FeedService();
@@ -35,6 +35,38 @@ export class FeedController {
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to fetch friends feed',
+      };
+      res.status(500).json(response);
+    }
+  };
+
+  /**
+   * Get global feed with cursor pagination
+   * GET /api/feed/global?cursor=X&limit=N
+   */
+  getGlobalFeed = async (req: Request, res: Response): Promise<void> => {
+    try {
+      const userId = req.user?.id;
+
+      if (!userId) {
+        const response: ApiResponse = { success: false, error: 'Authentication required' };
+        res.status(401).json(response);
+        return;
+      }
+
+      const cursor = req.query.cursor as string | undefined;
+      const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
+      const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 20 : rawLimit));
+
+      const result = await this.feedService.getGlobalFeed(userId, cursor, limit);
+
+      const response: ApiResponse = { success: true, data: result };
+      res.status(200).json(response);
+    } catch (error) {
+      logger.error('Get global feed error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      const response: ApiResponse = {
+        success: false,
+        error: error instanceof Error ? error.message : 'Failed to fetch global feed',
       };
       res.status(500).json(response);
     }
