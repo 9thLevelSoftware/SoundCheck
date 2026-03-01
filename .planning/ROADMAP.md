@@ -260,7 +260,11 @@ Plans:
   4. Rating sheet shows helper text when submit is disabled
   5. Rated bands/venue show checkmark indicator in rating sheet tabs
   6. Check-in screen shows 6 vibes initially, "More vibes" expands to full 10
-**Plans**: 3 plans (1: feed tab consolidation, 2: profile + rating sheet, 3: vibes reduction)
+**Plans**: 3/3 plans complete
+Plans:
+- [x] 20-01-PLAN.md — Feed tab consolidation (merge Happening Now into Events tab with ChoiceChip filter + live dot indicator)
+- [x] 20-02-PLAN.md — Profile section collapsing + rating sheet UX (See More/Less toggle, wire View All, helper text, rated tab checkmarks)
+- [x] 20-03-PLAN.md — Vibes reduction (show 6 initially + "More vibes" expandable chip)
 
 ### Phase 21: Theme Cleanup & Light Mode Prep
 **Goal**: Eliminate confusing color aliases, fix the nav label convention violation, add missing notification badge, and audit light theme colors for eventual light mode enablement.
@@ -286,8 +290,7 @@ Phase 19 ──────┘
 |-------|----------------|--------|
 | 18. WCAG Contrast & Accessibility | 2/2 | Complete |
 | 19. Touch Targets & Registration UX | 2/2 | Complete |
-| 20. UX Restructuring | 0/3 | Pending |
-| 21. Theme Cleanup & Light Mode Prep | 0/2 | Pending |
+| 20. UX Restructuring | 1/3 | In Progress|  | 21. Theme Cleanup & Light Mode Prep | 0/2 | Pending |
 
 **Total: 19/33 requirements complete**
 

@@ -39,8 +39,8 @@
 
 ## Feed Tabs Consolidation (2)
 
-- [ ] **UIUX-20**: Merge "Events" and "Happening Now" into a single "Events" tab with a "Happening Now" chip/pill filter inside — reduce from 4 tabs to 3, lowering cognitive scan load (`feed_screen.dart` TabController length 4→3)
-- [ ] **UIUX-21**: Add "Happening Now" live indicator badge/dot on the merged Events tab when active events exist — preserves the FOMO signal without a dedicated tab
+- [x] **UIUX-20**: Merge "Events" and "Happening Now" into a single "Events" tab with a "Happening Now" chip/pill filter inside — reduce from 4 tabs to 3, lowering cognitive scan load (`feed_screen.dart` TabController length 4→3)
+- [x] **UIUX-21**: Add "Happening Now" live indicator badge/dot on the merged Events tab when active events exist — preserves the FOMO signal without a dedicated tab
 
 ## Profile Section Collapsing (2)
 
@@ -104,8 +104,8 @@ Populated during roadmap creation. Each requirement maps to exactly one phase.
 | UIUX-17 | Phase 19 | Pending |
 | UIUX-18 | Phase 19 | Pending |
 | UIUX-19 | Phase 19 | Pending |
-| UIUX-20 | Phase 20 | Pending |
-| UIUX-21 | Phase 20 | Pending |
+| UIUX-20 | Phase 20 | Complete |
+| UIUX-21 | Phase 20 | Complete |
 | UIUX-22 | Phase 20 | Pending |
 | UIUX-23 | Phase 20 | Pending |
 | UIUX-24 | Phase 20 | Pending |
