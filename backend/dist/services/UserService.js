@@ -36,7 +36,8 @@ class UserService {
       INSERT INTO users (email, password_hash, username, first_name, last_name)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
-                location, date_of_birth, is_verified, is_active, created_at, updated_at
+                location, date_of_birth, is_verified, is_active, is_admin, is_premium,
+                created_at, updated_at
     `;
         const values = [email, passwordHash, username, firstName || null, lastName || null];
         const result = await this.db.query(query, values);
@@ -90,7 +91,8 @@ class UserService {
     async findById(userId) {
         const query = `
       SELECT id, email, username, first_name, last_name, bio, profile_image_url,
-             location, date_of_birth, is_verified, is_active, created_at, updated_at
+             location, date_of_birth, is_verified, is_active, is_admin, is_premium,
+             created_at, updated_at
       FROM users
       WHERE id = $1 AND is_active = true
     `;
@@ -106,7 +108,8 @@ class UserService {
     async findByEmail(email) {
         const query = `
       SELECT id, email, username, first_name, last_name, bio, profile_image_url,
-             location, date_of_birth, is_verified, is_active, created_at, updated_at
+             location, date_of_birth, is_verified, is_active, is_admin, is_premium,
+             created_at, updated_at
       FROM users
       WHERE email = $1 AND is_active = true
     `;
@@ -121,9 +124,9 @@ class UserService {
      */
     async findByEmailWithPassword(email) {
         const query = `
-      SELECT id, email, password_hash, username, first_name, last_name, bio, 
-             profile_image_url, location, date_of_birth, is_verified, is_active, 
-             created_at, updated_at
+      SELECT id, email, password_hash, username, first_name, last_name, bio,
+             profile_image_url, location, date_of_birth, is_verified, is_active,
+             is_admin, is_premium, created_at, updated_at
       FROM users
       WHERE email = $1
     `;
@@ -143,7 +146,8 @@ class UserService {
     async findByUsername(username) {
         const query = `
       SELECT id, email, username, first_name, last_name, bio, profile_image_url,
-             location, date_of_birth, is_verified, is_active, created_at, updated_at
+             location, date_of_birth, is_verified, is_active, is_admin, is_premium,
+             created_at, updated_at
       FROM users
       WHERE username = $1 AND is_active = true
     `;
@@ -178,7 +182,8 @@ class UserService {
       SET ${updates.join(', ')}, updated_at = CURRENT_TIMESTAMP
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
-                location, date_of_birth, is_verified, is_active, created_at, updated_at
+                location, date_of_birth, is_verified, is_active, is_admin, is_premium,
+                created_at, updated_at
     `;
         const result = await this.db.query(query, values);
         if (result.rows.length === 0) {

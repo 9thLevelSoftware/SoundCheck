@@ -115,10 +115,22 @@ class VenueController {
         /**
          * Update venue
          * PUT /api/venues/:id
+         * Authorized for admins and claimed owners (claimed_by_user_id match)
          */
         this.updateVenue = async (req, res) => {
             try {
+                if (!req.user) {
+                    res.status(401).json({ success: false, error: 'Authentication required' });
+                    return;
+                }
                 const { id } = req.params;
+                // Authorization: admin or claimed owner
+                const isAdmin = !!req.user.isAdmin;
+                const isOwner = await this.venueService.isClaimedOwner(id, req.user.id);
+                if (!isAdmin && !isOwner) {
+                    res.status(403).json({ success: false, error: 'Only admins or claimed owners can update this venue' });
+                    return;
+                }
                 const updateData = req.body;
                 const venue = await this.venueService.updateVenue(id, updateData);
                 const response = {

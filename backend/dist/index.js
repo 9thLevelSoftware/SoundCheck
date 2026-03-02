@@ -38,12 +38,24 @@ const dataExportRoutes_1 = __importDefault(require("./routes/dataExportRoutes"))
 const consentRoutes_1 = __importDefault(require("./routes/consentRoutes"));
 const socialAuthRoutes_1 = __importDefault(require("./routes/socialAuthRoutes"));
 const searchRoutes_1 = __importDefault(require("./routes/searchRoutes"));
+const reportRoutes_1 = __importDefault(require("./routes/reportRoutes"));
+const moderationRoutes_1 = __importDefault(require("./routes/moderationRoutes"));
+const passwordResetRoutes_1 = __importDefault(require("./routes/passwordResetRoutes"));
+const blockRoutes_1 = __importDefault(require("./routes/blockRoutes"));
+const rsvpRoutes_1 = __importDefault(require("./routes/rsvpRoutes"));
+const trendingRoutes_1 = __importDefault(require("./routes/trendingRoutes"));
+const onboardingRoutes_1 = __importDefault(require("./routes/onboardingRoutes"));
+const shareRoutes_1 = __importDefault(require("./routes/shareRoutes"));
+const claimRoutes_1 = __importDefault(require("./routes/claimRoutes"));
+const wrappedRoutes_1 = __importDefault(require("./routes/wrappedRoutes"));
+const subscriptionRoutes_1 = __importDefault(require("./routes/subscriptionRoutes"));
 const database_1 = __importDefault(require("./config/database"));
 const logger_1 = require("./utils/logger");
 const websocket_1 = require("./utils/websocket");
 const eventSyncWorker_1 = require("./jobs/eventSyncWorker");
 const badgeWorker_1 = require("./jobs/badgeWorker");
 const notificationWorker_1 = require("./jobs/notificationWorker");
+const moderationWorker_1 = require("./jobs/moderationWorker");
 const syncScheduler_1 = require("./jobs/syncScheduler");
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
@@ -179,6 +191,21 @@ app.use('/api/users', dataExportRoutes_1.default);
 app.use('/api/users/consents', consentRoutes_1.default);
 app.use('/api/auth/social', socialAuthRoutes_1.default);
 app.use('/api/search', searchRoutes_1.default);
+app.use('/api/reports', reportRoutes_1.default);
+app.use('/api/admin/moderation', moderationRoutes_1.default);
+app.use('/api/auth', passwordResetRoutes_1.default);
+app.use('/api/blocks', blockRoutes_1.default);
+app.use('/api/rsvp', rsvpRoutes_1.default);
+app.use('/api/trending', trendingRoutes_1.default);
+app.use('/api/onboarding', onboardingRoutes_1.default);
+app.use('/api/share', shareRoutes_1.default.api);
+app.use('/api/claims', claimRoutes_1.default.public);
+app.use('/api/admin/claims', claimRoutes_1.default.admin);
+app.use('/api/wrapped', wrappedRoutes_1.default.api);
+app.use('/api/subscription', subscriptionRoutes_1.default);
+// Public share landing pages (no auth, not under /api/)
+app.use('/share', shareRoutes_1.default.public);
+app.use('/wrapped', wrappedRoutes_1.default.public);
 // Root endpoint
 app.get('/', (req, res) => {
     const response = {
@@ -245,6 +272,7 @@ const server = (0, http_1.createServer)(app);
 let syncWorker = null;
 let badgeWorker = null;
 let notifWorker = null;
+let modWorker = null;
 // Start server
 const startServer = async () => {
     try {
@@ -279,6 +307,7 @@ const startServer = async () => {
         syncWorker = (0, eventSyncWorker_1.startEventSyncWorker)();
         badgeWorker = (0, badgeWorker_1.startBadgeEvalWorker)();
         notifWorker = (0, notificationWorker_1.startNotificationWorker)();
+        modWorker = (0, moderationWorker_1.startModerationWorker)();
         (0, syncScheduler_1.registerSyncJobs)().catch(err => (0, logger_1.logError)('Failed to register sync jobs', { error: err.message || err }));
     }
     catch (error) {
@@ -295,6 +324,8 @@ process.on('SIGTERM', async () => {
         await (0, badgeWorker_1.stopBadgeEvalWorker)(badgeWorker);
     if (notifWorker)
         await (0, notificationWorker_1.stopNotificationWorker)(notifWorker);
+    if (modWorker)
+        await (0, moderationWorker_1.stopModerationWorker)(modWorker);
     await (0, sentry_1.closeSentry)(2000); // Wait up to 2s for pending Sentry events
     await (0, redisRateLimiter_1.closeRedis)();
     websocket_1.websocket.close();
@@ -310,6 +341,8 @@ process.on('SIGINT', async () => {
         await (0, badgeWorker_1.stopBadgeEvalWorker)(badgeWorker);
     if (notifWorker)
         await (0, notificationWorker_1.stopNotificationWorker)(notifWorker);
+    if (modWorker)
+        await (0, moderationWorker_1.stopModerationWorker)(modWorker);
     await (0, sentry_1.closeSentry)(2000); // Wait up to 2s for pending Sentry events
     await (0, redisRateLimiter_1.closeRedis)();
     websocket_1.websocket.close();

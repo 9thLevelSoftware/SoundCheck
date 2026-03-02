@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupRateLimit = exports.rateLimit = exports.requireAdmin = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
+exports.cleanupRateLimit = exports.rateLimit = exports.requirePremium = exports.requireAdmin = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../utils/auth");
 const UserService_1 = require("../services/UserService");
 const redisRateLimiter_1 = require("../utils/redisRateLimiter");
@@ -130,6 +130,30 @@ const requireAdmin = () => {
     };
 };
 exports.requireAdmin = requireAdmin;
+/**
+ * Middleware to require premium subscription
+ */
+const requirePremium = () => {
+    return (req, res, next) => {
+        const user = req.user;
+        if (!user) {
+            res.status(401).json({
+                success: false,
+                error: 'Authentication required',
+            });
+            return;
+        }
+        if (!user.isPremium) {
+            res.status(403).json({
+                success: false,
+                error: 'SoundCheck Pro subscription required',
+            });
+            return;
+        }
+        next();
+    };
+};
+exports.requirePremium = requirePremium;
 /**
  * Rate limiting middleware
  *

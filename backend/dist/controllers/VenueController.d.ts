@@ -22,6 +22,7 @@ export declare class VenueController {
     /**
      * Update venue
      * PUT /api/venues/:id
+     * Authorized for admins and claimed owners (claimed_by_user_id match)
      */
     updateVenue: (req: Request, res: Response) => Promise<void>;
     /**

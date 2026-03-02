@@ -44,6 +44,11 @@ export declare class ReviewService {
      */
     getUserReview(userId: string, venueId?: string, bandId?: string): Promise<Review | null>;
     /**
+     * Claimed owner responds to a review.
+     * Verifies the user owns the venue/band that the review targets.
+     */
+    respondToReview(reviewId: string, userId: string, response: string): Promise<Review>;
+    /**
      * Check if user already reviewed venue/band
      */
     private findExistingReview;

@@ -20,7 +20,7 @@ class BandService {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, name, description, genre, formed_year, website_url, spotify_url,
                 instagram_url, facebook_url, image_url, hometown, average_rating,
-                total_reviews, is_active, created_at, updated_at
+                total_reviews, is_active, claimed_by_user_id, created_at, updated_at
     `;
         const values = [
             name,
@@ -44,7 +44,7 @@ class BandService {
         const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, created_at, updated_at
+             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE id = $1 AND is_active = true
     `;
@@ -65,14 +65,14 @@ class BandService {
         let paramCount = 1;
         // Text search
         if (q.trim()) {
-            conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR genre ILIKE $${paramCount} OR hometown ILIKE $${paramCount})`);
+            conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE g ILIKE $${paramCount}) OR hometown ILIKE $${paramCount})`);
             values.push(`%${q.trim()}%`);
             paramCount++;
         }
-        // Genre filter
+        // Genre filter (uses genres TEXT[] column)
         if (genre) {
-            conditions.push(`genre ILIKE $${paramCount}`);
-            values.push(`%${genre}%`);
+            conditions.push(`$${paramCount} = ANY(genres)`);
+            values.push(genre);
             paramCount++;
         }
         // Rating filter
@@ -95,7 +95,7 @@ class BandService {
         const mainQuery = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, created_at, updated_at
+             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE ${conditions.join(' AND ')}
       ORDER BY ${sortColumn} ${sortOrder}
@@ -145,7 +145,7 @@ class BandService {
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, name, description, genre, formed_year, website_url, spotify_url,
                 instagram_url, facebook_url, image_url, hometown, average_rating,
-                total_reviews, is_active, created_at, updated_at
+                total_reviews, is_active, claimed_by_user_id, created_at, updated_at
     `;
         const result = await this.db.query(query, values);
         if (result.rows.length === 0) {
@@ -171,7 +171,7 @@ class BandService {
         const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, created_at, updated_at
+             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE is_active = true AND total_reviews >= 3
       ORDER BY (average_rating * 0.7 + LEAST(total_reviews/50.0, 1.0) * 0.3) DESC
@@ -187,13 +187,13 @@ class BandService {
         const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, created_at, updated_at
+             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
-      WHERE is_active = true AND genre ILIKE $1
+      WHERE is_active = true AND $1 = ANY(genres)
       ORDER BY average_rating DESC, total_reviews DESC
       LIMIT $2
     `;
-        const result = await this.db.query(query, [`%${genre}%`, limit]);
+        const result = await this.db.query(query, [genre, limit]);
         return result.rows.map((row) => this.mapDbBandToBand(row));
     }
     /**
@@ -203,9 +203,9 @@ class BandService {
         const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, created_at, updated_at
+             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
-      WHERE is_active = true 
+      WHERE is_active = true
         AND created_at >= CURRENT_DATE - INTERVAL '30 days'
         AND (total_reviews = 0 OR average_rating >= 3.5)
       ORDER BY created_at DESC, average_rating DESC
@@ -250,6 +250,56 @@ class BandService {
         await this.db.query(query, [bandId]);
     }
     /**
+     * Check if a user is the claimed owner of a band.
+     */
+    async isClaimedOwner(bandId, userId) {
+        const result = await this.db.query('SELECT 1 FROM bands WHERE id = $1 AND claimed_by_user_id = $2', [bandId, userId]);
+        return result.rows.length > 0;
+    }
+    /**
+     * Get aggregate stats for a claimed band owner.
+     * Returns check-in totals, average rating, unique fans, recent events, and top venues.
+     */
+    async getBandStats(bandId) {
+        // Total check-ins to events featuring this band
+        const checkinsResult = await this.db.query(`SELECT COUNT(c.id) AS total_checkins,
+              COUNT(DISTINCT c.user_id) AS unique_fans
+       FROM checkins c
+       JOIN events e ON c.event_id = e.id
+       JOIN event_lineup el ON el.event_id = e.id
+       WHERE el.band_id = $1`, [bandId]);
+        // Average rating from reviews
+        const ratingResult = await this.db.query(`SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
+       FROM reviews WHERE band_id = $1`, [bandId]);
+        // Recent events count (last 90 days)
+        const recentEventsResult = await this.db.query(`SELECT COUNT(DISTINCT e.id) AS recent_events
+       FROM events e
+       JOIN event_lineup el ON el.event_id = e.id
+       WHERE el.band_id = $1 AND e.event_date >= CURRENT_DATE - INTERVAL '90 days'`, [bandId]);
+        // Top venues by checkin count
+        const topVenuesResult = await this.db.query(`SELECT v.id AS venue_id, v.name AS venue_name, COUNT(c.id) AS checkin_count
+       FROM checkins c
+       JOIN events e ON c.event_id = e.id
+       JOIN event_lineup el ON el.event_id = e.id
+       JOIN venues v ON e.venue_id = v.id
+       WHERE el.band_id = $1
+       GROUP BY v.id, v.name
+       ORDER BY checkin_count DESC
+       LIMIT 5`, [bandId]);
+        const row = checkinsResult.rows[0];
+        return {
+            totalCheckins: parseInt(row.total_checkins || '0'),
+            averageRating: parseFloat(ratingResult.rows[0].avg_rating || '0'),
+            uniqueFans: parseInt(row.unique_fans || '0'),
+            recentEventsCount: parseInt(recentEventsResult.rows[0].recent_events || '0'),
+            topVenues: topVenuesResult.rows.map((r) => ({
+                venueId: r.venue_id,
+                venueName: r.venue_name,
+                checkinCount: parseInt(r.checkin_count),
+            })),
+        };
+    }
+    /**
      * Map database band row to Band type
      */
     mapDbBandToBand(row) {
@@ -268,6 +318,7 @@ class BandService {
             averageRating: parseFloat(row.average_rating || 0),
             totalCheckins: parseInt(row.total_reviews || 0),
             isActive: row.is_active,
+            claimedByUserId: row.claimed_by_user_id || undefined,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
         };

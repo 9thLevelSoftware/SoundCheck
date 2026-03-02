@@ -19,6 +19,10 @@ export declare const requireOwnership: (resourceUserIdField?: string) => (req: R
  * Middleware to require admin privileges
  */
 export declare const requireAdmin: () => (req: Request, res: Response, next: NextFunction) => void;
+/**
+ * Middleware to require premium subscription
+ */
+export declare const requirePremium: () => (req: Request, res: Response, next: NextFunction) => void;
 export declare const rateLimit: (windowMs?: number, maxRequests?: number) => (req: Request, res: Response, next: NextFunction) => Promise<void>;
 /**
  * Clean up expired in-memory rate limit entries

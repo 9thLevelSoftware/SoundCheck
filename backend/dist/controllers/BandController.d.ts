@@ -22,6 +22,7 @@ export declare class BandController {
     /**
      * Update band
      * PUT /api/bands/:id
+     * Authorized for admins and claimed owners (claimed_by_user_id match)
      */
     updateBand: (req: Request, res: Response) => Promise<void>;
     /**

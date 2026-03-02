@@ -47,6 +47,25 @@ export declare class BandService {
      */
     updateBandRating(bandId: string): Promise<void>;
     /**
+     * Check if a user is the claimed owner of a band.
+     */
+    isClaimedOwner(bandId: string, userId: string): Promise<boolean>;
+    /**
+     * Get aggregate stats for a claimed band owner.
+     * Returns check-in totals, average rating, unique fans, recent events, and top venues.
+     */
+    getBandStats(bandId: string): Promise<{
+        totalCheckins: number;
+        averageRating: number;
+        uniqueFans: number;
+        recentEventsCount: number;
+        topVenues: Array<{
+            venueId: string;
+            venueName: string;
+            checkinCount: number;
+        }>;
+    }>;
+    /**
      * Map database band row to Band type
      */
     private mapDbBandToBand;

@@ -39,6 +39,24 @@ export declare class VenueService {
      */
     updateVenueRating(venueId: string): Promise<void>;
     /**
+     * Check if a user is the claimed owner of a venue.
+     */
+    isClaimedOwner(venueId: string, userId: string): Promise<boolean>;
+    /**
+     * Get aggregate stats for a claimed venue owner.
+     * Returns check-in totals, average rating, unique visitors, upcoming events, and popular genres.
+     */
+    getVenueStats(venueId: string): Promise<{
+        totalCheckins: number;
+        averageRating: number;
+        uniqueVisitors: number;
+        upcomingEventsCount: number;
+        popularGenres: Array<{
+            genre: string;
+            count: number;
+        }>;
+    }>;
+    /**
      * Map database venue row to Venue type
      */
     private mapDbVenueToVenue;

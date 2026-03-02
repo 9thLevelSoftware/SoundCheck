@@ -11,6 +11,7 @@ export interface User {
     isVerified: boolean;
     isActive: boolean;
     isAdmin?: boolean;
+    isPremium?: boolean;
     createdAt: string;
     updatedAt: string;
     totalCheckins?: number;
@@ -56,6 +57,7 @@ export interface Venue {
     averageRating: number;
     totalCheckins: number;
     isActive: boolean;
+    claimedByUserId?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -92,6 +94,7 @@ export interface Band {
     averageRating: number;
     totalCheckins: number;
     isActive: boolean;
+    claimedByUserId?: string;
     createdAt: string;
     updatedAt: string;
 }
@@ -121,6 +124,8 @@ export interface Review {
     helpfulCount: number;
     createdAt: string;
     updatedAt: string;
+    ownerResponse?: string;
+    ownerResponseAt?: string;
     user?: User;
     venue?: Venue;
     band?: Band;
@@ -321,6 +326,109 @@ export interface VenueAggregate {
     avgExperienceRating: number;
     totalRatings: number;
     uniqueVisitors: number;
+}
+export type ReportReason = 'spam' | 'harassment' | 'inappropriate' | 'copyright' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'actioned' | 'dismissed';
+export type ContentType = 'checkin' | 'comment' | 'photo' | 'user';
+export interface Report {
+    id: string;
+    reporterId: string;
+    contentType: ContentType;
+    contentId: string;
+    targetUserId?: string;
+    reason: ReportReason;
+    description?: string;
+    status: ReportStatus;
+    reviewedBy?: string;
+    reviewedAt?: string;
+    reviewNotes?: string;
+    createdAt: string;
+}
+export interface ModerationItem {
+    id: string;
+    contentType: ContentType;
+    contentId: string;
+    source: 'user_report' | 'auto_safesearch';
+    reportId?: string;
+    safesearchResults?: Record<string, string>;
+    status: string;
+    reviewedBy?: string;
+    reviewedAt?: string;
+    actionTaken?: string;
+    createdAt: string;
+}
+export interface UserBlock {
+    id: string;
+    blockerId: string;
+    blockedId: string;
+    createdAt: string;
+}
+export interface PasswordResetToken {
+    id: string;
+    userId: string;
+    tokenHash: string;
+    expiresAt: string;
+    usedAt?: string;
+    createdAt: string;
+}
+export interface CreateReportRequest {
+    contentType: ContentType;
+    contentId: string;
+    reason: ReportReason;
+    description?: string;
+}
+export type ClaimStatus = 'pending' | 'approved' | 'denied';
+export type ClaimEntityType = 'venue' | 'band';
+export interface VerificationClaim {
+    id: string;
+    userId: string;
+    entityType: ClaimEntityType;
+    entityId: string;
+    status: ClaimStatus;
+    evidenceText?: string;
+    evidenceUrl?: string;
+    reviewedBy?: string;
+    reviewedAt?: string;
+    reviewNotes?: string;
+    createdAt: string;
+    updatedAt: string;
+    entityName?: string;
+    userName?: string;
+    userEmail?: string;
+}
+export interface CreateClaimRequest {
+    entityType: ClaimEntityType;
+    entityId: string;
+    evidenceText?: string;
+    evidenceUrl?: string;
+}
+export interface ReviewClaimRequest {
+    status: 'approved' | 'denied';
+    reviewNotes?: string;
+}
+export interface TrendingEvent {
+    id: string;
+    eventName: string;
+    eventDate: string;
+    venueName: string;
+    venueCity: string;
+    venueState: string;
+    rsvpCount: number;
+    checkinVelocity: number;
+    friendSignals: number;
+    distanceKm: number;
+    trendingScore: number;
+    imageUrl?: string;
+    lineupBands?: string[];
+}
+export interface SearchResults {
+    bands: Band[];
+    venues: Venue[];
+    events: Event[];
+}
+export interface OwnerReviewResponse {
+    reviewId: string;
+    ownerResponse: string;
 }
 declare global {
     namespace Express {
