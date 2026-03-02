@@ -214,89 +214,15 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 
 </details>
 
-## v3.0 UI/UX Design Audit (Phases 18-21)
+<details>
+<summary>✅ v3.0 UI/UX Design Audit (Phases 18-21) — SHIPPED 2026-03-01</summary>
 
-**Goal:** Raise design quality from 78/100 (B+) to 90+ (A) — fix every accessibility violation, contrast failure, touch target issue, and UX friction point. No new features — pure quality remediation. All changes are mobile-only Flutter code.
-**Source:** UI Design Audit Report (2026-03-01)
-**Requirements:** `.planning/REQUIREMENTS.md` (33 requirements)
+**Total: 4 phases, 9 plans, 33 requirements — all complete**
+**Archive:** `.planning/milestones/v3.0-ROADMAP.md`, `.planning/milestones/v3.0-REQUIREMENTS.md`
+**Audit:** `.planning/milestones/v3.0-AUDIT.md`
 
-### Phase 18: WCAG Contrast & Accessibility
-**Goal**: Eliminate all WCAG AA contrast failures and add semantic labels to every interactive element missing accessible names. After this phase, the app passes automated accessibility audits and screen reader users can navigate all interactive elements.
-**Depends on**: Nothing (first phase — highest impact, lowest effort)
-**Requirements**: UIUX-01, UIUX-02, UIUX-03, UIUX-04, UIUX-05, UIUX-06, UIUX-07, UIUX-08, UIUX-09, UIUX-10
-**Success Criteria** (what must be TRUE):
-  1. All text elements meet WCAG AA contrast ratio (4.5:1 for normal text, 3:1 for large text) — no `textTertiary` at 12px remaining
-  2. All four `_SocialIcon` instances in band detail have `semanticLabel` values
-  3. Star rating in rating sheet announces current value to screen readers
-  4. Password toggle, search clear, and verified badges all have accessible labels or tooltips
-  5. No font size below 13px on any user-visible text element
-Plans:
-- [x] 18-01-PLAN.md — WCAG contrast & typography fixes (social icon alpha, textTertiary→textSecondary, fontSize bumps, search hint)
-- [x] 18-02-PLAN.md — Semantic accessibility labels (_SocialIcon labels, star rating Semantics, search clear tooltip, password toggle tooltips, venue verified badge Tooltip)
-
-### Phase 19: Touch Targets & Registration UX
-**Goal**: Bring every interactive element to the 44px minimum touch target and improve registration form clarity with optional field labels, password strength, and inline validation — without changing the single-page layout.
-**Depends on**: Nothing (can run in parallel with Phase 18)
-**Requirements**: UIUX-11, UIUX-12, UIUX-13, UIUX-14, UIUX-15, UIUX-16, UIUX-17, UIUX-18, UIUX-19
-**Success Criteria** (what must be TRUE):
-  1. All TextButtons ("Clear", "Restore Purchases", "See All", "Mark all read") have minimum 44px touch height
-  2. Venue verified badge has effective 44px tap target via padding
-  3. First Name and Last Name fields labeled "(optional)"
-  4. Password field shows strength indicator (weak/medium/strong)
-  5. Email format and confirm-password mismatch validated inline before submit
-**Plans**: 2/2 plans complete
-Plans:
-- [x] 19-01-PLAN.md — Touch target sweep (Clear, Restore Purchases, See All, Mark all read TextButtons → 44px; venue verified badge padding)
-- [x] 19-02-PLAN.md — Registration form UX (optional labels, password strength indicator, username availability check, inline validation)
-
-### Phase 20: UX Restructuring
-**Goal**: Reduce cognitive overload on feed, profile, check-in rating, and check-in vibes by consolidating tabs, collapsing sections, clarifying the rating sheet, and reducing vibe choices.
-**Depends on**: Phase 18 (contrast fixes applied first so restructured UI is accessible from the start)
-**Requirements**: UIUX-20, UIUX-21, UIUX-22, UIUX-23, UIUX-24, UIUX-25, UIUX-26, UIUX-27
-**Success Criteria** (what must be TRUE):
-  1. Feed screen has 3 tabs (Discover, Friends, Events) — "Happening Now" merged into Events tab with a filter chip
-  2. Profile shows ~5 sections on initial load — secondary sections collapsed behind "See More"
-  3. "View All" on Recent Activity navigates to full activity list
-  4. Rating sheet shows helper text when submit is disabled
-  5. Rated bands/venue show checkmark indicator in rating sheet tabs
-  6. Check-in screen shows 6 vibes initially, "More vibes" expands to full 10
-**Plans**: 3/3 plans complete
-Plans:
-- [x] 20-01-PLAN.md — Feed tab consolidation (merge Happening Now into Events tab with ChoiceChip filter + live dot indicator)
-- [x] 20-02-PLAN.md — Profile section collapsing + rating sheet UX (See More/Less toggle, wire View All, helper text, rated tab checkmarks)
-- [x] 20-03-PLAN.md — Vibes reduction (show 6 initially + "More vibes" expandable chip)
-
-### Phase 21: Theme Cleanup & Light Mode Prep
-**Goal**: Eliminate confusing color aliases, fix the nav label convention violation, add missing notification badge, and audit light theme colors for eventual light mode enablement.
-**Depends on**: Phase 18 (contrast values finalized before light mode audit references them)
-**Requirements**: UIUX-28, UIUX-29, UIUX-30, UIUX-31, UIUX-32, UIUX-33
-**Success Criteria** (what must be TRUE):
-  1. Zero references to `electricPurple` or `liveGreen` in codebase — all replaced with `voltLime`
-  2. Bottom nav Notifications tab labeled "Notifications" (not "Alerts")
-  3. Unread notification count badge visible on Notifications nav item
-  4. Light theme color audit document produced with pass/fail for each color pair
-  5. Nav icon sizes pulled from `IconThemeData` instead of hardcoded `size: 24`
-**Plans**: 2 plans (1: color alias removal + nav fixes, 2: light mode audit + icon theme)
-
-**Execution Order:**
-```
-Phase 18 ──────┬── Phase 20
-               │
-               └── Phase 21
-Phase 19 ──────┘
-```
-
-| Phase | Plans Complete | Status |
-|-------|----------------|--------|
-| 18. WCAG Contrast & Accessibility | 2/2 | Complete |
-| 19. Touch Targets & Registration UX | 2/2 | Complete |
-| 20. UX Restructuring | 3/3 | Complete |
-| 21. Theme Cleanup & Light Mode Prep | 2/2 | Complete |
-
-**Total: 33/33 requirements complete**
-
-**Gap closure (post-audit):** 3 audit-flagged fixes (UIUX-18, UIUX-23, UIUX-24) + 14 additional `textTertiary/12px` WCAG violations swept across 10 files. All requirements now satisfied.
+</details>
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-03-01 — v3.0 milestone closed: 33/33 requirements satisfied after gap closure sweep*
+*Last updated: 2026-03-01 — v3.0 milestone archived: 33/33 requirements satisfied*

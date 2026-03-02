@@ -60,19 +60,15 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - ✓ Venue/artist claim and verification system — v1.1
 - ✓ SoundCheck Wrapped annual recap — v1.1
 - ✓ SoundCheck Pro subscription via RevenueCat — v1.1
+- ✓ WCAG AA contrast compliance, semantic accessibility labels — v3.0
+- ✓ 44px touch targets on all interactive elements — v3.0
+- ✓ Feed tab consolidation (4→3), profile section collapsing, vibes reduction — v3.0
+- ✓ Registration form UX (password strength, username availability, inline validation) — v3.0
+- ✓ Theme cleanup (legacy color aliases removed, notification badge, light mode audited) — v3.0
 
 ### Active
 
-**v3.0 UI/UX Design Audit** (UI Audit Report 78/100 B+, 2026-03-01 — 33 requirements)
-- [ ] WCAG contrast fixes: social icon alpha, textTertiary→textSecondary at 14px, minimum 13px font
-- [ ] Accessibility: semantic labels on all interactive elements (social icons, star ratings, password toggle, verified badges)
-- [ ] Touch targets: all TextButtons to 44px minimum (Clear, Restore Purchases, See All, Mark all read)
-- [ ] Registration form: optional field labels, password strength indicator, inline validation
-- [ ] UX restructuring: feed tabs 4→3, profile section collapsing, rating sheet clarity, vibes 10→6
-- [ ] Theme cleanup: remove electricPurple/liveGreen aliases, rename "Alerts"→"Notifications", add notification badge
-- [ ] Light mode prep: color pair audit, icon theme inheritance
-
-**Future (post-audit)**
+**Future**
 - [ ] Collaborative filtering for recommendations
 - [ ] WebSocket horizontal scaling (multi-instance)
 - [ ] Public API with OAuth2 scopes
@@ -91,7 +87,7 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 
 ## Context
 
-**Current State (v3.0 started 2026-03-01):**
+**Current State (v3.0 shipped 2026-03-01):**
 - Monorepo: `/backend` (Node.js/Express/TypeScript) and `/mobile` (Flutter/Dart)
 - PostgreSQL with 39 migrations, Redis caching, BullMQ job processing
 - Clean architecture on mobile (data/domain/presentation), MVC + service layer on backend
@@ -115,11 +111,9 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - v1.0 MVP (2026-02-27): 8 phases, 22 plans, 77 requirements
 - v1.1 Launch Readiness (2026-02-28): 9 phases, 30 plans, 32 requirements
 - v2.0 Beta Launch (2026-03-01): 5 phases, 10 plans, 28 requirements
+- v3.0 UI/UX Design Audit (2026-03-01): 4 phases, 9 plans, 33 requirements
 
-**Active Milestone:**
-- v3.0 UI/UX Design Audit: 4 phases, 9 plans, 33 requirements
-
-## Current Milestone: v3.0 UI/UX Design Audit (Phases 18-21, 33 requirements)
+**Active Milestone:** None — use `/gsd:new-milestone` to start next milestone
 
 ## Constraints
 
@@ -147,4 +141,4 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 | JSONB badge criteria | New badges without code changes | ✓ Good — 37 badges, zero custom code per type |
 
 ---
-*Last updated: 2026-03-01 after v3.0 UI/UX Design Audit milestone started*
+*Last updated: 2026-03-01 — v3.0 UI/UX Design Audit shipped (33/33 requirements)*
