@@ -341,8 +341,8 @@ class _BadgeEarnedTile extends StatelessWidget {
                   Text(
                     badge.description!,
                     style: const TextStyle(
-                      color: AppTheme.textTertiary,
-                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -419,8 +419,8 @@ class _BadgeProgressTile extends StatelessWidget {
           Text(
             '${progress.currentValue}/${progress.requirementValue}',
             style: const TextStyle(
-              color: AppTheme.textTertiary,
-              fontSize: 12,
+              color: AppTheme.textSecondary,
+              fontSize: 13,
               fontWeight: FontWeight.w500,
             ),
           ),

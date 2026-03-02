@@ -257,8 +257,8 @@ class _SuggestionCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          color: AppTheme.textTertiary,
-                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
                         ),
                       ),
                     ],

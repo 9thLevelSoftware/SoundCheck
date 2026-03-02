@@ -150,8 +150,8 @@ class _ClaimCard extends StatelessWidget {
           Text(
             'Submitted ${_formatDate(claim.createdAt)}',
             style: const TextStyle(
-              color: AppTheme.textTertiary,
-              fontSize: 12,
+              color: AppTheme.textSecondary,
+              fontSize: 13,
             ),
           ),
           // Show review notes if denied

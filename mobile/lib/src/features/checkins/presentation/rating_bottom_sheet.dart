@@ -218,7 +218,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                         child: Text(
                           'Rate at least one band or the venue to submit',
                           style: TextStyle(
-                            color: AppTheme.textTertiary,
+                            color: AppTheme.textSecondary,
                             fontSize: 13,
                           ),
                           textAlign: TextAlign.center,

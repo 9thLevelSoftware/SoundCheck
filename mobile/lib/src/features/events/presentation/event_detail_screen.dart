@@ -302,8 +302,8 @@ class _EventContent extends StatelessWidget {
             child: Text(
               '${event.distanceKm!.toStringAsFixed(1)} km away',
               style: const TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 12,
+                color: AppTheme.textSecondary,
+                fontSize: 13,
               ),
             ),
           ),

@@ -115,8 +115,8 @@ class FeedCard extends ConsumerWidget {
                             child: Text(
                               item.eventDate!,
                               style: const TextStyle(
-                                color: AppTheme.textTertiary,
-                                fontSize: 12,
+                                color: AppTheme.textSecondary,
+                                fontSize: 13,
                               ),
                             ),
                           ),
@@ -215,8 +215,8 @@ class FeedCard extends ConsumerWidget {
                       Text(
                         timeAgo,
                         style: const TextStyle(
-                          color: AppTheme.textTertiary,
-                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
                         ),
                       ),
                     ],

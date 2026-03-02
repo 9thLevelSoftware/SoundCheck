@@ -2032,8 +2032,8 @@ class _GenreEventListItem extends StatelessWidget {
           if (dateDisplay.isNotEmpty) dateDisplay,
         ].join(' - '),
         style: const TextStyle(
-          color: AppTheme.textTertiary,
-          fontSize: 12,
+          color: AppTheme.textSecondary,
+          fontSize: 13,
         ),
       ),
       trailing: const Icon(

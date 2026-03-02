@@ -625,8 +625,8 @@ class _UpcomingShowItem extends StatelessWidget {
                         ? '$venueName - $venueLocation'
                         : venueName,
                     style: const TextStyle(
-                      color: AppTheme.textTertiary,
-                      fontSize: 12,
+                      color: AppTheme.textSecondary,
+                      fontSize: 13,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1264,8 +1264,8 @@ class _CheckInPreviewCard extends StatelessWidget {
                       Text(
                         timeAgo,
                         style: const TextStyle(
-                          color: AppTheme.textTertiary,
-                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
                         ),
                       ),
                     ],

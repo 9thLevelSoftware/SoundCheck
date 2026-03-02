@@ -154,8 +154,8 @@ class HappeningNowCard extends StatelessWidget {
             Text(
               'Last check-in: $timeAgo',
               style: const TextStyle(
-                color: AppTheme.textTertiary,
-                fontSize: 12,
+                color: AppTheme.textSecondary,
+                fontSize: 13,
               ),
             ),
           ],

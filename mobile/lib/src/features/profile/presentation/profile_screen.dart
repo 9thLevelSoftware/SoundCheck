@@ -770,6 +770,9 @@ class _SectionHeader extends StatelessWidget {
                   () {
                     debugPrint('$title - $trailing tapped');
                   },
+              style: TextButton.styleFrom(
+                minimumSize: const Size(0, 44),
+              ),
               child: Text(
                 trailing!,
                 style: const TextStyle(

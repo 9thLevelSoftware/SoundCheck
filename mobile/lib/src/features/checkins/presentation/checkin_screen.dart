@@ -552,8 +552,8 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                     Text(
                       '${bp.currentValue}/${bp.requirementValue}',
                       style: const TextStyle(
-                        color: AppTheme.textTertiary,
-                        fontSize: 12,
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
@@ -1479,8 +1479,8 @@ class _EventCard extends StatelessWidget {
                     if (event.startTime != null) 'Starts: ${event.startTime}',
                   ].join(' | '),
                   style: const TextStyle(
-                    color: AppTheme.textTertiary,
-                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
                   ),
                 ),
               ],
@@ -1533,8 +1533,8 @@ class _EventCard extends StatelessWidget {
                 Text(
                   '${event.checkinCount} checked in',
                   style: const TextStyle(
-                    color: AppTheme.textTertiary,
-                    fontSize: 12,
+                    color: AppTheme.textSecondary,
+                    fontSize: 13,
                   ),
                 ),
               ],
@@ -1973,8 +1973,8 @@ class _PhotoSelector extends StatelessWidget {
                       Text(
                         'Add',
                         style: TextStyle(
-                          color: AppTheme.textTertiary,
-                          fontSize: 12,
+                          color: AppTheme.textSecondary,
+                          fontSize: 13,
                         ),
                       ),
                     ],
