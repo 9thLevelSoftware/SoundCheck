@@ -1,10 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.VenueController = void 0;
 const VenueService_1 = require("../services/VenueService");
 const SetlistFmService_1 = require("../services/SetlistFmService");
 const DiscoveryService_1 = require("../services/DiscoveryService");
 const EventService_1 = require("../services/EventService");
+const logger_1 = __importDefault(require("../utils/logger"));
 class VenueController {
     constructor() {
         this.venueService = new VenueService_1.VenueService();
@@ -36,7 +40,7 @@ class VenueController {
                 res.status(201).json(response);
             }
             catch (error) {
-                console.error('Create venue error:', error);
+                logger_1.default.error('Create venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to create venue',
@@ -68,7 +72,7 @@ class VenueController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get venues error:', error);
+                logger_1.default.error('Get venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch venues',
@@ -104,7 +108,7 @@ class VenueController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get venue by ID error:', error);
+                logger_1.default.error('Get venue by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch venue',
@@ -141,7 +145,7 @@ class VenueController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Update venue error:', error);
+                logger_1.default.error('Update venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to update venue',
@@ -164,7 +168,7 @@ class VenueController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Delete venue error:', error);
+                logger_1.default.error('Delete venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to delete venue',
@@ -187,7 +191,7 @@ class VenueController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get popular venues error:', error);
+                logger_1.default.error('Get popular venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch popular venues',
@@ -229,7 +233,7 @@ class VenueController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get venues near error:', error);
+                logger_1.default.error('Get venues near error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch nearby venues',
@@ -262,7 +266,7 @@ class VenueController {
                 res.status(venue.alreadyExists ? 200 : 201).json(response);
             }
             catch (error) {
-                console.error('Import venue error:', error);
+                logger_1.default.error('Import venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to import venue',

@@ -151,15 +151,15 @@ async function seedAccount(
     const eventDate = new Date(now);
     eventDate.setDate(eventDate.getDate() - ev.daysAgo);
 
-    const locationVerified = i % 3 !== 2; // ~66% verified
+    const isVerified = i % 3 !== 2; // ~66% verified
     const venueRating = i % 2 === 0 ? (3.5 + (i % 4) * 0.5) : null;
 
     const result = await db.query(
-      `INSERT INTO checkins (user_id, event_id, venue_rating, location_verified, event_date, rating)
+      `INSERT INTO checkins (user_id, event_id, venue_rating, is_verified, event_date, rating)
        VALUES ($1, $2, $3, $4, $5, 0)
        ON CONFLICT DO NOTHING
        RETURNING id`,
-      [userId, eventIds[i], venueRating, locationVerified, eventDate.toISOString().split('T')[0]]
+      [userId, eventIds[i], venueRating, isVerified, eventDate.toISOString().split('T')[0]]
     );
 
     if (result.rows[0]) {

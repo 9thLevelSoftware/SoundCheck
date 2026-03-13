@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BadgeController = void 0;
 const BadgeService_1 = require("../services/BadgeService");
+const logger_1 = __importDefault(require("../utils/logger"));
 class BadgeController {
     constructor() {
         this.badgeService = new BadgeService_1.BadgeService();
@@ -19,7 +23,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get all badges error:', error);
+                logger_1.default.error('Get all badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch badges',
@@ -42,7 +46,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get user badges error:', error);
+                logger_1.default.error('Get user badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch user badges',
@@ -72,7 +76,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get my badges error:', error);
+                logger_1.default.error('Get my badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch your badges',
@@ -108,7 +112,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Check and award badges error:', error);
+                logger_1.default.error('Check and award badges error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to check badge awards',
@@ -130,7 +134,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get badge rarity error:', error);
+                logger_1.default.error('Get badge rarity error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch badge rarity',
@@ -153,7 +157,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get badge leaderboard error:', error);
+                logger_1.default.error('Get badge leaderboard error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch badge leaderboard',
@@ -183,7 +187,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get badge progress error:', error);
+                logger_1.default.error('Get badge progress error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch badge progress',
@@ -214,7 +218,7 @@ class BadgeController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get badge by ID error:', error);
+                logger_1.default.error('Get badge by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch badge',

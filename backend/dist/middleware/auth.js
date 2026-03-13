@@ -1,9 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.cleanupRateLimit = exports.rateLimit = exports.requirePremium = exports.requireAdmin = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../utils/auth");
 const UserService_1 = require("../services/UserService");
 const redisRateLimiter_1 = require("../utils/redisRateLimiter");
+const logger_1 = __importDefault(require("../utils/logger"));
+const sentry_1 = require("../utils/sentry");
 /**
  * Middleware to authenticate JWT tokens
  */
@@ -41,10 +46,12 @@ const authenticateToken = async (req, res, next) => {
         }
         // Attach user info to request
         req.user = user;
+        // Enrich Sentry error context with authenticated user
+        (0, sentry_1.setUser)({ id: user.id, email: user.email, username: user.username });
         next();
     }
     catch (error) {
-        console.error('Authentication middleware error:', error);
+        logger_1.default.error('Authentication middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         const response = {
             success: false,
             error: 'Authentication failed',
@@ -67,13 +74,14 @@ const optionalAuth = async (req, res, next) => {
                 const user = await userService.findById(payload.userId);
                 if (user && user.isActive) {
                     req.user = user;
+                    (0, sentry_1.setUser)({ id: user.id, email: user.email, username: user.username });
                 }
             }
         }
         next();
     }
     catch (error) {
-        console.error('Optional auth middleware error:', error);
+        logger_1.default.error('Optional auth middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         // Continue without authentication
         next();
     }
@@ -216,9 +224,13 @@ const rateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
             next();
         }
         catch (error) {
-            // On any error, fail-open (allow request through)
-            console.error('Rate limit error:', error);
-            next();
+            logger_1.default.error('Rate limit error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+            // Fail-closed: deny request when rate limiting is unavailable
+            const response = {
+                success: false,
+                error: 'Service temporarily unavailable, please try again later',
+            };
+            res.status(429).json(response);
         }
     };
 };

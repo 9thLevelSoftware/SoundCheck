@@ -7,6 +7,7 @@ exports.UserService = void 0;
 const database_1 = __importDefault(require("../config/database"));
 const auth_1 = require("../utils/auth");
 const dbMappers_1 = require("../utils/dbMappers");
+const logger_1 = __importDefault(require("../utils/logger"));
 class UserService {
     constructor() {
         this.db = database_1.default.getInstance();
@@ -274,7 +275,7 @@ class UserService {
             };
         }
         catch (error) {
-            console.error('Error getting user stats:', error);
+            logger_1.default.error('Error getting user stats', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
             throw new Error('Failed to retrieve user statistics');
         }
     }

@@ -55,7 +55,7 @@ export interface Venue {
     imageUrl?: string;
     coverImageUrl?: string;
     averageRating: number;
-    totalCheckins: number;
+    totalReviews: number;
     isActive: boolean;
     claimedByUserId?: string;
     createdAt: string;
@@ -92,7 +92,7 @@ export interface Band {
     imageUrl?: string;
     hometown?: string;
     averageRating: number;
-    totalCheckins: number;
+    totalReviews: number;
     isActive: boolean;
     claimedByUserId?: string;
     createdAt: string;
@@ -421,10 +421,20 @@ export interface TrendingEvent {
     imageUrl?: string;
     lineupBands?: string[];
 }
+export interface SearchUserResult {
+    id: string;
+    username: string;
+    displayName: string;
+    profileImageUrl: string | null;
+    bio: string | null;
+    totalCheckins: number;
+    isVerified: boolean;
+}
 export interface SearchResults {
     bands: Band[];
     venues: Venue[];
     events: Event[];
+    users?: SearchUserResult[];
 }
 export interface OwnerReviewResponse {
     reviewId: string;

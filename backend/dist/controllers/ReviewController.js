@@ -1,8 +1,12 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ReviewController = void 0;
 const ReviewService_1 = require("../services/ReviewService");
 const errors_1 = require("../utils/errors");
+const logger_1 = __importDefault(require("../utils/logger"));
 class ReviewController {
     constructor() {
         this.reviewService = new ReviewService_1.ReviewService();
@@ -65,7 +69,7 @@ class ReviewController {
                 res.status(201).json(response);
             }
             catch (error) {
-                console.error('Create review error:', error);
+                logger_1.default.error('Create review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to create review',
@@ -99,7 +103,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get reviews error:', error);
+                logger_1.default.error('Get reviews error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch reviews',
@@ -130,7 +134,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get review by ID error:', error);
+                logger_1.default.error('Get review by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch review',
@@ -163,7 +167,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Update review error:', error);
+                logger_1.default.error('Update review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to update review',
@@ -197,7 +201,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Delete review error:', error);
+                logger_1.default.error('Delete review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to delete review',
@@ -232,7 +236,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Mark review helpful error:', error);
+                logger_1.default.error('Mark review helpful error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to mark review',
@@ -280,7 +284,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get my review error:', error);
+                logger_1.default.error('Get my review error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch review',
@@ -313,7 +317,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get reviews by venue error:', error);
+                logger_1.default.error('Get reviews by venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch venue reviews',
@@ -346,7 +350,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get reviews by band error:', error);
+                logger_1.default.error('Get reviews by band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch band reviews',
@@ -379,7 +383,7 @@ class ReviewController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get reviews by user error:', error);
+                logger_1.default.error('Get reviews by user error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch user reviews',

@@ -1,10 +1,14 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.BandController = void 0;
 const BandService_1 = require("../services/BandService");
 const MusicBrainzService_1 = require("../services/MusicBrainzService");
 const DiscoveryService_1 = require("../services/DiscoveryService");
 const EventService_1 = require("../services/EventService");
+const logger_1 = __importDefault(require("../utils/logger"));
 class BandController {
     constructor() {
         this.bandService = new BandService_1.BandService();
@@ -36,7 +40,7 @@ class BandController {
                 res.status(201).json(response);
             }
             catch (error) {
-                console.error('Create band error:', error);
+                logger_1.default.error('Create band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to create band',
@@ -67,7 +71,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get bands error:', error);
+                logger_1.default.error('Get bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch bands',
@@ -103,7 +107,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get band by ID error:', error);
+                logger_1.default.error('Get band by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch band',
@@ -140,7 +144,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Update band error:', error);
+                logger_1.default.error('Update band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to update band',
@@ -163,7 +167,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Delete band error:', error);
+                logger_1.default.error('Delete band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to delete band',
@@ -186,7 +190,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get popular bands error:', error);
+                logger_1.default.error('Get popular bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch popular bands',
@@ -209,7 +213,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get trending bands error:', error);
+                logger_1.default.error('Get trending bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch trending bands',
@@ -233,7 +237,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get bands by genre error:', error);
+                logger_1.default.error('Get bands by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch bands by genre',
@@ -255,7 +259,7 @@ class BandController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get genres error:', error);
+                logger_1.default.error('Get genres error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch genres',
@@ -288,7 +292,7 @@ class BandController {
                 res.status(band.alreadyExists ? 200 : 201).json(response);
             }
             catch (error) {
-                console.error('Import band error:', error);
+                logger_1.default.error('Import band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to import band',

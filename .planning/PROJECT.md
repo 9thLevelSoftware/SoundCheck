@@ -113,7 +113,7 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - v2.0 Beta Launch (2026-03-01): 5 phases, 10 plans, 28 requirements
 - v3.0 UI/UX Design Audit (2026-03-01): 4 phases, 9 plans, 33 requirements
 
-**Active Milestone:** None — use `/gsd:new-milestone` to start next milestone
+**Active Milestone:** v4.0 Technical Consolidation & Launch Hardening — 6 phases, 8 plans, 9 requirements
 
 ## Constraints
 
@@ -141,4 +141,4 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 | JSONB badge criteria | New badges without code changes | ✓ Good — 37 badges, zero custom code per type |
 
 ---
-*Last updated: 2026-03-01 — v3.0 UI/UX Design Audit shipped (33/33 requirements)*
+*Last updated: 2026-03-09 — v4.0 Technical Consolidation & Launch Hardening defined*

@@ -9,6 +9,7 @@ const VenueService_1 = require("./VenueService");
 const BandService_1 = require("./BandService");
 const BadgeService_1 = require("./BadgeService");
 const errors_1 = require("../utils/errors");
+const logger_1 = __importDefault(require("../utils/logger"));
 class ReviewService {
     constructor() {
         this.db = database_1.default.getInstance();
@@ -74,7 +75,7 @@ class ReviewService {
         }
         // Check for badge awards (non-blocking)
         this.badgeService.checkAndAwardBadges(userId).catch(error => {
-            console.error('Error checking badge awards:', error);
+            logger_1.default.error('Error checking badge awards', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
         });
         return review;
     }
@@ -431,10 +432,13 @@ class ReviewService {
         // Update review with owner response
         const updateResult = await this.db.query(`UPDATE reviews
        SET owner_response = $1, owner_response_at = NOW(), updated_at = CURRENT_TIMESTAMP
-       WHERE id = $2
+       WHERE id = $2 AND owner_response IS NULL
        RETURNING id, user_id, venue_id, band_id, rating, title, content, event_date,
                  image_urls, is_verified, helpful_count, owner_response, owner_response_at,
                  created_at, updated_at`, [response, reviewId]);
+        if (updateResult.rowCount === 0) {
+            throw new errors_1.ConflictError('A response already exists for this review');
+        }
         return this.mapDbReviewToReview(updateResult.rows[0]);
     }
     /**

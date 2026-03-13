@@ -57,21 +57,29 @@ const badgeWorker_1 = require("./jobs/badgeWorker");
 const notificationWorker_1 = require("./jobs/notificationWorker");
 const moderationWorker_1 = require("./jobs/moderationWorker");
 const syncScheduler_1 = require("./jobs/syncScheduler");
+const fs_1 = require("fs");
+const path_1 = require("path");
+const auth_1 = require("./middleware/auth");
+// Read package version for health endpoint
+const packageJson = JSON.parse((0, fs_1.readFileSync)((0, path_1.join)(__dirname, '../package.json'), 'utf-8'));
+const APP_VERSION = packageJson.version;
 // Validate required environment variables
 // DB_PASSWORD is only required if DATABASE_URL is not set (Railway provides DATABASE_URL)
 const requiredEnvVars = ['JWT_SECRET'];
 for (const envVar of requiredEnvVars) {
     if (!process.env[envVar]) {
-        console.error(`FATAL: Missing required environment variable: ${envVar}`);
+        (0, logger_1.logError)(`FATAL: Missing required environment variable: ${envVar}`);
         process.exit(1);
     }
 }
 // Validate database configuration - need either DATABASE_URL or DB_PASSWORD
 if (!process.env.DATABASE_URL && !process.env.DB_PASSWORD) {
-    console.error('FATAL: Missing database configuration. Set either DATABASE_URL or DB_PASSWORD');
+    (0, logger_1.logError)('FATAL: Missing database configuration. Set either DATABASE_URL or DB_PASSWORD');
     process.exit(1);
 }
 const app = (0, express_1.default)();
+// Trust first proxy hop (Railway reverse proxy) so req.ip returns real client IP
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 // Security middleware
 app.use((0, helmet_1.default)({
@@ -155,7 +163,7 @@ app.get('/health', async (req, res) => {
             data: {
                 status: 'healthy',
                 timestamp: new Date().toISOString(),
-                version: '1.0.0',
+                version: APP_VERSION,
                 database: isDbHealthy ? 'connected' : 'disconnected',
                 websocket: {
                     enabled: process.env.ENABLE_WEBSOCKET === 'true',
@@ -212,11 +220,15 @@ app.get('/', (req, res) => {
         success: true,
         data: {
             message: 'SoundCheck API Server',
-            version: '1.0.0',
+            version: APP_VERSION,
             timestamp: new Date().toISOString(),
         },
     };
     res.json(response);
+});
+// Debug: Sentry test route (admin-only) — throws intentional error for verification
+app.get('/api/debug/sentry-test', auth_1.authenticateToken, (0, auth_1.requireAdmin)(), (req, res) => {
+    throw new Error('Sentry test error — this is intentional');
 });
 // 404 handler
 app.use('*', (req, res) => {

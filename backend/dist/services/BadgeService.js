@@ -23,6 +23,7 @@ const BadgeEvaluators_1 = require("./BadgeEvaluators");
 const NotificationService_1 = require("./NotificationService");
 const AuditService_1 = require("./AuditService");
 const websocket_1 = require("../utils/websocket");
+const logger_1 = __importDefault(require("../utils/logger"));
 class BadgeService {
     constructor() {
         this.db = database_1.default.getInstance();
@@ -132,7 +133,7 @@ class BadgeService {
                 }
             }
             catch (err) {
-                console.error(`[BadgeService] Evaluator error for type '${type}':`, err);
+                logger_1.default.error(`[BadgeService] Evaluator error for type '${type}'`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
                 // Continue with other evaluators -- one failure should not block others
             }
         }
@@ -151,7 +152,7 @@ class BadgeService {
                     });
                 }
                 catch (err) {
-                    console.error(`[BadgeService] Notification create failed for badge ${badge.id}:`, err);
+                    logger_1.default.error(`[BadgeService] Notification create failed for badge ${badge.id}`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
                     // Non-fatal -- badge was already awarded
                 }
                 // b) Send real-time WebSocket event for in-app toast
@@ -164,7 +165,7 @@ class BadgeService {
                     });
                 }
                 catch (err) {
-                    console.error(`[BadgeService] WebSocket send failed for badge ${badge.id}:`, err);
+                    logger_1.default.error(`[BadgeService] WebSocket send failed for badge ${badge.id}`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
                     // Non-fatal -- badge was already awarded
                 }
             }
@@ -327,7 +328,7 @@ class BadgeService {
                 evalCache.set(groupKey, result);
             }
             catch (err) {
-                console.error(`[BadgeService] Progress evaluator error for '${type}':`, err);
+                logger_1.default.error(`[BadgeService] Progress evaluator error for '${type}'`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
             }
         }
         // Build progress array

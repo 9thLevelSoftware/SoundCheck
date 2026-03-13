@@ -1,13 +1,13 @@
 ---
 gsd_state_version: 1.0
-milestone: none
-milestone_name: none
-status: idle
-last_updated: "2026-03-01T00:00:00Z"
+milestone: v4.0
+milestone_name: "Technical Consolidation & Launch Hardening"
+status: active
+last_updated: "2026-03-12T00:00:00Z"
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
-  total_plans: 0
+  total_plans: 8
   completed_plans: 0
 ---
 
@@ -18,13 +18,50 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-01)
 
 **Core value:** The live check-in moment: check in fast, rate the experience, share with friends -- feeding discovery, gamification, and concert identity.
-**Current focus:** No active milestone. Use `/gsd:new-milestone` to start next milestone.
+**Current focus:** v4.0 — Technical Consolidation & Launch Hardening (Phases 22-27)
 
 ## Current Position
 
-Milestone: v3.0 UI/UX Design Audit — SHIPPED 2026-03-01
-Status: Complete (33/33 requirements satisfied)
-Next: `/gsd:new-milestone` to define next milestone
+Phase: 22 of 27
+Phase Name: Launch Ops Foundation
+Status: Phase 22 executed -- OPS-03 complete, OPS-01/OPS-02 blocked
+Last Activity: Phase 22 execution (2026-03-12)
+Next Action: Rotate the remaining production secrets and configure the missing production env vars, then rerun `/legion:build` to finish Phase 22
+
+## Milestone: v4.0 — Technical Consolidation & Launch Hardening
+
+Phases 22-27 | 0/6 phases complete | 0/8 plans complete
+Requirements: 1/9 satisfied (.planning/REQUIREMENTS.md)
+Exploration: .planning/exploration-technical-consolidation.md
+
+## Recent Decisions
+
+- Kept Phase 22 as a single execution plan so the v4.0 roadmap remains 8 total plans and the operational work stays sequential.
+- Require `.planning/phases/22-launch-ops-foundation/22-01-OPS-EVIDENCE.md` as the sanitized evidence artifact for all launch-ops work.
+- If `npm run seed:demo` reports missing venues or bands, run `npm run seed` first and then rerun `npm run seed:demo`.
+- Treat the Railway service as `rootDirectory=backend`; clean manual deploys must upload the repo root, not the backend directory alone.
+- Production is currently not applying migrations automatically during deploy despite the planning assumption from `railway.toml`, so manual `npm run migrate:up` was required after successful deploys.
+- Corrective schema-drift migrations `040`, `041`, and `042` were required before production demo seeding could succeed.
+
+## GitHub
+
+### Phase-to-Issue Mapping
+
+| Phase | Issue | Status |
+|-------|-------|--------|
+| Phase 22: Launch Ops Foundation | #14 | Blocked |
+
+### Phase-to-PR Mapping
+
+| Phase | PR | Status |
+|-------|----|--------|
+| Phase 22: Launch Ops Foundation | — | Not created |
+
+### Milestone Mapping
+
+| Milestone | GitHub Milestone | Status |
+|-----------|------------------|--------|
+| v4.0 — Technical Consolidation & Launch Hardening | v4.0 Technical Consolidation & Launch Hardening | Open |
 
 ## Performance Metrics
 
@@ -37,14 +74,10 @@ Next: `/gsd:new-milestone` to define next milestone
 
 ## Pending Operational Actions (pre-launch)
 
-- Rotate all exposed secrets (DB password, JWT_SECRET, SetlistFM key) in Railway
-- Set NODE_ENV=production in Railway
-- Configure all third-party env vars in Railway (see .env.example)
-- Run migration 039 against production DB
-- Run `npm run seed:demo` against production DB
+*Tracked as Phase 22 (OPS-01, OPS-02, OPS-03) — no longer a standalone list*
 
 ## Session Continuity
 
-Last session: 2026-03-01
-Stopped at: v3.0 milestone archived — all 33 requirements satisfied
-Resume file: None
+Last session: 2026-03-12
+Stopped at: Phase 22 execution blocked after OPS-03 completion
+Resume file: .planning/phases/22-launch-ops-foundation/22-01-SUMMARY.md

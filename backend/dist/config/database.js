@@ -1,7 +1,11 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getSSLConfig = getSSLConfig;
 const pg_1 = require("pg");
+const logger_1 = __importDefault(require("../utils/logger"));
 /**
  * Get SSL configuration for database connection.
  * Defaults to verified TLS for security (rejectUnauthorized: true).
@@ -16,7 +20,7 @@ function getSSLConfig() {
     }
     // Explicit no-verify (not recommended, logs warning)
     if (dbSSL === 'no-verify') {
-        console.warn('WARNING: DB_SSL=no-verify disables certificate verification. Use only for development.');
+        logger_1.default.warn('DB_SSL=no-verify disables certificate verification. Use only for development.');
         return { rejectUnauthorized: false };
     }
     // Default: SSL enabled with verification (secure default)
@@ -29,8 +33,8 @@ class Database {
         const sslMode = process.env.DB_SSL?.toLowerCase() || 'verify';
         // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
         if (process.env.DATABASE_URL) {
-            console.log('🔗 Using DATABASE_URL for database connection');
-            console.log('📦 Database config version: 2025-01-06-v3');
+            logger_1.default.info('Using DATABASE_URL for database connection');
+            logger_1.default.info('Database config version: 2025-01-06-v3');
             // Modify DATABASE_URL to control SSL mode
             // Railway's URL may have sslmode=require which overrides Pool options
             let connectionString = process.env.DATABASE_URL;
@@ -45,7 +49,7 @@ class Database {
                 connectionString = `${connectionString}${separator}sslmode=no-verify`;
             }
             // Default (rejectUnauthorized: true) uses sslmode=require with verification
-            console.log(`🔒 SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
+            logger_1.default.info(`SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
             this.pool = new pg_1.Pool({
                 connectionString,
                 ssl: sslConfig,
@@ -56,8 +60,8 @@ class Database {
         }
         else {
             // Fall back to individual environment variables
-            console.log('🔗 Using individual DB_* environment variables');
-            console.log(`🔒 SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
+            logger_1.default.info('Using individual DB_* environment variables');
+            logger_1.default.info(`SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
             const config = {
                 host: process.env.DB_HOST || 'localhost',
                 port: parseInt(process.env.DB_PORT || '5432'),
@@ -75,7 +79,7 @@ class Database {
         }
         // Handle pool errors
         this.pool.on('error', (err) => {
-            console.error('Unexpected error on idle client', err);
+            logger_1.default.error('Unexpected error on idle client', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
             process.exit(-1);
         });
     }
@@ -94,12 +98,12 @@ class Database {
             const res = await this.pool.query(text, params);
             const duration = Date.now() - start;
             if (process.env.NODE_ENV === 'development') {
-                console.log('Executed query', { text, duration, rows: res.rowCount });
+                logger_1.default.debug('Executed query', { text, duration, rows: res.rowCount });
             }
             return res;
         }
         catch (error) {
-            console.error('Database query error:', error);
+            logger_1.default.error('Database query error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
             throw error;
         }
     }
@@ -116,7 +120,7 @@ class Database {
             return true;
         }
         catch (error) {
-            console.error('Database health check failed:', error);
+            logger_1.default.error('Database health check failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
             return false;
         }
     }

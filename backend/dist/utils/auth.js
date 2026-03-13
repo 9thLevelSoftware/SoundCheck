@@ -13,6 +13,7 @@ const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const crypto_1 = __importDefault(require("crypto"));
 const database_1 = __importDefault(require("../config/database"));
+const logger_1 = __importDefault(require("./logger"));
 const JWT_SECRET = (() => {
     const secret = process.env.JWT_SECRET;
     if (!secret) {
@@ -62,7 +63,7 @@ class AuthUtils {
         }
         catch (error) {
             if (error instanceof jsonwebtoken_1.default.JsonWebTokenError) {
-                console.error('JWT verification failed:', error.message);
+                logger_1.default.error('JWT verification failed', { error: error.message });
             }
             return null;
         }

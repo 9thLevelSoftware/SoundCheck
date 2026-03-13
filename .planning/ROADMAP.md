@@ -6,8 +6,99 @@
 - ✅ **v1.1 Launch Readiness & Growth Platform** — Phases 9-12 (shipped 2026-02-28)
 - ✅ **v2.0 Beta Launch** — Phases 13-17 (shipped 2026-03-01)
 - ✅ **v3.0 UI/UX Design Audit** — Phases 18-21 (shipped 2026-03-01)
+- 🔄 **v4.0 Technical Consolidation & Launch Hardening** — Phases 22-27
 
 ## Phases
+
+### v4.0 Technical Consolidation & Launch Hardening (Phases 22-27)
+
+**Goal**: Harden SoundCheck for production launch while eliminating the three largest sources of technical debt: failing tests, the legacy `reviews` system, and CheckinCreatorService legacy paths. Sequential safety-first execution — each phase validates before the next begins.
+
+**Exploration**: `.planning/exploration-technical-consolidation.md`
+
+### Phase 22: Launch Ops Foundation
+**Goal**: Production environment is correctly configured with rotated secrets and pending migrations applied
+**Depends on**: v3.0 complete
+**Requirements**: OPS-01, OPS-02, OPS-03
+**Success Criteria** (what must be TRUE):
+  1. All exposed secrets (DB password, JWT_SECRET, SetlistFM key) are rotated in Railway
+  2. NODE_ENV=production is set, all third-party env vars configured
+  3. Migration 039 applied and demo seed data populated in production DB
+Plans:
+- [ ] 22-01-PLAN.md — Secret rotation, Railway env parity, migration 039, demo seed, launch verification
+
+### Phase 23: Test Suite Green
+**Goal**: CI passes with zero test failures, gating all subsequent refactoring
+**Depends on**: Phase 22 (production environment stable)
+**Requirements**: TEST-01
+**Success Criteria** (what must be TRUE):
+  1. All 10 pre-existing test failures fixed (CheckinService + UserService UUID validation)
+  2. Full test suite passes: `npm test` exits 0
+Plans:
+- [ ] 23-01-PLAN.md — Fix 10 failing tests (CheckinService + UserService UUID validation)
+
+### Phase 24: Dark Color Cleanup
+**Goal**: Zero `AppTheme.*Dark` references remain in mobile code, unblocking light mode
+**Depends on**: Phase 23 (tests green to validate no regressions)
+**Requirements**: THEME-01
+**Success Criteria** (what must be TRUE):
+  1. All remaining `AppTheme.*Dark` references replaced with theme-aware equivalents
+  2. `flutter analyze` passes with no errors
+Plans:
+- [ ] 24-01-PLAN.md — Remove AppTheme.*Dark references, replace with Theme.of(context).colorScheme
+
+### Phase 25: CheckinCreator Legacy Removal
+**Goal**: CheckinCreatorService contains only the event-first check-in flow
+**Depends on**: Phase 24 (mobile audit confirms event-first usage)
+**Requirements**: DEBT-01
+**Success Criteria** (what must be TRUE):
+  1. Legacy `createCheckin(bandId + venueId)` path removed from CheckinCreatorService
+  2. Dual-write logic removed
+  3. CheckinService facade updated, related tests pass
+Plans:
+- [ ] 25-01-PLAN.md — Audit mobile check-in flow, remove legacy path, update facade and tests
+
+### Phase 26: Reviews System Consolidation
+**Goal**: The `reviews` table and all associated code eliminated; aggregates use `checkin_band_ratings`
+**Depends on**: Phase 25 (core check-in path clean before touching aggregates)
+**Requirements**: DEBT-02, DEBT-03, DEBT-04
+**Success Criteria** (what must be TRUE):
+  1. VenueService and BandService aggregate ratings computed from `checkin_band_ratings`
+  2. Owner response migrated to checkin-level or removed
+  3. ReviewService, ReviewController, `/api/reviews` endpoint deleted
+  4. `reviews` and `review_helpfulness` tables dropped via migration
+  5. Mobile Review domain model removed
+Plans:
+- [ ] 26-01-PLAN.md — Repoint aggregate rating queries from reviews to checkin_band_ratings
+- [ ] 26-02-PLAN.md — Migrate owner responses, delete review stack (service, controller, routes, tests)
+- [ ] 26-03-PLAN.md — Drop tables migration, update AdminController, DataExportService, seed.ts, mobile cleanup
+
+### Phase 27: Validation Sweep
+**Goal**: Full confidence that all changes are correct and nothing is broken
+**Depends on**: Phase 26 (all changes complete)
+**Requirements**: VAL-01
+**Success Criteria** (what must be TRUE):
+  1. Full backend test suite passes
+  2. Smoke tests pass
+  3. Venue and band aggregate ratings verified correct from new data source
+  4. Admin dashboard, data export, and claim features work without reviews table
+  5. `flutter analyze` passes on mobile
+Plans:
+- [ ] 27-01-PLAN.md — Full test suite, smoke tests, aggregate verification, flutter analyze
+
+## Progress
+
+**Execution Order:**
+Phases execute in numeric order: 22 -> 23 -> 24 -> 25 -> 26 -> 27
+
+| Phase | Milestone | Plans Complete | Status | Completed |
+|-------|-----------|----------------|--------|-----------|
+| 22. Launch Ops Foundation | v4.0 | 0/1 | Blocked | — |
+| 23. Test Suite Green | v4.0 | 0/1 | Pending | — |
+| 24. Dark Color Cleanup | v4.0 | 0/1 | Pending | — |
+| 25. CheckinCreator Legacy Removal | v4.0 | 0/1 | Pending | — |
+| 26. Reviews System Consolidation | v4.0 | 0/3 | Pending | — |
+| 27. Validation Sweep | v4.0 | 0/1 | Pending | — |
 
 <details>
 <summary>✅ v1.0 MVP (Phases 1-8) — SHIPPED 2026-02-27</summary>
@@ -225,4 +316,4 @@ Phases execute in numeric order: 9 -> 9.1 -> 10 -> 10.1 -> 10.2 -> 11 -> 11.1 ->
 
 ---
 *Roadmap created: 2026-02-02*
-*Last updated: 2026-03-01 — v3.0 milestone archived: 33/33 requirements satisfied*
+*Last updated: 2026-03-09 — v4.0 milestone defined: 6 phases, 8 plans, 8 success criteria*

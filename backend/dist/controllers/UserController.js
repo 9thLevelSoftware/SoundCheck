@@ -1,9 +1,13 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const UserService_1 = require("../services/UserService");
 const StatsService_1 = require("../services/StatsService");
 const AuditService_1 = require("../services/AuditService");
+const logger_1 = __importDefault(require("../utils/logger"));
 // UUID validation regex (supports UUID v1-5)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 class UserController {
@@ -24,7 +28,7 @@ class UserController {
                 res.status(201).json(response);
             }
             catch (error) {
-                console.error('Registration error:', error);
+                logger_1.default.error('Registration error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Registration failed',
@@ -50,7 +54,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Login error:', error);
+                logger_1.default.error('Login error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 // Audit log: login failure
                 const reason = error instanceof Error ? error.message : 'Unknown error';
                 const email = req.body?.email || 'unknown';
@@ -97,7 +101,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get profile error:', error);
+                logger_1.default.error('Get profile error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch profile',
@@ -131,7 +135,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Update profile error:', error);
+                logger_1.default.error('Update profile error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to update profile',
@@ -177,7 +181,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Get user by username error:', error);
+                logger_1.default.error('Get user by username error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to fetch user',
@@ -207,7 +211,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Deactivate account error:', error);
+                logger_1.default.error('Deactivate account error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to deactivate account',
@@ -234,7 +238,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Check username error:', error);
+                logger_1.default.error('Check username error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to check username availability',
@@ -261,7 +265,7 @@ class UserController {
                 res.status(200).json(response);
             }
             catch (error) {
-                console.error('Check email error:', error);
+                logger_1.default.error('Check email error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to check email availability',
@@ -303,7 +307,7 @@ class UserController {
                 res.json(response);
             }
             catch (error) {
-                console.error('Error getting user stats:', error);
+                logger_1.default.error('Error getting user stats', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Failed to get user stats',
@@ -335,7 +339,7 @@ class UserController {
                 res.json(response);
             }
             catch (error) {
-                console.error('Error getting concert cred:', error);
+                logger_1.default.error('Error getting concert cred', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to get concert cred',
@@ -373,7 +377,7 @@ class UserController {
                 res.json(response);
             }
             catch (error) {
-                console.error('User search error:', error);
+                logger_1.default.error('User search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 const response = {
                     success: false,
                     error: 'Search failed',
@@ -405,7 +409,7 @@ class UserController {
                 });
             }
             catch (error) {
-                console.error('Upload profile image error:', error);
+                logger_1.default.error('Upload profile image error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
                 res.status(500).json({
                     success: false,
                     error: error instanceof Error ? error.message : 'Failed to upload image',
