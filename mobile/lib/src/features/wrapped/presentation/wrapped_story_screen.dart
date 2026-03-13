@@ -13,7 +13,7 @@ import 'widgets/wrapped_slide.dart';
 class WrappedStoryScreen extends ConsumerStatefulWidget {
   final int year;
 
-  const WrappedStoryScreen({super.key, required this.year});
+  const WrappedStoryScreen({required this.year, super.key});
 
   @override
   ConsumerState<WrappedStoryScreen> createState() =>
@@ -184,7 +184,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.error_outline,
-                  color: AppTheme.error, size: 48),
+                  color: AppTheme.error, size: 48,),
               const SizedBox(height: 16),
               const Text(
                 'Failed to load Wrapped',
@@ -286,7 +286,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
                                   )
                                 : const Icon(Icons.share),
                             label: Text(
-                                _isSharing ? 'Generating...' : 'Share'),
+                                _isSharing ? 'Generating...' : 'Share',),
                           ),
                         ),
                         const SizedBox(height: 12),
@@ -319,7 +319,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               const Icon(Icons.music_note,
-                  size: 64, color: AppTheme.voltLime),
+                  size: 64, color: AppTheme.voltLime,),
               const SizedBox(height: 24),
               Text(
                 "You've been to ${stats.totalShows} show${stats.totalShows == 1 ? '' : 's'} this year.",

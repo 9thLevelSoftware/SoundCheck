@@ -213,7 +213,7 @@ class _SuggestionCard extends StatelessWidget {
                     : null,
                 child: user.profileImageUrl == null
                     ? const Icon(Icons.person,
-                        color: AppTheme.voltLime, size: 28)
+                        color: AppTheme.voltLime, size: 28,)
                     : null,
               ),
               const SizedBox(width: 16),
@@ -238,7 +238,7 @@ class _SuggestionCard extends StatelessWidget {
                         if (user.isVerified) ...[
                           const SizedBox(width: 4),
                           const Icon(Icons.verified,
-                              color: AppTheme.electricBlue, size: 16),
+                              color: AppTheme.electricBlue, size: 16,),
                         ],
                       ],
                     ),
@@ -299,7 +299,7 @@ class _SuggestionCard extends StatelessWidget {
                             onPressed: onFollow,
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(
-                                  color: AppTheme.voltLime),
+                                  color: AppTheme.voltLime,),
                               padding: EdgeInsets.zero,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(8),

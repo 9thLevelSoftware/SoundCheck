@@ -88,10 +88,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         Text('Your ${DateTime.now().year} Wrapped',
-                                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600)),
+                                          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16, fontWeight: FontWeight.w600),),
                                         const SizedBox(height: 4),
                                         const Text('See your year in concerts',
-                                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
+                                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 13),),
                                       ],
                                     ),
                                   ),
@@ -725,6 +725,7 @@ class _LevelProgress extends StatelessWidget {
 // Section Header
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
+    super.key,
     required this.title,
     this.subtitle,
     this.trailing,

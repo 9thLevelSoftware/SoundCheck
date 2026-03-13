@@ -8,10 +8,7 @@ class StoryProgressBar extends StatelessWidget {
   final AnimationController progress;
 
   const StoryProgressBar({
-    super.key,
-    required this.slideCount,
-    required this.currentSlide,
-    required this.progress,
+    required this.slideCount, required this.currentSlide, required this.progress, super.key,
   });
 
   @override

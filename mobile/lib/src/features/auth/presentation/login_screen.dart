@@ -318,7 +318,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                               context.push('/forgot-password');
                             }
                           },
-                          child: Text(
+                          child: const Text(
                             'Forgot password?',
                             style: TextStyle(
                               color: AppTheme.textSecondary,

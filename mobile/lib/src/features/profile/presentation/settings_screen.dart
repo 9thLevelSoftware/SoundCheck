@@ -39,12 +39,12 @@ class SettingsScreen extends ConsumerWidget {
             children: [
               // Appearance Section
               const _SectionHeader(title: 'Appearance'),
-              _SettingsTile(
+              const _SettingsTile(
                 title: 'Theme',
                 subtitle: 'Dark',
-                leading: const Icon(Icons.palette_outlined),
-                trailing: const Text('Dark',
-                    style: TextStyle(color: AppTheme.textSecondary)),
+                leading: Icon(Icons.palette_outlined),
+                trailing: Text('Dark',
+                    style: TextStyle(color: AppTheme.textSecondary),),
               ),
               const Divider(),
 

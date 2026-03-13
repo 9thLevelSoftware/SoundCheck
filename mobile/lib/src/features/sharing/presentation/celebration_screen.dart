@@ -35,8 +35,7 @@ class CelebrationParams {
 /// 5. Done button to dismiss
 class CelebrationScreen extends ConsumerStatefulWidget {
   const CelebrationScreen({
-    super.key,
-    required this.params,
+    required this.params, super.key,
   });
 
   final CelebrationParams params;

@@ -179,9 +179,9 @@ class _VenueContent extends ConsumerWidget {
                                   color: AppTheme.info.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(16),
                                 ),
-                                child: Row(
+                                child: const Row(
                                   mainAxisSize: MainAxisSize.min,
-                                  children: const [
+                                  children: [
                                     Icon(
                                       Icons.verified,
                                       size: 20,

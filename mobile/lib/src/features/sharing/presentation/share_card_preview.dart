@@ -12,10 +12,7 @@ import '../services/social_share_service.dart';
 /// followed by a row of share target buttons (Instagram Stories, TikTok, Share).
 class ShareCardPreview extends StatelessWidget {
   const ShareCardPreview({
-    super.key,
-    required this.cardUrls,
-    required this.shareText,
-    required this.shareUrl,
+    required this.cardUrls, required this.shareText, required this.shareUrl, super.key,
   });
 
   /// Async value of the share card URLs (OG + Stories).
@@ -53,7 +50,7 @@ class ShareCardPreview extends StatelessWidget {
 
   Widget _buildCardImage(BuildContext context) {
     return cardUrls.when(
-      loading: () => _buildShimmer(),
+      loading: _buildShimmer,
       error: (_, __) => _buildErrorState(),
       data: (urls) => ClipRRect(
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
@@ -100,7 +97,7 @@ class ShareCardPreview extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(Icons.image_not_supported_outlined,
-                color: AppTheme.textTertiary, size: 32),
+                color: AppTheme.textTertiary, size: 32,),
             SizedBox(height: 8),
             Text(
               'Card preview unavailable',

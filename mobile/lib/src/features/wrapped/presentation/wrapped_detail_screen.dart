@@ -10,7 +10,7 @@ import 'wrapped_providers.dart';
 class WrappedDetailScreen extends ConsumerWidget {
   final int year;
 
-  const WrappedDetailScreen({super.key, required this.year});
+  const WrappedDetailScreen({required this.year, super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -42,7 +42,7 @@ class WrappedDetailScreen extends ConsumerWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Icon(Icons.lock_outline,
-                        size: 48, color: AppTheme.voltLime),
+                        size: 48, color: AppTheme.voltLime,),
                     const SizedBox(height: 16),
                     const Text(
                       'Detailed analytics require SoundCheck Pro',
@@ -70,7 +70,7 @@ class WrappedDetailScreen extends ConsumerWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 const Icon(Icons.error_outline,
-                    color: AppTheme.error, size: 48),
+                    color: AppTheme.error, size: 48,),
                 const SizedBox(height: 16),
                 const Text(
                   'Failed to load details',
@@ -94,22 +94,22 @@ class WrappedDetailScreen extends ConsumerWidget {
             if (stats.monthlyBreakdown != null &&
                 stats.monthlyBreakdown!.isNotEmpty)
               SliverToBoxAdapter(
-                  child: _buildMonthlyBreakdown(stats.monthlyBreakdown!)),
+                  child: _buildMonthlyBreakdown(stats.monthlyBreakdown!),),
             // Genre evolution
             if (stats.genreEvolution != null &&
                 stats.genreEvolution!.isNotEmpty)
               SliverToBoxAdapter(
-                  child: _buildGenreEvolution(stats.genreEvolution!)),
+                  child: _buildGenreEvolution(stats.genreEvolution!),),
             // Friend overlap
             if (stats.friendOverlap != null &&
                 stats.friendOverlap!.isNotEmpty)
               SliverToBoxAdapter(
-                  child: _buildFriendOverlap(stats.friendOverlap!)),
+                  child: _buildFriendOverlap(stats.friendOverlap!),),
             // Top rated sets
             if (stats.topRatedSets != null &&
                 stats.topRatedSets!.isNotEmpty)
               SliverToBoxAdapter(
-                  child: _buildTopRatedSets(stats.topRatedSets!)),
+                  child: _buildTopRatedSets(stats.topRatedSets!),),
             // Bottom padding
             const SliverPadding(padding: EdgeInsets.only(bottom: 32)),
           ],
@@ -144,7 +144,7 @@ class WrappedDetailScreen extends ConsumerWidget {
     final maxCount =
         monthly.fold<int>(0, (max, m) => m.showCount > max ? m.showCount : max);
     const months = [
-      'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D'
+      'J', 'F', 'M', 'A', 'M', 'J', 'J', 'A', 'S', 'O', 'N', 'D',
     ];
 
     // Fill in missing months with 0
@@ -208,7 +208,7 @@ class WrappedDetailScreen extends ConsumerWidget {
   Widget _buildGenreEvolution(List<GenreMonth> genres) {
     const monthNames = [
       '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
     ];
 
     // Group by month, show top genre per month

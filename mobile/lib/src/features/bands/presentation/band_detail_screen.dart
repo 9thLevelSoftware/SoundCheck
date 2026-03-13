@@ -307,7 +307,7 @@ class _BandHeader extends StatelessWidget {
                       ),
                     ),
                     if (band.claimedByUserId != null)
-                      Tooltip(
+                      const Tooltip(
                         message: 'Verified band',
                         child: Icon(
                           Icons.verified,

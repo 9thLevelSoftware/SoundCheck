@@ -234,15 +234,16 @@ class FeedCard extends ConsumerWidget {
 
 /// User avatar with CachedNetworkImage or initial letter fallback
 class _UserAvatar extends StatelessWidget {
-  const _UserAvatar({
+  _UserAvatar({
+    super.key,
     required this.username,
     this.avatarUrl,
-    this.size = 40.0,
-  });
+    double size = 40,
+  }) : _size = size;
 
   final String username;
   final String? avatarUrl;
-  final double size;
+  final double _size;
 
   @override
   Widget build(BuildContext context) {
@@ -250,21 +251,21 @@ class _UserAvatar extends StatelessWidget {
       return ClipOval(
         child: CachedNetworkImage(
           imageUrl: avatarUrl!,
-          width: size,
-          height: size,
+          width: _size,
+          height: _size,
           fit: BoxFit.cover,
           placeholder: (context, url) => _InitialAvatar(
             username: username,
-            size: size,
+            size: _size,
           ),
           errorWidget: (context, url, error) => _InitialAvatar(
             username: username,
-            size: size,
+            size: _size,
           ),
         ),
       );
     }
-    return _InitialAvatar(username: username, size: size);
+    return _InitialAvatar(username: username, size: _size);
   }
 }
 

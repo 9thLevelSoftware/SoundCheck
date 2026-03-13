@@ -134,23 +134,23 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            _PerkCard(
+            const _PerkCard(
               icon: Icons.analytics_outlined,
               title: 'Detailed Wrapped Analytics',
               description:
                   'Monthly breakdown, genre evolution, friend overlap',
             ),
-            _PerkCard(
+            const _PerkCard(
               icon: Icons.share_outlined,
               title: 'Per-Stat Share Cards',
               description: 'Share individual Wrapped stats to social',
             ),
-            _PerkCard(
+            const _PerkCard(
               icon: Icons.history,
               title: 'Wrapped Archive',
               description: "Browse previous years' Wrapped",
             ),
-            _PerkCard(
+            const _PerkCard(
               icon: Icons.insights,
               title: 'Year-Round Analytics',
               description: 'Detailed concert analytics anytime',
@@ -193,11 +193,11 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
                 onPressed: _isRestoring ? null : _onRestore,
                 child: Text(_isRestoring
                     ? 'Restoring...'
-                    : 'Restore Purchases'),
+                    : 'Restore Purchases',),
               ),
             ] else ...[
               const Icon(Icons.check_circle,
-                  color: AppTheme.voltLime, size: 48),
+                  color: AppTheme.voltLime, size: 48,),
               const SizedBox(height: 8),
               const Text(
                 'All Pro features are unlocked',
@@ -211,14 +211,14 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
                 TextButton(
                   onPressed: () => _launchUrl('https://soundcheck.app/terms'),
                   child: const Text('Terms of Service',
-                      style: TextStyle(fontSize: 14)),
+                      style: TextStyle(fontSize: 14),),
                 ),
                 const Text(' | ',
-                    style: TextStyle(color: AppTheme.textTertiary)),
+                    style: TextStyle(color: AppTheme.textTertiary),),
                 TextButton(
                   onPressed: () => _launchUrl('https://soundcheck.app/privacy'),
                   child: const Text('Privacy Policy',
-                      style: TextStyle(fontSize: 14)),
+                      style: TextStyle(fontSize: 14),),
                 ),
               ],
             ),
@@ -262,13 +262,13 @@ class _PerkCard extends StatelessWidget {
                       color: AppTheme.textPrimary,
                       fontSize: 15,
                       fontWeight: FontWeight.w600,
-                    )),
+                    ),),
                 const SizedBox(height: 2),
                 Text(description,
                     style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 13,
-                    )),
+                    ),),
               ],
             ),
           ),
