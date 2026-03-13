@@ -41,3 +41,6 @@ local.propertiescal.properties
 *.backup
 *.orig
 *.old
+/.planning/
+/.claude_commits/
+/docs/
