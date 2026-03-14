@@ -52,10 +52,9 @@ describe('CheckinController', () => {
       userId: 'user-123',
       venueId: 'venue-123',
       bandId: 'band-123',
-      rating: 4.5,
-      comment: 'Great show!',
-      photoUrl: undefined,
-      eventDate: new Date('2024-01-01'),
+      rating: 0,
+      eventId: 'event-123',
+      isVerified: true,
       createdAt: new Date('2024-01-01T00:00:00Z'),
       updatedAt: new Date('2024-01-01T00:00:00Z'),
       toastCount: 0,
@@ -63,16 +62,14 @@ describe('CheckinController', () => {
       hasUserToasted: false,
     };
 
-    it('should create a checkin successfully', async () => {
+    it('should create an event-first checkin successfully', async () => {
       setupApp('user-123');
-      mockCheckinService.createCheckin.mockResolvedValue(mockCheckin);
+      mockCheckinService.createEventCheckin.mockResolvedValue(mockCheckin);
 
       const checkinData = {
-        venueId: 'venue-123',
-        bandId: 'band-123',
-        rating: 4.5,
-        comment: 'Great show!',
-        eventDate: '2024-01-01',
+        eventId: 'event-123',
+        locationLat: 40.7128,
+        locationLon: -74.006,
       };
 
       const response = await request(app)
@@ -86,12 +83,11 @@ describe('CheckinController', () => {
         userId: 'user-123',
       }));
       expect(response.body.message).toBe('Check-in created successfully');
-      expect(mockCheckinService.createCheckin).toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(expect.objectContaining({
         userId: 'user-123',
-        venueId: 'venue-123',
-        bandId: 'band-123',
-        rating: 4.5,
-        comment: 'Great show!',
+        eventId: 'event-123',
+        locationLat: 40.7128,
+        locationLon: -74.006,
       }));
     });
 
@@ -99,9 +95,7 @@ describe('CheckinController', () => {
       setupApp(null); // No authenticated user
 
       const checkinData = {
-        venueId: 'venue-123',
-        bandId: 'band-123',
-        rating: 4,
+        eventId: 'event-123',
       };
 
       const response = await request(app)
@@ -111,15 +105,15 @@ describe('CheckinController', () => {
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
-      expect(mockCheckinService.createCheckin).not.toHaveBeenCalled();
+      expect(mockCheckinService.createEventCheckin).not.toHaveBeenCalled();
     });
 
-    it('should return 400 when missing required fields', async () => {
+    it('should return 400 when eventId is missing', async () => {
       setupApp('user-123');
 
       const incompleteData = {
-        venueId: 'venue-123',
-        // Missing bandId and rating
+        locationLat: 40.7128,
+        locationLon: -74.006,
       };
 
       const response = await request(app)
@@ -128,18 +122,34 @@ describe('CheckinController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Venue ID, band ID, and rating are required');
-      expect(mockCheckinService.createCheckin).not.toHaveBeenCalled();
+      expect(response.body.error).toBe('eventId is required');
+      expect(mockCheckinService.createEventCheckin).not.toHaveBeenCalled();
+    });
+
+    it('should return 400 when legacy bandId+venueId is sent without eventId', async () => {
+      setupApp('user-123');
+
+      const legacyData = {
+        venueId: 'venue-123',
+        bandId: 'band-123',
+        rating: 4,
+      };
+
+      const response = await request(app)
+        .post('/checkins')
+        .send(legacyData);
+
+      expect(response.status).toBe(400);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('eventId is required');
     });
 
     it('should return 400 when service throws an error', async () => {
       setupApp('user-123');
-      mockCheckinService.createCheckin.mockRejectedValue(new Error('Failed to create check-in'));
+      mockCheckinService.createEventCheckin.mockRejectedValue(new Error('Event not found or cancelled'));
 
       const checkinData = {
-        venueId: 'venue-123',
-        bandId: 'band-123',
-        rating: 4,
+        eventId: 'nonexistent-event',
       };
 
       const response = await request(app)
@@ -148,17 +158,16 @@ describe('CheckinController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Failed to create check-in');
+      expect(response.body.error).toBe('Event not found or cancelled');
     });
 
-    it('should include vibeTagIds when provided', async () => {
+    it('should pass vibeTagIds and comment when provided', async () => {
       setupApp('user-123');
-      mockCheckinService.createCheckin.mockResolvedValue(mockCheckin);
+      mockCheckinService.createEventCheckin.mockResolvedValue(mockCheckin);
 
       const checkinData = {
-        venueId: 'venue-123',
-        bandId: 'band-123',
-        rating: 4,
+        eventId: 'event-123',
+        comment: 'Amazing show!',
         vibeTagIds: ['vibe-1', 'vibe-2'],
       };
 
@@ -167,7 +176,10 @@ describe('CheckinController', () => {
         .send(checkinData);
 
       expect(response.status).toBe(201);
-      expect(mockCheckinService.createCheckin).toHaveBeenCalledWith(expect.objectContaining({
+      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(expect.objectContaining({
+        userId: 'user-123',
+        eventId: 'event-123',
+        comment: 'Amazing show!',
         vibeTagIds: ['vibe-1', 'vibe-2'],
       }));
     });

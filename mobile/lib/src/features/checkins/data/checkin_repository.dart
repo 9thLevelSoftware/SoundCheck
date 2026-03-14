@@ -76,20 +76,6 @@ class CheckInRepository {
     }
   }
 
-  /// Create a new check-in
-  Future<CheckIn> createCheckIn(CreateCheckInRequest request) async {
-    try {
-      final response = await _dioClient.post(
-        ApiConfig.checkins,
-        data: request.toJson(),
-      );
-      final checkinData = response.data['data'] as Map<String, dynamic>;
-      return CheckIn.fromJson(checkinData);
-    } catch (e) {
-      rethrow;
-    }
-  }
-
   /// Delete check-in
   Future<void> deleteCheckIn(String id) async {
     try {

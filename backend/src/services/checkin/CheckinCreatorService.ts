@@ -3,16 +3,14 @@
  *
  * Extracted from CheckinService as part of v1-launch tech debt cleanup.
  * Handles:
- *   - createCheckin() -- legacy format (bandId + venueId)
- *   - createEventCheckin() -- event-first format
+ *   - createEventCheckin() -- event-first format (the only creation path)
  *   - deleteCheckin()
  *   - Location verification helpers
  *   - Time window validation
  */
 
 import Database from '../../config/database';
-import { VenueService } from '../VenueService';
-import { BandService } from '../BandService';
+// VenueService and BandService imports removed — legacy createCheckin() path deleted
 import { EventService } from '../EventService';
 import { FeedService } from '../FeedService';
 import { badgeEvalQueue } from '../../jobs/badgeQueue';
@@ -21,9 +19,7 @@ import { getRedis } from '../../utils/redisRateLimiter';
 import { notificationQueue } from '../../jobs/notificationQueue';
 import {
   Checkin,
-  CreateCheckinRequest,
   CreateEventCheckinRequest,
-  mapDbCheckinToCheckin,
 } from './types';
 import logger from '../../utils/logger';
 
@@ -42,8 +38,6 @@ const DEFAULT_VENUE_RADIUS_KM = 1.0;
 
 export class CheckinCreatorService {
   private db = Database.getInstance();
-  private venueService = new VenueService();
-  private bandService = new BandService();
   private eventService = new EventService();
   private feedService = new FeedService();
 
@@ -211,150 +205,6 @@ export class CheckinCreatorService {
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
       logger.error('Create event check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      throw error;
-    }
-  }
-
-  // ============================================
-  // Legacy check-in creation (backward compatibility)
-  // ============================================
-
-  /**
-   * Create a new check-in (legacy format: bandId + venueId).
-   * If eventId is present in the request, delegates to createEventCheckin.
-   *
-   * Dual-write: populates BOTH old columns (band_id, venue_id, rating, comment,
-   * photo_url, event_date) AND new columns (event_id, venue_rating, review_text,
-   * image_urls, is_verified) in a single INSERT.
-   * Also writes to checkin_band_ratings for per-band rating tracking.
-   */
-  async createCheckin(data: CreateCheckinRequest): Promise<Checkin> {
-    try {
-      // If eventId is present, delegate to event-first flow
-      if (data.eventId) {
-        return this.createEventCheckin({
-          userId: data.userId,
-          eventId: data.eventId,
-          locationLat: data.locationLat ?? data.checkinLatitude,
-          locationLon: data.locationLon ?? data.checkinLongitude,
-          comment: data.comment,
-          vibeTagIds: data.vibeTagIds,
-        });
-      }
-
-      const {
-        userId,
-        venueId,
-        bandId,
-        rating,
-        comment,
-        photoUrl,
-        eventDate,
-        checkinLatitude,
-        checkinLongitude,
-        vibeTagIds,
-      } = data;
-
-      // Find or create the event for this venue+band+date (for event_id)
-      const resolvedEventDate = eventDate || new Date();
-      let eventId: string | null = null;
-      try {
-        eventId = await this.eventService.findOrCreateEvent(venueId, bandId, resolvedEventDate);
-      } catch (err) {
-        // Non-fatal: if event creation fails, still create the checkin without event_id
-        logger.debug('Warning: could not find/create event for checkin', { error: err instanceof Error ? err.message : String(err) });
-      }
-
-      // Dual-write: populate both old AND new columns
-      const insertQuery = `
-        INSERT INTO checkins (
-          user_id, band_id, venue_id, rating, comment, photo_url,
-          event_date, checkin_latitude, checkin_longitude,
-          event_id, venue_rating, review_text, image_urls, is_verified
-        )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        RETURNING *
-      `;
-
-      const result = await this.db.query(insertQuery, [
-        userId,
-        bandId,
-        venueId,
-        rating,
-        comment || null,
-        photoUrl || null,
-        resolvedEventDate,
-        checkinLatitude || null,
-        checkinLongitude || null,
-        eventId,                                    // event_id (new)
-        rating,                                     // venue_rating = same as rating (new)
-        comment || null,                            // review_text = same as comment (new)
-        photoUrl ? [photoUrl] : null,               // image_urls = array of photo (new)
-        false,                                      // is_verified = false (new, Phase 3)
-      ]);
-
-      const checkinId = result.rows[0].id;
-
-      // Write to checkin_band_ratings for per-band rating tracking
-      try {
-        await this.db.query(
-          `INSERT INTO checkin_band_ratings (checkin_id, band_id, rating)
-           VALUES ($1, $2, $3)
-           ON CONFLICT (checkin_id, band_id) DO NOTHING`,
-          [checkinId, bandId, rating]
-        );
-      } catch (err) {
-        // Non-fatal: band rating write failure should not block checkin creation
-        logger.debug('Warning: could not write checkin_band_rating', { error: err instanceof Error ? err.message : String(err) });
-      }
-
-      // Add vibe tags if provided
-      if (vibeTagIds && vibeTagIds.length > 0) {
-        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
-      }
-
-      // Update venue and band ratings asynchronously (triggers handle stats)
-      this.venueService.updateVenueRating(venueId).catch(err =>
-        logger.debug('Error updating venue rating', { error: err instanceof Error ? err.message : String(err) })
-      );
-      this.bandService.updateBandRating(bandId).catch(err =>
-        logger.debug('Error updating band rating', { error: err instanceof Error ? err.message : String(err) })
-      );
-
-      // Fire-and-forget: invalidate feed caches for followers and event
-      this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
-        logger.debug('Warning: feed cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
-
-      // Fire-and-forget: invalidate concert cred stats cache
-      cache.del(`stats:concert-cred:${userId}`).catch((err) =>
-        logger.debug('Warning: stats cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
-
-      // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
-      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
-        logger.debug('Warning: recommendations cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
-
-      // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out (legacy path)
-      // and enqueue batched push notifications for followers
-      if (eventId) {
-        this.publishCheckinAndNotify(
-          checkinId,
-          userId,
-          eventId,
-          '', // event name not readily available in legacy path
-          venueId,
-          result.rows[0].created_at
-        ).catch((err) =>
-          logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
-        );
-      }
-
-      // Return full check-in with details
-      return this.getCheckinByIdFn(checkinId, userId);
-    } catch (error) {
-      logger.error('Create check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
     }
   }

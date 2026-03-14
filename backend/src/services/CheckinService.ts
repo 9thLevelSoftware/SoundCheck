@@ -22,7 +22,6 @@ import {
   VibeTag,
   Toast,
   Comment,
-  CreateCheckinRequest,
   CreateEventCheckinRequest,
   AddRatingsRequest,
   GetCheckinsOptions,
@@ -91,13 +90,6 @@ export class CheckinService {
    */
   async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
     return this.creatorService.createEventCheckin(data);
-  }
-
-  /**
-   * Create a new check-in (legacy format or event-based).
-   */
-  async createCheckin(data: CreateCheckinRequest): Promise<Checkin> {
-    return this.creatorService.createCheckin(data);
   }
 
   /**

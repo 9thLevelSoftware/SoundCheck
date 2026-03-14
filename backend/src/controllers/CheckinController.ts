@@ -13,9 +13,8 @@ export class CheckinController {
    * Create a new check-in
    * POST /api/checkins
    *
-   * Supports two request formats:
-   * - New (event-first): { eventId, locationLat?, locationLon?, comment?, vibeTagIds? }
-   * - Legacy: { venueId, bandId, rating, comment?, photoUrl?, eventDate?, vibeTagIds? }
+   * Request format (event-first only):
+   *   { eventId, locationLat?, locationLon?, comment?, vibeTagIds? }
    */
   createCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -32,76 +31,43 @@ export class CheckinController {
 
       const {
         eventId,
-        venueId,
-        bandId,
-        rating,
-        comment,
-        photoUrl,
-        eventDate,
         checkinLatitude,
         checkinLongitude,
         locationLat,
         locationLon,
+        comment,
         vibeTagIds,
       } = req.body;
 
-      // Detect request format: event-first vs legacy
-      if (eventId) {
-        // New event-first flow
-        const checkin = await this.checkinService.createEventCheckin({
-          userId,
-          eventId,
-          locationLat: locationLat ?? checkinLatitude,
-          locationLon: locationLon ?? checkinLongitude,
-          comment,
-          vibeTagIds,
-        });
-
-        // Audit log: check-in created (event-first flow)
-        this.auditService.logCheckinCreated(userId, checkin.id, { eventId, isVerified: checkin.isVerified }, req);
-
+      // eventId is required -- legacy bandId+venueId path has been removed
+      if (!eventId) {
         const response: ApiResponse = {
-          success: true,
-          data: checkin,
-          message: 'Check-in created successfully',
+          success: false,
+          error: 'eventId is required',
         };
-
-        res.status(201).json(response);
-      } else {
-        // Legacy flow: bandId + venueId required
-        if (!venueId || !bandId || rating === undefined) {
-          const response: ApiResponse = {
-            success: false,
-            error: 'Venue ID, band ID, and rating are required',
-          };
-          res.status(400).json(response);
-          return;
-        }
-
-        const checkin = await this.checkinService.createCheckin({
-          userId,
-          venueId,
-          bandId,
-          rating,
-          comment,
-          photoUrl,
-          eventDate: eventDate ? new Date(eventDate) : undefined,
-          checkinLatitude,
-          checkinLongitude,
-          vibeTagIds,
-        });
-
-        // Audit log: check-in created (legacy flow)
-        this.auditService.logCheckinCreated(userId, checkin.id, { venueId, bandId }, req);
-
-        const response: ApiResponse = {
-          success: true,
-          data: checkin,
-          message: 'Check-in created successfully',
-        };
-
-        res.status(201).json(response);
+        res.status(400).json(response);
+        return;
       }
+
+      const checkin = await this.checkinService.createEventCheckin({
+        userId,
+        eventId,
+        locationLat: locationLat ?? checkinLatitude,
+        locationLon: locationLon ?? checkinLongitude,
+        comment,
+        vibeTagIds,
+      });
+
+      // Audit log: check-in created
+      this.auditService.logCheckinCreated(userId, checkin.id, { eventId, isVerified: checkin.isVerified }, req);
+
+      const response: ApiResponse = {
+        success: true,
+        data: checkin,
+        message: 'Check-in created successfully',
+      };
+
+      res.status(201).json(response);
     } catch (error: any) {
       logger.error('Create check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 

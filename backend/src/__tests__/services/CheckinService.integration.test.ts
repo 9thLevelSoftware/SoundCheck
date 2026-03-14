@@ -489,14 +489,36 @@ describeIntegration('CheckinService Integration Tests', () => {
   });
 
   describe('CheckinService Methods', () => {
-    it('should create checkin via service', async () => {
-      const checkin = await checkinService.createCheckin({
+    let testEventId: string;
+
+    beforeAll(async () => {
+      // Create a test event for event-first check-in tests
+      const eventResult = await db.query(`
+        INSERT INTO events (venue_id, event_date, event_name, is_cancelled)
+        VALUES ($1, CURRENT_DATE, 'Test Event', FALSE)
+        RETURNING id
+      `, [testVenueId]);
+      testEventId = eventResult.rows[0].id;
+
+      // Add band to event lineup
+      await db.query(`
+        INSERT INTO event_lineup (event_id, band_id, is_headliner, set_order)
+        VALUES ($1, $2, TRUE, 1)
+      `, [testEventId, testBandId]);
+    });
+
+    afterAll(async () => {
+      if (testEventId) {
+        await db.query('DELETE FROM event_lineup WHERE event_id = $1', [testEventId]);
+        await db.query('DELETE FROM events WHERE id = $1', [testEventId]);
+      }
+    });
+
+    it('should create event-first checkin via service', async () => {
+      const checkin = await checkinService.createEventCheckin({
         userId: testUserId,
-        venueId: testVenueId,
-        bandId: testBandId,
-        rating: 4.5,
+        eventId: testEventId,
         comment: 'Service test checkin',
-        eventDate: new Date(),
       });
 
       createdCheckinIds.push(checkin.id);
@@ -504,8 +526,6 @@ describeIntegration('CheckinService Integration Tests', () => {
       expect(checkin.userId).toBe(testUserId);
       expect(checkin.venueId).toBe(testVenueId);
       expect(checkin.bandId).toBe(testBandId);
-      expect(checkin.rating).toBe(4.5);
-      expect(checkin.comment).toBe('Service test checkin');
     });
 
     it('should get checkin by ID via service', async () => {
