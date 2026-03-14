@@ -289,16 +289,16 @@ export class BandService {
    */
   async updateBandRating(bandId: string): Promise<void> {
     const query = `
-      UPDATE bands 
-      SET 
+      UPDATE bands
+      SET
         average_rating = (
           SELECT COALESCE(AVG(rating::numeric), 0)
-          FROM reviews 
+          FROM checkin_band_ratings
           WHERE band_id = $1
         ),
         total_reviews = (
           SELECT COUNT(*)
-          FROM reviews
+          FROM checkin_band_ratings
           WHERE band_id = $1
         ),
         updated_at = CURRENT_TIMESTAMP
@@ -341,10 +341,10 @@ export class BandService {
       [bandId]
     );
 
-    // Average rating from reviews
+    // Average rating from checkin band ratings
     const ratingResult = await this.db.query(
       `SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
-       FROM reviews WHERE band_id = $1`,
+       FROM checkin_band_ratings WHERE band_id = $1`,
       [bandId]
     );
 

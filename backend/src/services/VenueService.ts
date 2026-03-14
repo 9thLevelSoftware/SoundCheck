@@ -295,17 +295,17 @@ export class VenueService {
    */
   async updateVenueRating(venueId: string): Promise<void> {
     const query = `
-      UPDATE venues 
-      SET 
+      UPDATE venues
+      SET
         average_rating = (
-          SELECT COALESCE(AVG(rating::numeric), 0)
-          FROM reviews 
-          WHERE venue_id = $1
+          SELECT COALESCE(AVG(venue_rating::numeric), 0)
+          FROM checkins
+          WHERE venue_id = $1 AND venue_rating IS NOT NULL
         ),
         total_reviews = (
           SELECT COUNT(*)
-          FROM reviews
-          WHERE venue_id = $1
+          FROM checkins
+          WHERE venue_id = $1 AND venue_rating IS NOT NULL
         ),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
@@ -346,10 +346,10 @@ export class VenueService {
       [venueId]
     );
 
-    // Average rating from reviews
+    // Average rating from checkins
     const ratingResult = await this.db.query(
-      `SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
-       FROM reviews WHERE venue_id = $1`,
+      `SELECT COALESCE(AVG(venue_rating)::numeric(3,2), 0) AS avg_rating
+       FROM checkins WHERE venue_id = $1 AND venue_rating IS NOT NULL`,
       [venueId]
     );
 
