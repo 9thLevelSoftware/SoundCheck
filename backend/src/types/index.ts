@@ -122,38 +122,6 @@ export interface CreateBandRequest {
   hometown?: string;
 }
 
-export interface Review {
-  id: string;
-  userId: string;
-  venueId?: string;
-  bandId?: string;
-  rating: number;
-  title?: string;
-  content?: string;
-  eventDate?: string;
-  imageUrls?: string[];
-  isVerified: boolean;
-  helpfulCount: number;
-  createdAt: string;
-  updatedAt: string;
-  ownerResponse?: string;
-  ownerResponseAt?: string;
-  // Populated fields
-  user?: User;
-  venue?: Venue;
-  band?: Band;
-}
-
-export interface CreateReviewRequest {
-  venueId?: string;
-  bandId?: string;
-  rating: number;
-  title?: string;
-  content?: string;
-  eventDate?: string;
-  imageUrls?: string[];
-}
-
 export interface Badge {
   id: string;
   name: string;
@@ -184,14 +152,6 @@ export interface UserFollower {
   createdAt: string;
   follower?: User;
   following?: User;
-}
-
-export interface ReviewHelpfulness {
-  id: string;
-  userId: string;
-  reviewId: string;
-  isHelpful: boolean;
-  createdAt: string;
 }
 
 // Event types (events + event_lineup tables)
@@ -493,11 +453,6 @@ export interface SearchResults {
   venues: Venue[];
   events: Event[];
   users?: SearchUserResult[];
-}
-
-export interface OwnerReviewResponse {
-  reviewId: string;
-  ownerResponse: string;
 }
 
 // Express Request with user

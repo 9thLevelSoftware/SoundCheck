@@ -22,7 +22,6 @@ import helmet from 'helmet';
 import userRoutes from './routes/userRoutes';
 import venueRoutes from './routes/venueRoutes';
 import bandRoutes from './routes/bandRoutes';
-import reviewRoutes from './routes/reviewRoutes';
 import badgeRoutes from './routes/badgeRoutes';
 import discoveryRoutes from './routes/discoveryRoutes';
 import eventRoutes from './routes/eventRoutes';
@@ -201,7 +200,6 @@ app.get('/health', async (req, res) => {
 app.use('/api/users', userRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/bands', bandRoutes);
-app.use('/api/reviews', reviewRoutes);
 app.use('/api/badges', badgeRoutes);
 app.use('/api/discover', discoveryRoutes);
 app.use('/api/events', eventRoutes);

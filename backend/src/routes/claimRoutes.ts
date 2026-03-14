@@ -5,7 +5,6 @@
  *   POST /api/claims                              -- Submit a claim
  *   GET  /api/claims/me                           -- List user's own claims
  *   GET  /api/claims/stats/:entityType/:entityId  -- Get claimed entity stats
- *   POST /api/claims/reviews/:reviewId/respond     -- Respond to a review as owner
  *   GET  /api/claims/:id                          -- Get claim by ID
  *
  * Admin routes:
@@ -33,7 +32,6 @@ publicRouter.get('/me', authenticateToken, claimController.getMyClaims);
 
 // Claimed owner features
 publicRouter.get('/stats/:entityType/:entityId', authenticateToken, claimController.getEntityStats);
-publicRouter.post('/reviews/:reviewId/respond', authenticateToken, claimController.respondToReview);
 
 // Generic :id route must be last
 publicRouter.get('/:id', authenticateToken, claimController.getClaimById);
