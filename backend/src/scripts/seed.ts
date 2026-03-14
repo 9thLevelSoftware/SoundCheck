@@ -424,15 +424,6 @@ async function seedDatabase() {
     }
     console.log('✅ Database connection successful\n');
 
-    // Get user ID for reviews (using the first user in the database)
-    const userResult = await db.query('SELECT id FROM users LIMIT 1');
-    const userId = userResult.rows[0]?.id;
-
-    if (!userId) {
-      console.log('⚠️  No users found in database. Skipping review seeding.');
-      console.log('   Create a user account first, then run seed script again.\n');
-    }
-
     // Seed venues
     console.log('📍 Seeding venues...');
     const venueIds: string[] = [];
@@ -494,96 +485,10 @@ async function seedDatabase() {
     }
     console.log(`✅ Seeded ${bandIds.length} bands\n`);
 
-    // Seed sample reviews (only if we have a user)
-    if (userId && venueIds.length > 0 && bandIds.length > 0) {
-      console.log('⭐ Seeding sample reviews...');
-
-      const venueReviews = [
-        {
-          venueId: venueIds[0],
-          rating: 5,
-          title: 'Amazing sound and atmosphere!',
-          content: 'One of the best venues I\'ve ever been to. The acoustics are incredible and the staff is super friendly. Can\'t wait to come back!',
-        },
-        {
-          venueId: venueIds[1],
-          rating: 5,
-          title: 'Breathtaking views and incredible sound',
-          content: 'Red Rocks is a bucket list venue for any music fan. The natural amphitheatre creates perfect acoustics and the sunset views are unmatched.',
-        },
-        {
-          venueId: venueIds[2],
-          rating: 4,
-          title: 'Great venue with excellent sound system',
-          content: 'Brooklyn Steel has a massive floor and great sound. The rooftop bar is a nice touch. Only downside is it can get pretty packed.',
-        },
-      ];
-
-      const bandReviews = [
-        {
-          bandId: bandIds[0],
-          rating: 5,
-          title: 'Best live show of the year!',
-          content: 'The Midnight Riders absolutely killed it! Their energy on stage is contagious and they sound even better live than on record.',
-        },
-        {
-          bandId: bandIds[1],
-          rating: 4,
-          title: 'Great dance vibes',
-          content: 'Neon Pulse had everyone dancing all night. The light show was amazing and the beats were on point. Would definitely see them again.',
-        },
-      ];
-
-      for (const review of venueReviews) {
-        const query = `
-          INSERT INTO reviews (user_id, venue_id, rating, title, content)
-          VALUES ($1, $2, $3, $4, $5)
-          ON CONFLICT DO NOTHING
-        `;
-        await db.query(query, [userId, review.venueId, review.rating, review.title, review.content]);
-      }
-
-      for (const review of bandReviews) {
-        const query = `
-          INSERT INTO reviews (user_id, band_id, rating, title, content)
-          VALUES ($1, $2, $3, $4, $5)
-          ON CONFLICT DO NOTHING
-        `;
-        await db.query(query, [userId, review.bandId, review.rating, review.title, review.content]);
-      }
-
-      console.log(`✅ Seeded ${venueReviews.length + bandReviews.length} sample reviews\n`);
-
-      // Update venue and band ratings
-      console.log('📊 Updating ratings...');
-      for (const venueId of venueIds.slice(0, 3)) {
-        await db.query(`
-          UPDATE venues
-          SET
-            average_rating = (SELECT COALESCE(AVG(rating::numeric), 0) FROM reviews WHERE venue_id = $1),
-            total_reviews = (SELECT COUNT(*) FROM reviews WHERE venue_id = $1)
-          WHERE id = $1
-        `, [venueId]);
-      }
-      for (const bandId of bandIds.slice(0, 2)) {
-        await db.query(`
-          UPDATE bands
-          SET
-            average_rating = (SELECT COALESCE(AVG(rating::numeric), 0) FROM reviews WHERE band_id = $1),
-            total_reviews = (SELECT COUNT(*) FROM reviews WHERE band_id = $1)
-          WHERE id = $1
-        `, [bandId]);
-      }
-      console.log('✅ Ratings updated\n');
-    }
-
     console.log('🎉 Database seeding completed successfully!\n');
     console.log('📊 Summary:');
     console.log(`   • ${venueIds.length} venues added`);
-    console.log(`   • ${bandIds.length} bands added`);
-    if (userId) {
-      console.log(`   • 5 sample reviews added\n`);
-    }
+    console.log(`   • ${bandIds.length} bands added\n`);
 
     process.exit(0);
   } catch (error) {

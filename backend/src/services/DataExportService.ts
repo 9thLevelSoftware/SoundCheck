@@ -31,20 +31,6 @@ export interface ExportedCheckin {
   createdAt: string;
 }
 
-export interface ExportedReview {
-  id: string;
-  venueName: string | null;
-  bandName: string | null;
-  rating: number;
-  title: string | null;
-  content: string | null;
-  eventDate: string | null;
-  imageUrls: string[] | null;
-  isVerified: boolean;
-  helpfulCount: number;
-  createdAt: string;
-}
-
 export interface ExportedFollower {
   id: string;
   username: string;
@@ -95,7 +81,6 @@ export interface GDPRExport {
   exportedAt: string;
   profile: ExportedProfile;
   checkins: ExportedCheckin[];
-  reviews: ExportedReview[];
   followers: ExportedFollower[];
   following: ExportedFollower[];
   wishlist: ExportedWishlistItem[];
@@ -110,7 +95,7 @@ export class DataExportService {
 
   /**
    * Export all user data for GDPR compliance
-   * Collects profile, checkins, reviews, followers, following, wishlist, badges,
+   * Collects profile, checkins, followers, following, wishlist, badges,
    * toasts, comments, and notifications
    * Excludes sensitive fields like password_hash
    */
@@ -122,9 +107,8 @@ export class DataExportService {
     }
 
     // Collect all data in parallel for efficiency
-    const [checkins, reviews, followers, following, wishlist, badges, toasts, comments, notifications] = await Promise.all([
+    const [checkins, followers, following, wishlist, badges, toasts, comments, notifications] = await Promise.all([
       this.getCheckins(userId),
-      this.getReviews(userId),
       this.getFollowers(userId),
       this.getFollowing(userId),
       this.getWishlist(userId),
@@ -139,7 +123,6 @@ export class DataExportService {
       exportedAt: new Date().toISOString(),
       profile,
       checkins,
-      reviews,
       followers,
       following,
       wishlist,
@@ -215,39 +198,6 @@ export class DataExportService {
       eventDate: row.event_date ? row.event_date.toISOString() : null,
       checkinLatitude: row.checkin_latitude ? parseFloat(row.checkin_latitude) : null,
       checkinLongitude: row.checkin_longitude ? parseFloat(row.checkin_longitude) : null,
-      createdAt: row.created_at.toISOString(),
-    }));
-  }
-
-  /**
-   * Get user's reviews with venue and band names
-   */
-  private async getReviews(userId: string): Promise<ExportedReview[]> {
-    const query = `
-      SELECT r.id, r.rating, r.title, r.content, r.event_date, r.image_urls,
-             r.is_verified, r.helpful_count, r.created_at,
-             v.name as venue_name,
-             b.name as band_name
-      FROM reviews r
-      LEFT JOIN venues v ON r.venue_id = v.id
-      LEFT JOIN bands b ON r.band_id = b.id
-      WHERE r.user_id = $1
-      ORDER BY r.created_at DESC
-    `;
-
-    const result = await this.db.query(query, [userId]);
-
-    return result.rows.map((row: any) => ({
-      id: row.id,
-      venueName: row.venue_name,
-      bandName: row.band_name,
-      rating: row.rating,
-      title: row.title,
-      content: row.content,
-      eventDate: row.event_date ? row.event_date.toISOString() : null,
-      imageUrls: row.image_urls,
-      isVerified: row.is_verified,
-      helpfulCount: row.helpful_count || 0,
       createdAt: row.created_at.toISOString(),
     }));
   }

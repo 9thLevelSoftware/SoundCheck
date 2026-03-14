@@ -41,7 +41,6 @@ describe('DataExportService', () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] }) // Profile
         .mockResolvedValueOnce({ rows: [] }) // Checkins
-        .mockResolvedValueOnce({ rows: [] }) // Reviews
         .mockResolvedValueOnce({ rows: [] }) // Followers
         .mockResolvedValueOnce({ rows: [] }) // Following
         .mockResolvedValueOnce({ rows: [] }) // Wishlist
@@ -56,7 +55,6 @@ describe('DataExportService', () => {
       expect(result.exportedAt).toBeDefined();
       expect(result.profile).toBeDefined();
       expect(result.checkins).toBeDefined();
-      expect(result.reviews).toBeDefined();
       expect(result.followers).toBeDefined();
       expect(result.following).toBeDefined();
       expect(result.wishlist).toBeDefined();
@@ -74,7 +72,6 @@ describe('DataExportService', () => {
 
       mockDb.query
         .mockResolvedValueOnce({ rows: [profileWithPassword] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -106,7 +103,6 @@ describe('DataExportService', () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
         .mockResolvedValueOnce({ rows: [] }) // No checkins
-        .mockResolvedValueOnce({ rows: [] }) // No reviews
         .mockResolvedValueOnce({ rows: [] }) // No followers
         .mockResolvedValueOnce({ rows: [] }) // No following
         .mockResolvedValueOnce({ rows: [] }) // No wishlist
@@ -118,7 +114,6 @@ describe('DataExportService', () => {
       const result = await dataExportService.exportUserData(userId);
 
       expect(result.checkins).toEqual([]);
-      expect(result.reviews).toEqual([]);
       expect(result.followers).toEqual([]);
       expect(result.following).toEqual([]);
       expect(result.wishlist).toEqual([]);
@@ -153,7 +148,6 @@ describe('DataExportService', () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
       const result = await dataExportService.exportUserData(userId);
@@ -169,42 +163,6 @@ describe('DataExportService', () => {
       expect(result.checkins[0].checkinLongitude).toBe(-118.3877);
     });
 
-    it('should include reviews with venue and band names', async () => {
-      const mockReview = {
-        id: 'review-1',
-        rating: 5,
-        title: 'Amazing venue!',
-        content: 'Best concert experience ever.',
-        event_date: new Date('2024-03-10'),
-        image_urls: ['https://example.com/img1.jpg'],
-        is_verified: true,
-        helpful_count: 10,
-        created_at: new Date('2024-03-11'),
-        venue_name: 'Madison Square Garden',
-        band_name: null,
-      };
-
-      mockDb.query
-        .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [mockReview] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] });
-
-      const result = await dataExportService.exportUserData(userId);
-
-      expect(result.reviews).toHaveLength(1);
-      expect(result.reviews[0].venueName).toBe('Madison Square Garden');
-      expect(result.reviews[0].rating).toBe(5);
-      expect(result.reviews[0].title).toBe('Amazing venue!');
-      expect(result.reviews[0].helpfulCount).toBe(10);
-    });
-
     it('should include followers list', async () => {
       const mockFollower = {
         id: 'follower-1',
@@ -214,7 +172,6 @@ describe('DataExportService', () => {
 
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [mockFollower] })
         .mockResolvedValueOnce({ rows: [] })
@@ -242,7 +199,6 @@ describe('DataExportService', () => {
         .mockResolvedValueOnce({ rows: [mockProfile] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [mockFollowing] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -267,7 +223,6 @@ describe('DataExportService', () => {
 
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -300,7 +255,6 @@ describe('DataExportService', () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [mockBadge] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -317,7 +271,6 @@ describe('DataExportService', () => {
     it('should format dates as ISO strings', async () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -361,7 +314,6 @@ describe('DataExportService', () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
       const result = await dataExportService.exportUserData(userId);
@@ -377,7 +329,6 @@ describe('DataExportService', () => {
     it('should use correct format version', async () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -417,7 +368,6 @@ describe('DataExportService', () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
       const result = await dataExportService.exportUserData(userId);
@@ -440,7 +390,6 @@ describe('DataExportService', () => {
 
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -476,7 +425,6 @@ describe('DataExportService', () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [mockComment] })
         .mockResolvedValueOnce({ rows: [] });
 
@@ -501,7 +449,6 @@ describe('DataExportService', () => {
 
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
@@ -540,7 +487,6 @@ describe('DataExportService', () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [mockProfile] })
         .mockResolvedValueOnce({ rows: [mockCheckinWithLocation] })
-        .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] })

@@ -1,5 +1,4 @@
 import '../../../core/api/dio_client.dart';
-import '../../reviews/domain/review.dart';
 
 /// Model representing a verification claim for a venue or band.
 class VerificationClaim {
@@ -89,35 +88,4 @@ class ClaimRepository {
     return response.data['data'] as Map<String, dynamic>;
   }
 
-  /// Submit an owner response to a review.
-  /// POST /claims/reviews/:reviewId/respond
-  Future<Map<String, dynamic>> respondToReview(
-    String reviewId,
-    String ownerResponse,
-  ) async {
-    final response = await _client.post(
-      '/claims/reviews/$reviewId/respond',
-      data: {'ownerResponse': ownerResponse},
-    );
-    return response.data['data'] as Map<String, dynamic>;
-  }
-
-  /// Fetch reviews for a venue.
-  /// GET /reviews/venue/:venueId
-  Future<List<Review>> getVenueReviews(String venueId) async {
-    final response = await _client.get('/reviews/venue/$venueId');
-    final data = response.data['data'] as Map<String, dynamic>;
-    final reviewsList = data['reviews'] as List;
-    return reviewsList.map((e) {
-      final json = Map<String, dynamic>.from(e as Map<String, dynamic>);
-      // Flatten nested user object into top-level fields for Review.fromJson
-      final user = json['user'] as Map<String, dynamic>?;
-      if (user != null) {
-        json['userName'] = user['username'] as String? ??
-            user['firstName'] as String?;
-        json['userProfileImageUrl'] = user['profileImageUrl'] as String?;
-      }
-      return Review.fromJson(json);
-    }).toList();
-  }
 }

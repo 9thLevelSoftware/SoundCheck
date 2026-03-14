@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
-import '../../../reviews/domain/review.dart';
 import '../../data/claim_repository.dart';
 
 /// Claim repository provider.
@@ -28,8 +27,3 @@ final entityStatsProvider = FutureProvider.autoDispose
   return ref.read(claimRepositoryProvider).getEntityStats(entityType, entityId);
 });
 
-/// Reviews for a venue. Used on VenueDetailScreen for claimed owner review section.
-final venueReviewsProvider = FutureProvider.autoDispose
-    .family<List<Review>, String>((ref, venueId) async {
-  return ref.read(claimRepositoryProvider).getVenueReviews(venueId);
-});
