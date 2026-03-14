@@ -74,6 +74,8 @@ describe('UserService', () => {
           dateOfBirth: undefined,
           isVerified: false,
           isActive: true,
+          isAdmin: false,
+          isPremium: false,
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
         },
@@ -202,6 +204,8 @@ describe('UserService', () => {
         dateOfBirth: undefined,
         isVerified: false,
         isActive: true,
+        isAdmin: false,
+        isPremium: false,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',
       });
