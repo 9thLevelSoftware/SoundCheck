@@ -42,8 +42,8 @@ describe('UserService.getUserStats', () => {
     expect(sqlQuery).toContain('FROM checkins WHERE user_id');
     expect(sqlQuery).toMatch(/SELECT COUNT\(\*\) FROM checkins WHERE user_id.*as checkin_count/s);
 
-    // Check that reviews table is queried separately for review_count
-    expect(sqlQuery).toMatch(/SELECT COUNT\(\*\) FROM reviews WHERE user_id.*as review_count/s);
+    // Review count is now hardcoded to 0 (reviews table dropped in migration 043)
+    expect(sqlQuery).toContain('0 as review_count');
 
     // Verify returned values
     expect(stats.totalCheckins).toBe(5);

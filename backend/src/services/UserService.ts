@@ -308,7 +308,7 @@ export class UserService {
       const statsQuery = `
         SELECT
           (SELECT COUNT(*) FROM checkins WHERE user_id = $1) as checkin_count,
-          (SELECT COUNT(*) FROM reviews WHERE user_id = $1) as review_count,
+          0 as review_count, -- reviews table dropped in migration 043
           (SELECT COUNT(*) FROM user_badges WHERE user_id = $1) as badge_count,
           (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as follower_count,
           (SELECT COUNT(*) FROM user_followers WHERE follower_id = $1) as following_count,
