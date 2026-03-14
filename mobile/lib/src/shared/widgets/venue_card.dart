@@ -50,7 +50,7 @@ class VenueCard extends StatelessWidget {
                           imageUrl: venue.imageUrl!,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
-                            color: AppTheme.background,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
@@ -158,7 +158,7 @@ class VenueCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppTheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: const Center(
         child: Icon(
           Icons.location_city,

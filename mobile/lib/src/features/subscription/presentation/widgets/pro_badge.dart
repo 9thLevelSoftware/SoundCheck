@@ -16,7 +16,7 @@ class ProBadge extends StatelessWidget {
       child: const Text(
         'PRO',
         style: TextStyle(
-          color: AppTheme.backgroundDark,
+          color: Theme.of(context).scaffoldBackgroundColor,
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,

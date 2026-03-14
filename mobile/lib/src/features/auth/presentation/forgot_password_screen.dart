@@ -88,9 +88,9 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('Forgot Password'),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
@@ -174,7 +174,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               backgroundColor: AppTheme.primary,
-              foregroundColor: AppTheme.backgroundDark,
+              foregroundColor: Theme.of(context).scaffoldBackgroundColor,
               elevation: 0,
             ),
             child: _isLoading
@@ -183,7 +183,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
                     width: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      color: AppTheme.backgroundDark,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                     ),
                   )
                 : const Text(
@@ -239,7 +239,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               borderRadius: BorderRadius.circular(12),
             ),
             backgroundColor: AppTheme.primary,
-            foregroundColor: AppTheme.backgroundDark,
+            foregroundColor: Theme.of(context).scaffoldBackgroundColor,
             elevation: 0,
           ),
           child: const Text(

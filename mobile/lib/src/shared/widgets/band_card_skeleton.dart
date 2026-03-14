@@ -9,9 +9,9 @@ class BandCardSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final baseColor = isDark ? AppTheme.surfaceVariantDark : Colors.grey[300]!;
-    final highlightColor = isDark ? AppTheme.cardDark : Colors.grey[100]!;
-    final shapeColor = isDark ? AppTheme.surfaceDark : Colors.white;
+    final baseColor = isDark ? Theme.of(context).colorScheme.surfaceContainerHighest : Colors.grey[300]!;
+    final highlightColor = isDark ? Theme.of(context).colorScheme.surfaceContainerHigh : Colors.grey[100]!;
+    final shapeColor = isDark ? Theme.of(context).colorScheme.surface : Colors.white;
     final iconColor = isDark ? AppTheme.textMuted : Colors.grey[300];
 
     return Card(

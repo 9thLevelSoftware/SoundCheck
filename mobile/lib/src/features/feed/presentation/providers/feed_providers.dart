@@ -227,7 +227,7 @@ mixin FeedWebSocketListenerMixin<T extends ConsumerStatefulWidget>
             ),
           ],
         ),
-        backgroundColor: AppTheme.cardDark,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),

@@ -84,14 +84,14 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
     final newCheckinCount = ref.watch(newCheckinCountProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: NestedScrollView(
         headerSliverBuilder: (context, innerBoxIsScrolled) => [
           // App Bar with SOUNDCHECK branding
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: AppTheme.backgroundDark,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             title: Row(
               children: [
                 Container(
@@ -108,7 +108,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.backgroundDark,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                       letterSpacing: 1.5,
                     ),
                   ),
@@ -269,7 +269,7 @@ class _GlobalFeedTabState extends ConsumerState<_GlobalFeedTab> {
 
     return RefreshIndicator(
       color: AppTheme.voltLime,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       onRefresh: () async {
         ref.invalidate(globalFeedProvider);
       },
@@ -347,7 +347,7 @@ class _FriendsTabState extends ConsumerState<_FriendsTab> {
 
     return RefreshIndicator(
       color: AppTheme.voltLime,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       onRefresh: () async {
         ref.invalidate(friendsFeedProvider);
         ref.read(newCheckinCountProvider.notifier).reset();
@@ -433,10 +433,10 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
                 selected: _filter == _EventsFilter.events,
                 onSelected: (_) => setState(() => _filter = _EventsFilter.events),
                 selectedColor: AppTheme.voltLime,
-                backgroundColor: AppTheme.surfaceVariantDark,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 labelStyle: TextStyle(
                   color: _filter == _EventsFilter.events
-                      ? AppTheme.backgroundDark
+                      ? Theme.of(context).scaffoldBackgroundColor
                       : AppTheme.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -468,10 +468,10 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
                 onSelected: (_) =>
                     setState(() => _filter = _EventsFilter.happeningNow),
                 selectedColor: AppTheme.voltLime,
-                backgroundColor: AppTheme.surfaceVariantDark,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                 labelStyle: TextStyle(
                   color: _filter == _EventsFilter.happeningNow
-                      ? AppTheme.backgroundDark
+                      ? Theme.of(context).scaffoldBackgroundColor
                       : AppTheme.textSecondary,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
@@ -499,7 +499,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
 
     return RefreshIndicator(
       color: AppTheme.voltLime,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       onRefresh: () async {
         ref.invalidate(eventsFeedProvider);
       },
@@ -542,7 +542,7 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
 
     return RefreshIndicator(
       color: AppTheme.voltLime,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       onRefresh: () async {
         ref.invalidate(happeningNowProvider);
       },
@@ -595,7 +595,7 @@ class _FeedLoadingState extends StatelessWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
           height: 280,
           decoration: BoxDecoration(
-            color: AppTheme.cardDark,
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(16),
           ),
           child: const Center(

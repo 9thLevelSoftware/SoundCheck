@@ -67,7 +67,7 @@ class _RsvpButtonState extends ConsumerState<RsvpButton> {
           backgroundColor:
               isGoing ? AppTheme.voltLime : Colors.transparent,
           foregroundColor:
-              isGoing ? AppTheme.backgroundDark : AppTheme.voltLime,
+              isGoing ? Theme.of(context).scaffoldBackgroundColor : AppTheme.voltLime,
           side: const BorderSide(color: AppTheme.voltLime),
           minimumSize: const Size(0, 48),
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

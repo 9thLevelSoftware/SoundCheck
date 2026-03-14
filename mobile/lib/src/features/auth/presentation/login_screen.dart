@@ -215,7 +215,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       body: Stack(
         children: [
@@ -338,7 +338,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                             borderRadius: BorderRadius.circular(12),
                           ),
                           backgroundColor: AppTheme.primary,
-                          foregroundColor: AppTheme.backgroundDark, // Dark text on volt lime
+                          foregroundColor: Theme.of(context).scaffoldBackgroundColor, // Dark text on volt lime
                           elevation: 0,
                         ),
                         child: const Text(
@@ -451,7 +451,7 @@ class _SocialLoginButton extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            border: Border.all(color: AppTheme.surfaceVariantDark),
+            border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
             shape: BoxShape.circle,
           ),
           child: Icon(

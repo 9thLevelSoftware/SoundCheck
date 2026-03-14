@@ -95,7 +95,7 @@ class UserProfileScreen extends ConsumerWidget {
 
           return RefreshIndicator(
             color: AppTheme.primary,
-            backgroundColor: AppTheme.cardDark,
+            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
             onRefresh: () async {
               ref.invalidate(userPublicProfileProvider(userId));
               ref.invalidate(blockStatusProvider(userId));
@@ -110,7 +110,7 @@ class UserProfileScreen extends ConsumerWidget {
                   // User Avatar
                   CircleAvatar(
                     radius: 50,
-                    backgroundColor: AppTheme.surfaceVariantDark,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     backgroundImage: profileImageUrl != null
                         ? NetworkImage(profileImageUrl)
                         : null,
@@ -307,9 +307,9 @@ class _StatsRow extends StatelessWidget {
         horizontal: AppTheme.spacing8,
       ),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-        border: Border.all(color: AppTheme.surfaceVariantDark),
+        border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
@@ -373,7 +373,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       height: 32,
       width: 1,
-      color: AppTheme.surfaceVariantDark,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
     );
   }
 }

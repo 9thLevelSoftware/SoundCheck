@@ -59,7 +59,7 @@ class FeedCard extends ConsumerWidget {
         child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -169,7 +169,7 @@ class FeedCard extends ConsumerWidget {
               decoration: const BoxDecoration(
                 border: Border(
                   top: BorderSide(
-                    color: AppTheme.surfaceVariantDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     width: 1,
                   ),
                 ),
@@ -291,7 +291,7 @@ class _InitialAvatar extends StatelessWidget {
         child: Text(
           username.isNotEmpty ? username[0].toUpperCase() : '?',
           style: TextStyle(
-            color: AppTheme.backgroundDark,
+            color: Theme.of(context).scaffoldBackgroundColor,
             fontWeight: FontWeight.bold,
             fontSize: size * 0.4,
           ),
@@ -370,13 +370,13 @@ class _PhotoArea extends StatelessWidget {
                     Icon(
                       Icons.emoji_events,
                       size: 14,
-                      color: AppTheme.backgroundDark,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                     ),
                     SizedBox(width: 4),
                     Text(
                       'Badge Earned!',
                       style: TextStyle(
-                        color: AppTheme.backgroundDark,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                       ),

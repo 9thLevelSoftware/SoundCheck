@@ -93,7 +93,7 @@ class BlockedUsersScreen extends ConsumerWidget {
 
               return ListTile(
                 leading: CircleAvatar(
-                  backgroundColor: AppTheme.surfaceVariantDark,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   backgroundImage: profileImageUrl != null
                       ? NetworkImage(profileImageUrl)
                       : null,

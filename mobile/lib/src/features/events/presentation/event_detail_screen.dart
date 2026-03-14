@@ -34,7 +34,7 @@ class EventDetailScreen extends ConsumerWidget {
     final eventAsync = ref.watch(eventDetailProvider(eventId));
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: eventAsync.when(
         data: (event) => _EventContent(event: event, eventId: eventId),
         loading: () => const Center(
@@ -89,7 +89,7 @@ class _EventContent extends StatelessWidget {
         SliverAppBar(
           expandedHeight: 240,
           pinned: true,
-          backgroundColor: AppTheme.backgroundDark,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           flexibleSpace: FlexibleSpaceBar(
             background: Stack(
               fit: StackFit.expand,
@@ -111,7 +111,7 @@ class _EventContent extends StatelessWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        AppTheme.backgroundDark.withValues(alpha: 0.95),
+                        Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.95),
                       ],
                     ),
                   ),

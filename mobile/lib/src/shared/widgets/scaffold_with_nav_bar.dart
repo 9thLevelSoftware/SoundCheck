@@ -69,7 +69,7 @@ class _CustomBottomNavBar extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: isDark ? AppTheme.surfaceDark : Colors.white,
+        color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha:0.1),

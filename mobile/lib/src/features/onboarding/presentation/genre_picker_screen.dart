@@ -136,7 +136,7 @@ class _GenrePickerScreenState extends ConsumerState<GenrePickerScreen> {
                             },
                       selectedColor:
                           AppTheme.primary.withValues(alpha: 0.2),
-                      backgroundColor: AppTheme.surfaceVariantDark,
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                       labelStyle: TextStyle(
                         color: isSelected
                             ? AppTheme.primary
@@ -195,7 +195,7 @@ class _GenrePickerScreenState extends ConsumerState<GenrePickerScreen> {
                           borderRadius: BorderRadius.circular(12),
                         ),
                         disabledBackgroundColor:
-                            AppTheme.surfaceVariantDark,
+                            Theme.of(context).colorScheme.surfaceContainerHighest,
                         disabledForegroundColor: AppTheme.textTertiary,
                       ),
                       child: const Text(

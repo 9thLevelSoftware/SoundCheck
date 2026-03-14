@@ -22,7 +22,7 @@ class VenueFiltersSheet extends ConsumerWidget {
         final isDark = Theme.of(context).brightness == Brightness.dark;
         return Container(
           decoration: BoxDecoration(
-            color: isDark ? AppTheme.surfaceDark : Colors.white,
+            color: isDark ? Theme.of(context).colorScheme.surface : Colors.white,
             borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: Column(

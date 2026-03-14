@@ -130,9 +130,9 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
     final commentsAsync = ref.watch(checkInCommentsProvider(widget.checkinId));
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('Check-in'),
         actions: [
           checkinAsync.maybeWhen(
@@ -256,7 +256,7 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
 
                     // Divider
                     const Divider(
-                      color: AppTheme.surfaceVariantDark,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       height: 1,
                     ),
 
@@ -468,7 +468,7 @@ class _EventInfoSection extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -483,7 +483,7 @@ class _EventInfoSection extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceVariantDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ClipRRect(
@@ -536,7 +536,7 @@ class _EventInfoSection extends StatelessWidget {
           ),
 
           const SizedBox(height: 12),
-          const Divider(color: AppTheme.surfaceVariantDark, height: 1),
+          Divider(color: Theme.of(context).colorScheme.surfaceContainerHighest, height: 1),
           const SizedBox(height: 12),
 
           // Venue Row
@@ -548,7 +548,7 @@ class _EventInfoSection extends StatelessWidget {
                   width: 48,
                   height: 48,
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceVariantDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: ClipRRect(
@@ -715,7 +715,7 @@ class _ReviewSection extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -788,7 +788,7 @@ class _VibeTagsSection extends StatelessWidget {
               return Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceVariantDark,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
@@ -880,7 +880,7 @@ class _PhotosCarousel extends StatelessWidget {
                       placeholder: (_, __) => Container(
                         width: 200,
                         height: 200,
-                        color: AppTheme.surfaceVariantDark,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         child: const Center(
                           child: CircularProgressIndicator(
                             color: AppTheme.voltLime,
@@ -891,7 +891,7 @@ class _PhotosCarousel extends StatelessWidget {
                       errorWidget: (_, __, ___) => Container(
                         width: 200,
                         height: 200,
-                        color: AppTheme.surfaceVariantDark,
+                        color: Theme.of(context).colorScheme.surfaceContainerHighest,
                         child: const Icon(
                           Icons.broken_image,
                           color: AppTheme.textTertiary,
@@ -1063,7 +1063,7 @@ class _CommentsSection extends StatelessWidget {
                 return Container(
                   padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
@@ -1152,7 +1152,7 @@ class _CommentItem extends StatelessWidget {
       child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -1267,9 +1267,9 @@ class _CommentInput extends StatelessWidget {
         MediaQuery.of(context).padding.bottom + 8,
       ),
       decoration: const BoxDecoration(
-        color: AppTheme.surfaceDark,
+        color: Theme.of(context).colorScheme.surface,
         border: Border(
-          top: BorderSide(color: AppTheme.surfaceVariantDark, width: 1),
+          top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest, width: 1),
         ),
       ),
       child: Row(
@@ -1281,7 +1281,7 @@ class _CommentInput extends StatelessWidget {
                 hintText: 'Add a comment...',
                 hintStyle: const TextStyle(color: AppTheme.textTertiary),
                 filled: true,
-                fillColor: AppTheme.cardDark,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(24),
                   borderSide: BorderSide.none,

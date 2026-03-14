@@ -22,10 +22,10 @@ class WrappedDetailScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text('Wrapped $year Details'),
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
       body: detailAsync.when(
         loading: () => const Center(
@@ -123,7 +123,7 @@ class WrappedDetailScreen extends ConsumerWidget {
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: AppTheme.voltLime.withValues(alpha: 0.2),
@@ -286,7 +286,7 @@ class WrappedDetailScreen extends ConsumerWidget {
               children: [
                 CircleAvatar(
                   radius: 18,
-                  backgroundColor: AppTheme.surfaceVariantDark,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   backgroundImage: f.friendProfileImageUrl != null
                       ? NetworkImage(f.friendProfileImageUrl!)
                       : null,
@@ -430,7 +430,7 @@ class _SectionCard extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(

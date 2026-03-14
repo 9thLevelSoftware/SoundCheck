@@ -12,7 +12,7 @@ void showPremiumPaywallSheet(BuildContext context) {
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppTheme.cardDark,
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -148,7 +148,7 @@ class _PremiumPaywallSheetState extends ConsumerState<PremiumPaywallSheet> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppTheme.backgroundDark,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                         ),
                       )
                     : const Text('Subscribe'),

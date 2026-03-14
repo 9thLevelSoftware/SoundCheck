@@ -32,7 +32,7 @@ class VenueDetailScreen extends ConsumerWidget {
     final venueAsync = ref.watch(venueDetailProvider(venueId));
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: venueAsync.when(
         data: (venue) => _VenueContent(venue: venue, venueId: venueId),
         loading: () => const Center(
@@ -87,7 +87,7 @@ class _VenueContent extends ConsumerWidget {
         SliverAppBar(
           expandedHeight: 220,
           pinned: true,
-          backgroundColor: AppTheme.backgroundDark,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           flexibleSpace: FlexibleSpaceBar(
             background: Stack(
               fit: StackFit.expand,
@@ -109,7 +109,7 @@ class _VenueContent extends ConsumerWidget {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        AppTheme.backgroundDark.withValues(alpha:0.95),
+                        Theme.of(context).scaffoldBackgroundColor.withValues(alpha:0.95),
                       ],
                     ),
                   ),
@@ -332,7 +332,7 @@ class _MapStrip extends StatelessWidget {
         height: 80,
         margin: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -341,7 +341,7 @@ class _MapStrip extends StatelessWidget {
             Container(
               width: 100,
               decoration: const BoxDecoration(
-                color: AppTheme.surfaceVariantDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.horizontal(
                   left: Radius.circular(12),
                 ),
@@ -446,7 +446,7 @@ class _VenueStatsRow extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -553,7 +553,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       height: 30,
       width: 1,
-      color: AppTheme.surfaceVariantDark,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
     );
   }
 }
@@ -612,7 +612,7 @@ class _UpcomingEventsSection extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.cardDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Row(
@@ -675,7 +675,7 @@ class _UpcomingEventItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -792,7 +792,7 @@ class _VenueInsightsSection extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.cardDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -823,7 +823,7 @@ class _VenueInsightsSection extends StatelessWidget {
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           gradient: AppTheme.primaryGradient,
-                          border: Border.all(color: AppTheme.cardDark, width: 2),
+                          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh, width: 2),
                         ),
                         child: Center(
                           child: Text(
@@ -866,7 +866,7 @@ class _RecentBandsSection extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1019,7 +1019,7 @@ class _VenueReviewsSection extends ConsumerWidget {
             error: (_, __) => Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppTheme.cardDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
@@ -1035,7 +1035,7 @@ class _VenueReviewsSection extends ConsumerWidget {
                 return Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Row(
@@ -1093,7 +1093,7 @@ class _ReviewCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1306,7 +1306,7 @@ class _CheckInPreviewCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

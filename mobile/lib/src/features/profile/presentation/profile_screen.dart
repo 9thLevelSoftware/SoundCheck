@@ -31,13 +31,13 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final authState = ref.watch(authStateProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: authState.when(
         data: (user) => user == null
             ? const Center(child: Text('Not logged in'))
             : RefreshIndicator(
                 color: AppTheme.voltLime,
-                backgroundColor: AppTheme.cardDark,
+                backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 onRefresh: () async {
                   ref.invalidate(concertCredProvider(user.id));
                   ref.invalidate(userRecentCheckinsProvider(user.id));
@@ -68,7 +68,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                             child: Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: AppTheme.cardDark,
+                                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(color: AppTheme.voltLime.withValues(alpha: 0.3)),
                               ),
@@ -310,13 +310,13 @@ class _ProfileHeader extends ConsumerWidget {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: AppTheme.backgroundDark,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                         width: 4,
                       ),
                     ),
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundColor: AppTheme.cardDark,
+                      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                       backgroundImage: user.profileImageUrl != null
                           ? NetworkImage(user.profileImageUrl!)
                           : null,
@@ -443,7 +443,7 @@ class _MainStatsRow extends ConsumerWidget {
         margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppTheme.voltLime.withValues(alpha: 0.2),
@@ -463,7 +463,7 @@ class _MainStatsRow extends ConsumerWidget {
         margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Center(
@@ -488,7 +488,7 @@ class _MainStatsRow extends ConsumerWidget {
         margin: const EdgeInsets.fromLTRB(16, 24, 16, 8),
         padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppTheme.voltLime.withValues(alpha: 0.2),
@@ -650,7 +650,7 @@ class _LevelProgress extends StatelessWidget {
       margin: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -673,7 +673,7 @@ class _LevelProgress extends StatelessWidget {
                       style: const TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
-                        color: AppTheme.backgroundDark,
+                        color: Theme.of(context).scaffoldBackgroundColor,
                       ),
                     ),
                   ),
@@ -703,7 +703,7 @@ class _LevelProgress extends StatelessWidget {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 6,
-              backgroundColor: AppTheme.surfaceDark,
+              backgroundColor: Theme.of(context).colorScheme.surface,
               valueColor:
                   const AlwaysStoppedAnimation<Color>(AppTheme.primary),
             ),
@@ -835,7 +835,7 @@ class _GenreBreakdown extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.cardDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
@@ -871,7 +871,7 @@ class _GenreBreakdown extends ConsumerWidget {
           margin: const EdgeInsets.symmetric(horizontal: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.cardDark,
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
@@ -906,7 +906,7 @@ class _GenreBreakdown extends ConsumerWidget {
                       child: LinearProgressIndicator(
                         value: (genre.percentage / 100).clamp(0.0, 1.0),
                         minHeight: 6,
-                        backgroundColor: AppTheme.surfaceDark,
+                        backgroundColor: Theme.of(context).colorScheme.surface,
                         valueColor: const AlwaysStoppedAnimation<Color>(
                           AppTheme.voltLime,
                         ),
@@ -951,7 +951,7 @@ class _TopRatedBands extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.cardDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
@@ -1009,7 +1009,7 @@ class _TopBandCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppTheme.hotOrange.withValues(alpha: 0.15),
@@ -1023,7 +1023,7 @@ class _TopBandCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: band.imageUrl != null
@@ -1122,7 +1122,7 @@ class _TopRatedVenues extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.cardDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
@@ -1188,7 +1188,7 @@ class _TopVenueCard extends StatelessWidget {
         margin: const EdgeInsets.only(right: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: AppTheme.toastGold.withValues(alpha: 0.15),
@@ -1202,7 +1202,7 @@ class _TopVenueCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: AppTheme.surfaceDark,
+                color: Theme.of(context).colorScheme.surface,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: venue.imageUrl != null
@@ -1317,7 +1317,7 @@ class _RecentCheckins extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color: AppTheme.cardDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(
@@ -1399,7 +1399,7 @@ class _CheckinCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
@@ -1416,7 +1416,7 @@ class _CheckinCard extends StatelessWidget {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceDark,
+                      color: Theme.of(context).colorScheme.surface,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: bandImageUrl != null
@@ -1639,7 +1639,7 @@ class _BadgesShowcase extends ConsumerWidget {
             margin: const EdgeInsets.symmetric(horizontal: 16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppTheme.cardDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Center(

@@ -149,10 +149,10 @@ class _TrendingCard extends StatelessWidget {
         width: 280,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: AppTheme.surfaceVariantDark,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             width: 1,
           ),
         ),
@@ -248,7 +248,7 @@ class _TrendingCard extends StatelessWidget {
                       vertical: 3,
                     ),
                     decoration: BoxDecoration(
-                      color: AppTheme.surfaceVariantDark,
+                      color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

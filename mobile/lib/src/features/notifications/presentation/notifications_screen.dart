@@ -15,9 +15,9 @@ class NotificationsScreen extends ConsumerWidget {
     final notificationFeedAsync = ref.watch(notificationFeedProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         elevation: 0,
         title: const Text(
           'Activity',
@@ -76,7 +76,7 @@ class NotificationsScreen extends ConsumerWidget {
         ref.invalidate(notificationFeedProvider);
       },
       color: AppTheme.voltLime,
-      backgroundColor: AppTheme.cardDark,
+      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: ListView.builder(
         padding: const EdgeInsets.symmetric(vertical: 8),
         itemCount: feed.notifications.length,
@@ -305,7 +305,7 @@ class _NotificationItem extends StatelessWidget {
                 : AppTheme.voltLime.withValues(alpha: 0.05),
             border: const Border(
               bottom: BorderSide(
-                color: AppTheme.surfaceVariantDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 width: 0.5,
               ),
             ),

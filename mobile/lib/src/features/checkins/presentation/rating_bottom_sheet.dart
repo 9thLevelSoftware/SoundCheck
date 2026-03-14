@@ -127,7 +127,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
       maxChildSize: 0.9,
       builder: (context, scrollController) => Container(
         decoration: const BoxDecoration(
-          color: AppTheme.surfaceDark,
+          color: Theme.of(context).colorScheme.surface,
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
         child: Column(
@@ -254,7 +254,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
                                   color: _hasAnyRatings
-                                      ? AppTheme.backgroundDark
+                                      ? Theme.of(context).scaffoldBackgroundColor
                                       : AppTheme.textTertiary,
                                 ),
                               ),
@@ -303,7 +303,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
           margin: const EdgeInsets.only(bottom: 16),
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceVariantDark,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(16),
             border: currentRating > 0
                 ? Border.all(
@@ -324,7 +324,7 @@ class _RatingBottomSheetState extends ConsumerState<RatingBottomSheet>
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(Icons.music_note,
-                        color: AppTheme.backgroundDark, size: 24,),
+                        color: Theme.of(context).scaffoldBackgroundColor, size: 24,),
                   ),
                   const SizedBox(width: 12),
                   Expanded(

@@ -159,7 +159,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
                 children: [
                   LinearProgressIndicator(
                     color: AppTheme.voltLime,
-                    backgroundColor: AppTheme.surfaceVariantDark,
+                    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                   SizedBox(height: 12),
                   Text(
@@ -177,7 +177,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
               child: ElevatedButton(
                 onPressed: _isUploading ? null : () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.surfaceVariantDark,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),

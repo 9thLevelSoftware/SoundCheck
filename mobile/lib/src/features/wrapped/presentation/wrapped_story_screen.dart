@@ -174,7 +174,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
     final statsAsync = ref.watch(wrappedStatsProvider(widget.year));
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: statsAsync.when(
         loading: () => const Center(
           child: CircularProgressIndicator(color: AppTheme.voltLime),
@@ -251,7 +251,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppTheme.cardDark.withValues(alpha: 0.7),
+                        color: Theme.of(context).colorScheme.surfaceContainerHigh.withValues(alpha: 0.7),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -281,7 +281,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
                                     height: 20,
                                     child: CircularProgressIndicator(
                                       strokeWidth: 2,
-                                      color: AppTheme.backgroundDark,
+                                      color: Theme.of(context).scaffoldBackgroundColor,
                                     ),
                                   )
                                 : const Icon(Icons.share),

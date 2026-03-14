@@ -71,13 +71,13 @@ class ShareCardPreview extends StatelessWidget {
 
   Widget _buildShimmer() {
     return Shimmer.fromColors(
-      baseColor: AppTheme.surfaceVariantDark,
-      highlightColor: AppTheme.cardDark,
+      baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+      highlightColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       child: Container(
         width: double.infinity,
         height: 180,
         decoration: BoxDecoration(
-          color: AppTheme.surfaceVariantDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         ),
       ),
@@ -89,7 +89,7 @@ class ShareCardPreview extends StatelessWidget {
       width: double.infinity,
       height: 100,
       decoration: BoxDecoration(
-        color: AppTheme.surfaceVariantDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       ),
       child: const Center(
@@ -184,7 +184,7 @@ class _ShareButton extends StatelessWidget {
               width: 56,
               height: 56,
               decoration: BoxDecoration(
-                color: AppTheme.surfaceVariantDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: AppTheme.voltLime.withValues(alpha: 0.3),

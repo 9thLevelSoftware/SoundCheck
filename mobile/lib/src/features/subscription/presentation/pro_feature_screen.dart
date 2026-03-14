@@ -103,10 +103,10 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
     final isPremium = ref.watch(isPremiumProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: const Text('SoundCheck Pro'),
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -181,7 +181,7 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
                           height: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: AppTheme.backgroundDark,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                           ),
                         )
                       : const Text('Subscribe'),
@@ -246,7 +246,7 @@ class _PerkCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(

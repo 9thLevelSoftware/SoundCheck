@@ -29,7 +29,7 @@ class WrappedSlide extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: AppTheme.backgroundDark,
+      color: Theme.of(context).scaffoldBackgroundColor,
       padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 80),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,

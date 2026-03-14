@@ -28,16 +28,12 @@ class AppTheme {
   static const Color accentTeal = electricBlue; // Alias for backward compatibility
   static const Color accentOrange = hotOrange;
 
-  // Background/surface aliases
-  static const Color background = backgroundDark;
-  static const Color surfaceVariant = surfaceVariantDark;
-
-  // Background Colors - "Moonlit Grey" Palette
+  // Background Colors - "Moonlit Grey" Palette (inline values for internal theme use)
   // Avoids pure black (#000000) for better eye comfort and depth
-  static const Color backgroundDark = Color(0xFF0D0F11); // Very deep slate/almost black
-  static const Color surfaceDark = Color(0xFF161B22); // Slightly lighter gunmetal
-  static const Color surfaceVariantDark = Color(0xFF21262D); // Borders/Inputs
-  static const Color cardDark = Color(0xFF1C2128);
+  static const Color _backgroundDark = Color(0xFF0D0F11); // Very deep slate/almost black
+  static const Color _surfaceDark = Color(0xFF161B22); // Slightly lighter gunmetal
+  static const Color _surfaceVariantDark = Color(0xFF21262D); // Borders/Inputs
+  static const Color _cardDark = Color(0xFF1C2128);
 
   // Text Colors - High Contrast
   static const Color textPrimary = Color(0xFFF0F6FC); // Off-white/Ice
@@ -114,21 +110,23 @@ class AppTheme {
       primary: voltLime,
       secondary: electricBlue,
       tertiary: hotOrange,
-      surface: surfaceDark,
+      surface: _surfaceDark,
+      surfaceContainerHigh: _cardDark,
+      surfaceContainerHighest: _surfaceVariantDark,
       error: error,
-      onPrimary: backgroundDark, // Dark text on Lime button for contrast
-      onSecondary: backgroundDark,
+      onPrimary: _backgroundDark, // Dark text on Lime button for contrast
+      onSecondary: _backgroundDark,
       onSurface: textPrimary,
       onError: Colors.white,
     ),
-    scaffoldBackgroundColor: backgroundDark,
+    scaffoldBackgroundColor: _backgroundDark,
 
     // AppBar Theme - Brutalist/Minimal
     appBarTheme: const AppBarTheme(
       elevation: 0,
       centerTitle: false,
       scrolledUnderElevation: 0,
-      backgroundColor: backgroundDark,
+      backgroundColor: _backgroundDark,
       foregroundColor: textPrimary,
       titleTextStyle: TextStyle(
         fontSize: 24,
@@ -144,9 +142,9 @@ class AppTheme {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusLarge),
-        side: const BorderSide(color: surfaceVariantDark, width: 1),
+        side: const BorderSide(color: _surfaceVariantDark, width: 1),
       ),
-      color: cardDark,
+      color: _cardDark,
       margin: const EdgeInsets.symmetric(
         horizontal: spacing16,
         vertical: spacing8,
@@ -156,7 +154,7 @@ class AppTheme {
     // Input Decoration Theme - Integrated
     inputDecorationTheme: InputDecorationTheme(
       filled: true,
-      fillColor: surfaceVariantDark,
+      fillColor: _surfaceVariantDark,
       hintStyle: const TextStyle(color: textTertiary),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(radiusMedium),
@@ -188,7 +186,7 @@ class AppTheme {
     elevatedButtonTheme: ElevatedButtonThemeData(
       style: ElevatedButton.styleFrom(
         backgroundColor: voltLime,
-        foregroundColor: backgroundDark, // Dark text on Lime
+        foregroundColor: _backgroundDark, // Dark text on Lime
         minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(
           horizontal: spacing32,
@@ -210,7 +208,7 @@ class AppTheme {
     filledButtonTheme: FilledButtonThemeData(
       style: FilledButton.styleFrom(
         backgroundColor: voltLime,
-        foregroundColor: backgroundDark,
+        foregroundColor: _backgroundDark,
         minimumSize: const Size.fromHeight(56),
         padding: const EdgeInsets.symmetric(
           horizontal: spacing32,
@@ -266,7 +264,7 @@ class AppTheme {
 
     // Bottom Navigation Bar Theme - Clean
     bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-      backgroundColor: surfaceDark,
+      backgroundColor: _surfaceDark,
       selectedItemColor: voltLime,
       unselectedItemColor: textTertiary,
       type: BottomNavigationBarType.fixed,
@@ -283,7 +281,7 @@ class AppTheme {
 
     // Chip Theme - Vibe Tags
     chipTheme: ChipThemeData(
-      backgroundColor: surfaceVariantDark,
+      backgroundColor: _surfaceVariantDark,
       selectedColor: voltLime.withValues(alpha: 0.2),
       deleteIconColor: textSecondary,
       labelStyle: const TextStyle(
@@ -308,7 +306,7 @@ class AppTheme {
     // Floating Action Button Theme - Check-In Button
     floatingActionButtonTheme: const FloatingActionButtonThemeData(
       backgroundColor: voltLime,
-      foregroundColor: backgroundDark,
+      foregroundColor: _backgroundDark,
       elevation: 4,
       shape: CircleBorder(),
       sizeConstraints: BoxConstraints.tightFor(
@@ -319,7 +317,7 @@ class AppTheme {
 
     // Divider Theme
     dividerTheme: const DividerThemeData(
-      color: surfaceVariantDark,
+      color: _surfaceVariantDark,
       thickness: 1,
       space: spacing16,
     ),
@@ -463,12 +461,12 @@ class AppTheme {
     // Slider Theme (for ratings)
     sliderTheme: SliderThemeData(
       activeTrackColor: voltLime,
-      inactiveTrackColor: surfaceVariantDark,
+      inactiveTrackColor: _surfaceVariantDark,
       thumbColor: voltLime,
       overlayColor: voltLime.withValues(alpha: 0.2),
       valueIndicatorColor: voltLime,
       valueIndicatorTextStyle: const TextStyle(
-        color: backgroundDark,
+        color: _backgroundDark,
         fontWeight: FontWeight.bold,
       ),
     ),
@@ -485,13 +483,13 @@ class AppTheme {
         if (states.contains(WidgetState.selected)) {
           return voltLime.withValues(alpha: 0.5);
         }
-        return surfaceVariantDark;
+        return _surfaceVariantDark;
       }),
     ),
 
     // Bottom Sheet Theme
     bottomSheetTheme: const BottomSheetThemeData(
-      backgroundColor: surfaceDark,
+      backgroundColor: _surfaceDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(
           top: Radius.circular(radiusXLarge),
@@ -501,7 +499,7 @@ class AppTheme {
 
     // Dialog Theme
     dialogTheme: DialogThemeData(
-      backgroundColor: surfaceDark,
+      backgroundColor: _surfaceDark,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusLarge),
       ),
@@ -509,7 +507,7 @@ class AppTheme {
 
     // Snackbar Theme
     snackBarTheme: SnackBarThemeData(
-      backgroundColor: cardDark,
+      backgroundColor: _cardDark,
       contentTextStyle: const TextStyle(color: textPrimary),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(radiusMedium),

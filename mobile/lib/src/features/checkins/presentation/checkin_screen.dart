@@ -179,9 +179,9 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: 'Close',
@@ -393,7 +393,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               label: const Text('Grant location access'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.voltLime,
-                foregroundColor: AppTheme.backgroundDark,
+                foregroundColor: Theme.of(context).scaffoldBackgroundColor,
               ),
             ),
             const SizedBox(height: 12),
@@ -516,7 +516,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                 margin: const EdgeInsets.only(bottom: 8),
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardDark,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
                 ),
                 child: Row(
@@ -539,7 +539,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                             child: LinearProgressIndicator(
                               value: pct,
                               minHeight: 6,
-                              backgroundColor: AppTheme.surfaceVariantDark,
+                              backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                               valueColor: const AlwaysStoppedAnimation<Color>(
                                 AppTheme.voltLime,
                               ),
@@ -601,7 +601,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
             ),
             child: const Icon(
               Icons.check,
-              color: AppTheme.backgroundDark,
+              color: Theme.of(context).scaffoldBackgroundColor,
               size: 48,
             ),
           ),
@@ -741,7 +741,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               showModalBottomSheet(
                 context: context,
                 isScrollControlled: true,
-                backgroundColor: AppTheme.surfaceDark,
+                backgroundColor: Theme.of(context).colorScheme.surface,
                 shape: const RoundedRectangleBorder(
                   borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                 ),
@@ -776,7 +776,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color: AppTheme.backgroundDark,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                 ),
               ),
             ),
@@ -859,7 +859,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
   void _showImageOptions() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppTheme.surfaceDark,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1050,7 +1050,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               const SizedBox(height: 16),
               Container(
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceVariantDark,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: TextField(
@@ -1293,7 +1293,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           const SizedBox(height: 12),
           Container(
             decoration: BoxDecoration(
-              color: AppTheme.surfaceVariantDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
             child: TextField(
@@ -1325,14 +1325,14 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               child: const Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.check_circle, color: AppTheme.backgroundDark),
+                  Icon(Icons.check_circle, color: Theme.of(context).scaffoldBackgroundColor),
                   SizedBox(width: 8),
                   Text(
                     'Check In',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
-                      color: AppTheme.backgroundDark,
+                      color: Theme.of(context).scaffoldBackgroundColor,
                     ),
                   ),
                 ],
@@ -1349,7 +1349,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
-      backgroundColor: AppTheme.surfaceDark,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -1391,10 +1391,10 @@ class _EventCard extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 12),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppTheme.surfaceDark,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: AppTheme.surfaceVariantDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           width: 1,
         ),
       ),
@@ -1499,7 +1499,7 @@ class _EventCard extends StatelessWidget {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.surfaceVariantDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                     border: entry.isHeadliner
                         ? Border.all(
@@ -1570,7 +1570,7 @@ class _EventCard extends StatelessWidget {
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
-                          color: AppTheme.backgroundDark,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           strokeWidth: 2,
                         ),
                       )
@@ -1579,7 +1579,7 @@ class _EventCard extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: AppTheme.backgroundDark,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           letterSpacing: 0.5,
                         ),
                       ),
@@ -1619,12 +1619,12 @@ class _EnrichmentCard extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.surfaceDark,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
               color: completed
                   ? AppTheme.voltLime.withValues(alpha: 0.5)
-                  : AppTheme.surfaceVariantDark,
+                  : Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
           ),
           child: Row(
@@ -1694,7 +1694,7 @@ class _BandSearchResult extends StatelessWidget {
               : null,
         ),
         child: imageUrl == null
-            ? const Icon(Icons.music_note, color: AppTheme.backgroundDark, size: 28)
+            ? Icon(Icons.music_note, color: Theme.of(context).scaffoldBackgroundColor, size: 28)
             : null,
       ),
       title: Text(
@@ -1741,7 +1741,7 @@ class _SelectedBandCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child:
-                const Icon(Icons.music_note, color: AppTheme.backgroundDark, size: 32),
+                Icon(Icons.music_note, color: Theme.of(context).scaffoldBackgroundColor, size: 32),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -1751,7 +1751,7 @@ class _SelectedBandCard extends StatelessWidget {
                 Text(
                   'Checking in to',
                   style: TextStyle(
-                    color: AppTheme.backgroundDark.withValues(alpha: 0.7),
+                    color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
@@ -1759,7 +1759,7 @@ class _SelectedBandCard extends StatelessWidget {
                 Text(
                   bandName,
                   style: const TextStyle(
-                    color: AppTheme.backgroundDark,
+                    color: Theme.of(context).scaffoldBackgroundColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1770,7 +1770,7 @@ class _SelectedBandCard extends StatelessWidget {
           IconButton(
             onPressed: onClear,
             icon: Icon(Icons.close,
-                color: AppTheme.backgroundDark.withValues(alpha: 0.7),),
+                color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.7),),
           ),
         ],
       ),
@@ -1812,7 +1812,7 @@ class _VenueSelector extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.surfaceVariantDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(12),
           border: selectedVenueName != null
               ? Border.all(color: AppTheme.voltLime)
@@ -1913,7 +1913,7 @@ class _PhotoSelector extends StatelessWidget {
         child: Container(
           height: 120,
           decoration: BoxDecoration(
-            color: AppTheme.surfaceVariantDark,
+            color: Theme.of(context).colorScheme.surfaceContainerHighest,
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: AppTheme.textTertiary.withValues(alpha: 0.3),
@@ -1956,7 +1956,7 @@ class _PhotoSelector extends StatelessWidget {
                 height: 120,
                 margin: const EdgeInsets.only(right: 12),
                 decoration: BoxDecoration(
-                  color: AppTheme.surfaceVariantDark,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
                     color: AppTheme.textTertiary.withValues(alpha: 0.3),
@@ -2071,7 +2071,7 @@ class _VibeSelectorState extends State<_VibeSelector> {
               decoration: BoxDecoration(
                 color: isSelected
                     ? AppTheme.voltLime
-                    : AppTheme.surfaceVariantDark,
+                    : Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(20),
                 border: isSelected
                     ? null
@@ -2092,7 +2092,7 @@ class _VibeSelectorState extends State<_VibeSelector> {
                     vibe['name']!,
                     style: TextStyle(
                       color: isSelected
-                          ? AppTheme.backgroundDark
+                          ? Theme.of(context).scaffoldBackgroundColor
                           : AppTheme.textSecondary,
                       fontWeight:
                           isSelected ? FontWeight.w600 : FontWeight.w500,
@@ -2112,7 +2112,7 @@ class _VibeSelectorState extends State<_VibeSelector> {
               padding:
                   const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceVariantDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(20),
                 border: Border.all(
                   color: AppTheme.voltLime.withValues(alpha: 0.5),
@@ -2166,7 +2166,7 @@ class _VenueSearchSheet extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Container(
             decoration: BoxDecoration(
-              color: AppTheme.surfaceVariantDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(12),
             ),
             child: const TextField(

@@ -85,11 +85,11 @@ class _FriendAvatarCircle extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
-        border: Border.all(color: AppTheme.backgroundDark, width: 2),
+        border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 2),
       ),
       child: CircleAvatar(
         radius: 14,
-        backgroundColor: AppTheme.surfaceVariantDark,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
         backgroundImage: friend.profileImageUrl != null
             ? CachedNetworkImageProvider(friend.profileImageUrl!)
             : null,

@@ -14,7 +14,7 @@ void showOwnerResponseBottomSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppTheme.cardDark,
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -157,7 +157,7 @@ class _OwnerResponseBottomSheetState
                   hintText: 'Write your response...',
                   hintStyle: const TextStyle(color: AppTheme.textTertiary),
                   filled: true,
-                  fillColor: AppTheme.surfaceDark,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -187,7 +187,7 @@ class _OwnerResponseBottomSheetState
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                            color: AppTheme.backgroundDark,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             strokeWidth: 2,
                           ),
                         )
@@ -197,7 +197,7 @@ class _OwnerResponseBottomSheetState
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
                             color: text.isNotEmpty
-                                ? AppTheme.backgroundDark
+                                ? Theme.of(context).scaffoldBackgroundColor
                                 : AppTheme.textTertiary,
                           ),
                         ),

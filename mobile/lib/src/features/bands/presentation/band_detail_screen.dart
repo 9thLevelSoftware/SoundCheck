@@ -51,7 +51,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
     final bandAsync = ref.watch(bandDetailProvider(widget.bandId));
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: bandAsync.when(
         data: (band) => _buildContent(context, band),
         loading: () => const Center(
@@ -70,7 +70,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
           SliverAppBar(
             expandedHeight: 180,
             pinned: true,
-            backgroundColor: AppTheme.backgroundDark,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             flexibleSpace: FlexibleSpaceBar(
               background: Stack(
                 fit: StackFit.expand,
@@ -92,7 +92,7 @@ class _BandDetailScreenState extends ConsumerState<BandDetailScreen>
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          AppTheme.backgroundDark.withValues(alpha:0.9),
+                          Theme.of(context).scaffoldBackgroundColor.withValues(alpha:0.9),
                         ],
                       ),
                     ),
@@ -267,7 +267,7 @@ class _BandHeader extends StatelessWidget {
             height: 80,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(12),
-              color: AppTheme.surfaceVariantDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
@@ -376,7 +376,7 @@ class _StatsRow extends StatelessWidget {
       margin: const EdgeInsets.symmetric(horizontal: 16),
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -476,7 +476,7 @@ class _StatDivider extends StatelessWidget {
     return Container(
       height: 30,
       width: 1,
-      color: AppTheme.surfaceVariantDark,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
     );
   }
 }
@@ -496,7 +496,7 @@ class _UpcomingShowsSection extends StatelessWidget {
         child: Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.cardDark,
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
             borderRadius: BorderRadius.circular(12),
           ),
           child: const Row(
@@ -569,7 +569,7 @@ class _UpcomingShowItem extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -794,7 +794,7 @@ class _DescriptionSectionState extends State<_DescriptionSection> {
             child: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppTheme.cardDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Column(
@@ -941,7 +941,7 @@ class _TabBarDelegate extends SliverPersistentHeaderDelegate {
   @override
   Widget build(context, shrinkOffset, overlapsContent) {
     return Container(
-      color: AppTheme.backgroundDark,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: TabBar(
         controller: tabController,
         tabs: tabs.map((t) => Tab(text: t)).toList(),
@@ -1175,7 +1175,7 @@ class _CheckInPreviewCard extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(

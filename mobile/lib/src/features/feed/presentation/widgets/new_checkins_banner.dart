@@ -90,13 +90,13 @@ class _NewCheckinsBannerState extends State<NewCheckinsBanner>
               const Icon(
                 Icons.arrow_upward,
                 size: 16,
-                color: AppTheme.backgroundDark,
+                color: Theme.of(context).scaffoldBackgroundColor,
               ),
               const SizedBox(width: 6),
               Text(
                 '${widget.count} new check-in${widget.count == 1 ? '' : 's'}',
                 style: const TextStyle(
-                  color: AppTheme.backgroundDark,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,
                 ),

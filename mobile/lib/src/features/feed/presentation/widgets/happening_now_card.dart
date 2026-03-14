@@ -70,7 +70,7 @@ class HappeningNowCard extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: AppTheme.voltLime.withValues(alpha: 0.3),
@@ -212,7 +212,7 @@ class _FriendAvatarRow extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: AppTheme.surfaceVariantDark,
+                color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
@@ -248,7 +248,7 @@ class _FriendAvatar extends StatelessWidget {
       decoration: BoxDecoration(
         shape: BoxShape.circle,
         border: Border.all(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           width: 2,
         ),
       ),
@@ -296,7 +296,7 @@ class _InitialCircle extends StatelessWidget {
         child: Text(
           username.isNotEmpty ? username[0].toUpperCase() : '?',
           style: TextStyle(
-            color: AppTheme.backgroundDark,
+            color: Theme.of(context).scaffoldBackgroundColor,
             fontWeight: FontWeight.bold,
             fontSize: size * 0.35,
           ),

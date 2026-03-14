@@ -48,14 +48,14 @@ class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
     final suggestionsAsync = ref.watch(userSuggestionsProvider);
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         title: const Text('Discover People'),
       ),
       body: RefreshIndicator(
         color: AppTheme.voltLime,
-        backgroundColor: AppTheme.cardDark,
+        backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
         onRefresh: () async {
           ref.invalidate(userSuggestionsProvider);
         },
@@ -192,7 +192,7 @@ class _SuggestionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      color: AppTheme.cardDark,
+      color: Theme.of(context).colorScheme.surfaceContainerHigh,
       margin: const EdgeInsets.only(bottom: 12),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),

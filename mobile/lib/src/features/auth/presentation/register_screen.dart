@@ -183,7 +183,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       appBar: AppBar(
         title: const Text('Create Account'),
@@ -331,7 +331,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                           borderRadius: BorderRadius.circular(4),
                           child: LinearProgressIndicator(
                             value: _passwordStrength,
-                            backgroundColor: AppTheme.cardDark,
+                            backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                             valueColor: AlwaysStoppedAnimation<Color>(_passwordStrengthColor),
                             minHeight: 4,
                           ),

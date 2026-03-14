@@ -46,7 +46,7 @@ class BandCard extends StatelessWidget {
                           imageUrl: band.imageUrl!,
                           fit: BoxFit.cover,
                           placeholder: (context, url) => Container(
-                            color: AppTheme.background,
+                            color: Theme.of(context).scaffoldBackgroundColor,
                             child: const Center(
                               child: CircularProgressIndicator(),
                             ),
@@ -164,7 +164,7 @@ class BandCard extends StatelessWidget {
 
   Widget _buildPlaceholder() {
     return Container(
-      color: AppTheme.surfaceVariant,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: const Center(
         child: Icon(
           Icons.music_video,

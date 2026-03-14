@@ -484,7 +484,7 @@ class _UserSearchTile extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         ),
-        tileColor: AppTheme.cardDark,
+        tileColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       ),
     );
   }
@@ -560,7 +560,7 @@ class _EventSearchTile extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         ),
-        tileColor: AppTheme.cardDark,
+        tileColor: Theme.of(context).colorScheme.surfaceContainerHigh,
       ),
     );
   }

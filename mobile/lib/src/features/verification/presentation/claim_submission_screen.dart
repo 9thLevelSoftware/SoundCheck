@@ -84,9 +84,9 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Claim ${widget.entityName}'),
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       ),
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -146,7 +146,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                     'Explain your connection to this $entityLabel...',
                 hintStyle: const TextStyle(color: AppTheme.textTertiary),
                 filled: true,
-                fillColor: AppTheme.cardDark,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -154,7 +154,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
-                    color: AppTheme.surfaceVariantDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -185,7 +185,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 hintText: 'Link to your official website or social media',
                 hintStyle: const TextStyle(color: AppTheme.textTertiary),
                 filled: true,
-                fillColor: AppTheme.cardDark,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHigh,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
@@ -193,7 +193,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: const BorderSide(
-                    color: AppTheme.surfaceVariantDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
                 focusedBorder: OutlineInputBorder(
@@ -217,7 +217,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 onPressed: _isSubmitting ? null : _submit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.voltLime,
-                  foregroundColor: AppTheme.backgroundDark,
+                  foregroundColor: Theme.of(context).scaffoldBackgroundColor,
                   disabledBackgroundColor:
                       AppTheme.voltLime.withValues(alpha: 0.5),
                   shape: RoundedRectangleBorder(
@@ -230,7 +230,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                         height: 20,
                         child: CircularProgressIndicator(
                           strokeWidth: 2,
-                          color: AppTheme.backgroundDark,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                         ),
                       )
                     : const Text(

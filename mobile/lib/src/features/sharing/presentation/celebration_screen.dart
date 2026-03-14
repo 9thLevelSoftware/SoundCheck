@@ -81,9 +81,9 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
     final cardUrls = ref.watch(checkinCardProvider(params.checkinId));
 
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppTheme.backgroundDark,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         leading: IconButton(
           icon: const Icon(Icons.close),
           tooltip: 'Close',
@@ -120,7 +120,7 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
                 ),
                 child: const Icon(
                   Icons.check,
-                  color: AppTheme.backgroundDark,
+                  color: Theme.of(context).scaffoldBackgroundColor,
                   size: 48,
                 ),
               ),
@@ -383,7 +383,7 @@ class _BadgeProgressTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: AppTheme.cardDark,
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
       ),
       child: Row(
@@ -406,7 +406,7 @@ class _BadgeProgressTile extends StatelessWidget {
                   lineHeight: 6,
                   percent: pct,
                   progressColor: AppTheme.voltLime,
-                  backgroundColor: AppTheme.surfaceVariantDark,
+                  backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   barRadius: const Radius.circular(3),
                   animation: true,
                   animationDuration: 600,

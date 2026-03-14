@@ -32,7 +32,7 @@ void showReportBottomSheet(
   showModalBottomSheet(
     context: context,
     isScrollControlled: true,
-    backgroundColor: AppTheme.cardDark,
+    backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
     ),
@@ -223,7 +223,7 @@ class _ReportBottomSheetState extends ConsumerState<ReportBottomSheet> {
                   hintText: 'Provide more context...',
                   hintStyle: const TextStyle(color: AppTheme.textTertiary),
                   filled: true,
-                  fillColor: AppTheme.surfaceDark,
+                  fillColor: Theme.of(context).colorScheme.surface,
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
@@ -306,7 +306,7 @@ class _ReasonTile extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? AppTheme.error.withValues(alpha: 0.15)
-                : AppTheme.surfaceDark,
+                : Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(12),
             border: isSelected
                 ? Border.all(color: AppTheme.error, width: 1.5)

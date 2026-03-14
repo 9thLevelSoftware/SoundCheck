@@ -102,14 +102,14 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.backgroundDark,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: CustomScrollView(
         slivers: [
           // App Bar with Search
           SliverAppBar(
             floating: true,
             pinned: true,
-            backgroundColor: AppTheme.backgroundDark,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             expandedHeight: 140,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -132,7 +132,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       textField: true,
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppTheme.surfaceVariantDark,
+                          color: Theme.of(context).colorScheme.surfaceContainerHighest,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: TextField(
@@ -178,7 +178,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   decoration: BoxDecoration(
                     color: _showMapView
                         ? AppTheme.voltLime.withValues(alpha: 0.2)
-                        : AppTheme.surfaceVariantDark,
+                        : Theme.of(context).colorScheme.surfaceContainerHighest,
                     borderRadius: BorderRadius.circular(8),
                     border: _showMapView
                         ? Border.all(color: AppTheme.voltLime, width: 1.5)
@@ -497,7 +497,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               initialZoom: zoom,
               minZoom: 3,
               maxZoom: 18,
-              backgroundColor: AppTheme.backgroundDark,
+              backgroundColor: Theme.of(context).scaffoldBackgroundColor,
             ),
             children: [
               // OpenStreetMap tiles with dark theme
@@ -558,7 +558,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardDark,
+                    color: Theme.of(context).colorScheme.surfaceContainerHigh,
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: const Row(
@@ -596,7 +596,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardDark,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: AppTheme.voltLime.withValues(alpha: 0.3),
@@ -632,7 +632,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 margin: const EdgeInsets.all(32),
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardDark,
+                  color: Theme.of(context).colorScheme.surfaceContainerHigh,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -676,7 +676,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
       backgroundColor: Colors.transparent,
       builder: (context) => Container(
         decoration: const BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
@@ -1117,7 +1117,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                             decoration: BoxDecoration(
                               color: isSelected
                                   ? AppTheme.voltLime
-                                  : AppTheme.surfaceVariantDark,
+                                  : Theme.of(context).colorScheme.surfaceContainerHighest,
                               borderRadius: BorderRadius.circular(20),
                               border: isSelected
                                   ? null
@@ -1175,7 +1175,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               maxHeight: MediaQuery.of(context).size.height * 0.6,
             ),
             decoration: const BoxDecoration(
-              color: AppTheme.cardDark,
+              color: Theme.of(context).colorScheme.surfaceContainerHigh,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             child: Column(
@@ -1371,7 +1371,7 @@ class _LocationPermissionPrompt extends StatelessWidget {
               onPressed: onPressed,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.voltLime,
-                foregroundColor: AppTheme.backgroundDark,
+                foregroundColor: Theme.of(context).scaffoldBackgroundColor,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 20,
                   vertical: 10,
@@ -1527,7 +1527,7 @@ class _EventCard extends ConsumerWidget {
         width: 160,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -1573,7 +1573,7 @@ class _EventCard extends ConsumerWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1605,7 +1605,7 @@ class _EventCard extends ConsumerWidget {
                         ),
                         child: const Icon(
                           Icons.check,
-                          color: AppTheme.backgroundDark,
+                          color: Theme.of(context).scaffoldBackgroundColor,
                           size: 12,
                         ),
                       ),
@@ -1621,7 +1621,7 @@ class _EventCard extends ConsumerWidget {
                           vertical: 3,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
@@ -1698,7 +1698,7 @@ class _TrendingEventCard extends StatelessWidget {
         width: 160,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -1779,7 +1779,7 @@ class _TrendingEventCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
@@ -1857,7 +1857,7 @@ class _ForYouCard extends StatelessWidget {
         width: 200,
         margin: const EdgeInsets.only(right: 12),
         decoration: BoxDecoration(
-          color: AppTheme.cardDark,
+          color: Theme.of(context).colorScheme.surfaceContainerHigh,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
@@ -1905,7 +1905,7 @@ class _ForYouCard extends StatelessWidget {
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: AppTheme.backgroundDark.withValues(alpha: 0.85),
+                          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.85),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
