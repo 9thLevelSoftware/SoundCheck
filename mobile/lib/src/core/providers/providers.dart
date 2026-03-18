@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:sentry_flutter/sentry_flutter.dart';
 
 import '../api/dio_client.dart';
 import '../services/analytics_service.dart';
@@ -182,6 +183,13 @@ class AuthState extends _$AuthState {
     } catch (_) {}
 
     await authRepository.logout();
+
+    // Clear Sentry user context so no PII leaks across sessions
+    Sentry.configureScope((scope) => scope.setUser(null));
+
+    // Clear analytics identity
+    AnalyticsService.clearUserId();
+
     state = const AsyncValue.data(null);
   }
 
