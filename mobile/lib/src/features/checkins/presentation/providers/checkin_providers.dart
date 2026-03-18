@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../shared/services/location_service.dart';
 import '../../../bands/domain/band.dart';
+import '../../../feed/presentation/providers/feed_providers.dart';
 import '../../data/upload_repository.dart';
 import '../../domain/checkin.dart';
 import '../../domain/nearby_event.dart';
@@ -51,13 +52,6 @@ Future<List<Band>> searchBandsForCheckin(Ref ref) async {
 
   final bandRepository = ref.watch(bandRepositoryProvider);
   return bandRepository.getBands(search: query, limit: 10);
-}
-
-/// Provider for the social feed
-@riverpod
-Future<List<CheckIn>> socialFeed(Ref ref) async {
-  final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getFeed();
 }
 
 /// Provider for vibe tags
@@ -143,8 +137,9 @@ class CreateCheckIn extends _$CreateCheckIn {
         ),
       );
 
-      // Invalidate feed and user check-ins to refresh
-      ref.invalidate(socialFeedProvider);
+      // Invalidate both feed providers so the feed screen refreshes
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
 
       state = const AsyncValue.data(null);
       return checkIn;
@@ -176,7 +171,8 @@ class ToastCheckIn extends _$ToastCheckIn {
       // Invalidate related providers
       ref.invalidate(checkInToastsProvider(checkInId));
       ref.invalidate(checkInDetailProvider(checkInId));
-      ref.invalidate(socialFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
 
       state = const AsyncValue.data(null);
       return !hasToasted;
@@ -204,7 +200,8 @@ class AddComment extends _$AddComment {
       // Invalidate comments provider
       ref.invalidate(checkInCommentsProvider(checkInId));
       ref.invalidate(checkInDetailProvider(checkInId));
-      ref.invalidate(socialFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
 
       state = const AsyncValue.data(null);
       return newComment;
@@ -308,7 +305,8 @@ class CreateEventCheckIn extends _$CreateEventCheckIn {
       );
 
       // Invalidate feed and nearby events to refresh
-      ref.invalidate(socialFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
       ref.invalidate(nearbyEventsProvider);
 
       state = const AsyncValue.data(null);
