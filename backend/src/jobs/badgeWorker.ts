@@ -14,6 +14,7 @@
 import { Worker, Job } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { BadgeService } from '../services/BadgeService';
+import { captureException } from '../utils/sentry';
 import logger from '../utils/logger';
 
 /**
@@ -54,6 +55,7 @@ export function startBadgeEvalWorker(): Worker | null {
     {
       connection: createBullMQConnection(),
       concurrency: 3,
+      lockDuration: 60000, // 1 min — badge evaluation involves multiple DB queries
     },
   );
 
@@ -68,6 +70,7 @@ export function startBadgeEvalWorker(): Worker | null {
       error: err.message,
       attemptsMade: job?.attemptsMade,
     });
+    captureException(err, { queue: 'badge-eval', jobId: job?.id });
   });
 
   worker.on('error', (err: Error) => {

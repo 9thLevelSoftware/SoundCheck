@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { BlockService } from '../services/BlockService';
-import { ApiResponse } from '../types';
+import { buildErrorResponse } from '../middleware/validate';
 
 /**
  * BlockController: HTTP handlers for user blocking operations.
@@ -16,25 +16,22 @@ export class BlockController {
    */
   blockUser = async (req: Request, res: Response): Promise<void> => {
     try {
-      const blockerId = req.user!.id;
+      const blockerId = req.user?.id;
+      if (!blockerId) {
+        res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Authentication required'));
+        return;
+      }
       const blockedId = req.params.userId;
 
       const block = await this.blockService.blockUser(blockerId, blockedId);
 
-      const response: ApiResponse = {
-        success: true,
-        data: block,
-      };
-
-      res.status(201).json(response);
+      res.status(201).json({ success: true, data: block });
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const response: ApiResponse = {
-        success: false,
-        error: statusCode < 500 ? error.message : 'Failed to block user',
-      };
+      const code = statusCode < 500 ? 'REQUEST_ERROR' : 'INTERNAL_ERROR';
+      const message = statusCode < 500 ? error.message : 'Failed to block user';
 
-      res.status(statusCode).json(response);
+      res.status(statusCode).json(buildErrorResponse(code, message));
     }
   };
 
@@ -44,25 +41,22 @@ export class BlockController {
    */
   unblockUser = async (req: Request, res: Response): Promise<void> => {
     try {
-      const blockerId = req.user!.id;
+      const blockerId = req.user?.id;
+      if (!blockerId) {
+        res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Authentication required'));
+        return;
+      }
       const blockedId = req.params.userId;
 
       await this.blockService.unblockUser(blockerId, blockedId);
 
-      const response: ApiResponse = {
-        success: true,
-        message: 'User unblocked',
-      };
-
-      res.status(200).json(response);
+      res.status(200).json({ success: true, message: 'User unblocked' });
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const response: ApiResponse = {
-        success: false,
-        error: statusCode < 500 ? error.message : 'Failed to unblock user',
-      };
+      const code = statusCode < 500 ? 'REQUEST_ERROR' : 'INTERNAL_ERROR';
+      const message = statusCode < 500 ? error.message : 'Failed to unblock user';
 
-      res.status(statusCode).json(response);
+      res.status(statusCode).json(buildErrorResponse(code, message));
     }
   };
 
@@ -72,23 +66,17 @@ export class BlockController {
    */
   getBlockedUsers = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Authentication required'));
+        return;
+      }
 
       const blocks = await this.blockService.getBlockedUsers(userId);
 
-      const response: ApiResponse = {
-        success: true,
-        data: blocks,
-      };
-
-      res.status(200).json(response);
+      res.status(200).json({ success: true, data: blocks });
     } catch (error: any) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to fetch blocked users',
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(buildErrorResponse('INTERNAL_ERROR', 'Failed to fetch blocked users'));
     }
   };
 
@@ -98,24 +86,18 @@ export class BlockController {
    */
   checkBlocked = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Authentication required'));
+        return;
+      }
       const otherUserId = req.params.userId;
 
       const blocked = await this.blockService.isBlocked(userId, otherUserId);
 
-      const response: ApiResponse = {
-        success: true,
-        data: { blocked },
-      };
-
-      res.status(200).json(response);
+      res.status(200).json({ success: true, data: { blocked } });
     } catch (error: any) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to check block status',
-      };
-
-      res.status(500).json(response);
+      res.status(500).json(buildErrorResponse('INTERNAL_ERROR', 'Failed to check block status'));
     }
   };
 }

@@ -12,7 +12,7 @@ import { initSentry, setupSentryForExpress, closeSentry, captureException as sen
 initSentry();
 
 // Initialize Redis for distributed rate limiting and caching
-import { initRedis, closeRedis } from './utils/redisRateLimiter';
+import { initRedis, closeRedis, getRedis } from './utils/redisRateLimiter';
 initRedis();
 
 import express from 'express';
@@ -61,6 +61,7 @@ import { Worker } from 'bullmq';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { authenticateToken, requireAdmin } from './middleware/auth';
+import { buildErrorResponse } from './middleware/validate';
 
 // Read package version for health endpoint
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
@@ -166,20 +167,45 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
+// Health check endpoint with timeout and Redis ping
 app.get('/health', async (req, res) => {
+  let responded = false;
+  const timeout = setTimeout(() => {
+    if (!responded) {
+      responded = true;
+      res.status(503).json({
+        success: false,
+        data: { status: 'timeout', db: 'unknown', redis: 'unknown' },
+      });
+    }
+  }, 5000);
+
   try {
     const db = Database.getInstance();
-    const isDbHealthy = await db.healthCheck();
+    const redis = getRedis();
     const wsStats = getWebSocketStats();
+
+    const [dbResult, redisResult] = await Promise.all([
+      db.healthCheck().then(() => 'ok' as const).catch(() => 'error' as const),
+      redis ? redis.ping().then(() => 'ok' as const).catch(() => 'error' as const) : Promise.resolve('not_configured' as const),
+    ]);
+
+    clearTimeout(timeout);
+    if (responded) return;
+    responded = true;
+
+    const status = dbResult === 'ok' && (redisResult === 'ok' || redisResult === 'not_configured')
+      ? 'healthy'
+      : 'degraded';
 
     const response: ApiResponse = {
       success: true,
       data: {
-        status: 'healthy',
+        status,
         timestamp: new Date().toISOString(),
         version: APP_VERSION,
-        database: isDbHealthy ? 'connected' : 'disconnected',
+        database: dbResult === 'ok' ? 'connected' : 'disconnected',
+        redis: redisResult,
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,
@@ -188,8 +214,11 @@ app.get('/health', async (req, res) => {
       },
     };
 
-    res.status(200).json(response);
+    res.status(status === 'healthy' ? 200 : 503).json(response);
   } catch (error) {
+    clearTimeout(timeout);
+    if (responded) return;
+    responded = true;
     const response: ApiResponse = {
       success: false,
       error: 'Health check failed',
@@ -252,11 +281,9 @@ app.get('/api/debug/sentry-test', authenticateToken, requireAdmin(), (req: expre
 
 // 404 handler
 app.use('*', (req, res) => {
-  const response: ApiResponse = {
-    success: false,
-    error: `Route ${req.originalUrl} not found`,
-  };
-  res.status(404).json(response);
+  res.status(404).json(
+    buildErrorResponse('NOT_FOUND', `Route ${req.originalUrl} not found`),
+  );
 });
 
 // Setup Sentry Express error handler - must be before other error handlers
@@ -288,19 +315,19 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     });
   }
 
-  // Build response
-  const response: ApiResponse = {
-    success: false,
-    error: process.env.NODE_ENV === 'development'
-      ? error.message
-      : statusCode >= 500
-        ? 'Internal server error'
-        : error.message || 'Request failed',
-  };
+  // Build canonical error response
+  const errorCode = statusCode >= 500 ? 'INTERNAL_ERROR' : error.code || 'REQUEST_ERROR';
+  const errorMessage = process.env.NODE_ENV === 'development'
+    ? error.message
+    : statusCode >= 500
+      ? 'Internal server error'
+      : error.message || 'Request failed';
+
+  const response = buildErrorResponse(errorCode, errorMessage);
 
   // Include stack trace only in development
   if (process.env.NODE_ENV === 'development' && error.stack) {
-    (response as any).stack = error.stack;
+    response.error.details = { stack: error.stack };
   }
 
   res.status(statusCode).json(response);
@@ -335,8 +362,10 @@ const startServer = async () => {
     logInfo('Database connection established');
 
     // Warn about CORS configuration in production
+    // CORS_ORIGIN is not strictly needed for mobile-only API (mobile apps don't send Origin headers),
+    // but should be set if a web client is added later.
     if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
-      logWarn('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
+      logWarn('CORS_ORIGIN not set in production — defaulting to mobile-only mode (no origin required)');
     }
 
     // Initialize WebSocket server
@@ -369,8 +398,13 @@ const startServer = async () => {
 };
 
 // Handle graceful shutdown
-process.on('SIGTERM', async () => {
-  logInfo('SIGTERM received, shutting down gracefully');
+const gracefulShutdown = async (signal: string) => {
+  logInfo(`${signal} received, starting graceful shutdown`);
+  // Stop accepting new connections first
+  server.close(() => {
+    logInfo('HTTP server closed');
+  });
+  // Stop BullMQ workers
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
@@ -381,21 +415,10 @@ process.on('SIGTERM', async () => {
   const db = Database.getInstance();
   await db.close();
   process.exit(0);
-});
+};
 
-process.on('SIGINT', async () => {
-  logInfo('SIGINT received, shutting down gracefully');
-  if (syncWorker) await stopEventSyncWorker(syncWorker);
-  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
-  if (notifWorker) await stopNotificationWorker(notifWorker);
-  if (modWorker) await stopModerationWorker(modWorker);
-  await closeSentry(2000); // Wait up to 2s for pending Sentry events
-  await closeRedis();
-  websocket.close();
-  const db = Database.getInstance();
-  await db.close();
-  process.exit(0);
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {

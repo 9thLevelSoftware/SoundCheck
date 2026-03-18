@@ -21,7 +21,7 @@ const JWT_SECRET: string = (() => {
   }
   return secret;
 })();
-const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN: string = process.env.JWT_EXPIRES_IN || '30m';
 
 export class AuthUtils {
   /**
@@ -44,7 +44,7 @@ export class AuthUtils {
    */
   static generateToken(payload: JWTPayload): string {
     const options: SignOptions = {
-      expiresIn: JWT_EXPIRES_IN as any, // '7d' format is valid but types are strict
+      expiresIn: JWT_EXPIRES_IN as any, // '30m' format is valid but types are strict
       issuer: 'soundcheck-api',
       audience: 'soundcheck-mobile',
     };

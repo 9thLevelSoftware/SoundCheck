@@ -16,6 +16,7 @@
 import { Worker, Job } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { EventSyncService } from '../services/EventSyncService';
+import { captureException } from '../utils/sentry';
 import logger from '../utils/logger';
 
 /**
@@ -59,6 +60,7 @@ export function startEventSyncWorker(): Worker | null {
     {
       connection: createBullMQConnection(),
       concurrency: 1,
+      lockDuration: 300000, // 5 min — long-running sync against Ticketmaster API
     },
   );
 
@@ -73,6 +75,7 @@ export function startEventSyncWorker(): Worker | null {
       error: err.message,
       attemptsMade: job?.attemptsMade,
     });
+    captureException(err, { queue: 'event-sync', jobId: job?.id, jobName: job?.name });
   });
 
   worker.on('error', (err: Error) => {

@@ -236,10 +236,11 @@ describe('SocialAuthService', () => {
       expect(result.refreshToken).toBe('mock-refresh-token');
     });
 
-    it('should link social account to existing user with same email', async () => {
+    it('should link social account to existing user with same email when user has social auth', async () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [] }) // findSocialAccount - not found
         .mockResolvedValueOnce({ rows: [mockUser] }) // findUserByEmail - found
+        .mockResolvedValueOnce({ rows: [{ user_id: mockUser.id }] }) // userHasSocialAccounts - has social auth
         .mockResolvedValueOnce({ rows: [] }); // linkSocialAccount
 
       const result = await socialAuthService.authenticateOrCreate(mockProfile);
@@ -251,6 +252,16 @@ describe('SocialAuthService', () => {
         expect.stringContaining('INSERT INTO user_social_accounts'),
         [mockUser.id, 'google', 'google-user-123']
       );
+    });
+
+    it('should reject auto-linking when existing user is password-only', async () => {
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [] }) // findSocialAccount - not found
+        .mockResolvedValueOnce({ rows: [mockUser] }) // findUserByEmail - found
+        .mockResolvedValueOnce({ rows: [] }); // userHasSocialAccounts - no social accounts (password-only)
+
+      await expect(socialAuthService.authenticateOrCreate(mockProfile))
+        .rejects.toThrow('An account with this email already exists');
     });
 
     it('should create new user when no existing account found', async () => {

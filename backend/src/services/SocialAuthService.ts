@@ -171,7 +171,24 @@ export class SocialAuthService {
     const existingUser = await this.findUserByEmail(profile.email);
 
     if (existingUser) {
-      // User exists - link this social account to their profile
+      // Check if this is a password-only account (no social accounts linked).
+      // If so, don't auto-link — this prevents account takeover via social auth.
+      // The user must log in with their password first and link the social account
+      // from account settings.
+      const hasSocialAccounts = await this.userHasSocialAccounts(existingUser.id);
+      if (!hasSocialAccounts) {
+        logger.warn('Social auth email matches password-only account, refusing auto-link', {
+          provider: profile.provider,
+          existingUserId: existingUser.id,
+        });
+        const err = new Error(
+          'An account with this email already exists. Please log in with your password and link your social account from settings.'
+        );
+        (err as any).statusCode = 409;
+        throw err;
+      }
+
+      // User already has social auth — safe to link this additional provider
       await this.linkSocialAccount(existingUser.id, profile.provider, profile.providerId);
       return this.generateAuthResult(existingUser, false);
     }
@@ -235,6 +252,18 @@ export class SocialAuthService {
     }
 
     return mapDbUserToUser(result.rows[0]);
+  }
+
+  /**
+   * Check if a user has any social accounts linked.
+   * Used to distinguish password-only users from social-auth users.
+   */
+  private async userHasSocialAccounts(userId: string): Promise<boolean> {
+    const result = await this.db.query(
+      `SELECT 1 FROM user_social_accounts WHERE user_id = $1 LIMIT 1`,
+      [userId]
+    );
+    return result.rows.length > 0;
   }
 
   /**

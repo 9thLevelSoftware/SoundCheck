@@ -72,8 +72,9 @@ describe('UserController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.data.details).toBeDefined();
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toBe('Validation failed');
+      expect(response.body.error.details).toBeDefined();
     });
 
     it('should return error for duplicate email', async () => {
@@ -143,8 +144,9 @@ describe('UserController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Validation failed');
-      expect(response.body.data.details).toBeDefined();
+      expect(response.body.error.code).toBe('VALIDATION_ERROR');
+      expect(response.body.error.message).toBe('Validation failed');
+      expect(response.body.error.details).toBeDefined();
     });
 
     it('should return error for invalid credentials', async () => {

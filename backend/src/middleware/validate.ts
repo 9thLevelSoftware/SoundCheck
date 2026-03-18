@@ -1,7 +1,38 @@
 import { Request, Response, NextFunction } from 'express';
 import { AnyZodObject, ZodError } from 'zod';
-import { ApiResponse } from '../types';
 import logger from '../utils/logger';
+
+/**
+ * Canonical error response shape.
+ * All error responses across validation, global handler, and controllers
+ * should use this format for consistency (CFR-API-013).
+ */
+export interface ErrorResponse {
+  success: false;
+  error: {
+    code: string;
+    message: string;
+    details?: any;
+  };
+}
+
+/**
+ * Helper to build a canonical error response.
+ */
+export function buildErrorResponse(
+  code: string,
+  message: string,
+  details?: any,
+): ErrorResponse {
+  const response: ErrorResponse = {
+    success: false,
+    error: { code, message },
+  };
+  if (details !== undefined) {
+    response.error.details = details;
+  }
+  return response;
+}
 
 /**
  * Middleware factory for Zod schema validation
@@ -17,21 +48,21 @@ export const validate = (schema: AnyZodObject) => {
       next();
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessages = error.errors.map((err) => {
-          return `${err.path.join('.')}: ${err.message}`;
-        });
+        const fieldErrors = error.errors.map((err) => ({
+          field: err.path.join('.'),
+          message: err.message,
+        }));
 
-        const response: ApiResponse = {
-          success: false,
-          error: 'Validation failed',
-          data: { details: errorMessages },
-        };
-        res.status(400).json(response);
+        res.status(400).json(
+          buildErrorResponse('VALIDATION_ERROR', 'Validation failed', fieldErrors),
+        );
         return;
       }
-      
+
       logger.error('Validation middleware unexpected error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      res.status(500).json({ success: false, error: 'Internal server error' });
+      res.status(500).json(
+        buildErrorResponse('INTERNAL_ERROR', 'Internal server error'),
+      );
     }
   };
 };

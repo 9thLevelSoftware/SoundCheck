@@ -57,7 +57,7 @@ export const authenticateToken = async (
     // Attach user info to request
     req.user = user;
     // Enrich Sentry error context with authenticated user
-    sentrySetUser({ id: user.id, email: user.email, username: user.username });
+    sentrySetUser({ id: user.id, username: user.username });
 
     next();
   } catch (error) {
@@ -87,10 +87,10 @@ export const optionalAuth = async (
       if (payload) {
         const userService = new UserService();
         const user = await userService.findById(payload.userId);
-        
+
         if (user && user.isActive) {
           req.user = user;
-          sentrySetUser({ id: user.id, email: user.email, username: user.username });
+          sentrySetUser({ id: user.id, username: user.username });
         }
       }
     }
@@ -101,36 +101,6 @@ export const optionalAuth = async (
     // Continue without authentication
     next();
   }
-};
-
-/**
- * Middleware to check if user owns a resource
- */
-export const requireOwnership = (resourceUserIdField: string = 'userId') => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const user = req.user;
-    const resourceUserId = req.params[resourceUserIdField] || req.body[resourceUserIdField];
-
-    if (!user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Authentication required',
-      };
-      res.status(401).json(response);
-      return;
-    }
-
-    if (user.id !== resourceUserId) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Access denied: You can only access your own resources',
-      };
-      res.status(403).json(response);
-      return;
-    }
-
-    next();
-  };
 };
 
 /**

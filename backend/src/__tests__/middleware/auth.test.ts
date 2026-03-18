@@ -2,7 +2,6 @@ import { Request, Response, NextFunction } from 'express';
 import {
   authenticateToken,
   optionalAuth,
-  requireOwnership,
   requireAdmin,
 } from '../../middleware/auth';
 import { AuthUtils } from '../../utils/auth';
@@ -329,72 +328,6 @@ describe('Auth Middleware', () => {
       expect(mockStatus).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
-    });
-  });
-
-  describe('requireOwnership', () => {
-    it('should allow owner to access resource via params', () => {
-      mockRequest.user = mockUser;
-      mockRequest.params = { userId: 'user-123' };
-
-      const middleware = requireOwnership('userId');
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockStatus).not.toHaveBeenCalled();
-    });
-
-    it('should allow owner to access resource via body', () => {
-      mockRequest.user = mockUser;
-      mockRequest.params = {};
-      mockRequest.body = { userId: 'user-123' };
-
-      const middleware = requireOwnership('userId');
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockStatus).not.toHaveBeenCalled();
-    });
-
-    it('should return 401 when user not authenticated', () => {
-      mockRequest.user = undefined;
-      mockRequest.params = { userId: 'user-123' };
-
-      const middleware = requireOwnership('userId');
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockStatus).toHaveBeenCalledWith(401);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Authentication required',
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should return 403 when user is not owner', () => {
-      mockRequest.user = mockUser;
-      mockRequest.params = { userId: 'other-user-456' };
-
-      const middleware = requireOwnership('userId');
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockStatus).toHaveBeenCalledWith(403);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Access denied: You can only access your own resources',
-      });
-      expect(mockNext).not.toHaveBeenCalled();
-    });
-
-    it('should use default field name when not specified', () => {
-      mockRequest.user = mockUser;
-      mockRequest.params = { userId: 'user-123' };
-
-      const middleware = requireOwnership();
-      middleware(mockRequest as Request, mockResponse as Response, mockNext);
-
-      expect(mockNext).toHaveBeenCalled();
-      expect(mockStatus).not.toHaveBeenCalled();
     });
   });
 

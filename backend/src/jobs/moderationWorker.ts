@@ -19,6 +19,7 @@ import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { ImageModerationService } from '../services/ImageModerationService';
 import { ModerationService } from '../services/ModerationService';
 import { ContentType } from '../types';
+import { captureException } from '../utils/sentry';
 import logger from '../utils/logger';
 
 interface ModerationJobData {
@@ -91,6 +92,7 @@ export function startModerationWorker(): Worker | null {
     {
       connection: createBullMQConnection(),
       concurrency: 2,
+      lockDuration: 60000, // 1 min — Cloud Vision API calls can be slow
     }
   );
 
@@ -105,6 +107,7 @@ export function startModerationWorker(): Worker | null {
       error: err.message,
       attemptsMade: job?.attemptsMade,
     });
+    captureException(err, { queue: 'image-moderation', jobId: job?.id });
   });
 
   worker.on('error', (err: Error) => {
