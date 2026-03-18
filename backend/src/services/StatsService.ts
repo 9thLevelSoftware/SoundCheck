@@ -58,14 +58,19 @@ export class StatsService {
     followersCount: number;
     followingCount: number;
   }> {
+    // CFR-E2E-016: Read denormalized columns from users table to align with trigger logic.
+    // total_checkins, unique_bands, unique_venues are maintained by the checkin stats trigger.
+    // Badges, followers, and following are still computed via subqueries (no trigger path).
     const result = await this.db.query(
       `SELECT
-        (SELECT COUNT(DISTINCT c.id)::int FROM checkins c WHERE c.user_id = $1 AND c.is_hidden IS NOT TRUE) as total_shows,
-        (SELECT COUNT(DISTINCT el.band_id)::int FROM checkins c JOIN event_lineup el ON c.event_id = el.event_id WHERE c.user_id = $1 AND c.is_hidden IS NOT TRUE) as unique_bands,
-        (SELECT COUNT(DISTINCT c.venue_id)::int FROM checkins c WHERE c.user_id = $1 AND c.is_hidden IS NOT TRUE) as unique_venues,
+        u.total_checkins as total_shows,
+        u.unique_bands as unique_bands,
+        u.unique_venues as unique_venues,
         (SELECT COUNT(DISTINCT ub.badge_id)::int FROM user_badges ub WHERE ub.user_id = $1) as badges_earned,
         (SELECT COUNT(*)::int FROM user_followers WHERE following_id = $1) as followers_count,
         (SELECT COUNT(*)::int FROM user_followers WHERE follower_id = $1) as following_count
+      FROM users u
+      WHERE u.id = $1
       `,
       [userId]
     );

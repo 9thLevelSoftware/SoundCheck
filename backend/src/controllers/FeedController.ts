@@ -79,6 +79,7 @@ export class FeedController {
   getEventFeed = async (req: Request, res: Response): Promise<void> => {
     try {
       const { eventId } = req.params;
+      const userId = req.user?.id;
 
       if (!eventId) {
         const response: ApiResponse = { success: false, error: 'Event ID is required' };
@@ -90,7 +91,7 @@ export class FeedController {
       const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
       const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 20 : rawLimit));
 
-      const result = await this.feedService.getEventFeed(eventId, cursor, limit);
+      const result = await this.feedService.getEventFeed(eventId, userId, cursor, limit);
 
       const response: ApiResponse = { success: true, data: result };
       res.status(200).json(response);

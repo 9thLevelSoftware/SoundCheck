@@ -55,7 +55,7 @@ export class ShareCardService {
     checkinId: string,
     data: CheckinCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-    if (!r2Service.configured) {
+    if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
@@ -83,7 +83,7 @@ export class ShareCardService {
     badgeAwardId: string,
     data: BadgeCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-    if (!r2Service.configured) {
+    if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
@@ -108,7 +108,7 @@ export class ShareCardService {
     year: number,
     data: WrappedSummaryData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-    if (!r2Service.configured) {
+    if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }
@@ -130,7 +130,7 @@ export class ShareCardService {
     year: number,
     data: WrappedStatData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-    if (!r2Service.configured) {
+    if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
     }

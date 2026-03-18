@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import { Band, Venue, Event, SearchResults, SearchUserResult } from '../types';
+import { BlockService } from './BlockService';
 import { EventService } from './EventService';
 
 /**
@@ -15,6 +16,7 @@ import { EventService } from './EventService';
  */
 export class SearchService {
   private db = Database.getInstance();
+  private blockService = new BlockService();
   private eventService = new EventService();
 
   /**
@@ -26,7 +28,7 @@ export class SearchService {
    */
   async search(
     query: string,
-    options?: { types?: ('band' | 'venue' | 'event' | 'user')[]; limit?: number }
+    options?: { types?: ('band' | 'venue' | 'event' | 'user')[]; limit?: number; userId?: string }
   ): Promise<SearchResults> {
     const types = options?.types ?? ['band', 'venue', 'event'];
     const limit = Math.min(options?.limit ?? 10, 50);
@@ -35,7 +37,7 @@ export class SearchService {
       types.includes('band') ? this.searchBands(query, limit) : [],
       types.includes('venue') ? this.searchVenues(query, limit) : [],
       types.includes('event') ? this.searchEvents(query, limit) : [],
-      types.includes('user') ? this.searchUsers(query, limit) : [],
+      types.includes('user') ? this.searchUsers(query, limit, options?.userId) : [],
     ]);
 
     const result: SearchResults = { bands, venues, events };
@@ -181,10 +183,14 @@ export class SearchService {
    * Search users using ILIKE on username, first_name, last_name.
    * Exact username matches rank first, then prefix matches, then partial matches.
    */
-  private async searchUsers(query: string, limit: number): Promise<SearchUserResult[]> {
+  private async searchUsers(query: string, limit: number, userId?: string): Promise<SearchUserResult[]> {
     const searchTerm = `%${query.toLowerCase()}%`;
     const exactTerm = query.toLowerCase();
     const prefixTerm = `${query.toLowerCase()}%`;
+
+    const blockFilter = userId
+      ? this.blockService.getBlockFilterSQL(userId, 'u.id')
+      : '';
 
     const sql = `
       SELECT u.id, u.username, u.first_name, u.last_name,
@@ -196,6 +202,7 @@ export class SearchService {
              OR LOWER(u.first_name) LIKE $1
              OR LOWER(u.last_name) LIKE $1
              OR LOWER(COALESCE(u.first_name || ' ' || u.last_name, '')) LIKE $1)
+        ${blockFilter}
       ORDER BY
         CASE WHEN LOWER(u.username) = $3 THEN 0
              WHEN LOWER(u.username) LIKE $4 THEN 1

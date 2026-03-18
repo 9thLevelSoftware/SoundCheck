@@ -148,7 +148,15 @@ export class R2Service {
   }
 
   /**
-   * Check if R2 is configured and photo uploads are available.
+   * Check if R2 is configured and ready for photo uploads.
+   * CFR-BE-006: Renamed from 'configured' to 'isReady' to distinguish from internal isConfigured field.
+   */
+  get isReady(): boolean {
+    return this.isConfigured;
+  }
+
+  /**
+   * @deprecated Use isReady instead. Kept for backward compatibility.
    */
   get configured(): boolean {
     return this.isConfigured;

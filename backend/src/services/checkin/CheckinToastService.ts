@@ -25,21 +25,18 @@ export class CheckinToastService {
    */
   async toastCheckin(userId: string, checkinId: string): Promise<{ toastCount: number; ownerId: string }> {
     try {
-      // Check if already toasted
-      const existingToast = await this.db.query(
-        'SELECT id FROM toasts WHERE checkin_id = $1 AND user_id = $2',
+      // Atomic upsert — eliminates TOCTOU race between SELECT and INSERT (CFR-BE-001)
+      const insertResult = await this.db.query(
+        `INSERT INTO toasts (checkin_id, user_id)
+         VALUES ($1, $2)
+         ON CONFLICT (checkin_id, user_id) DO NOTHING
+         RETURNING id`,
         [checkinId, userId]
       );
 
-      if (existingToast.rows.length > 0) {
+      if (insertResult.rows.length === 0) {
         throw new Error('Already toasted this check-in');
       }
-
-      // Create toast
-      await this.db.query(
-        'INSERT INTO toasts (checkin_id, user_id) VALUES ($1, $2)',
-        [checkinId, userId]
-      );
 
       // Get toast count and owner ID for WebSocket broadcast
       const result = await this.db.query(

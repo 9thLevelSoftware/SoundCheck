@@ -32,9 +32,13 @@ export class CheckinRatingService {
    * Ratings must be 0.5-5.0 in 0.5 steps.
    */
   async addRatings(checkinId: string, userId: string, ratings: AddRatingsRequest): Promise<Checkin> {
+    // Wrap all writes in a transaction to ensure atomicity (CFR-BE-002)
+    const client = await this.db.getClient();
     try {
+      await client.query('BEGIN');
+
       // Verify checkin belongs to userId
-      const checkinResult = await this.db.query(
+      const checkinResult = await client.query(
         'SELECT user_id, event_id FROM checkins WHERE id = $1',
         [checkinId]
       );
@@ -52,7 +56,7 @@ export class CheckinRatingService {
       // Handle venue rating
       if (ratings.venueRating !== undefined) {
         this.validateRating(ratings.venueRating);
-        await this.db.query(
+        await client.query(
           'UPDATE checkins SET venue_rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [ratings.venueRating, checkinId]
         );
@@ -65,7 +69,7 @@ export class CheckinRatingService {
 
           // Verify band is in event lineup (if event-based check-in)
           if (eventId) {
-            const lineupCheck = await this.db.query(
+            const lineupCheck = await client.query(
               'SELECT 1 FROM event_lineup WHERE event_id = $1 AND band_id = $2',
               [eventId, br.bandId]
             );
@@ -75,7 +79,7 @@ export class CheckinRatingService {
           }
 
           // Upsert band rating
-          await this.db.query(
+          await client.query(
             `INSERT INTO checkin_band_ratings (checkin_id, band_id, rating)
              VALUES ($1, $2, $3)
              ON CONFLICT (checkin_id, band_id) DO UPDATE SET rating = $3`,
@@ -84,19 +88,23 @@ export class CheckinRatingService {
         }
 
         // Update the legacy rating column to average of all band ratings for backward compat
-        const avgResult = await this.db.query(
+        const avgResult = await client.query(
           `SELECT AVG(rating) as avg_rating FROM checkin_band_ratings WHERE checkin_id = $1`,
           [checkinId]
         );
         const avgRating = avgResult.rows[0]?.avg_rating
           ? parseFloat(avgResult.rows[0].avg_rating)
           : 0;
-        await this.db.query(
+        await client.query(
           'UPDATE checkins SET rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [avgRating, checkinId]
         );
+      }
 
-        // Fire-and-forget: invalidate band aggregate cache for each rated band
+      await client.query('COMMIT');
+
+      // Fire-and-forget cache invalidation (outside transaction)
+      if (ratings.bandRatings && ratings.bandRatings.length > 0) {
         for (const br of ratings.bandRatings) {
           cache.del(CacheKeys.bandAggregate(br.bandId)).catch((err) =>
             logger.debug('Warning: band aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
@@ -104,7 +112,6 @@ export class CheckinRatingService {
         }
       }
 
-      // Fire-and-forget: invalidate venue aggregate cache if venue was rated
       if (ratings.venueRating !== undefined) {
         const checkinForVenue = await this.db.query(
           'SELECT venue_id FROM checkins WHERE id = $1',
@@ -120,8 +127,11 @@ export class CheckinRatingService {
 
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
+      await client.query('ROLLBACK');
       logger.error('Add ratings error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
+    } finally {
+      client.release();
     }
   }
 

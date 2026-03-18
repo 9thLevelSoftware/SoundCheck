@@ -225,16 +225,27 @@ export class VenueService {
   }
 
   /**
-   * Delete venue (soft delete)
+   * Delete venue (soft delete).
+   * Also invalidates pending verification claims and resolves pending reports (CFR-DI-007, CFR-DI-008).
    */
   async deleteVenue(venueId: string): Promise<void> {
     const query = `
-      UPDATE venues 
+      UPDATE venues
       SET is_active = false, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
 
     await this.db.query(query, [venueId]);
+
+    // CFR-DI-007: Deny pending verification claims for this venue (entity deleted)
+    await this.db.query(
+      `UPDATE verification_claims SET status = 'denied', review_notes = 'entity_deleted', updated_at = CURRENT_TIMESTAMP
+       WHERE entity_type = 'venue' AND entity_id = $1 AND status = 'pending'`,
+      [venueId]
+    );
+
+    // Note: reports table uses content_type_enum ('checkin','comment','photo','user')
+    // and does not include 'venue', so no report cleanup is needed here.
   }
 
   /**
