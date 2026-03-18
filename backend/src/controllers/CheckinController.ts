@@ -390,11 +390,23 @@ export class CheckinController {
 
       res.status(200).json(response);
     } catch (error) {
+      if (error instanceof Error) {
+        const statusCode = (error as any).statusCode;
+        if (statusCode === 404) {
+          res.status(404).json({ success: false, error: 'Check-in not found' } as ApiResponse);
+          return;
+        }
+        if (statusCode === 403) {
+          res.status(403).json({ success: false, error: error.message } as ApiResponse);
+          return;
+        }
+      }
+
       logger.error('Delete check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
       const response: ApiResponse = {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete check-in',
+        error: 'Failed to delete check-in',
       };
 
       res.status(500).json(response);

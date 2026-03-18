@@ -237,11 +237,15 @@ export class CheckinCreatorService {
       );
 
       if (checkin.rows.length === 0) {
-        throw new Error('Check-in not found');
+        const err = new Error('Check-in not found');
+        (err as any).statusCode = 404;
+        throw err;
       }
 
       if (checkin.rows[0].user_id !== userId) {
-        throw new Error('Unauthorized to delete this check-in');
+        const err = new Error('You can only delete your own check-ins');
+        (err as any).statusCode = 403;
+        throw err;
       }
 
       const venueId = checkin.rows[0].venue_id;

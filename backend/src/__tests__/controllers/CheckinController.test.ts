@@ -538,16 +538,32 @@ describe('CheckinController', () => {
       expect(response.body.error).toBe('Authentication required');
     });
 
-    it('should return 500 when user is not authorized', async () => {
+    it('should return 403 when user is not authorized', async () => {
       setupApp('user-123');
-      mockCheckinService.deleteCheckin.mockRejectedValue(new Error('Unauthorized to delete this check-in'));
+      const err = new Error('You can only delete your own check-ins');
+      (err as any).statusCode = 403;
+      mockCheckinService.deleteCheckin.mockRejectedValue(err);
 
       const response = await request(app)
         .delete('/checkins/checkin-123');
 
-      expect(response.status).toBe(500);
+      expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Unauthorized to delete this check-in');
+      expect(response.body.error).toBe('You can only delete your own check-ins');
+    });
+
+    it('should return 404 when check-in not found', async () => {
+      setupApp('user-123');
+      const err = new Error('Check-in not found');
+      (err as any).statusCode = 404;
+      mockCheckinService.deleteCheckin.mockRejectedValue(err);
+
+      const response = await request(app)
+        .delete('/checkins/checkin-123');
+
+      expect(response.status).toBe(404);
+      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBe('Check-in not found');
     });
   });
 
