@@ -75,6 +75,7 @@ class AuthRepository {
     try {
       await _secureStorage.delete(key: ApiConfig.tokenKey);
       await _secureStorage.delete(key: ApiConfig.userKey);
+      await _secureStorage.delete(key: 'refresh_token');
     } catch (e) {
       rethrow;
     }

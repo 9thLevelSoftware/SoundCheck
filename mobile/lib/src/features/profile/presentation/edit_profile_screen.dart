@@ -97,6 +97,14 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         updates['bio'] = _bioController.text.trim();
       }
 
+      // Upload profile image if one was selected
+      if (_selectedImage != null) {
+        final profileRepository = ref.read(profileRepositoryProvider);
+        final newAvatarUrl =
+            await profileRepository.uploadProfileImage(_selectedImage!.path);
+        updates['profileImageUrl'] = newAvatarUrl;
+      }
+
       // Update profile
       final authRepository = ref.read(authRepositoryProvider);
       await authRepository.updateProfile(updates);

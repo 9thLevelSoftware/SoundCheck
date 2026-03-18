@@ -155,7 +155,7 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
 
             // Upload progress indicator
             if (_isUploading)
-              const Column(
+              Column(
                 children: [
                   LinearProgressIndicator(
                     color: AppTheme.voltLime,

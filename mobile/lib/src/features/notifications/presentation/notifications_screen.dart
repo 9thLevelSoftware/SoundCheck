@@ -303,7 +303,7 @@ class _NotificationItem extends StatelessWidget {
             color: notification.isRead
                 ? Colors.transparent
                 : AppTheme.voltLime.withValues(alpha: 0.05),
-            border: const Border(
+            border: Border(
               bottom: BorderSide(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 width: 0.5,

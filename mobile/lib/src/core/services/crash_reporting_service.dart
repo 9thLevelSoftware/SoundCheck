@@ -53,8 +53,9 @@ class CrashReportingService {
         // Auto session tracking
         options.enableAutoSessionTracking = true;
 
-        // Attach screenshots on errors (mobile only)
-        options.attachScreenshot = true;
+        // Attach screenshots on errors (development only — disabled in release
+        // to avoid capturing sensitive user data)
+        options.attachScreenshot = !kReleaseMode;
 
         // Attach view hierarchy
         options.attachViewHierarchy = true;

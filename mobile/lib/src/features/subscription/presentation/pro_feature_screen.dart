@@ -176,7 +176,7 @@ class _ProFeatureScreenState extends ConsumerState<ProFeatureScreen> {
                 child: ElevatedButton(
                   onPressed: _isPurchasing ? null : _onSubscribe,
                   child: _isPurchasing
-                      ? const SizedBox(
+                      ? SizedBox(
                           width: 20,
                           height: 20,
                           child: CircularProgressIndicator(

@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
 import '../domain/concert_cred.dart';
@@ -30,15 +32,15 @@ class ProfileRepository {
     }
   }
 
-  /// Upload profile image
+  /// Upload profile image via multipart form data
   Future<String> uploadProfileImage(String filePath) async {
     try {
-      // In a real implementation, this would upload the file
-      // For now, we'll return a placeholder
-      // You would use FormData from dio to upload the file
+      final formData = FormData.fromMap({
+        'image': await MultipartFile.fromFile(filePath),
+      });
       final response = await _dioClient.post(
         '${ApiConfig.auth}/me/profile-image',
-        data: {'imagePath': filePath},
+        data: formData,
       );
       final responseData = response.data['data'] as Map<String, dynamic>;
       return responseData['imageUrl'] as String;

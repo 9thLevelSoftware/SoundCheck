@@ -670,7 +670,7 @@ class _LevelProgress extends StatelessWidget {
                     ),
                     child: Text(
                       'LVL $currentLevel',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                         color: Theme.of(context).scaffoldBackgroundColor,

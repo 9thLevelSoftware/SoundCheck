@@ -270,14 +270,12 @@ class _VenueContent extends ConsumerWidget {
           child: _UpcomingEventsSection(venue: venue, venueId: venueId),
         ),
 
-        // Loyal Patrons & Trending Bands
+        // Recent Bands (data-driven)
         SliverToBoxAdapter(
-          child: _VenueInsightsSection(venueId: venueId),
-        ),
-
-        // Recent Check-ins Feed
-        SliverToBoxAdapter(
-          child: _RecentCheckinsSection(venueId: venueId),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: _RecentBandsSection(venueId: venueId),
+          ),
         ),
 
         // Bottom padding for nav bar
@@ -332,9 +330,9 @@ class _MapStrip extends StatelessWidget {
             // Map placeholder
             Container(
               width: 100,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                borderRadius: BorderRadius.horizontal(
+                borderRadius: const BorderRadius.horizontal(
                   left: Radius.circular(12),
                 ),
               ),
@@ -587,16 +585,7 @@ class _UpcomingEventsSection extends StatelessWidget {
                   ),
                 ],
               ),
-              TextButton(
-                style: TextButton.styleFrom(minimumSize: const Size(0, 44)),
-                onPressed: () {
-                  context.push('/venues/$venueId/shows');
-                },
-                child: const Text(
-                  'See All',
-                  style: TextStyle(color: AppTheme.voltLime),
-                ),
-              ),
+              // TODO: Add "See All" button when venue shows list screen is implemented
             ],
           ),
           const SizedBox(height: 12),
@@ -768,83 +757,6 @@ class _UpcomingEventItem extends StatelessWidget {
   }
 }
 
-class _VenueInsightsSection extends StatelessWidget {
-  final String venueId;
-
-  const _VenueInsightsSection({required this.venueId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          // Loyal Patrons
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.emoji_events, color: AppTheme.toastGold, size: 16),
-                      SizedBox(width: 6),
-                      Text(
-                        'Loyal Patrons',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Stack of avatars
-                  Row(
-                    children: List.generate(4, (i) {
-                      return Container(
-                        margin: EdgeInsets.only(left: i == 0 ? 0 : -8),
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: AppTheme.primaryGradient,
-                          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh, width: 2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            i == 3 ? '+5' : ['S', 'M', 'A'][i],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Recent Bands - Now using real data
-          Expanded(
-            child: _RecentBandsSection(venueId: venueId),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 /// Widget that displays recent bands from venue check-ins
 class _RecentBandsSection extends ConsumerWidget {
   final String venueId;
@@ -941,153 +853,4 @@ class _RecentBandsSection extends ConsumerWidget {
   }
 }
 
-String _timeAgo(String isoDate) {
-  try {
-    final date = DateTime.parse(isoDate);
-    final diff = DateTime.now().difference(date);
-    if (diff.inDays > 365) return '${diff.inDays ~/ 365}y ago';
-    if (diff.inDays > 30) return '${diff.inDays ~/ 30}mo ago';
-    if (diff.inDays > 0) return '${diff.inDays}d ago';
-    if (diff.inHours > 0) return '${diff.inHours}h ago';
-    if (diff.inMinutes > 0) return '${diff.inMinutes}m ago';
-    return 'just now';
-  } catch (_) {
-    return '';
-  }
-}
 
-class _RecentCheckinsSection extends StatelessWidget {
-  final String venueId;
-
-  const _RecentCheckinsSection({required this.venueId});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Check-ins',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          // Check-in cards
-          ...List.generate(5, (index) => _CheckInPreviewCard(index: index)),
-        ],
-      ),
-    );
-  }
-}
-
-class _CheckInPreviewCard extends StatelessWidget {
-  final int index;
-
-  const _CheckInPreviewCard({required this.index});
-
-  @override
-  Widget build(BuildContext context) {
-    final users = ['Sarah M.', 'Mike T.', 'Alex R.', 'Jordan L.', 'Casey B.'];
-    final bands = ['Metallica', 'Ghost', 'Gojira', 'Mastodon', 'Slipknot'];
-    final times = ['15m ago', '1h ago', '2h ago', '3h ago', '5h ago'];
-    final ratings = [5.0, 4.5, 4.0, 5.0, 4.5];
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surfaceContainerHigh,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Avatar
-          Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              gradient: AppTheme.primaryGradient,
-            ),
-            child: Center(
-              child: Text(
-                users[index][0],
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Content
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                RichText(
-                  text: TextSpan(
-                    style: const TextStyle(fontSize: 14),
-                    children: [
-                      TextSpan(
-                        text: users[index],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.textPrimary,
-                        ),
-                      ),
-                      const TextSpan(
-                        text: ' saw ',
-                        style: TextStyle(color: AppTheme.textSecondary),
-                      ),
-                      TextSpan(
-                        text: bands[index],
-                        style: const TextStyle(
-                          fontWeight: FontWeight.bold,
-                          color: AppTheme.voltLime,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    ...List.generate(5, (i) {
-                      return Icon(
-                        Icons.star,
-                        size: 14,
-                        color: i < ratings[index]
-                            ? AppTheme.toastGold
-                            : AppTheme.ratingInactive,
-                      );
-                    }),
-                    const SizedBox(width: 8),
-                    Text(
-                      times[index],
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

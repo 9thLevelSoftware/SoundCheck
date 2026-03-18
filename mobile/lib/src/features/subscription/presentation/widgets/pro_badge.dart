@@ -13,7 +13,7 @@ class ProBadge extends StatelessWidget {
         color: AppTheme.voltLime,
         borderRadius: BorderRadius.circular(4),
       ),
-      child: const Text(
+      child: Text(
         'PRO',
         style: TextStyle(
           color: Theme.of(context).scaffoldBackgroundColor,

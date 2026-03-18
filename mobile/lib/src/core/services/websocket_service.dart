@@ -270,6 +270,8 @@ class WebSocketService {
 
         case WebSocketEvents.authenticated:
           _isAuthenticated = true;
+          // Clear token from memory now that the WS session is authenticated
+          _authToken = null;
           LogService.i('WebSocket authenticated');
           // Re-join previously joined rooms
           for (final room in _joinedRooms) {

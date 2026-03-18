@@ -118,7 +118,7 @@ class _CelebrationScreenState extends ConsumerState<CelebrationScreen>
                   gradient: AppTheme.primaryGradient,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.check,
                   color: Theme.of(context).scaffoldBackgroundColor,
                   size: 48,

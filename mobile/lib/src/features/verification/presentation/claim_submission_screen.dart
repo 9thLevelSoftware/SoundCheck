@@ -153,7 +153,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
+                  borderSide: BorderSide(
                     color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
@@ -192,7 +192,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
-                  borderSide: const BorderSide(
+                  borderSide: BorderSide(
                     color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
                 ),
@@ -225,7 +225,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
                   ),
                 ),
                 child: _isSubmitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
