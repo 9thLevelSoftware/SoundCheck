@@ -13,7 +13,11 @@ export class WrappedController {
 
   getWrapped = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const year = parseInt(req.params.year, 10);
       if (isNaN(year) || year < 2020 || year > new Date().getFullYear()) {
         res.status(400).json({ success: false, error: 'Invalid year' });
@@ -29,7 +33,11 @@ export class WrappedController {
 
   getWrappedDetail = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const year = parseInt(req.params.year, 10);
       if (isNaN(year) || year < 2020 || year > new Date().getFullYear()) {
         res.status(400).json({ success: false, error: 'Invalid year' });
@@ -45,7 +53,11 @@ export class WrappedController {
 
   generateSummaryCard = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const year = parseInt(req.params.year, 10);
       if (isNaN(year)) { res.status(400).json({ success: false, error: 'Invalid year' }); return; }
 
@@ -75,7 +87,11 @@ export class WrappedController {
 
   generateStatCard = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const year = parseInt(req.params.year, 10);
       const statType = req.params.statType as 'top-artist' | 'top-venue' | 'top-genre';
 

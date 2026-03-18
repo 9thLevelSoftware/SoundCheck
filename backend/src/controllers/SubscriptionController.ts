@@ -54,7 +54,11 @@ export class SubscriptionController {
    */
   getStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const status = await this.subscriptionService.getSubscriptionStatus(userId);
       res.json({ success: true, data: status });
     } catch (error) {

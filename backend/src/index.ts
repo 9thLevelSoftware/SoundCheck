@@ -12,7 +12,7 @@ import { initSentry, setupSentryForExpress, closeSentry, captureException as sen
 initSentry();
 
 // Initialize Redis for distributed rate limiting and caching
-import { initRedis, closeRedis } from './utils/redisRateLimiter';
+import { initRedis, closeRedis, getRedis } from './utils/redisRateLimiter';
 initRedis();
 
 import express from 'express';
@@ -165,20 +165,45 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint
+// Health check endpoint with timeout and Redis ping
 app.get('/health', async (req, res) => {
+  let responded = false;
+  const timeout = setTimeout(() => {
+    if (!responded) {
+      responded = true;
+      res.status(503).json({
+        success: false,
+        data: { status: 'timeout', db: 'unknown', redis: 'unknown' },
+      });
+    }
+  }, 5000);
+
   try {
     const db = Database.getInstance();
-    const isDbHealthy = await db.healthCheck();
+    const redis = getRedis();
     const wsStats = getWebSocketStats();
+
+    const [dbResult, redisResult] = await Promise.all([
+      db.healthCheck().then(() => 'ok' as const).catch(() => 'error' as const),
+      redis ? redis.ping().then(() => 'ok' as const).catch(() => 'error' as const) : Promise.resolve('not_configured' as const),
+    ]);
+
+    clearTimeout(timeout);
+    if (responded) return;
+    responded = true;
+
+    const status = dbResult === 'ok' && (redisResult === 'ok' || redisResult === 'not_configured')
+      ? 'healthy'
+      : 'degraded';
 
     const response: ApiResponse = {
       success: true,
       data: {
-        status: 'healthy',
+        status,
         timestamp: new Date().toISOString(),
         version: APP_VERSION,
-        database: isDbHealthy ? 'connected' : 'disconnected',
+        database: dbResult === 'ok' ? 'connected' : 'disconnected',
+        redis: redisResult,
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,
@@ -186,8 +211,11 @@ app.get('/health', async (req, res) => {
       },
     };
 
-    res.status(200).json(response);
+    res.status(status === 'healthy' ? 200 : 503).json(response);
   } catch (error) {
+    clearTimeout(timeout);
+    if (responded) return;
+    responded = true;
     const response: ApiResponse = {
       success: false,
       error: 'Health check failed',

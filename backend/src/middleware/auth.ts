@@ -104,36 +104,6 @@ export const optionalAuth = async (
 };
 
 /**
- * Middleware to check if user owns a resource
- */
-export const requireOwnership = (resourceUserIdField: string = 'userId') => {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const user = req.user;
-    const resourceUserId = req.params[resourceUserIdField] || req.body[resourceUserIdField];
-
-    if (!user) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Authentication required',
-      };
-      res.status(401).json(response);
-      return;
-    }
-
-    if (user.id !== resourceUserId) {
-      const response: ApiResponse = {
-        success: false,
-        error: 'Access denied: You can only access your own resources',
-      };
-      res.status(403).json(response);
-      return;
-    }
-
-    next();
-  };
-};
-
-/**
  * Middleware to require admin privileges
  */
 export const requireAdmin = () => {

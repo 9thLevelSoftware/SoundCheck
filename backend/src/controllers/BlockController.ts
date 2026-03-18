@@ -16,7 +16,11 @@ export class BlockController {
    */
   blockUser = async (req: Request, res: Response): Promise<void> => {
     try {
-      const blockerId = req.user!.id;
+      const blockerId = req.user?.id;
+      if (!blockerId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const blockedId = req.params.userId;
 
       const block = await this.blockService.blockUser(blockerId, blockedId);
@@ -44,7 +48,11 @@ export class BlockController {
    */
   unblockUser = async (req: Request, res: Response): Promise<void> => {
     try {
-      const blockerId = req.user!.id;
+      const blockerId = req.user?.id;
+      if (!blockerId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const blockedId = req.params.userId;
 
       await this.blockService.unblockUser(blockerId, blockedId);
@@ -72,7 +80,11 @@ export class BlockController {
    */
   getBlockedUsers = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
 
       const blocks = await this.blockService.getBlockedUsers(userId);
 
@@ -98,7 +110,11 @@ export class BlockController {
    */
   checkBlocked = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      const userId = req.user?.id;
+      if (!userId) {
+        res.status(401).json({ success: false, error: 'Authentication required' });
+        return;
+      }
       const otherUserId = req.params.userId;
 
       const blocked = await this.blockService.isBlocked(userId, otherUserId);
