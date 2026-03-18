@@ -1,6 +1,8 @@
 import Database from '../config/database';
 import { User } from '../types';
 import { mapDbUserToUser } from '../utils/dbMappers';
+import { NotificationService } from './NotificationService';
+import logger from '../utils/logger';
 
 export interface FollowResult {
   success: boolean;
@@ -16,6 +18,11 @@ export interface FollowerListResult {
 
 export class FollowService {
   private db = Database.getInstance();
+  private notificationService: NotificationService;
+
+  constructor(notificationService?: NotificationService) {
+    this.notificationService = notificationService ?? new NotificationService();
+  }
 
   /**
    * Follow a user
@@ -44,7 +51,22 @@ export class FollowService {
       RETURNING id
     `;
 
-    await this.db.query(query, [followerId, followingId]);
+    const result = await this.db.query(query, [followerId, followingId]);
+
+    // Only send notification if this is a new follow (not a duplicate)
+    if (result.rows.length > 0) {
+      try {
+        await this.notificationService.createNotification({
+          userId: followingId,        // recipient: the user being followed
+          type: 'new_follower',
+          fromUserId: followerId,     // actor: who followed
+          message: 'started following you',
+        });
+      } catch (err) {
+        // Fire-and-forget: notification failure must not block the follow
+        logger.debug('Warning: follow notification failed', { error: err instanceof Error ? err.message : String(err) });
+      }
+    }
 
     return { success: true, isFollowing: true };
   }
