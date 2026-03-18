@@ -8,6 +8,9 @@ import '../services/websocket_service.dart';
 import '../../shared/services/location_service.dart';
 import '../../features/auth/data/auth_repository.dart';
 import '../../features/auth/domain/user.dart';
+import '../../features/checkins/presentation/providers/checkin_providers.dart';
+import '../../features/feed/presentation/providers/feed_providers.dart';
+import '../../features/notifications/presentation/providers/notification_providers.dart';
 import '../../features/subscription/presentation/subscription_service.dart';
 import '../../features/subscription/presentation/subscription_providers.dart';
 import '../../features/venues/data/venue_repository.dart';
@@ -37,7 +40,14 @@ FlutterSecureStorage secureStorage(Ref ref) {
 @Riverpod(keepAlive: true)
 DioClient dioClient(Ref ref) {
   final secureStorage = ref.watch(secureStorageProvider);
-  return DioClient(secureStorage: secureStorage);
+  return DioClient(
+    secureStorage: secureStorage,
+    onAuthFailure: () {
+      // Force auth state to re-evaluate; getCurrentUser() will return null
+      // because the interceptor already wiped the stored credentials.
+      ref.invalidate(authStateProvider);
+    },
+  );
 }
 
 @Riverpod(keepAlive: true)
@@ -181,8 +191,31 @@ class AuthState extends _$AuthState {
       ref.read(isPremiumProvider.notifier).set(false);
     } catch (_) {}
 
+    // Clear all user-scoped data providers to prevent stale data leaking
+    // between accounts on shared devices
+    _clearUserData();
+
     await authRepository.logout();
     state = const AsyncValue.data(null);
+  }
+
+  /// Invalidate all user-scoped providers so no stale data from the
+  /// previous session leaks into the next login.
+  void _clearUserData() {
+    // Feed providers
+    ref.invalidate(globalFeedProvider);
+    ref.invalidate(friendsFeedProvider);
+    ref.invalidate(happeningNowProvider);
+    ref.invalidate(unseenCountsProvider);
+    ref.invalidate(newCheckinCountProvider);
+    ref.invalidate(activeEventIdsProvider);
+
+    // Notifications
+    ref.invalidate(notificationFeedProvider);
+    ref.invalidate(unreadNotificationCountProvider);
+
+    // Check-in providers
+    ref.invalidate(nearbyEventsProvider);
   }
 
   Future<void> refreshUser() async {

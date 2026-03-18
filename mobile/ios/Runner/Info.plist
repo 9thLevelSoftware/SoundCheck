@@ -84,11 +84,14 @@
 	<string>SoundCheck may use motion data to enhance your concert experience and automatically detect when you're at a venue.</string>
 	<key>FlutterDeepLinkingEnabled</key>
 	<true/>
+	<!-- Custom URL scheme for deep links (e.g., password reset) -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.soundcheck.app</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>soundcheck</string>

@@ -122,35 +122,6 @@ sealed class CheckInBand with _$CheckInBand {
       _$CheckInBandFromJson(json);
 }
 
-/// Request to create a new check-in
-/// NOTE: Legacy class -- the backend now requires eventId (event-first flow).
-/// The legacy fields (bandId, venueId, etc.) are retained only because
-/// CreateCheckIn provider in checkin_providers.dart still references them.
-/// TODO: Remove this class and the legacy CreateCheckIn provider; all new
-///       check-ins should go through createEventCheckIn() which uses named
-///       parameters directly.
-@freezed
-sealed class CreateCheckInRequest with _$CreateCheckInRequest {
-  const factory CreateCheckInRequest({
-    // Event-first flow fields
-    String? eventId,
-    double? locationLat,
-    double? locationLon,
-    // Legacy flow fields -- retained for compile compat with CreateCheckIn provider
-    @Deprecated('Use createEventCheckIn() instead') String? bandId,
-    @Deprecated('Use createEventCheckIn() instead') String? venueId,
-    @Deprecated('Use createEventCheckIn() instead') String? eventDate,
-    double? venueRating,
-    double? bandRating,
-    String? reviewText,
-    List<String>? imageUrls,
-    List<String>? vibeTagIds,
-  }) = _CreateCheckInRequest;
-
-  factory CreateCheckInRequest.fromJson(Map<String, dynamic> json) =>
-      _$CreateCheckInRequestFromJson(json);
-}
-
 /// Badge earned from a check-in
 @freezed
 sealed class EarnedBadge with _$EarnedBadge {

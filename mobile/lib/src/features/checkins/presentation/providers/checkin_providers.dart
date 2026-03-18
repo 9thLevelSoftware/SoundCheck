@@ -3,6 +3,7 @@ import 'package:riverpod_annotation/riverpod_annotation.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../../shared/services/location_service.dart';
 import '../../../bands/domain/band.dart';
+import '../../../feed/presentation/providers/feed_providers.dart';
 import '../../data/upload_repository.dart';
 import '../../domain/checkin.dart';
 import '../../domain/nearby_event.dart';
@@ -51,13 +52,6 @@ Future<List<Band>> searchBandsForCheckin(Ref ref) async {
 
   final bandRepository = ref.watch(bandRepositoryProvider);
   return bandRepository.getBands(search: query, limit: 10);
-}
-
-/// Provider for the social feed
-@riverpod
-Future<List<CheckIn>> socialFeed(Ref ref) async {
-  final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getFeed();
 }
 
 /// Provider for vibe tags
@@ -109,52 +103,6 @@ Future<List<CheckInComment>> checkInComments(Ref ref, String checkInId) async {
   return repository.getCheckInComments(checkInId);
 }
 
-/// Notifier for creating check-ins
-@riverpod
-class CreateCheckIn extends _$CreateCheckIn {
-  @override
-  Future<void> build() async {}
-
-  Future<CheckIn?> submit({
-    required String bandId,
-    required String venueId,
-    required String eventDate,
-    double? venueRating,
-    double? bandRating,
-    String? reviewText,
-    List<String>? imageUrls,
-    List<String>? vibeTagIds,
-  }) async {
-    state = const AsyncValue.loading();
-
-    final repository = ref.read(checkInRepositoryProvider);
-
-    try {
-      final checkIn = await repository.createCheckIn(
-        CreateCheckInRequest(
-          bandId: bandId,
-          venueId: venueId,
-          eventDate: eventDate,
-          venueRating: venueRating,
-          bandRating: bandRating,
-          reviewText: reviewText,
-          imageUrls: imageUrls,
-          vibeTagIds: vibeTagIds,
-        ),
-      );
-
-      // Invalidate feed and user check-ins to refresh
-      ref.invalidate(socialFeedProvider);
-
-      state = const AsyncValue.data(null);
-      return checkIn;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
-    }
-  }
-}
-
 /// Notifier for toasting/un-toasting check-ins
 @riverpod
 class ToastCheckIn extends _$ToastCheckIn {
@@ -176,7 +124,8 @@ class ToastCheckIn extends _$ToastCheckIn {
       // Invalidate related providers
       ref.invalidate(checkInToastsProvider(checkInId));
       ref.invalidate(checkInDetailProvider(checkInId));
-      ref.invalidate(socialFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
 
       state = const AsyncValue.data(null);
       return !hasToasted;
@@ -204,7 +153,8 @@ class AddComment extends _$AddComment {
       // Invalidate comments provider
       ref.invalidate(checkInCommentsProvider(checkInId));
       ref.invalidate(checkInDetailProvider(checkInId));
-      ref.invalidate(socialFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
 
       state = const AsyncValue.data(null);
       return newComment;
@@ -308,7 +258,8 @@ class CreateEventCheckIn extends _$CreateEventCheckIn {
       );
 
       // Invalidate feed and nearby events to refresh
-      ref.invalidate(socialFeedProvider);
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
       ref.invalidate(nearbyEventsProvider);
 
       state = const AsyncValue.data(null);

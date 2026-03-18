@@ -1,17 +1,25 @@
+import 'dart:ui' show VoidCallback;
+
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../error/failures.dart';
 import '../services/log_service.dart';
 import 'api_config.dart';
 
+/// Storage key for the refresh token
+const _refreshTokenKey = 'refresh_token';
+
 /// DioClient provides a configured Dio instance with interceptors
 class DioClient {
   final Dio _dio;
   final FlutterSecureStorage _secureStorage;
+  final VoidCallback? _onAuthFailure;
 
   DioClient({
     required FlutterSecureStorage secureStorage,
+    VoidCallback? onAuthFailure,
   })  : _secureStorage = secureStorage,
+        _onAuthFailure = onAuthFailure,
         _dio = Dio(
           BaseOptions(
             baseUrl: ApiConfig.baseUrl,
@@ -28,8 +36,11 @@ class DioClient {
   }
 
   void _initializeInterceptors() {
+    // QueuedInterceptorsWrapper serializes interceptor execution so that
+    // multiple concurrent 401s do not race against each other. The first
+    // 401 triggers a refresh attempt; subsequent 401s queue behind it.
     _dio.interceptors.add(
-      InterceptorsWrapper(
+      QueuedInterceptorsWrapper(
         onRequest: (options, handler) async {
           // Add JWT token to headers for authenticated requests
           final token = await _secureStorage.read(key: ApiConfig.tokenKey);
@@ -39,11 +50,30 @@ class DioClient {
           return handler.next(options);
         },
         onError: (error, handler) async {
-          // Handle 401 Unauthorized errors
           if (error.response?.statusCode == 401) {
-            // Token expired or invalid - clear storage
+            // Attempt token refresh before wiping credentials
+            final refreshed = await _attemptTokenRefresh();
+            if (refreshed) {
+              // Retry the original request with the new token
+              try {
+                final token =
+                    await _secureStorage.read(key: ApiConfig.tokenKey);
+                error.requestOptions.headers['Authorization'] =
+                    'Bearer $token';
+                final retryResponse = await _dio.fetch(error.requestOptions);
+                return handler.resolve(retryResponse);
+              } catch (_) {
+                // Retry failed -- fall through to credential wipe
+              }
+            }
+
+            // Refresh failed or no refresh token: clear all credentials
             await _secureStorage.delete(key: ApiConfig.tokenKey);
             await _secureStorage.delete(key: ApiConfig.userKey);
+            await _secureStorage.delete(key: _refreshTokenKey);
+
+            // Notify auth state so the UI can redirect to login
+            _onAuthFailure?.call();
           }
           return handler.next(error);
         },
@@ -61,6 +91,42 @@ class DioClient {
         ),
       );
     }
+  }
+
+  /// Attempt to refresh the access token using the stored refresh token.
+  /// Returns true if the refresh succeeded and new tokens were stored.
+  Future<bool> _attemptTokenRefresh() async {
+    try {
+      final refreshToken = await _secureStorage.read(key: _refreshTokenKey);
+      if (refreshToken == null) return false;
+
+      // Use a fresh Dio instance to avoid interceptor recursion
+      final refreshDio = Dio(BaseOptions(baseUrl: ApiConfig.baseUrl));
+      final response = await refreshDio.post(
+        '/tokens/refresh',
+        data: {'refreshToken': refreshToken},
+      );
+
+      if (response.statusCode == 200 && response.data['success'] == true) {
+        final data = response.data['data'] as Map<String, dynamic>;
+        final newAccessToken = data['accessToken'] as String;
+        final newRefreshToken = data['refreshToken'] as String;
+
+        await _secureStorage.write(
+          key: ApiConfig.tokenKey,
+          value: newAccessToken,
+        );
+        await _secureStorage.write(
+          key: _refreshTokenKey,
+          value: newRefreshToken,
+        );
+
+        return true;
+      }
+    } catch (e) {
+      LogService.d('Token refresh failed: $e');
+    }
+    return false;
   }
 
   /// GET request with error classification
