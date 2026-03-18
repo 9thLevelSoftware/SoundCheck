@@ -566,10 +566,34 @@ export class EventController {
   /**
    * Delete an event
    * DELETE /api/events/:id
+   * Authorized for admins and the user who created the event (created_by_user_id)
    */
   deleteEvent = async (req: Request, res: Response): Promise<void> => {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Authentication required' } as ApiResponse);
+        return;
+      }
+
       const { id } = req.params;
+
+      // Fetch event to check ownership
+      let event: any;
+      try {
+        event = await this.eventService.getEventById(id);
+      } catch {
+        res.status(404).json({ success: false, error: 'Event not found' } as ApiResponse);
+        return;
+      }
+
+      // Authorization: admin or event creator
+      const isAdmin = !!req.user.isAdmin;
+      const isCreator = event.createdByUserId === req.user.id;
+
+      if (!isAdmin && !isCreator) {
+        res.status(403).json({ success: false, error: 'Only admins or event creators can delete this event' } as ApiResponse);
+        return;
+      }
 
       await this.eventService.deleteEvent(id);
 
