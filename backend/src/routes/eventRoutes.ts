@@ -1,9 +1,41 @@
 import { Router } from 'express';
+import { z } from 'zod';
 import { EventController } from '../controllers/EventController';
 import { authenticateToken } from '../middleware/auth';
+import { validate } from '../middleware/validate';
 
 const router = Router();
 const eventController = new EventController();
+
+// --- Zod validation schemas ---
+
+const createEventSchema = z.object({
+  body: z.object({
+    venueId: z.string().uuid('venueId must be a valid UUID'),
+    bandId: z.string().uuid('bandId must be a valid UUID').optional(),
+    eventDate: z.string().refine(
+      (val) => !isNaN(new Date(val).getTime()),
+      { message: 'A valid eventDate is required' }
+    ),
+    eventName: z.string().min(1).max(500).optional(),
+    description: z.string().max(5000).optional(),
+    doorsTime: z.string().optional(),
+    startTime: z.string().optional(),
+    ticketUrl: z.string().url().max(2000).optional().or(z.literal('')),
+    lineup: z.array(z.object({
+      bandId: z.string().uuid().optional(),
+      bandName: z.string().min(1).max(500).optional(),
+      setOrder: z.number().int().min(0).optional(),
+      isHeadliner: z.boolean().optional(),
+    })).optional(),
+  }),
+});
+
+const eventIdParamSchema = z.object({
+  params: z.object({
+    id: z.string().uuid('Event ID must be a valid UUID'),
+  }),
+});
 
 // Get upcoming events (public)
 router.get('/upcoming', eventController.getUpcomingEvents);
@@ -32,12 +64,12 @@ router.get('/nearby', authenticateToken, eventController.getNearbyEvents);
 router.get('/lookup/:ticketmasterId', authenticateToken, eventController.lookupEvent);
 
 // Create a new event (requires auth)
-router.post('/', authenticateToken, eventController.createEvent);
+router.post('/', authenticateToken, validate(createEventSchema), eventController.createEvent);
 
 // Get event by ID (public)
-router.get('/:id', eventController.getEventById);
+router.get('/:id', validate(eventIdParamSchema), eventController.getEventById);
 
 // Delete event (requires auth)
-router.delete('/:id', authenticateToken, eventController.deleteEvent);
+router.delete('/:id', authenticateToken, validate(eventIdParamSchema), eventController.deleteEvent);
 
 export default router;

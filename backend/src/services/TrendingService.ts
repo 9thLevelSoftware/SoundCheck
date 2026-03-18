@@ -1,6 +1,7 @@
 import Database from '../config/database';
 import { TrendingEvent } from '../types';
 import { BlockService } from './BlockService';
+import { cache } from '../utils/cache';
 
 interface TrendingOptions {
   radiusKm?: number;
@@ -37,6 +38,19 @@ export class TrendingService {
     const days = options?.days ?? 30;
     const limit = options?.limit ?? 20;
 
+    // Cache key: round lat/lon to 2 decimals for spatial bucketing
+    const cacheKey = `trending:${lat.toFixed(2)}:${lon.toFixed(2)}:${radiusKm}:${days}:${limit}`;
+    return cache.getOrSet(cacheKey, async () => this.fetchTrending(userId, lat, lon, radiusKm, days, limit), 120); // 2 minute TTL
+  }
+
+  private async fetchTrending(
+    userId: string,
+    lat: number,
+    lon: number,
+    radiusKm: number,
+    days: number,
+    limit: number
+  ): Promise<TrendingEvent[]> {
     const query = `
       SELECT * FROM (
         SELECT
