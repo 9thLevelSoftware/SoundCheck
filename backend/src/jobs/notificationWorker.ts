@@ -44,6 +44,12 @@ export function startNotificationWorker(): Worker | null {
       const { userId } = job.data;
       logger.info('Processing notification batch', { jobId: job.id, userId });
 
+      // Short-circuit when Firebase is not configured to avoid wasteful Redis reads
+      if (!pushNotificationService.isAvailable) {
+        logger.debug('Push notifications disabled (Firebase not configured). Skipping batch.', { userId });
+        return { sent: false, reason: 'fcm_disabled' };
+      }
+
       const redis = getRedis();
       if (!redis) {
         logger.warn('Redis not available, skipping notification batch', { userId });

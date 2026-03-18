@@ -46,7 +46,7 @@ interface Client {
 class WebSocketServer {
   private wss?: WebSocket.Server;
   private clients: Map<string, Client> = new Map();
-  private userClients: Map<string, Set<string>> = new Map();
+  private userClients: Map<string, Set<string>> = new Map(); // userId -> clientIds index for O(1) sendToUser
   private rooms: Map<string, Set<string>> = new Map();
   private heartbeatInterval?: NodeJS.Timeout;
   private subscriber: IORedis | null = null;
@@ -368,8 +368,8 @@ class WebSocketServer {
   }
 
   /**
-   * Send message to specific user (all their connections)
-   * Uses O(1) userId index instead of O(N) client iteration
+   * Send message to specific user (all their connections).
+   * Uses O(1) userId index instead of O(N) client iteration.
    */
   sendToUser(userId: string, type: string, payload: any): void {
     const clientIds = this.userClients.get(userId);

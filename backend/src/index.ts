@@ -51,6 +51,7 @@ import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
+import { pushNotificationService } from './services/PushNotificationService';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
 import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
 import { startNotificationWorker, stopNotificationWorker } from './jobs/notificationWorker';
@@ -183,6 +184,7 @@ app.get('/health', async (req, res) => {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,
         },
+        pushNotifications: pushNotificationService.isAvailable ? 'enabled' : 'disabled',
       },
     };
 

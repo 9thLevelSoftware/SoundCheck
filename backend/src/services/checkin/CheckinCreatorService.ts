@@ -106,7 +106,8 @@ export class CheckinCreatorService {
         ? headlinerResult.rows[0].band_id
         : null;
 
-      // INSERT the check-in
+      // INSERT the check-in + vibe tags inside a single transaction
+      // so a vibe tag failure rolls back the checkin (prevents partial state)
       const insertQuery = `
         INSERT INTO checkins (
           user_id, event_id, venue_id, band_id,
@@ -117,9 +118,13 @@ export class CheckinCreatorService {
         RETURNING *
       `;
 
-      let result;
+      let checkinId: string;
+      let checkinCreatedAt: string;
+      const client = await this.db.getClient();
       try {
-        result = await this.db.query(insertQuery, [
+        await client.query('BEGIN');
+
+        const result = await client.query(insertQuery, [
           userId,
           eventId,
           event.venue_id,
@@ -132,21 +137,28 @@ export class CheckinCreatorService {
           0,                      // rating starts at 0, set via PATCH /ratings
           comment || null,
         ]);
+
+        checkinId = result.rows[0].id;
+        checkinCreatedAt = result.rows[0].created_at;
+
+        // Add vibe tags if provided (within the same transaction)
+        if (vibeTagIds && vibeTagIds.length > 0) {
+          await this.addVibeTagsToCheckin(checkinId, vibeTagIds, client);
+        }
+
+        await client.query('COMMIT');
       } catch (error: any) {
-        // Catch unique constraint violation for user+event
+        await client.query('ROLLBACK');
+
+        // Re-throw unique constraint violation as 409
         if (error.code === '23505' && error.constraint && error.constraint.includes('user_event')) {
           const dupErr = new Error('You have already checked in to this event');
           (dupErr as any).statusCode = 409;
           throw dupErr;
         }
         throw error;
-      }
-
-      const checkinId = result.rows[0].id;
-
-      // Add vibe tags if provided
-      if (vibeTagIds && vibeTagIds.length > 0) {
-        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
+      } finally {
+        client.release();
       }
 
       // Promote user-created events if organic verification threshold met
@@ -196,7 +208,7 @@ export class CheckinCreatorService {
         eventId,
         event.event_name || '',
         event.venue_id,
-        result.rows[0].created_at
+        checkinCreatedAt
       ).catch((err) =>
         logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
       );
@@ -225,11 +237,15 @@ export class CheckinCreatorService {
       );
 
       if (checkin.rows.length === 0) {
-        throw new Error('Check-in not found');
+        const err = new Error('Check-in not found');
+        (err as any).statusCode = 404;
+        throw err;
       }
 
       if (checkin.rows[0].user_id !== userId) {
-        throw new Error('Unauthorized to delete this check-in');
+        const err = new Error('You can only delete your own check-ins');
+        (err as any).statusCode = 403;
+        throw err;
       }
 
       const venueId = checkin.rows[0].venue_id;
@@ -421,16 +437,18 @@ export class CheckinCreatorService {
   // ============================================
 
   /**
-   * Add vibe tags to a check-in
+   * Add vibe tags to a check-in.
+   * Accepts an optional client to execute within an existing transaction.
    */
-  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[]): Promise<void> {
+  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[], client?: any): Promise<void> {
     try {
       if (!vibeTagIds || vibeTagIds.length === 0) return;
 
       const values = vibeTagIds.map((_, i) => `($1, $${i + 2})`).join(', ');
       const params = [checkinId, ...vibeTagIds];
 
-      await this.db.query(
+      const queryExecutor = client || this.db;
+      await queryExecutor.query(
         `INSERT INTO checkin_vibes (checkin_id, vibe_tag_id) VALUES ${values}
          ON CONFLICT (checkin_id, vibe_tag_id) DO NOTHING`,
         params
@@ -561,13 +579,22 @@ export class CheckinCreatorService {
         venueName: venueName || '',
       });
 
+      // Use Redis pipeline for batch RPUSH (avoids sequential round-trips)
+      const pipeline = redis.pipeline();
+      for (const followerId of followerIds) {
+        const listKey = `notif:batch:${followerId}`;
+        pipeline.rpush(listKey, notifData);
+        pipeline.expire(listKey, 300); // 5-minute safety TTL
+      }
+      try {
+        await pipeline.exec();
+      } catch (err) {
+        logger.debug('Warning: pipelined notification RPUSH failed', { error: err instanceof Error ? err.message : String(err) });
+      }
+
+      // Enqueue BullMQ jobs (these are already deduped by jobId)
       for (const followerId of followerIds) {
         try {
-          const listKey = `notif:batch:${followerId}`;
-          await redis.rpush(listKey, notifData);
-          await redis.expire(listKey, 300); // 5-minute safety TTL
-
-          // Enqueue delayed job with dedup (one per user per batching window)
           if (notificationQueue) {
             await notificationQueue.add('send-batch', { userId: followerId }, {
               delay: 120_000, // 2-minute batching window
