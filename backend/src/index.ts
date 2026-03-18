@@ -60,6 +60,7 @@ import { Worker } from 'bullmq';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { authenticateToken, requireAdmin } from './middleware/auth';
+import { buildErrorResponse } from './middleware/validate';
 
 // Read package version for health endpoint
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
@@ -278,11 +279,9 @@ app.get('/api/debug/sentry-test', authenticateToken, requireAdmin(), (req: expre
 
 // 404 handler
 app.use('*', (req, res) => {
-  const response: ApiResponse = {
-    success: false,
-    error: `Route ${req.originalUrl} not found`,
-  };
-  res.status(404).json(response);
+  res.status(404).json(
+    buildErrorResponse('NOT_FOUND', `Route ${req.originalUrl} not found`),
+  );
 });
 
 // Setup Sentry Express error handler - must be before other error handlers
@@ -314,19 +313,19 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     });
   }
 
-  // Build response
-  const response: ApiResponse = {
-    success: false,
-    error: process.env.NODE_ENV === 'development'
-      ? error.message
-      : statusCode >= 500
-        ? 'Internal server error'
-        : error.message || 'Request failed',
-  };
+  // Build canonical error response
+  const errorCode = statusCode >= 500 ? 'INTERNAL_ERROR' : error.code || 'REQUEST_ERROR';
+  const errorMessage = process.env.NODE_ENV === 'development'
+    ? error.message
+    : statusCode >= 500
+      ? 'Internal server error'
+      : error.message || 'Request failed';
+
+  const response = buildErrorResponse(errorCode, errorMessage);
 
   // Include stack trace only in development
   if (process.env.NODE_ENV === 'development' && error.stack) {
-    (response as any).stack = error.stack;
+    response.error.details = { stack: error.stack };
   }
 
   res.status(statusCode).json(response);

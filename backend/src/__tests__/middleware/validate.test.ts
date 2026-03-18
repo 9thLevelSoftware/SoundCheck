@@ -67,16 +67,16 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([
-            expect.stringContaining('body.name'),
-            expect.stringContaining('body.age'),
-          ]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.message).toBe('Validation failed');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: expect.stringContaining('body.name') }),
+          expect.objectContaining({ field: expect.stringContaining('body.age') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -93,13 +93,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('query.page')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: expect.stringContaining('query.page') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -116,13 +117,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('params.id')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ field: expect.stringContaining('params.id') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -137,10 +139,10 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(500);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Internal server error',
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('INTERNAL_ERROR');
+      expect(responseData.error.message).toBe('Internal server error');
       expect(mockNext).not.toHaveBeenCalled();
 
       consoleSpy.mockRestore();
@@ -189,13 +191,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('Invalid email')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('Invalid email') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -210,13 +213,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('uppercase')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('uppercase') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -231,13 +235,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('special character')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('special character') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -252,13 +257,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('at least 8 characters')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('at least 8 characters') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -273,13 +279,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('at least 3 characters')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('at least 3 characters') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -294,15 +301,16 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([
-            expect.stringContaining('letters, numbers, dots, hyphens, and underscores'),
-          ]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            message: expect.stringContaining('letters, numbers, dots, hyphens, and underscores'),
+          }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
   });
@@ -344,13 +352,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('Password is required')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('Password is required') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -402,13 +411,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('less than 500 characters')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('less than 500 characters') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -421,13 +431,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('Invalid URL')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('Invalid URL') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -466,13 +477,14 @@ describe('Validation Middleware', () => {
       await middleware(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(400);
-      expect(mockJson).toHaveBeenCalledWith({
-        success: false,
-        error: 'Validation failed',
-        data: {
-          details: expect.arrayContaining([expect.stringContaining('Invalid email')]),
-        },
-      });
+      const responseData = mockJson.mock.calls[0][0];
+      expect(responseData.success).toBe(false);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.details).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ message: expect.stringContaining('Invalid email') }),
+        ]),
+      );
       expect(mockNext).not.toHaveBeenCalled();
     });
 
@@ -537,8 +549,9 @@ describe('Validation Middleware', () => {
       expect(mockStatus).toHaveBeenCalledWith(400);
       const responseData = mockJson.mock.calls[0][0];
       expect(responseData.success).toBe(false);
-      expect(responseData.error).toBe('Validation failed');
-      expect(responseData.data.details.length).toBeGreaterThan(1);
+      expect(responseData.error.code).toBe('VALIDATION_ERROR');
+      expect(responseData.error.message).toBe('Validation failed');
+      expect(responseData.error.details.length).toBeGreaterThan(1);
       expect(mockNext).not.toHaveBeenCalled();
     });
   });

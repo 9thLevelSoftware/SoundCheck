@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { SubscriptionService } from '../services/SubscriptionService';
+import { buildErrorResponse } from '../middleware/validate';
 import logger from '../utils/logger';
 
 export class SubscriptionController {
@@ -23,7 +24,7 @@ export class SubscriptionController {
       const token = authHeader.replace('Bearer ', '');
       if (token !== webhookAuth) {
         logger.warn('SubscriptionController: Invalid webhook authorization');
-        res.status(401).json({ error: 'Unauthorized' });
+        res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Unauthorized'));
         return;
       }
 
@@ -56,14 +57,14 @@ export class SubscriptionController {
     try {
       const userId = req.user?.id;
       if (!userId) {
-        res.status(401).json({ success: false, error: 'Authentication required' });
+        res.status(401).json(buildErrorResponse('UNAUTHORIZED', 'Authentication required'));
         return;
       }
       const status = await this.subscriptionService.getSubscriptionStatus(userId);
       res.json({ success: true, data: status });
     } catch (error) {
       logger.error('SubscriptionController.getStatus error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      res.status(500).json({ success: false, error: 'Failed to check subscription status' });
+      res.status(500).json(buildErrorResponse('INTERNAL_ERROR', 'Failed to check subscription status'));
     }
   };
 }
