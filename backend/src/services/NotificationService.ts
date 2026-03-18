@@ -97,6 +97,10 @@ export class NotificationService {
       // Get notifications with related data
       // JOIN events table for event-based notifications
       // LEFT JOIN shows for backward compat (if shows table exists, its data is available)
+      // CFR-PERF-005: Fold serial count queries into main query via window functions.
+      // Eliminates 2 of 3 serial queries by computing total_count and unread_count inline.
+      const blockFilter = this.blockService.getBlockFilterSQL(userId, 'n.from_user_id');
+
       const query = `
         SELECT
           n.*,
@@ -127,7 +131,10 @@ export class NotificationService {
           evv.name as event_venue_name,
           -- Event headliner band (via event_lineup)
           el.band_id as event_band_id,
-          evb.name as event_band_name
+          evb.name as event_band_name,
+          -- Inline window aggregates (eliminates 2 serial queries)
+          COUNT(*) OVER() AS total_count,
+          COUNT(*) FILTER (WHERE n.is_read = FALSE) OVER() AS unread_count
         FROM notifications n
         LEFT JOIN users fu ON n.from_user_id = fu.id
         LEFT JOIN checkins c ON n.checkin_id = c.id
@@ -139,28 +146,16 @@ export class NotificationService {
         LEFT JOIN event_lineup el ON ev.id = el.event_id AND el.is_headliner = true
         LEFT JOIN bands evb ON el.band_id = evb.id
         WHERE n.user_id = $1
-          ${this.blockService.getBlockFilterSQL(userId, 'n.from_user_id')}
+          ${blockFilter}
         ORDER BY n.created_at DESC
         LIMIT $2 OFFSET $3
       `;
 
       const result = await this.db.query(query, [userId, limit, offset]);
 
-      // Get unread count (also filtered by blocks)
-      const blockFilter = this.blockService.getBlockFilterSQL(userId, 'n.from_user_id');
-      const unreadResult = await this.db.query(
-        `SELECT COUNT(*) as count FROM notifications n WHERE n.user_id = $1 AND n.is_read = FALSE ${blockFilter}`,
-        [userId]
-      );
-
-      // Get total count (also filtered by blocks)
-      const totalResult = await this.db.query(
-        `SELECT COUNT(*) as count FROM notifications n WHERE n.user_id = $1 ${blockFilter}`,
-        [userId]
-      );
-
-      const unreadCount = parseInt(unreadResult.rows[0].count, 10);
-      const total = parseInt(totalResult.rows[0].count, 10);
+      // Extract counts from the first row (window functions compute over entire result set)
+      const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count, 10) : 0;
+      const unreadCount = result.rows.length > 0 ? parseInt(result.rows[0].unread_count, 10) : 0;
 
       const notifications = result.rows.map((row: any) => this.mapDbRowToNotification(row));
 

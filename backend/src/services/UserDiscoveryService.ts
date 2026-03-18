@@ -48,18 +48,21 @@ export class UserDiscoveryService {
     try {
       const blockFilterSQL = this.blockService.getBlockFilterSQL(userId, 'u.id');
 
+      // CFR-PERF-006: LIMIT CTEs to prevent unbounded scans on cold cache
       const sql = `
         WITH user_bands AS (
           SELECT DISTINCT el.band_id
           FROM checkins c
           JOIN event_lineup el ON el.event_id = c.event_id
           WHERE c.user_id = $1
+          LIMIT 100
         ),
         user_venues AS (
           SELECT DISTINCT e.venue_id
           FROM checkins c
           JOIN events e ON c.event_id = e.id
           WHERE c.user_id = $1
+          LIMIT 100
         ),
         candidates AS (
           SELECT u.id,
@@ -86,6 +89,7 @@ export class UserDiscoveryService {
             ${blockFilterSQL}
           GROUP BY u.id, u.total_checkins
           HAVING COUNT(c.id) > 0
+          LIMIT 500
         )
         SELECT u.id, u.username, u.first_name, u.last_name,
           u.profile_image_url, u.bio, u.total_checkins, u.is_verified,
