@@ -178,10 +178,25 @@ export class BandController {
   /**
    * Delete band
    * DELETE /api/bands/:id
+   * Authorized for admins and claimed owners (claimed_by_user_id match)
    */
   deleteBand = async (req: Request, res: Response): Promise<void> => {
     try {
+      if (!req.user) {
+        res.status(401).json({ success: false, error: 'Authentication required' } as ApiResponse);
+        return;
+      }
+
       const { id } = req.params;
+
+      // Authorization: admin or claimed owner
+      const isAdmin = !!req.user.isAdmin;
+      const isOwner = await this.bandService.isClaimedOwner(id, req.user.id);
+
+      if (!isAdmin && !isOwner) {
+        res.status(403).json({ success: false, error: 'Only admins or claimed owners can delete this band' } as ApiResponse);
+        return;
+      }
 
       await this.bandService.deleteBand(id);
 
@@ -193,7 +208,7 @@ export class BandController {
       res.status(200).json(response);
     } catch (error) {
       logger.error('Delete band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to delete band',

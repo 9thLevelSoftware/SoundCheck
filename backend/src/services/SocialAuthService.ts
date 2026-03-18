@@ -4,7 +4,7 @@ import Database from '../config/database';
 import { User, AuthResponse } from '../types';
 import { AuthUtils } from '../utils/auth';
 import { generateRefreshToken } from '../utils/auth';
-import { mapDbUserToUser } from '../utils/dbMappers';
+import { mapDbUserToUser, sanitizeUserForClient } from '../utils/dbMappers';
 import { PoolClient } from 'pg';
 import crypto from 'crypto';
 import logger from '../utils/logger';
@@ -428,7 +428,7 @@ export class SocialAuthService {
     const refreshToken = await generateRefreshToken(user.id);
 
     return {
-      user,
+      user: sanitizeUserForClient(user) as User,
       token,
       refreshToken,
       isNewUser,

@@ -1,7 +1,7 @@
 import Database from '../config/database';
 import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../types';
 import { AuthUtils } from '../utils/auth';
-import { mapDbUserToUser, camelToSnakeCase } from '../utils/dbMappers';
+import { mapDbUserToUser, sanitizeUserForClient, camelToSnakeCase } from '../utils/dbMappers';
 import logger from '../utils/logger';
 
 export class UserService {
@@ -54,7 +54,7 @@ export class UserService {
     });
 
     return {
-      user,
+      user: sanitizeUserForClient(user) as User,
       token,
     };
   }
@@ -89,11 +89,11 @@ export class UserService {
       username: user.username,
     });
 
-    // Remove password hash from user object
+    // Remove password hash and server-only fields from user object
     const { passwordHash, ...userWithoutPassword } = user;
 
     return {
-      user: userWithoutPassword,
+      user: sanitizeUserForClient(userWithoutPassword) as User,
       token,
     };
   }

@@ -3,6 +3,7 @@ import { UserService } from '../services/UserService';
 import { StatsService } from '../services/StatsService';
 import { AuditService } from '../services/AuditService';
 import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
+import { sanitizeUserForClient } from '../utils/dbMappers';
 import logger from '../utils/logger';
 
 // UUID validation regex (supports UUID v1-5)
@@ -117,7 +118,7 @@ export class UserController {
       const response: ApiResponse = {
         success: true,
         data: {
-          ...user,
+          ...sanitizeUserForClient(user),
           stats,
         },
       };
@@ -125,7 +126,7 @@ export class UserController {
       res.status(200).json(response);
     } catch (error) {
       logger.error('Get profile error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch profile',
@@ -158,7 +159,7 @@ export class UserController {
 
       const response: ApiResponse = {
         success: true,
-        data: updatedUser,
+        data: sanitizeUserForClient(updatedUser),
         message: 'Profile updated successfully',
       };
 
