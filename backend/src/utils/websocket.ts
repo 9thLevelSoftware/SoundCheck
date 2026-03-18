@@ -46,6 +46,7 @@ interface Client {
 class WebSocketServer {
   private wss?: WebSocket.Server;
   private clients: Map<string, Client> = new Map();
+  private userClients: Map<string, Set<string>> = new Map(); // userId -> clientIds index for O(1) sendToUser
   private rooms: Map<string, Set<string>> = new Map();
   private heartbeatInterval?: NodeJS.Timeout;
   private subscriber: IORedis | null = null;
@@ -228,6 +229,13 @@ class WebSocketServer {
     const client = this.clients.get(clientId);
     if (client) {
       client.userId = userId;
+
+      // Maintain userClients index for O(1) sendToUser lookup
+      if (!this.userClients.has(userId)) {
+        this.userClients.set(userId, new Set());
+      }
+      this.userClients.get(userId)!.add(clientId);
+
       this.send(clientId, 'authenticated', { userId });
       winstonLogger.info(`Client ${clientId} authenticated as user ${userId}`);
     }
@@ -269,6 +277,17 @@ class WebSocketServer {
     const client = this.clients.get(clientId);
     if (!client) return;
 
+    // Clean up userClients index
+    if (client.userId) {
+      const userSet = this.userClients.get(client.userId);
+      if (userSet) {
+        userSet.delete(clientId);
+        if (userSet.size === 0) {
+          this.userClients.delete(client.userId);
+        }
+      }
+    }
+
     // Leave all rooms
     client.rooms.forEach(room => {
       const roomClients = this.rooms.get(room);
@@ -297,13 +316,14 @@ class WebSocketServer {
   }
 
   /**
-   * Send message to specific user (all their connections)
+   * Send message to specific user (all their connections).
+   * Uses the userClients index for O(1) lookup instead of iterating all clients.
    */
   sendToUser(userId: string, type: string, payload: any): void {
-    for (const [clientId, client] of this.clients.entries()) {
-      if (client.userId === userId) {
-        this.send(clientId, type, payload);
-      }
+    const clientIds = this.userClients.get(userId);
+    if (!clientIds) return;
+    for (const clientId of clientIds) {
+      this.send(clientId, type, payload);
     }
   }
 

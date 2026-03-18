@@ -575,13 +575,22 @@ export class CheckinCreatorService {
         venueName: venueName || '',
       });
 
+      // Use Redis pipeline for batch RPUSH (avoids sequential round-trips)
+      const pipeline = redis.pipeline();
+      for (const followerId of followerIds) {
+        const listKey = `notif:batch:${followerId}`;
+        pipeline.rpush(listKey, notifData);
+        pipeline.expire(listKey, 300); // 5-minute safety TTL
+      }
+      try {
+        await pipeline.exec();
+      } catch (err) {
+        logger.debug('Warning: pipelined notification RPUSH failed', { error: err instanceof Error ? err.message : String(err) });
+      }
+
+      // Enqueue BullMQ jobs (these are already deduped by jobId)
       for (const followerId of followerIds) {
         try {
-          const listKey = `notif:batch:${followerId}`;
-          await redis.rpush(listKey, notifData);
-          await redis.expire(listKey, 300); // 5-minute safety TTL
-
-          // Enqueue delayed job with dedup (one per user per batching window)
           if (notificationQueue) {
             await notificationQueue.add('send-batch', { userId: followerId }, {
               delay: 120_000, // 2-minute batching window
