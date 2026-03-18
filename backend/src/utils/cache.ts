@@ -207,17 +207,24 @@ class CacheService {
   }
 
   /**
-   * Delete keys by pattern
+   * Delete keys by pattern using non-blocking SCAN (instead of blocking KEYS).
+   * Uses UNLINK for non-blocking key removal.
    */
   async delPattern(pattern: string): Promise<void> {
     const redis = getRedis();
 
     if (redis) {
       try {
-        const keys = await redis.keys(pattern);
-        if (keys.length > 0) {
-          await redis.del(...keys);
-        }
+        let cursor = '0';
+        do {
+          const [nextCursor, keys] = await redis.scan(
+            cursor, 'MATCH', pattern, 'COUNT', 100
+          );
+          cursor = nextCursor;
+          if (keys.length > 0) {
+            await redis.unlink(...keys); // UNLINK is non-blocking DEL
+          }
+        } while (cursor !== '0');
         return;
       } catch (error) {
         logger.error('Redis del pattern error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
