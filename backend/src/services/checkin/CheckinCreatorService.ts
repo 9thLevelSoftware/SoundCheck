@@ -241,6 +241,13 @@ export class CheckinCreatorService {
       );
       const bandIds: string[] = bandRatingsResult.rows.map((r: any) => r.band_id);
 
+      // CFR-DI-008: Dismiss pending reports for this checkin before deletion
+      await this.db.query(
+        `UPDATE reports SET status = 'dismissed', review_notes = 'content_deleted'
+         WHERE content_type = 'checkin' AND content_id = $1 AND status = 'pending'`,
+        [checkinId]
+      );
+
       // Delete check-in (cascades to toasts and comments)
       await this.db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
 

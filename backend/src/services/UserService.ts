@@ -228,16 +228,24 @@ export class UserService {
   }
 
   /**
-   * Deactivate user account
+   * Deactivate user account.
+   * Also dismisses pending reports targeting this user (CFR-DI-008).
    */
   async deactivateAccount(userId: string): Promise<void> {
     const query = `
-      UPDATE users 
+      UPDATE users
       SET is_active = false, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
 
     await this.db.query(query, [userId]);
+
+    // CFR-DI-008: Dismiss pending reports targeting this user (account deactivated)
+    await this.db.query(
+      `UPDATE reports SET status = 'dismissed', review_notes = 'content_deleted'
+       WHERE content_type = 'user' AND content_id = $1 AND status = 'pending'`,
+      [userId]
+    );
   }
 
   /**

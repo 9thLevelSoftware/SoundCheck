@@ -201,16 +201,24 @@ export class BandService {
   }
 
   /**
-   * Delete band (soft delete)
+   * Delete band (soft delete).
+   * Also denies pending verification claims for this band (CFR-DI-007).
    */
   async deleteBand(bandId: string): Promise<void> {
     const query = `
-      UPDATE bands 
+      UPDATE bands
       SET is_active = false, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
 
     await this.db.query(query, [bandId]);
+
+    // CFR-DI-007: Deny pending verification claims for this band (entity deleted)
+    await this.db.query(
+      `UPDATE verification_claims SET status = 'denied', review_notes = 'entity_deleted', updated_at = CURRENT_TIMESTAMP
+       WHERE entity_type = 'band' AND entity_id = $1 AND status = 'pending'`,
+      [bandId]
+    );
   }
 
   /**
