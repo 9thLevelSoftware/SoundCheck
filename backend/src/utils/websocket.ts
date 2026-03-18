@@ -46,6 +46,7 @@ interface Client {
 class WebSocketServer {
   private wss?: WebSocket.Server;
   private clients: Map<string, Client> = new Map();
+  private userClients: Map<string, Set<string>> = new Map();
   private rooms: Map<string, Set<string>> = new Map();
   private heartbeatInterval?: NodeJS.Timeout;
   private subscriber: IORedis | null = null;
@@ -56,13 +57,42 @@ class WebSocketServer {
       return;
     }
 
-    this.wss = new WebSocket.Server({ server });
+    this.wss = new WebSocket.Server({
+      server,
+      verifyClient: (info, callback) => {
+        try {
+          // Extract token from query string or Authorization header
+          const url = new URL(info.req.url || '', `http://${info.req.headers.host}`);
+          const token = url.searchParams.get('token')
+            || AuthUtils.extractTokenFromHeader(info.req.headers.authorization);
+
+          if (!token) {
+            callback(false, 401, 'Authentication required');
+            return;
+          }
+
+          const payload = AuthUtils.verifyToken(token);
+          if (!payload) {
+            callback(false, 401, 'Invalid or expired token');
+            return;
+          }
+
+          // Attach userId to the upgrade request for use in connection handler
+          (info.req as any).userId = payload.userId;
+          callback(true);
+        } catch (error) {
+          winstonLogger.error('WebSocket verifyClient error', { error: error instanceof Error ? error.message : String(error) });
+          callback(false, 500, 'Authentication error');
+        }
+      },
+    });
 
     this.wss.on('connection', (ws: WebSocket, req) => {
       const clientId = this.generateClientId();
+      const userId = (req as any).userId; // Set from verifyClient
       const client: Client = {
         ws,
-        userId: undefined,
+        userId,
         rooms: new Set(),
         isAlive: true,
         messageCount: 0,
@@ -70,7 +100,16 @@ class WebSocketServer {
       };
 
       this.clients.set(clientId, client);
-      winstonLogger.info(`WebSocket client connected: ${clientId}`);
+
+      // Maintain userId -> clientId index for O(1) sendToUser
+      if (userId) {
+        if (!this.userClients.has(userId)) {
+          this.userClients.set(userId, new Set());
+        }
+        this.userClients.get(userId)!.add(clientId);
+      }
+
+      winstonLogger.info(`WebSocket client connected: ${clientId} (user: ${userId || 'unknown'})`);
 
       // Handle messages
       ws.on('message', (message: string) => {
@@ -227,7 +266,14 @@ class WebSocketServer {
 
     const client = this.clients.get(clientId);
     if (client) {
-      client.userId = userId;
+      // Update userId -> clientId index if user was not already set by verifyClient
+      if (!client.userId) {
+        client.userId = userId;
+        if (!this.userClients.has(userId)) {
+          this.userClients.set(userId, new Set());
+        }
+        this.userClients.get(userId)!.add(clientId);
+      }
       this.send(clientId, 'authenticated', { userId });
       winstonLogger.info(`Client ${clientId} authenticated as user ${userId}`);
     }
@@ -235,7 +281,21 @@ class WebSocketServer {
 
   private joinRoom(clientId: string, room: string): void {
     const client = this.clients.get(clientId);
-    if (!client) return;
+    if (!client || !client.userId) return;
+
+    // Validate room name format and authorize access
+    const validRoomPrefixes = ['event:', 'venue:', 'user:'];
+    const isValidRoom = validRoomPrefixes.some(prefix => room.startsWith(prefix));
+    if (!isValidRoom) {
+      this.send(clientId, 'error', { message: 'Invalid room name' });
+      return;
+    }
+
+    // User-specific rooms: only allow joining own room
+    if (room.startsWith('user:') && room !== `user:${client.userId}`) {
+      this.send(clientId, 'error', { message: 'Cannot join another user\'s room' });
+      return;
+    }
 
     client.rooms.add(room);
 
@@ -269,6 +329,17 @@ class WebSocketServer {
     const client = this.clients.get(clientId);
     if (!client) return;
 
+    // Remove from userId -> clientId index
+    if (client.userId) {
+      const userSet = this.userClients.get(client.userId);
+      if (userSet) {
+        userSet.delete(clientId);
+        if (userSet.size === 0) {
+          this.userClients.delete(client.userId);
+        }
+      }
+    }
+
     // Leave all rooms
     client.rooms.forEach(room => {
       const roomClients = this.rooms.get(room);
@@ -298,12 +369,13 @@ class WebSocketServer {
 
   /**
    * Send message to specific user (all their connections)
+   * Uses O(1) userId index instead of O(N) client iteration
    */
   sendToUser(userId: string, type: string, payload: any): void {
-    for (const [clientId, client] of this.clients.entries()) {
-      if (client.userId === userId) {
-        this.send(clientId, type, payload);
-      }
+    const clientIds = this.userClients.get(userId);
+    if (!clientIds) return;
+    for (const clientId of clientIds) {
+      this.send(clientId, type, payload);
     }
   }
 
