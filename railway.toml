@@ -6,3 +6,5 @@ watchPaths = ["backend/**"]
 startCommand = "cd backend && npm run migrate:up && npm start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
+healthcheckPath = "/health"
+healthcheckTimeout = 120

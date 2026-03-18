@@ -90,7 +90,8 @@ class Database {
     // Handle pool errors
     this.pool.on('error', (err) => {
       logger.error('Unexpected error on idle client', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
-      process.exit(-1);
+      // Do NOT exit -- pool will reconnect automatically.
+      // The /health endpoint will detect persistent DB failures.
     });
   }
 
