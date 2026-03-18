@@ -103,53 +103,6 @@ Future<List<CheckInComment>> checkInComments(Ref ref, String checkInId) async {
   return repository.getCheckInComments(checkInId);
 }
 
-/// Notifier for creating check-ins
-@riverpod
-class CreateCheckIn extends _$CreateCheckIn {
-  @override
-  Future<void> build() async {}
-
-  Future<CheckIn?> submit({
-    required String bandId,
-    required String venueId,
-    required String eventDate,
-    double? venueRating,
-    double? bandRating,
-    String? reviewText,
-    List<String>? imageUrls,
-    List<String>? vibeTagIds,
-  }) async {
-    state = const AsyncValue.loading();
-
-    final repository = ref.read(checkInRepositoryProvider);
-
-    try {
-      final checkIn = await repository.createCheckIn(
-        CreateCheckInRequest(
-          bandId: bandId,
-          venueId: venueId,
-          eventDate: eventDate,
-          venueRating: venueRating,
-          bandRating: bandRating,
-          reviewText: reviewText,
-          imageUrls: imageUrls,
-          vibeTagIds: vibeTagIds,
-        ),
-      );
-
-      // Invalidate both feed providers so the feed screen refreshes
-      ref.invalidate(globalFeedProvider);
-      ref.invalidate(friendsFeedProvider);
-
-      state = const AsyncValue.data(null);
-      return checkIn;
-    } catch (e, st) {
-      state = AsyncValue.error(e, st);
-      return null;
-    }
-  }
-}
-
 /// Notifier for toasting/un-toasting check-ins
 @riverpod
 class ToastCheckIn extends _$ToastCheckIn {

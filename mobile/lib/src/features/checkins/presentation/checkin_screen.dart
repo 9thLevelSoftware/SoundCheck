@@ -968,49 +968,6 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     }
   }
 
-  Future<void> _submitCheckIn() async {
-    if (_selectedBandId == null || _selectedVenueId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please select a band and venue'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
-      return;
-    }
-
-    final createCheckInNotifier = ref.read(createCheckInProvider.notifier);
-    final checkIn = await createCheckInNotifier.submit(
-      bandId: _selectedBandId!,
-      venueId: _selectedVenueId!,
-      eventDate: DateTime.now().toIso8601String(),
-      venueRating: _rating > 0 ? _rating : null,
-      bandRating: _rating > 0 ? _rating : null,
-      reviewText:
-          _commentController.text.isNotEmpty ? _commentController.text : null,
-      vibeTagIds: _selectedVibes.isNotEmpty ? _selectedVibes.toList() : null,
-    );
-
-    if (!mounted) return;
-
-    if (checkIn != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Check-in successful!'),
-          backgroundColor: AppTheme.voltLime,
-        ),
-      );
-      context.pop();
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to create check-in. Please try again.'),
-          backgroundColor: AppTheme.error,
-        ),
-      );
-    }
-  }
-
   Widget _buildBandSearch() {
     return Column(
       children: [
@@ -1310,23 +1267,24 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Submit Button
+          // Submit Button — disabled; legacy band+venue check-in path removed
+          // All check-ins go through the event-first CreateEventCheckIn flow
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: _submitCheckIn,
+              onPressed: null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.voltLime,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.check_circle, color: Theme.of(context).scaffoldBackgroundColor),
-                  SizedBox(width: 8),
+                  const SizedBox(width: 8),
                   Text(
                     'Check In',
                     style: TextStyle(
