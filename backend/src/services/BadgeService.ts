@@ -281,48 +281,79 @@ export class BadgeService {
     badgeCount: number;
     recentBadges: Badge[];
   }>> {
+    // Single query: leaderboard users + their 3 most recent badges via LATERAL join
     const query = `
-      SELECT u.id, u.username, u.first_name, u.last_name, u.profile_image_url,
-             COUNT(ub.id) as badge_count
+      SELECT
+        u.id, u.username, u.first_name, u.last_name, u.profile_image_url,
+        ub_counts.badge_count,
+        rb.id AS recent_badge_id, rb.name AS recent_badge_name,
+        rb.description AS recent_badge_description, rb.icon_url AS recent_badge_icon_url,
+        rb.badge_type AS recent_badge_type, rb.requirement_value AS recent_badge_requirement_value,
+        rb.color AS recent_badge_color, rb.criteria AS recent_badge_criteria,
+        rb.created_at AS recent_badge_created_at
       FROM users u
-      LEFT JOIN user_badges ub ON u.id = ub.user_id
+      JOIN (
+        SELECT user_id, COUNT(*)::int AS badge_count
+        FROM user_badges
+        GROUP BY user_id
+        HAVING COUNT(*) > 0
+        ORDER BY badge_count DESC
+        LIMIT $1
+      ) ub_counts ON u.id = ub_counts.user_id
+      LEFT JOIN LATERAL (
+        SELECT b.id, b.name, b.description, b.icon_url, b.badge_type,
+               b.requirement_value, b.color, b.criteria, b.created_at
+        FROM user_badges ub
+        JOIN badges b ON ub.badge_id = b.id
+        WHERE ub.user_id = u.id
+        ORDER BY ub.earned_at DESC
+        LIMIT 3
+      ) rb ON TRUE
       WHERE u.is_active = true
-      GROUP BY u.id, u.username, u.first_name, u.last_name, u.profile_image_url
-      HAVING COUNT(ub.id) > 0
-      ORDER BY badge_count DESC, u.username ASC
-      LIMIT $1
+      ORDER BY ub_counts.badge_count DESC, u.username ASC
     `;
 
     const result = await this.db.query(query, [limit]);
 
-    const leaderboard = [];
+    // Group rows by user (each user may have up to 3 rows for recent badges)
+    const userMap = new Map<string, {
+      user: { id: string; username: string; firstName?: string; lastName?: string; profileImageUrl?: string };
+      badgeCount: number;
+      recentBadges: Badge[];
+    }>();
+
     for (const row of result.rows) {
-      const recentBadgesQuery = `
-        SELECT b.id, b.name, b.description, b.icon_url, b.badge_type, b.requirement_value, b.color, b.criteria, b.created_at
-        FROM user_badges ub
-        JOIN badges b ON ub.badge_id = b.id
-        WHERE ub.user_id = $1
-        ORDER BY ub.earned_at DESC
-        LIMIT 3
-      `;
+      if (!userMap.has(row.id)) {
+        userMap.set(row.id, {
+          user: {
+            id: row.id,
+            username: row.username,
+            firstName: row.first_name,
+            lastName: row.last_name,
+            profileImageUrl: row.profile_image_url,
+          },
+          badgeCount: parseInt(row.badge_count),
+          recentBadges: [],
+        });
+      }
 
-      const recentBadgesResult = await this.db.query(recentBadgesQuery, [row.id]);
-      const recentBadges = recentBadgesResult.rows.map((badgeRow: any) => this.mapDbBadgeToBadge(badgeRow));
-
-      leaderboard.push({
-        user: {
-          id: row.id,
-          username: row.username,
-          firstName: row.first_name,
-          lastName: row.last_name,
-          profileImageUrl: row.profile_image_url,
-        },
-        badgeCount: parseInt(row.badge_count),
-        recentBadges,
-      });
+      // Append recent badge if present (LEFT JOIN may yield null)
+      if (row.recent_badge_id) {
+        userMap.get(row.id)!.recentBadges.push(this.mapDbBadgeToBadge({
+          id: row.recent_badge_id,
+          name: row.recent_badge_name,
+          description: row.recent_badge_description,
+          icon_url: row.recent_badge_icon_url,
+          badge_type: row.recent_badge_type,
+          requirement_value: row.recent_badge_requirement_value,
+          color: row.recent_badge_color,
+          criteria: row.recent_badge_criteria,
+          created_at: row.recent_badge_created_at,
+        }));
+      }
     }
 
-    return leaderboard;
+    return Array.from(userMap.values());
   }
 
   /**

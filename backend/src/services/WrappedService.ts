@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import { BlockService } from './BlockService';
+import { cache } from '../utils/cache';
 
 export interface WrappedStats {
   year: number;
@@ -58,52 +59,58 @@ export class WrappedService {
    * Compute basic Wrapped stats for a user and year (free tier).
    */
   async getWrappedStats(userId: string, year: number): Promise<WrappedStats> {
-    const [basicCounts, topGenre, homeVenue, topArtist] = await Promise.all([
-      this.getBasicCounts(userId, year),
-      this.getTopGenre(userId, year),
-      this.getHomeVenue(userId, year),
-      this.getTopArtist(userId, year),
-    ]);
+    const cacheKey = `wrapped:${userId}:${year}`;
+    return cache.getOrSet(cacheKey, async () => {
+      const [basicCounts, topGenre, homeVenue, topArtist] = await Promise.all([
+        this.getBasicCounts(userId, year),
+        this.getTopGenre(userId, year),
+        this.getHomeVenue(userId, year),
+        this.getTopArtist(userId, year),
+      ]);
 
-    const totalShows = basicCounts.totalShows;
+      const totalShows = basicCounts.totalShows;
 
-    return {
-      year,
-      totalShows,
-      uniqueBands: basicCounts.uniqueBands,
-      uniqueVenues: basicCounts.uniqueVenues,
-      topGenre: topGenre.genre,
-      topGenrePercentage: topGenre.percentage,
-      homeVenueName: homeVenue.name,
-      homeVenueId: homeVenue.id,
-      homeVenueVisits: homeVenue.visits,
-      topArtistName: topArtist.name,
-      topArtistId: topArtist.id,
-      topArtistTimesSeen: topArtist.timesSeen,
-      meetsThreshold: totalShows >= 3,
-    };
+      return {
+        year,
+        totalShows,
+        uniqueBands: basicCounts.uniqueBands,
+        uniqueVenues: basicCounts.uniqueVenues,
+        topGenre: topGenre.genre,
+        topGenrePercentage: topGenre.percentage,
+        homeVenueName: homeVenue.name,
+        homeVenueId: homeVenue.id,
+        homeVenueVisits: homeVenue.visits,
+        topArtistName: topArtist.name,
+        topArtistId: topArtist.id,
+        topArtistTimesSeen: topArtist.timesSeen,
+        meetsThreshold: totalShows >= 3,
+      };
+    }, 3600); // 1 hour TTL
   }
 
   /**
    * Compute premium-only Wrapped detail stats for a user and year.
    */
   async getWrappedDetailStats(userId: string, year: number): Promise<WrappedDetailStats> {
-    const [basicStats, monthlyBreakdown, genreEvolution, friendOverlap, topRatedSets] =
-      await Promise.all([
-        this.getWrappedStats(userId, year),
-        this.getMonthlyBreakdown(userId, year),
-        this.getGenreEvolution(userId, year),
-        this.getFriendOverlap(userId, year),
-        this.getTopRatedSets(userId, year),
-      ]);
+    const cacheKey = `wrapped-detail:${userId}:${year}`;
+    return cache.getOrSet(cacheKey, async () => {
+      const [basicStats, monthlyBreakdown, genreEvolution, friendOverlap, topRatedSets] =
+        await Promise.all([
+          this.getWrappedStats(userId, year),
+          this.getMonthlyBreakdown(userId, year),
+          this.getGenreEvolution(userId, year),
+          this.getFriendOverlap(userId, year),
+          this.getTopRatedSets(userId, year),
+        ]);
 
-    return {
-      ...basicStats,
-      monthlyBreakdown,
-      genreEvolution,
-      friendOverlap,
-      topRatedSets,
-    };
+      return {
+        ...basicStats,
+        monthlyBreakdown,
+        genreEvolution,
+        friendOverlap,
+        topRatedSets,
+      };
+    }, 3600); // 1 hour TTL
   }
 
   private async getBasicCounts(
