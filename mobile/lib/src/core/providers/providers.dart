@@ -40,7 +40,14 @@ FlutterSecureStorage secureStorage(Ref ref) {
 @Riverpod(keepAlive: true)
 DioClient dioClient(Ref ref) {
   final secureStorage = ref.watch(secureStorageProvider);
-  return DioClient(secureStorage: secureStorage);
+  return DioClient(
+    secureStorage: secureStorage,
+    onAuthFailure: () {
+      // Force auth state to re-evaluate; getCurrentUser() will return null
+      // because the interceptor already wiped the stored credentials.
+      ref.invalidate(authStateProvider);
+    },
+  );
 }
 
 @Riverpod(keepAlive: true)
