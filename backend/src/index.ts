@@ -333,8 +333,10 @@ const startServer = async () => {
     logInfo('Database connection established');
 
     // Warn about CORS configuration in production
+    // CORS_ORIGIN is not strictly needed for mobile-only API (mobile apps don't send Origin headers),
+    // but should be set if a web client is added later.
     if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
-      logWarn('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
+      logWarn('CORS_ORIGIN not set in production — defaulting to mobile-only mode (no origin required)');
     }
 
     // Initialize WebSocket server

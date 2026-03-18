@@ -57,7 +57,7 @@ export const authenticateToken = async (
     // Attach user info to request
     req.user = user;
     // Enrich Sentry error context with authenticated user
-    sentrySetUser({ id: user.id, email: user.email, username: user.username });
+    sentrySetUser({ id: user.id, username: user.username });
 
     next();
   } catch (error) {
@@ -87,10 +87,10 @@ export const optionalAuth = async (
       if (payload) {
         const userService = new UserService();
         const user = await userService.findById(payload.userId);
-        
+
         if (user && user.isActive) {
           req.user = user;
-          sentrySetUser({ id: user.id, email: user.email, username: user.username });
+          sentrySetUser({ id: user.id, username: user.username });
         }
       }
     }
