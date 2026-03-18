@@ -545,11 +545,11 @@ export class EventService {
                  v.id as v_id, v.name as venue_name, v.city as venue_city,
                  v.state as venue_state, v.image_url as venue_image,
                  (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
-                 (6371 * acos(
+                 (6371 * acos(LEAST(GREATEST(
                    cos(radians($1)) * cos(radians(v.latitude)) *
                    cos(radians(v.longitude) - radians($2)) +
                    sin(radians($1)) * sin(radians(v.latitude))
-                 )) AS distance_km
+                 , -1), 1))) AS distance_km
           FROM events e
           JOIN venues v ON e.venue_id = v.id
           WHERE e.event_date = CURRENT_DATE
@@ -606,11 +606,11 @@ export class EventService {
                    v.id as v_id, v.name as venue_name, v.city as venue_city,
                    v.state as venue_state, v.image_url as venue_image,
                    (SELECT COUNT(*) FROM checkins c WHERE c.event_id = e.id) as checkin_count,
-                   (6371 * acos(
+                   (6371 * acos(LEAST(GREATEST(
                      cos(radians($1)) * cos(radians(v.latitude)) *
                      cos(radians(v.longitude) - radians($2)) +
                      sin(radians($1)) * sin(radians(v.latitude))
-                   )) AS distance_km
+                   , -1), 1))) AS distance_km
             FROM events e
             JOIN venues v ON e.venue_id = v.id
             WHERE e.event_date BETWEEN CURRENT_DATE AND CURRENT_DATE + ($3 || ' days')::INTERVAL
@@ -669,11 +669,11 @@ export class EventService {
                       AND c.created_at >= CURRENT_DATE - ($3 || ' days')::INTERVAL
                       AND c.is_hidden IS NOT TRUE
                    ) as recent_checkins,
-                   (6371 * acos(
+                   (6371 * acos(LEAST(GREATEST(
                      cos(radians($1)) * cos(radians(v.latitude)) *
                      cos(radians(v.longitude) - radians($2)) +
                      sin(radians($1)) * sin(radians(v.latitude))
-                   )) AS distance_km
+                   , -1), 1))) AS distance_km
             FROM events e
             JOIN venues v ON e.venue_id = v.id
             WHERE e.event_date >= CURRENT_DATE

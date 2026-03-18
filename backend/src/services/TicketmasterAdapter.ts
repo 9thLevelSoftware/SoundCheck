@@ -19,6 +19,7 @@ import {
   TicketmasterSearchParams,
   NormalizedEvent,
 } from '../types/ticketmaster';
+import { getRedis } from '../utils/redisRateLimiter';
 import logger from '../utils/logger';
 
 /** Maximum pages to fetch before attempting date-range subdivision */
@@ -41,7 +42,8 @@ const INTER_REQUEST_DELAY_MS = 200;
 
 export class TicketmasterAdapter {
   private client: AxiosInstance;
-  private dailyCallCount = 0;
+  // CFR-BE-007: In-memory counter kept as fallback when Redis is unavailable
+  private dailyCallCountFallback = 0;
   private dailyResetTime: number;
 
   constructor() {
@@ -73,8 +75,7 @@ export class TicketmasterAdapter {
     events: TicketmasterEvent[];
     page: { totalElements: number; totalPages: number; number: number; size: number };
   }> {
-    this.checkDailyQuota();
-    this.resetDailyCounterIfNeeded();
+    await this.checkDailyQuota();
 
     const response = await this.client.get<TicketmasterSearchResponse>('/events.json', {
       params: {
@@ -90,7 +91,7 @@ export class TicketmasterAdapter {
       },
     });
 
-    this.dailyCallCount++;
+    await this.incrementDailyCount();
 
     const data = response.data;
     const events = data._embedded?.events || [];
@@ -193,12 +194,11 @@ export class TicketmasterAdapter {
    * Returns null if the event is not found (404).
    */
   async getEventById(eventId: string): Promise<TicketmasterEvent | null> {
-    this.checkDailyQuota();
-    this.resetDailyCounterIfNeeded();
+    await this.checkDailyQuota();
 
     try {
       const response = await this.client.get<TicketmasterEvent>(`/events/${eventId}.json`);
-      this.dailyCallCount++;
+      await this.incrementDailyCount();
       return response.data;
     } catch (error) {
       const axiosErr = error as AxiosError;
@@ -282,9 +282,8 @@ export class TicketmasterAdapter {
    * Get the current daily API call count.
    * Useful for monitoring and health checks.
    */
-  getDailyCallCount(): number {
-    this.resetDailyCounterIfNeeded();
-    return this.dailyCallCount;
+  async getDailyCallCount(): Promise<number> {
+    return this.getCurrentDailyCount();
   }
 
   // ─── Private Helpers ────────────────────────────────────────────────
@@ -323,33 +322,86 @@ export class TicketmasterAdapter {
    * Check if we are within the daily API call quota.
    * Throws if quota is exhausted.
    */
-  private checkDailyQuota(): void {
-    this.resetDailyCounterIfNeeded();
+  private async checkDailyQuota(): Promise<void> {
+    const currentCount = await this.getCurrentDailyCount();
 
-    if (this.dailyCallCount >= DAILY_QUOTA_HARD_LIMIT) {
+    if (currentCount >= DAILY_QUOTA_HARD_LIMIT) {
       throw new Error(
-        `Ticketmaster daily API quota nearly exhausted (${this.dailyCallCount}/${DAILY_QUOTA}). ` +
+        `Ticketmaster daily API quota nearly exhausted (${currentCount}/${DAILY_QUOTA}). ` +
         'Refusing further calls to reserve capacity for on-demand lookups.'
       );
     }
 
-    if (this.dailyCallCount >= DAILY_QUOTA_WARN) {
+    if (currentCount >= DAILY_QUOTA_WARN) {
       logger.warn('[TicketmasterAdapter] Approaching daily API quota', {
-        current: this.dailyCallCount,
+        current: currentCount,
         limit: DAILY_QUOTA,
       });
     }
   }
 
   /**
-   * Reset the daily call counter if we've passed midnight UTC.
+   * CFR-BE-007: Get the Redis key for today's daily counter.
    */
-  private resetDailyCounterIfNeeded(): void {
+  private getDailyRedisKey(): string {
+    return `ticketmaster:daily:${new Date().toISOString().slice(0, 10)}`;
+  }
+
+  /**
+   * CFR-BE-007: Increment the daily call counter.
+   * Uses Redis INCR when available; falls back to in-memory counter.
+   * Redis key auto-expires after 25 hours (covers UTC day + buffer).
+   */
+  private async incrementDailyCount(): Promise<number> {
+    const redis = getRedis();
+    if (redis) {
+      try {
+        const key = this.getDailyRedisKey();
+        const count = await redis.incr(key);
+        if (count === 1) {
+          // First increment today — set expiry to 25 hours from now
+          await redis.expire(key, 90000);
+        }
+        return count;
+      } catch (error) {
+        logger.warn('[TicketmasterAdapter] Redis INCR failed, falling back to in-memory', {
+          error: error instanceof Error ? error.message : String(error),
+        });
+      }
+    }
+
+    // Fallback: in-memory counter with midnight reset
+    this.resetFallbackCounterIfNeeded();
+    return ++this.dailyCallCountFallback;
+  }
+
+  /**
+   * Get the current daily call count from Redis or in-memory fallback.
+   */
+  private async getCurrentDailyCount(): Promise<number> {
+    const redis = getRedis();
+    if (redis) {
+      try {
+        const key = this.getDailyRedisKey();
+        const val = await redis.get(key);
+        return val ? parseInt(val, 10) : 0;
+      } catch {
+        // Fall through to in-memory
+      }
+    }
+    this.resetFallbackCounterIfNeeded();
+    return this.dailyCallCountFallback;
+  }
+
+  /**
+   * Reset the in-memory fallback counter if we've passed midnight UTC.
+   */
+  private resetFallbackCounterIfNeeded(): void {
     const now = Date.now();
     if (now >= this.dailyResetTime) {
-      this.dailyCallCount = 0;
+      this.dailyCallCountFallback = 0;
       this.dailyResetTime = this.getNextMidnightUTC();
-      logger.info('[TicketmasterAdapter] Daily API call counter reset');
+      logger.info('[TicketmasterAdapter] Daily API call counter reset (in-memory fallback)');
     }
   }
 
