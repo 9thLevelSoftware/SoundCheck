@@ -74,13 +74,16 @@ describe('UserService', () => {
           dateOfBirth: undefined,
           isVerified: false,
           isActive: true,
-          isAdmin: false,
-          isPremium: false,
+          // isAdmin and isPremium are stripped by sanitizeUserForClient (CFR-001)
           createdAt: '2024-01-01T00:00:00Z',
           updatedAt: '2024-01-01T00:00:00Z',
         },
         token: 'mock-jwt-token',
       });
+
+      // Verify isAdmin/isPremium are NOT exposed in auth responses (CFR-001)
+      expect(result.user).not.toHaveProperty('isAdmin');
+      expect(result.user).not.toHaveProperty('isPremium');
     });
 
     it('should throw error for existing email', async () => {
@@ -137,6 +140,10 @@ describe('UserService', () => {
         }),
         token: mockToken,
       });
+
+      // Verify isAdmin/isPremium are NOT exposed in auth responses (CFR-001)
+      expect(result.user).not.toHaveProperty('isAdmin');
+      expect(result.user).not.toHaveProperty('isPremium');
     });
 
     it('should throw error for invalid credentials', async () => {

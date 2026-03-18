@@ -1,6 +1,15 @@
 import { User, Report, ModerationItem, UserBlock } from '../types';
 
 /**
+ * Strip server-only fields before sending user data to clients.
+ * isAdmin and isPremium must NEVER be exposed in API responses.
+ */
+export function sanitizeUserForClient(user: User): Omit<User, 'isAdmin' | 'isPremium'> {
+  const { isAdmin, isPremium, ...clientUser } = user;
+  return clientUser;
+}
+
+/**
  * Helper to map database rows to User objects safely
  */
 export function mapDbUserToUser(row: any): User {
