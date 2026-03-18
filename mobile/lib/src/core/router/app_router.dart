@@ -392,6 +392,10 @@ GoRouter goRouter(Ref ref) {
       GoRoute(
         path: '/celebration',
         name: 'celebration',
+        redirect: (context, state) {
+          if (state.extra is! CelebrationParams) return '/feed';
+          return null;
+        },
         pageBuilder: (context, state) {
           final params = state.extra as CelebrationParams;
           return CustomTransitionPage(
@@ -598,7 +602,7 @@ GoRouter goRouter(Ref ref) {
         path: '/wrapped/:year',
         name: 'wrapped',
         pageBuilder: (context, state) {
-          final year = int.parse(state.pathParameters['year']!);
+          final year = int.tryParse(state.pathParameters['year'] ?? '') ?? DateTime.now().year;
           return CustomTransitionPage(
             key: state.pageKey,
             child: WrappedStoryScreen(year: year),
@@ -614,7 +618,7 @@ GoRouter goRouter(Ref ref) {
         path: '/wrapped/:year/detail',
         name: 'wrapped-detail',
         pageBuilder: (context, state) {
-          final year = int.parse(state.pathParameters['year']!);
+          final year = int.tryParse(state.pathParameters['year'] ?? '') ?? DateTime.now().year;
           return CustomTransitionPage(
             key: state.pageKey,
             child: WrappedDetailScreen(year: year),
