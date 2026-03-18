@@ -1,10 +1,11 @@
 const mockLoggerWarn = jest.fn();
+const mockLoggerError = jest.fn();
 
 jest.mock('../../utils/logger', () => ({
   __esModule: true,
   default: {
     info: jest.fn(),
-    error: jest.fn(),
+    error: mockLoggerError,
     warn: mockLoggerWarn,
     debug: jest.fn(),
   },
@@ -17,6 +18,7 @@ describe('Database Configuration', () => {
     jest.resetModules();
     process.env = { ...originalEnv };
     mockLoggerWarn.mockClear();
+    mockLoggerError.mockClear();
   });
 
   afterAll(() => {
@@ -91,5 +93,68 @@ describe('Database Configuration', () => {
     const sslConfig = getSSLConfig();
 
     expect(sslConfig).toBe(false);
+  });
+});
+
+describe('Database pool error handling', () => {
+  const originalEnv = process.env;
+  let mockPoolOn: jest.Mock;
+  let poolErrorHandler: ((err: Error) => void) | undefined;
+
+  beforeEach(() => {
+    jest.resetModules();
+    process.env = { ...originalEnv };
+    mockLoggerError.mockClear();
+
+    // Capture the 'error' event handler registered by the Database constructor
+    mockPoolOn = jest.fn((event: string, handler: (err: Error) => void) => {
+      if (event === 'error') {
+        poolErrorHandler = handler;
+      }
+    });
+
+    jest.mock('pg', () => ({
+      Pool: jest.fn().mockImplementation(() => ({
+        on: mockPoolOn,
+        query: jest.fn(),
+        connect: jest.fn(),
+        end: jest.fn(),
+      })),
+    }));
+  });
+
+  afterAll(() => {
+    process.env = originalEnv;
+  });
+
+  test('should NOT call process.exit on pool error', () => {
+    process.env.DB_SSL = 'false';
+    process.env.DB_HOST = 'localhost';
+    process.env.DB_PASSWORD = 'test';
+    delete process.env.DATABASE_URL;
+
+    const exitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
+
+    // Importing the module triggers the singleton constructor
+    const Database = require('../../config/database').default;
+    Database.getInstance();
+
+    // Verify the error handler was registered
+    expect(mockPoolOn).toHaveBeenCalledWith('error', expect.any(Function));
+    expect(poolErrorHandler).toBeDefined();
+
+    // Simulate a pool error
+    poolErrorHandler!(new Error('connection reset by peer'));
+
+    // Verify process.exit was NOT called
+    expect(exitSpy).not.toHaveBeenCalled();
+
+    // Verify error was logged
+    expect(mockLoggerError).toHaveBeenCalledWith(
+      'Unexpected error on idle client',
+      expect.objectContaining({ error: 'connection reset by peer' })
+    );
+
+    exitSpy.mockRestore();
   });
 });
