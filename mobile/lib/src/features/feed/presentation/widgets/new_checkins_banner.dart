@@ -87,7 +87,7 @@ class _NewCheckinsBannerState extends State<NewCheckinsBanner>
             mainAxisAlignment: MainAxisAlignment.center,
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(
+              Icon(
                 Icons.arrow_upward,
                 size: 16,
                 color: Theme.of(context).scaffoldBackgroundColor,
@@ -95,7 +95,7 @@ class _NewCheckinsBannerState extends State<NewCheckinsBanner>
               const SizedBox(width: 6),
               Text(
                 '${widget.count} new check-in${widget.count == 1 ? '' : 's'}',
-                style: const TextStyle(
+                style: TextStyle(
                   color: Theme.of(context).scaffoldBackgroundColor,
                   fontSize: 14,
                   fontWeight: FontWeight.w700,

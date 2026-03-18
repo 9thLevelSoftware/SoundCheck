@@ -143,7 +143,7 @@ class _PremiumPaywallSheetState extends ConsumerState<PremiumPaywallSheet> {
               child: ElevatedButton(
                 onPressed: _isPurchasing ? null : _onSubscribe,
                 child: _isPurchasing
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(

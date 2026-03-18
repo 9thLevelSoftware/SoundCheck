@@ -255,7 +255,7 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
                     ),
 
                     // Divider
-                    const Divider(
+                    Divider(
                       color: Theme.of(context).colorScheme.surfaceContainerHighest,
                       height: 1,
                     ),
@@ -1266,7 +1266,7 @@ class _CommentInput extends StatelessWidget {
         16,
         MediaQuery.of(context).padding.bottom + 8,
       ),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
         border: Border(
           top: BorderSide(color: Theme.of(context).colorScheme.surfaceContainerHighest, width: 1),

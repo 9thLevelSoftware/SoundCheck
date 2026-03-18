@@ -276,7 +276,7 @@ class _WrappedStoryScreenState extends ConsumerState<WrappedStoryScreen>
                           child: ElevatedButton.icon(
                             onPressed: _isSharing ? null : _onShareTapped,
                             icon: _isSharing
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 20,
                                     height: 20,
                                     child: CircularProgressIndicator(

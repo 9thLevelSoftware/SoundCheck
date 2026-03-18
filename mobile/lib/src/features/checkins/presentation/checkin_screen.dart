@@ -599,7 +599,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
               gradient: AppTheme.primaryGradient,
               shape: BoxShape.circle,
             ),
-            child: const Icon(
+            child: Icon(
               Icons.check,
               color: Theme.of(context).scaffoldBackgroundColor,
               size: 48,
@@ -771,7 +771,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Text(
+              child: Text(
                 'Done',
                 style: TextStyle(
                   fontSize: 18,
@@ -1322,7 +1322,7 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Icon(Icons.check_circle, color: Theme.of(context).scaffoldBackgroundColor),
@@ -1566,7 +1566,7 @@ class _EventCard extends StatelessWidget {
                   padding: EdgeInsets.zero,
                 ),
                 child: isCheckingIn
-                    ? const SizedBox(
+                    ? SizedBox(
                         width: 20,
                         height: 20,
                         child: CircularProgressIndicator(
@@ -1574,7 +1574,7 @@ class _EventCard extends StatelessWidget {
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text(
+                    : Text(
                         'CHECK IN',
                         style: TextStyle(
                           fontSize: 16,
@@ -1758,7 +1758,7 @@ class _SelectedBandCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   bandName,
-                  style: const TextStyle(
+                  style: TextStyle(
                     color: Theme.of(context).scaffoldBackgroundColor,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,

@@ -178,7 +178,7 @@ class _ForgotPasswordScreenState extends ConsumerState<ForgotPasswordScreen> {
               elevation: 0,
             ),
             child: _isLoading
-                ? const SizedBox(
+                ? SizedBox(
                     height: 20,
                     width: 20,
                     child: CircularProgressIndicator(
