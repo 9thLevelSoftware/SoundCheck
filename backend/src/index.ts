@@ -397,8 +397,13 @@ const startServer = async () => {
 };
 
 // Handle graceful shutdown
-process.on('SIGTERM', async () => {
-  logInfo('SIGTERM received, shutting down gracefully');
+const gracefulShutdown = async (signal: string) => {
+  logInfo(`${signal} received, starting graceful shutdown`);
+  // Stop accepting new connections first
+  server.close(() => {
+    logInfo('HTTP server closed');
+  });
+  // Stop BullMQ workers
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
@@ -409,21 +414,10 @@ process.on('SIGTERM', async () => {
   const db = Database.getInstance();
   await db.close();
   process.exit(0);
-});
+};
 
-process.on('SIGINT', async () => {
-  logInfo('SIGINT received, shutting down gracefully');
-  if (syncWorker) await stopEventSyncWorker(syncWorker);
-  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
-  if (notifWorker) await stopNotificationWorker(notifWorker);
-  if (modWorker) await stopModerationWorker(modWorker);
-  await closeSentry(2000); // Wait up to 2s for pending Sentry events
-  await closeRedis();
-  websocket.close();
-  const db = Database.getInstance();
-  await db.close();
-  process.exit(0);
-});
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {

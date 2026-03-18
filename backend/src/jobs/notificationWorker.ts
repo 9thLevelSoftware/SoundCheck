@@ -20,6 +20,7 @@ import { Worker, Job } from 'bullmq';
 import { createBullMQConnection, getRedisUrl } from '../config/redis';
 import { pushNotificationService } from '../services/PushNotificationService';
 import { getRedis } from '../utils/redisRateLimiter';
+import { captureException } from '../utils/sentry';
 import logger from '../utils/logger';
 
 let notificationWorker: Worker | null = null;
@@ -52,9 +53,12 @@ export function startNotificationWorker(): Worker | null {
 
       const listKey = `notif:batch:${userId}`;
 
-      // Atomically read and delete the batch list
-      const items = await redis.lrange(listKey, 0, -1);
-      await redis.del(listKey);
+      // Atomically read and delete the batch list using MULTI/EXEC
+      const multi = redis.multi();
+      multi.lrange(listKey, 0, -1);
+      multi.del(listKey);
+      const results = await multi.exec();
+      const items = (results && results[0] && results[0][1]) as string[] | null;
 
       if (!items || items.length === 0) {
         logger.info('Empty notification batch (race condition), skipping', { userId });
@@ -99,6 +103,7 @@ export function startNotificationWorker(): Worker | null {
     {
       connection: createBullMQConnection(),
       concurrency: 5,
+      lockDuration: 30000, // 30s — notification sends are quick
     },
   );
 
@@ -113,6 +118,7 @@ export function startNotificationWorker(): Worker | null {
       error: err.message,
       attemptsMade: job?.attemptsMade,
     });
+    captureException(err, { queue: 'notification-batch', jobId: job?.id });
   });
 
   worker.on('error', (err: Error) => {
