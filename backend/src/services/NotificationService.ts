@@ -1,4 +1,5 @@
 import Database from '../config/database';
+import { BlockService } from './BlockService';
 import logger from '../utils/logger';
 
 export interface Notification {
@@ -79,6 +80,7 @@ export interface NotificationFeed {
 
 export class NotificationService {
   private db = Database.getInstance();
+  private blockService = new BlockService();
 
   /**
    * Get notifications for a user with pagination.
@@ -137,21 +139,23 @@ export class NotificationService {
         LEFT JOIN event_lineup el ON ev.id = el.event_id AND el.is_headliner = true
         LEFT JOIN bands evb ON el.band_id = evb.id
         WHERE n.user_id = $1
+          ${this.blockService.getBlockFilterSQL(userId, 'n.from_user_id')}
         ORDER BY n.created_at DESC
         LIMIT $2 OFFSET $3
       `;
 
       const result = await this.db.query(query, [userId, limit, offset]);
 
-      // Get unread count
+      // Get unread count (also filtered by blocks)
+      const blockFilter = this.blockService.getBlockFilterSQL(userId, 'n.from_user_id');
       const unreadResult = await this.db.query(
-        'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1 AND is_read = FALSE',
+        `SELECT COUNT(*) as count FROM notifications n WHERE n.user_id = $1 AND n.is_read = FALSE ${blockFilter}`,
         [userId]
       );
 
-      // Get total count
+      // Get total count (also filtered by blocks)
       const totalResult = await this.db.query(
-        'SELECT COUNT(*) as count FROM notifications WHERE user_id = $1',
+        `SELECT COUNT(*) as count FROM notifications n WHERE n.user_id = $1 ${blockFilter}`,
         [userId]
       );
 

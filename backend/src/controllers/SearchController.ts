@@ -63,7 +63,8 @@ export class SearchController {
         }
       }
 
-      const results = await this.searchService.search(q.trim(), { types, limit });
+      const userId = req.user?.id;
+      const results = await this.searchService.search(q.trim(), { types, limit, userId });
 
       const response: ApiResponse = {
         success: true,

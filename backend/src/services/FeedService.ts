@@ -155,8 +155,10 @@ export class FeedService {
    * Get event feed: all check-ins for a specific event with cursor pagination.
    * Uses cache-aside pattern with Redis (60s TTL).
    */
-  async getEventFeed(eventId: string, cursor?: string, limit: number = 20): Promise<FeedPage> {
-    const cacheKey = `feed:event:${eventId}:${cursor || 'head'}`;
+  async getEventFeed(eventId: string, userId?: string, cursor?: string, limit: number = 20): Promise<FeedPage> {
+    const cacheKey = userId
+      ? `feed:event:${eventId}:${userId}:${cursor || 'head'}`
+      : `feed:event:${eventId}:${cursor || 'head'}`;
 
     const cached = await getCache<FeedPage>(cacheKey);
     if (cached) return cached;
@@ -166,6 +168,17 @@ export class FeedService {
     const cursorClause = cursorData
       ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)'
       : '';
+
+    const blockFilter = userId
+      ? this.blockService.getBlockFilterSQL(userId, 'c.user_id')
+      : '';
+
+    const toastSelect = userId
+      ? `EXISTS(
+          SELECT 1 FROM toasts t2
+          WHERE t2.checkin_id = c.id AND t2.user_id = '${userId}'
+        ) AS has_user_toasted`
+      : 'false AS has_user_toasted';
 
     const query = `
       SELECT
@@ -186,13 +199,14 @@ export class FeedService {
             AND ub.earned_at >= c.created_at - INTERVAL '1 minute'
             AND ub.earned_at <= c.created_at + INTERVAL '1 hour'
         ) AS has_badge_earned,
-        false AS has_user_toasted
+        ${toastSelect}
       FROM checkins c
       JOIN users u ON c.user_id = u.id
       LEFT JOIN events e ON c.event_id = e.id
       LEFT JOIN venues v ON e.venue_id = v.id
       WHERE c.event_id = $1
         AND (c.is_hidden IS NOT TRUE)
+        ${blockFilter}
         ${cursorClause}
       ORDER BY c.created_at DESC, c.id DESC
       LIMIT $2
