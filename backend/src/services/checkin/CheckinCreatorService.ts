@@ -106,7 +106,8 @@ export class CheckinCreatorService {
         ? headlinerResult.rows[0].band_id
         : null;
 
-      // INSERT the check-in
+      // INSERT the check-in + vibe tags inside a single transaction
+      // so a vibe tag failure rolls back the checkin (prevents partial state)
       const insertQuery = `
         INSERT INTO checkins (
           user_id, event_id, venue_id, band_id,
@@ -117,9 +118,13 @@ export class CheckinCreatorService {
         RETURNING *
       `;
 
-      let result;
+      let checkinId: string;
+      let checkinCreatedAt: string;
+      const client = await this.db.getClient();
       try {
-        result = await this.db.query(insertQuery, [
+        await client.query('BEGIN');
+
+        const result = await client.query(insertQuery, [
           userId,
           eventId,
           event.venue_id,
@@ -132,21 +137,28 @@ export class CheckinCreatorService {
           0,                      // rating starts at 0, set via PATCH /ratings
           comment || null,
         ]);
+
+        checkinId = result.rows[0].id;
+        checkinCreatedAt = result.rows[0].created_at;
+
+        // Add vibe tags if provided (within the same transaction)
+        if (vibeTagIds && vibeTagIds.length > 0) {
+          await this.addVibeTagsToCheckin(checkinId, vibeTagIds, client);
+        }
+
+        await client.query('COMMIT');
       } catch (error: any) {
-        // Catch unique constraint violation for user+event
+        await client.query('ROLLBACK');
+
+        // Re-throw unique constraint violation as 409
         if (error.code === '23505' && error.constraint && error.constraint.includes('user_event')) {
           const dupErr = new Error('You have already checked in to this event');
           (dupErr as any).statusCode = 409;
           throw dupErr;
         }
         throw error;
-      }
-
-      const checkinId = result.rows[0].id;
-
-      // Add vibe tags if provided
-      if (vibeTagIds && vibeTagIds.length > 0) {
-        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
+      } finally {
+        client.release();
       }
 
       // Promote user-created events if organic verification threshold met
@@ -196,7 +208,7 @@ export class CheckinCreatorService {
         eventId,
         event.event_name || '',
         event.venue_id,
-        result.rows[0].created_at
+        checkinCreatedAt
       ).catch((err) =>
         logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
       );
@@ -421,16 +433,18 @@ export class CheckinCreatorService {
   // ============================================
 
   /**
-   * Add vibe tags to a check-in
+   * Add vibe tags to a check-in.
+   * Accepts an optional client to execute within an existing transaction.
    */
-  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[]): Promise<void> {
+  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[], client?: any): Promise<void> {
     try {
       if (!vibeTagIds || vibeTagIds.length === 0) return;
 
       const values = vibeTagIds.map((_, i) => `($1, $${i + 2})`).join(', ');
       const params = [checkinId, ...vibeTagIds];
 
-      await this.db.query(
+      const queryExecutor = client || this.db;
+      await queryExecutor.query(
         `INSERT INTO checkin_vibes (checkin_id, vibe_tag_id) VALUES ${values}
          ON CONFLICT (checkin_id, vibe_tag_id) DO NOTHING`,
         params
