@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SEC-066: Release/main network security configuration.
+     Enforces HTTPS-only traffic and trusts only system CAs.
+     The debug variant (src/debug/res/xml/) additionally allows cleartext
+     traffic to localhost/10.0.2.2 for local development. -->
+<network-security-config>
+    <!-- Deny all cleartext (HTTP) traffic in release builds -->
+    <base-config cleartextTrafficPermitted="false">
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+</network-security-config>
