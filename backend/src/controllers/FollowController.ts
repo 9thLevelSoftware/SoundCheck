@@ -60,7 +60,8 @@ export class FollowController {
         message: 'Successfully followed user',
       };
 
-      res.status(200).json(response);
+      // Return 201 for new follow, 200 for already following
+      res.status(result.isNew ? 201 : 200).json(response);
     } catch (error) {
       logError('Follow user error:', { error });
 

@@ -142,7 +142,8 @@ export class CheckinRatingService {
     if (rating < 0.5 || rating > 5.0) {
       throw new Error('Rating must be between 0.5 and 5.0');
     }
-    if (rating % 0.5 !== 0) {
+    // Use integer arithmetic to avoid floating-point modulo precision issues
+    if ((rating * 2) % 1 !== 0) {
       throw new Error('Rating must be in 0.5 increments');
     }
   }

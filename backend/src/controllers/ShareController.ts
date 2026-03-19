@@ -126,8 +126,9 @@ export class ShareController {
         return;
       }
 
-      const response: ApiResponse = { success: false, error: 'Failed to generate share card' };
-      res.status(500).json(response);
+      const statusCode = error.statusCode || 500;
+      const response: ApiResponse = { success: false, error: statusCode === 503 ? error.message : 'Failed to generate share card' };
+      res.status(statusCode).json(response);
     }
   };
 
@@ -188,8 +189,9 @@ export class ShareController {
     } catch (error: any) {
       logError('ShareController.generateBadgeCard error', { error: error.message });
 
-      const response: ApiResponse = { success: false, error: 'Failed to generate share card' };
-      res.status(500).json(response);
+      const statusCode = error.statusCode || 500;
+      const response: ApiResponse = { success: false, error: statusCode === 503 ? error.message : 'Failed to generate share card' };
+      res.status(statusCode).json(response);
     }
   };
 

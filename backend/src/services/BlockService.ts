@@ -56,6 +56,14 @@ export class BlockService {
         [blockerId, blockedId]
       );
 
+      // Clean up existing notifications from the blocked user
+      await this.db.query(
+        `DELETE FROM notifications
+         WHERE (user_id = $1 AND from_user_id = $2)
+            OR (user_id = $2 AND from_user_id = $1)`,
+        [blockerId, blockedId]
+      );
+
       return mapDbRowToUserBlock(result.rows[0]);
     } catch (error: any) {
       // Re-throw custom errors

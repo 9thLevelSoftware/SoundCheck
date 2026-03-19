@@ -613,7 +613,7 @@ export class EventService {
                    , -1), 1))) AS distance_km
             FROM events e
             JOIN venues v ON e.venue_id = v.id
-            WHERE e.event_date BETWEEN CURRENT_DATE AND CURRENT_DATE + ($3 || ' days')::INTERVAL
+            WHERE e.event_date BETWEEN CURRENT_DATE AND CURRENT_DATE + make_interval(days => $3)
               AND e.is_cancelled = FALSE
               AND v.latitude IS NOT NULL
               AND v.longitude IS NOT NULL

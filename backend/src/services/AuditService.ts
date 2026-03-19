@@ -40,7 +40,6 @@ export type AuditResourceType =
   | 'checkins'
   | 'user_badges'
   | 'refresh_tokens'
-  | 'reviews'
   | 'events'
   | 'venues'
   | 'bands';

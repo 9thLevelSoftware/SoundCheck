@@ -7,6 +7,7 @@ import logger from '../utils/logger';
 export interface FollowResult {
   success: boolean;
   isFollowing: boolean;
+  isNew?: boolean;
 }
 
 export interface FollowerListResult {
@@ -28,12 +29,6 @@ export class FollowService {
    * Follow a user
    */
   async followUser(followerId: string, followingId: string): Promise<FollowResult> {
-    // Check if already following
-    const existingFollow = await this.isFollowing(followerId, followingId);
-    if (existingFollow) {
-      return { success: true, isFollowing: true };
-    }
-
     // Verify target user exists and is active
     const targetUserQuery = `
       SELECT id FROM users WHERE id = $1 AND is_active = true
@@ -43,7 +38,7 @@ export class FollowService {
       throw new Error('User not found');
     }
 
-    // Create follow relationship
+    // Create follow relationship (ON CONFLICT handles duplicates -- no pre-check needed)
     const query = `
       INSERT INTO user_followers (follower_id, following_id)
       VALUES ($1, $2)
@@ -52,6 +47,7 @@ export class FollowService {
     `;
 
     const result = await this.db.query(query, [followerId, followingId]);
+<<<<<<< HEAD
 
     // Only send notification if this is a new follow (not a duplicate)
     if (result.rows.length > 0) {
@@ -67,8 +63,10 @@ export class FollowService {
         logger.debug('Warning: follow notification failed', { error: err instanceof Error ? err.message : String(err) });
       }
     }
+=======
+>>>>>>> worktree-agent-ac41ef45
 
-    return { success: true, isFollowing: true };
+    return { success: true, isFollowing: true, isNew: result.rows.length > 0 };
   }
 
   /**
