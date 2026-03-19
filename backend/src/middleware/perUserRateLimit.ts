@@ -13,7 +13,12 @@ import logger from '../utils/logger';
  * - Rate limit by authenticated user ID
  * - Different limits for different endpoints
  * - Graceful degradation (falls back to IP if not authenticated)
- * - In-memory storage (upgrade to Redis for production)
+ * - In-memory storage
+ *
+ * API-061: This limiter uses in-memory storage, which resets on deploy and does not
+ * share state across multiple Railway instances. For multi-instance deployments,
+ * migrate to the Redis-based rate limiter (redisRateLimiter.ts). Acceptable for
+ * single-instance beta.
  *
  * USAGE:
  * import { createPerUserRateLimit } from './middleware/perUserRateLimit';

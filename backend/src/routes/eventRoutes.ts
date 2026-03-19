@@ -1,41 +1,10 @@
 import { Router } from 'express';
-import { z } from 'zod';
 import { EventController } from '../controllers/EventController';
 import { authenticateToken } from '../middleware/auth';
-import { validate } from '../middleware/validate';
+import { createPerUserRateLimit, RateLimitPresets } from '../middleware/perUserRateLimit';
 
 const router = Router();
 const eventController = new EventController();
-
-// --- Zod validation schemas ---
-
-const createEventSchema = z.object({
-  body: z.object({
-    venueId: z.string().uuid('venueId must be a valid UUID'),
-    bandId: z.string().uuid('bandId must be a valid UUID').optional(),
-    eventDate: z.string().refine(
-      (val) => !isNaN(new Date(val).getTime()),
-      { message: 'A valid eventDate is required' }
-    ),
-    eventName: z.string().min(1).max(500).optional(),
-    description: z.string().max(5000).optional(),
-    doorsTime: z.string().optional(),
-    startTime: z.string().optional(),
-    ticketUrl: z.string().url().max(2000).optional().or(z.literal('')),
-    lineup: z.array(z.object({
-      bandId: z.string().uuid().optional(),
-      bandName: z.string().min(1).max(500).optional(),
-      setOrder: z.number().int().min(0).optional(),
-      isHeadliner: z.boolean().optional(),
-    })).optional(),
-  }),
-});
-
-const eventIdParamSchema = z.object({
-  params: z.object({
-    id: z.string().uuid('Event ID must be a valid UUID'),
-  }),
-});
 
 // Get upcoming events (public)
 router.get('/upcoming', eventController.getUpcomingEvents);
@@ -64,12 +33,14 @@ router.get('/nearby', authenticateToken, eventController.getNearbyEvents);
 router.get('/lookup/:ticketmasterId', authenticateToken, eventController.lookupEvent);
 
 // Create a new event (requires auth)
-router.post('/', authenticateToken, validate(createEventSchema), eventController.createEvent);
+// SEC-013/CFR-014: Rate limit event creation
+router.post('/', authenticateToken, createPerUserRateLimit(RateLimitPresets.write), eventController.createEvent);
 
 // Get event by ID (public)
-router.get('/:id', validate(eventIdParamSchema), eventController.getEventById);
+router.get('/:id', eventController.getEventById);
 
 // Delete event (requires auth)
-router.delete('/:id', authenticateToken, validate(eventIdParamSchema), eventController.deleteEvent);
+// SEC-013/CFR-014: Rate limit event deletion
+router.delete('/:id', authenticateToken, createPerUserRateLimit(RateLimitPresets.write), eventController.deleteEvent);
 
 export default router;

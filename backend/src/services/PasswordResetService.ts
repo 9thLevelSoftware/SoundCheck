@@ -48,6 +48,8 @@ export class PasswordResetService {
       const user = userResult.rows[0];
 
       // Check if social-auth-only user (via social accounts table, not password sentinel)
+      // SEC-006/CFR-016: Return generic message for social auth users to prevent
+      // leaking whether an account uses social sign-in vs password
       const socialResult = await this.db.query(
         'SELECT 1 FROM user_social_accounts WHERE user_id = $1 LIMIT 1',
         [user.id]

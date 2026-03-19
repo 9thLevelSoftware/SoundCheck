@@ -22,6 +22,11 @@ export class PasswordResetController {
    * Always returns 200 with a generic message (no email enumeration).
    */
   forgotPassword = async (req: Request, res: Response): Promise<void> => {
+    // API-019: Enforce a minimum response time to prevent timing-based email enumeration.
+    // The response is sent after at least MIN_RESPONSE_MS regardless of internal path taken.
+    const MIN_RESPONSE_MS = 500;
+    const start = Date.now();
+
     try {
       const { email } = req.body;
 
@@ -32,9 +37,21 @@ export class PasswordResetController {
         data: { message: result.message },
       };
 
+      const elapsed = Date.now() - start;
+      const delay = Math.max(0, MIN_RESPONSE_MS - elapsed);
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+
       res.status(200).json(response);
     } catch (error) {
       logError('Error in forgotPassword handler', { error });
+
+      const elapsed = Date.now() - start;
+      const delay = Math.max(0, MIN_RESPONSE_MS - elapsed);
+      if (delay > 0) {
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
 
       const response: ApiResponse = {
         success: false,

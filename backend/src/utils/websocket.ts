@@ -145,6 +145,13 @@ class WebSocketServer {
     try {
       this.subscriber = createPubSubConnection();
       this.subscriber.subscribe('checkin:new');
+
+      // API-064: Re-subscribe on Redis reconnection to ensure no messages are lost
+      this.subscriber.on('ready', () => {
+        winstonLogger.info('Redis Pub/Sub reconnected, re-subscribing');
+        this.subscriber?.subscribe('checkin:new');
+      });
+
       this.subscriber.on('message', (channel: string, message: string) => {
         if (channel === 'checkin:new') {
           try {
@@ -201,14 +208,14 @@ class WebSocketServer {
     const client = this.clients.get(clientId);
     if (!client) return;
 
-    // Rate limiting: max 100 messages per 10 seconds
+    // API-060: Rate limiting: max 20 messages per 10 seconds (reduced from 100)
     const now = Date.now();
     if (now - client.lastMessageReset > 10000) {
       client.messageCount = 0;
       client.lastMessageReset = now;
     }
     client.messageCount++;
-    if (client.messageCount > 100) {
+    if (client.messageCount > 20) {
       this.send(clientId, 'error', { message: 'Rate limit exceeded' });
       return;
     }

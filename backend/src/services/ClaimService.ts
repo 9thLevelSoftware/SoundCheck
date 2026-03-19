@@ -11,6 +11,25 @@ import { NotFoundError, ConflictError, BadRequestError } from '../utils/errors';
 export class ClaimService {
   private db = Database.getInstance();
 
+  // SEC-008: Lookup map for entity type -> table name to avoid string interpolation.
+  // This is a static allow-list; no user input can influence the table name.
+  private static readonly ENTITY_TABLE_MAP: Record<string, string> = {
+    venue: 'venues',
+    band: 'bands',
+  };
+
+  /**
+   * Resolve a validated entity type to its database table name.
+   * Throws if the entity type is not in the allow-list.
+   */
+  private static resolveTable(entityType: string): string {
+    const table = ClaimService.ENTITY_TABLE_MAP[entityType];
+    if (!table) {
+      throw new BadRequestError('entityType must be "venue" or "band"');
+    }
+    return table;
+  }
+
   /**
    * Submit a new verification claim for a venue or band.
    * The partial unique index on verification_claims enforces one pending claim per entity.
@@ -18,13 +37,10 @@ export class ClaimService {
   async submitClaim(userId: string, request: CreateClaimRequest): Promise<VerificationClaim> {
     const { entityType, entityId, evidenceText, evidenceUrl } = request;
 
-    // Validate entityType
-    if (entityType !== 'venue' && entityType !== 'band') {
-      throw new BadRequestError('entityType must be "venue" or "band"');
-    }
+    // Validate entityType and resolve table via lookup map
+    const table = ClaimService.resolveTable(entityType);
 
     // Verify entity exists
-    const table = entityType === 'venue' ? 'venues' : 'bands';
     const entityResult = await this.db.query(
       `SELECT id FROM ${table} WHERE id = $1 AND is_active = true`,
       [entityId]
@@ -190,7 +206,7 @@ export class ClaimService {
 
       // If approved, update the entity with claimed_by_user_id
       if (decision.status === 'approved') {
-        const table = claim.entity_type === 'venue' ? 'venues' : 'bands';
+        const table = ClaimService.resolveTable(claim.entity_type);
         await client.query(
           `UPDATE ${table} SET claimed_by_user_id = $1 WHERE id = $2`,
           [claim.user_id, claim.entity_id]

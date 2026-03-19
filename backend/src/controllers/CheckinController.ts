@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { CheckinService } from '../services/CheckinService';
 import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
+import { AppError, NotFoundError } from '../utils/errors';
 import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
 import logger from '../utils/logger';
 
@@ -104,12 +105,19 @@ export class CheckinController {
     } catch (error) {
       logger.error('Get check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
+      // API-016/CFR-012: Distinguish NotFound from server errors
+      if (error instanceof NotFoundError || (error instanceof Error && error.message === 'Check-in not found')) {
+        const response: ApiResponse = { success: false, error: 'Check-in not found' };
+        res.status(404).json(response);
+        return;
+      }
+
       const response: ApiResponse = {
         success: false,
-        error: 'Check-in not found',
+        error: 'Failed to fetch check-in',
       };
 
-      res.status(404).json(response);
+      res.status(500).json(response);
     }
   };
 
@@ -131,8 +139,11 @@ export class CheckinController {
       }
 
       const filter = (req.query.filter as 'friends' | 'nearby' | 'global') || 'friends';
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+      // API-014: Bounded parseInt with NaN handling
+      const rawLimit = parseInt(req.query.limit as string, 10);
+      const limit = isNaN(rawLimit) ? 50 : Math.max(1, Math.min(100, rawLimit));
+      const rawOffset = parseInt(req.query.offset as string, 10);
+      const offset = isNaN(rawOffset) ? 0 : Math.max(0, rawOffset);
       const latitude = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
       const longitude = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
 
@@ -291,6 +302,16 @@ export class CheckinController {
         return;
       }
 
+      // SEC-009/CFR-010: Enforce max comment length to prevent abuse
+      if (commentText.length > 2000) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'Comment text must be 2000 characters or fewer',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
       const comment = await this.checkinService.addComment(userId, id, commentText);
 
       // Broadcast real-time notification to check-in room
@@ -421,12 +442,16 @@ export class CheckinController {
     try {
       const { venueId, bandId, userId, page, limit } = req.query;
 
+      // API-014: Bounded parseInt with NaN handling
+      const rawPage = parseInt(page as string, 10);
+      const rawLimitVal = parseInt(limit as string, 10);
+
       const checkins = await this.checkinService.getCheckins({
         venueId: venueId as string,
         bandId: bandId as string,
         userId: userId as string,
-        page: page ? parseInt(page as string) : 1,
-        limit: limit ? parseInt(limit as string) : 20,
+        page: isNaN(rawPage) ? 1 : Math.max(1, rawPage),
+        limit: isNaN(rawLimitVal) ? 20 : Math.max(1, Math.min(100, rawLimitVal)),
       });
 
       const response: ApiResponse = {

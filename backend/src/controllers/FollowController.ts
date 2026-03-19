@@ -60,8 +60,8 @@ export class FollowController {
         message: 'Successfully followed user',
       };
 
-      // Return 201 for new follow, 200 for already following
-      res.status(result.isNew ? 201 : 200).json(response);
+      // API-028: Return 201 for resource creation
+      res.status(201).json(response);
     } catch (error) {
       logError('Follow user error:', { error });
 
