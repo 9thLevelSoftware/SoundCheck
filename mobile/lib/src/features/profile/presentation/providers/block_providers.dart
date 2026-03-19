@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../auth/domain/user.dart';
 import '../../data/block_repository.dart';
 
 /// Block repository provider (keepAlive for consistency with other repositories).
@@ -25,11 +26,12 @@ final blockedUsersProvider =
 });
 
 /// Provider to fetch another user's public profile.
-/// GET /users/:userId returns the user object.
+/// GET /users/:userId returns the user object, parsed into a User model.
 final userPublicProfileProvider =
-    FutureProvider.autoDispose.family<Map<String, dynamic>, String>(
+    FutureProvider.autoDispose.family<User, String>(
         (ref, userId) async {
   final dioClient = ref.watch(dioClientProvider);
   final response = await dioClient.get('/users/$userId');
-  return response.data['data'] as Map<String, dynamic>;
+  final data = response.data['data'] as Map<String, dynamic>;
+  return User.fromJson(data);
 });

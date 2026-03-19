@@ -777,70 +777,7 @@ class _VenueInsightsSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          // Loyal Patrons
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Theme.of(context).colorScheme.surfaceContainerHigh,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Row(
-                    children: [
-                      Icon(Icons.emoji_events, color: AppTheme.toastGold, size: 16),
-                      SizedBox(width: 6),
-                      Text(
-                        'Loyal Patrons',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  // Stack of avatars
-                  Row(
-                    children: List.generate(4, (i) {
-                      return Container(
-                        margin: EdgeInsets.only(left: i == 0 ? 0 : -8),
-                        width: 28,
-                        height: 28,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          gradient: AppTheme.primaryGradient,
-                          border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHigh, width: 2),
-                        ),
-                        child: Center(
-                          child: Text(
-                            i == 3 ? '+5' : ['S', 'M', 'A'][i],
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    }),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          // Recent Bands - Now using real data
-          Expanded(
-            child: _RecentBandsSection(venueId: venueId),
-          ),
-        ],
-      ),
+      child: _RecentBandsSection(venueId: venueId),
     );
   }
 }

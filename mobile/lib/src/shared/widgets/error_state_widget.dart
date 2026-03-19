@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
 import '../../core/theme/app_theme.dart';
@@ -82,8 +83,8 @@ class ErrorStateWidget extends StatelessWidget {
               ),
             ],
 
-            // Technical Details (in debug mode)
-            if (error.toString().isNotEmpty) ...[
+            // Technical Details (only visible in debug builds)
+            if (kDebugMode && error.toString().isNotEmpty) ...[
               const SizedBox(height: AppTheme.spacing16),
               TextButton(
                 onPressed: () {

@@ -1,9 +1,11 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../core/providers/providers.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/error_state_widget.dart';
 import '../data/discovery_providers.dart';
 
 /// Screen showing suggested users for discovery with follow buttons.
@@ -18,6 +20,34 @@ class DiscoverUsersScreen extends ConsumerStatefulWidget {
 class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
   final Set<String> _followedIds = {};
   final Set<String> _loadingIds = {};
+  bool _followsFetched = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchExistingFollows();
+  }
+
+  Future<void> _fetchExistingFollows() async {
+    try {
+      final dioClient = ref.read(dioClientProvider);
+      final response = await dioClient.get('/follow/following');
+      if (response.data['data'] != null) {
+        final following = response.data['data'] as List;
+        setState(() {
+          _followedIds.addAll(
+            following.map((f) =>
+              (f['followedId'] ?? f['id'] ?? '') as String,
+            ).where((id) => id.isNotEmpty),
+          );
+          _followsFetched = true;
+        });
+      }
+    } catch (_) {
+      // Non-critical: local state will still work for new follows
+      _followsFetched = true;
+    }
+  }
 
   Future<void> _toggleFollow(String userId) async {
     if (_loadingIds.contains(userId)) return;
@@ -63,49 +93,13 @@ class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppTheme.voltLime),
           ),
-          error: (error, _) => ListView(
+          error: (error, stack) => ListView(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(32),
-                child: Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Icon(
-                        Icons.error_outline,
-                        color: AppTheme.hotOrange,
-                        size: 48,
-                      ),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'Failed to load suggestions',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        error.toString(),
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
-                      const SizedBox(height: 16),
-                      ElevatedButton(
-                        onPressed: () =>
-                            ref.invalidate(userSuggestionsProvider),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.voltLime,
-                        ),
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
+              ErrorStateWidget(
+                error: error,
+                stackTrace: stack,
+                customMessage: 'Failed to load suggestions',
+                onRetry: () => ref.invalidate(userSuggestionsProvider),
               ),
             ],
           ),
@@ -209,7 +203,7 @@ class _SuggestionCard extends StatelessWidget {
                 backgroundColor:
                     AppTheme.voltLime.withValues(alpha: 0.2),
                 backgroundImage: user.profileImageUrl != null
-                    ? NetworkImage(user.profileImageUrl!)
+                    ? CachedNetworkImageProvider(user.profileImageUrl!)
                     : null,
                 child: user.profileImageUrl == null
                     ? const Icon(Icons.person,

@@ -7,6 +7,7 @@ import 'providers/profile_providers.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/utils/app_info.dart';
+import '../../../shared/widgets/error_state_widget.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -30,7 +31,18 @@ class SettingsScreen extends ConsumerWidget {
       ),
       body: notificationSettings.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Error: $err')),
+        error: (err, stack) => RefreshIndicator(
+          onRefresh: () async => ref.invalidate(notificationSettingsProvider),
+          child: ListView(
+            children: [
+              ErrorStateWidget(
+                error: err,
+                stackTrace: stack,
+                onRetry: () => ref.invalidate(notificationSettingsProvider),
+              ),
+            ],
+          ),
+        ),
         data: (settings) {
           final pushEnabled = settings.$1;
           final emailEnabled = settings.$2;

@@ -166,7 +166,7 @@ class FeedCard extends ConsumerWidget {
             // Footer: Comment preview + Toast + Comment + Timestamp
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 border: Border(
                   top: BorderSide(
                     color: Theme.of(context).colorScheme.surfaceContainerHighest,
@@ -364,7 +364,7 @@ class _PhotoArea extends StatelessWidget {
                   color: AppTheme.toastGold.withValues(alpha: 0.9),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: const Row(
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Icon(
@@ -372,7 +372,7 @@ class _PhotoArea extends StatelessWidget {
                       size: 14,
                       color: Theme.of(context).scaffoldBackgroundColor,
                     ),
-                    SizedBox(width: 4),
+                    const SizedBox(width: 4),
                     Text(
                       'Badge Earned!',
                       style: TextStyle(
@@ -445,20 +445,28 @@ class _ActionButton extends StatelessWidget {
       label: semanticLabel,
       button: true,
       child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
         onTap: onTap,
-        child: Row(
-          children: [
-            Icon(icon, size: 20, color: color),
-            const SizedBox(width: 6),
-            Text(
-              label,
-              style: TextStyle(
-                color: color,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
+        child: SizedBox(
+          height: 44,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 10),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(icon, size: 20, color: color),
+                const SizedBox(width: 6),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: color,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

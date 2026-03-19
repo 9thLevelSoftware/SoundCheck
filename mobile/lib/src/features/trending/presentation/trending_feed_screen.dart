@@ -114,7 +114,38 @@ class TrendingFeedSection extends ConsumerWidget {
           SizedBox(height: 24),
         ],
       ),
-      error: (_, __) => const SizedBox.shrink(),
+      error: (error, _) => Padding(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.error_outline,
+              color: AppTheme.hotOrange,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Could not load trending shows',
+                style: TextStyle(
+                  color: AppTheme.textSecondary,
+                  fontSize: 14,
+                ),
+              ),
+            ),
+            TextButton(
+              onPressed: () => ref.invalidate(trendingFeedProvider),
+              child: const Text(
+                'Retry',
+                style: TextStyle(
+                  color: AppTheme.voltLime,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

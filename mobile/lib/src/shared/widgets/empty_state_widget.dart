@@ -8,6 +8,9 @@ enum EmptyStateType {
   noCheckins,
   noBadges,
   noSearchResults,
+  noNotifications,
+  noFriends,
+  noEvents,
   general,
 }
 
@@ -135,6 +138,33 @@ class EmptyStateWidget extends StatelessWidget {
               'We couldn\'t find what you\'re looking for. Try different keywords or browse all venues and bands.',
           actionLabel: 'Clear Search',
           actionIcon: Icons.clear,
+        );
+      case EmptyStateType.noNotifications:
+        return _EmptyStateConfig(
+          icon: Icons.notifications_none_outlined,
+          color: AppTheme.textSecondary,
+          title: 'No Notifications',
+          message: 'You\'re all caught up! New activity will appear here.',
+          actionLabel: 'Refresh',
+          actionIcon: Icons.refresh,
+        );
+      case EmptyStateType.noFriends:
+        return _EmptyStateConfig(
+          icon: Icons.people_outline,
+          color: AppTheme.primary,
+          title: 'No Friends Yet',
+          message: 'Follow other users to see their activity in your feed!',
+          actionLabel: 'Find Friends',
+          actionIcon: Icons.person_add,
+        );
+      case EmptyStateType.noEvents:
+        return _EmptyStateConfig(
+          icon: Icons.event_outlined,
+          color: AppTheme.primary,
+          title: 'No Events Found',
+          message: 'There are no upcoming events in your area. Check back later!',
+          actionLabel: 'Refresh',
+          actionIcon: Icons.refresh,
         );
       case EmptyStateType.general:
         return _EmptyStateConfig(

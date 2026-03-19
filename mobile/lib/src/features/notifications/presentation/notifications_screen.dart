@@ -239,9 +239,8 @@ class NotificationsScreen extends ConsumerWidget {
         break;
 
       case 'badge_earned':
-        // Navigate to user's own profile to see badges
-        // No dedicated badges route exists, so go to profile
-        context.go('/profile');
+        // Navigate to badge collection screen
+        context.push('/badges');
         break;
 
       case 'show_reminder':
@@ -303,7 +302,7 @@ class _NotificationItem extends StatelessWidget {
             color: notification.isRead
                 ? Colors.transparent
                 : AppTheme.voltLime.withValues(alpha: 0.05),
-            border: const Border(
+            border: Border(
               bottom: BorderSide(
                 color: Theme.of(context).colorScheme.surfaceContainerHighest,
                 width: 0.5,

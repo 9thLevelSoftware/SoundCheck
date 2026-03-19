@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
+import '../../../shared/widgets/error_state_widget.dart';
 import 'providers/feed_providers.dart';
 import 'widgets/feed_card.dart';
 import 'widgets/happening_now_card.dart';
@@ -103,7 +104,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
                     gradient: AppTheme.primaryGradient,
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
+                  child: Text(
                     'SOUNDCHECK',
                     style: TextStyle(
                       fontSize: 18,
@@ -119,7 +120,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
               IconButton(
                 icon: const Icon(Icons.search),
                 tooltip: 'Search',
-                onPressed: () => context.push('/discover'),
+                onPressed: () => context.go('/discover'),
               ),
             ],
             bottom: TabBar(
@@ -572,7 +573,11 @@ class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
             padding: const EdgeInsets.only(bottom: 100),
             itemCount: groups.length,
             itemBuilder: (context, index) {
-              return HappeningNowCard(group: groups[index]);
+              final group = groups[index];
+              return HappeningNowCard(
+                group: group,
+                onTap: () => context.push('/events/${group.eventId}'),
+              );
             },
           );
         },
@@ -622,46 +627,10 @@ class _FeedErrorState extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListView(
       children: [
-        Padding(
-          padding: const EdgeInsets.all(32.0),
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(
-                  Icons.error_outline,
-                  color: AppTheme.hotOrange,
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Failed to load feed',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  error.toString(),
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: onRetry,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.voltLime,
-                  ),
-                  child: const Text('Retry'),
-                ),
-              ],
-            ),
-          ),
+        ErrorStateWidget(
+          error: error,
+          customMessage: 'Failed to load feed',
+          onRetry: onRetry,
         ),
       ],
     );

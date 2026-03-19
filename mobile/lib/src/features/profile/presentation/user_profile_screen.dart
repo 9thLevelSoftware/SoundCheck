@@ -1,8 +1,10 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
+import '../../../shared/widgets/error_state_widget.dart';
 import '../../auth/domain/user.dart';
 import 'providers/block_providers.dart';
 
@@ -60,34 +62,13 @@ class UserProfileScreen extends ConsumerWidget {
       ),
       body: profileAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
-              const SizedBox(height: AppTheme.spacing16),
-              Text(
-                'Failed to load profile',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: AppTheme.spacing8),
-              Text(
-                err.toString(),
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppTheme.spacing16),
-              TextButton.icon(
-                onPressed: () =>
-                    ref.invalidate(userPublicProfileProvider(userId)),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
-              ),
-            ],
-          ),
+        error: (err, stack) => ErrorStateWidget(
+          error: err,
+          stackTrace: stack,
+          customMessage: 'Failed to load profile',
+          onRetry: () => ref.invalidate(userPublicProfileProvider(userId)),
         ),
-        data: (profileData) {
-          final user = User.fromJson(profileData);
+        data: (user) {
           final username = user.username;
           final displayName = _buildDisplayName(user);
           final profileImageUrl = user.profileImageUrl;
@@ -112,7 +93,7 @@ class UserProfileScreen extends ConsumerWidget {
                     radius: 50,
                     backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                     backgroundImage: profileImageUrl != null
-                        ? NetworkImage(profileImageUrl)
+                        ? CachedNetworkImageProvider(profileImageUrl)
                         : null,
                     child: profileImageUrl == null
                         ? Text(
