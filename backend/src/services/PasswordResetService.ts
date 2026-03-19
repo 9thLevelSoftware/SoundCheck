@@ -54,9 +54,11 @@ export class PasswordResetService {
       );
       if (socialResult.rows.length > 0) {
         logInfo('Password reset requested for social auth user', { userId: user.id });
+        // Return the same generic message as for non-existent users to prevent
+        // disclosing that this email uses social auth (E2E-073/E2E-074/CFR-016)
         return {
           sent: false,
-          message: 'This account uses Google/Apple Sign-In. Please use that method to log in.',
+          message: genericMessage,
         };
       }
 

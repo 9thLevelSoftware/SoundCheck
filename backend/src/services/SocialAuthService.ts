@@ -163,7 +163,12 @@ export class SocialAuthService {
 
     // Social account doesn't exist - check if we have an email to work with
     if (!profile.email) {
-      // For Apple after first sign-in, we need to look up existing account
+      // For Apple re-auth: email may be empty after first sign-in.
+      // Try to find an existing social account by provider + providerId
+      // (the initial findSocialAccount above checks provider_id, but the link
+      // may not exist yet if the user was created via email and this is a
+      // first-time Apple sign-in with no email provided).
+      // If we truly have no email and no existing link, we cannot proceed.
       throw new Error('Email is required for new social sign-in');
     }
 

@@ -18,23 +18,17 @@ export class RsvpService {
    * Validates that the event exists and is active before inserting.
    */
   async toggleRsvp(userId: string, eventId: string): Promise<{ isGoing: boolean }> {
-    // Check if RSVP already exists
-    const existingQuery = `
-      SELECT id FROM event_rsvps
-      WHERE user_id = $1 AND event_id = $2
-    `;
-    const existing = await this.db.query(existingQuery, [userId, eventId]);
+    // Try to delete first -- if a row was removed, the user was RSVP'd and is now un-RSVP'd
+    const deleteResult = await this.db.query(
+      `DELETE FROM event_rsvps WHERE user_id = $1 AND event_id = $2 RETURNING id`,
+      [userId, eventId]
+    );
 
-    if (existing.rows.length > 0) {
-      // Already RSVP'd -- remove it
-      await this.db.query(
-        `DELETE FROM event_rsvps WHERE user_id = $1 AND event_id = $2`,
-        [userId, eventId]
-      );
+    if (deleteResult.rows.length > 0) {
       return { isGoing: false };
     }
 
-    // Validate event exists and is active before inserting
+    // No existing RSVP -- validate event exists and is active before inserting
     const eventCheck = await this.db.query(
       `SELECT id FROM events WHERE id = $1 AND is_cancelled = FALSE`,
       [eventId]

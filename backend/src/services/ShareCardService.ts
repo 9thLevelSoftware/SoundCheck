@@ -56,8 +56,9 @@ export class ShareCardService {
     data: CheckinCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
-      return { ogUrl: '', storiesUrl: '' };
+      const err = new Error('Share card generation unavailable: storage not configured');
+      (err as any).statusCode = 503;
+      throw err;
     }
 
     const ts = Date.now();
@@ -84,8 +85,9 @@ export class ShareCardService {
     data: BadgeCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
-      return { ogUrl: '', storiesUrl: '' };
+      const err = new Error('Share card generation unavailable: storage not configured');
+      (err as any).statusCode = 503;
+      throw err;
     }
 
     const ts = Date.now();
@@ -109,8 +111,9 @@ export class ShareCardService {
     data: WrappedSummaryData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
-      return { ogUrl: '', storiesUrl: '' };
+      const err = new Error('Share card generation unavailable: storage not configured');
+      (err as any).statusCode = 503;
+      throw err;
     }
     const ts = Date.now();
     const ogKey = `cards/wrapped/${userId}-${year}-summary-${ts}-og.png`;
@@ -131,8 +134,9 @@ export class ShareCardService {
     data: WrappedStatData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
     if (!r2Service.configured) {
-      logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
-      return { ogUrl: '', storiesUrl: '' };
+      const err = new Error('Share card generation unavailable: storage not configured');
+      (err as any).statusCode = 503;
+      throw err;
     }
     const ts = Date.now();
     const ogKey = `cards/wrapped/${userId}-${year}-${data.statType}-${ts}-og.png`;

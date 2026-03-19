@@ -121,15 +121,38 @@ export class WrappedController {
   renderWrappedLanding = async (req: Request, res: Response): Promise<void> => {
     try {
       const { userId, year } = req.params;
+
+      // Validate userId is a UUID and year is a valid number to prevent XSS
+      const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+      if (!UUID_REGEX.test(userId)) {
+        res.status(400).send('Invalid user ID');
+        return;
+      }
+      const yearNum = parseInt(year, 10);
+      if (isNaN(yearNum) || yearNum < 2020 || yearNum > new Date().getFullYear() + 1) {
+        res.status(400).send('Invalid year');
+        return;
+      }
+
+      const escapeHtml = (str: string): string =>
+        str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+           .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+
       const templatePath = path.join(__dirname, '../templates/share-cards/landing-page.html');
       let html = fs.readFileSync(templatePath, 'utf-8');
 
-      html = html.replace(/\{\{TITLE\}\}/g, `SoundCheck Wrapped ${year}`)
-                 .replace(/\{\{DESCRIPTION\}\}/g, `Check out my ${year} concert stats on SoundCheck!`)
+      const safeYear = escapeHtml(String(yearNum));
+      const safeUserId = escapeHtml(userId);
+      const baseUrl = escapeHtml(process.env.BASE_URL || '');
+      const appStoreUrl = escapeHtml(process.env.APP_STORE_URL || '#');
+      const playStoreUrl = escapeHtml(process.env.PLAY_STORE_URL || '#');
+
+      html = html.replace(/\{\{TITLE\}\}/g, `SoundCheck Wrapped ${safeYear}`)
+                 .replace(/\{\{DESCRIPTION\}\}/g, `Check out my ${safeYear} concert stats on SoundCheck!`)
                  .replace(/\{\{IMAGE_URL\}\}/g, '')
-                 .replace(/\{\{PAGE_URL\}\}/g, `${process.env.BASE_URL || ''}/wrapped/${userId}/${year}`)
-                 .replace(/\{\{APP_STORE_URL\}\}/g, process.env.APP_STORE_URL || '#')
-                 .replace(/\{\{PLAY_STORE_URL\}\}/g, process.env.PLAY_STORE_URL || '#');
+                 .replace(/\{\{PAGE_URL\}\}/g, `${baseUrl}/wrapped/${safeUserId}/${safeYear}`)
+                 .replace(/\{\{APP_STORE_URL\}\}/g, appStoreUrl)
+                 .replace(/\{\{PLAY_STORE_URL\}\}/g, playStoreUrl);
 
       res.type('html').send(html);
     } catch (error) {

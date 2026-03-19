@@ -17,7 +17,7 @@
 
 import { Router } from 'express';
 import { ClaimController } from '../controllers/ClaimController';
-import { authenticateToken, requireAdmin } from '../middleware/auth';
+import { authenticateToken, requireAdmin, rateLimit } from '../middleware/auth';
 
 const claimController = new ClaimController();
 
@@ -27,7 +27,8 @@ const claimController = new ClaimController();
 
 const publicRouter = Router();
 
-publicRouter.post('/', authenticateToken, claimController.submitClaim);
+// Rate limit claim submissions: 5 per 15 minutes per user
+publicRouter.post('/', authenticateToken, rateLimit(15 * 60 * 1000, 5), claimController.submitClaim);
 publicRouter.get('/me', authenticateToken, claimController.getMyClaims);
 
 // Claimed owner features
