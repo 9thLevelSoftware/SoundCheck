@@ -211,7 +211,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 const SizedBox(height: AppTheme.spacing8),
                 
                 Text(
-                  'Start discovering and reviewing venues',
+                  'Start checking in to live shows',
                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                         color: AppTheme.textSecondary,
                       ),
