@@ -22,24 +22,38 @@ export class OnboardingService {
       throw new Error('Must select between 3 and 8 genres');
     }
 
-    // Delete existing preferences
-    await this.db.query(
-      `DELETE FROM user_genre_preferences WHERE user_id = $1`,
-      [userId]
-    );
+    // PERF-022: Wrap DELETE + INSERT in a transaction to prevent
+    // partial state if the INSERT fails after DELETE commits.
+    const client = await this.db.getClient();
+    try {
+      await client.query('BEGIN');
 
-    // Batch insert new preferences
-    if (genres.length > 0) {
-      const values = genres
-        .map((_, i) => `($1, $${i + 2})`)
-        .join(', ');
-      const params = [userId, ...genres];
-
-      await this.db.query(
-        `INSERT INTO user_genre_preferences (user_id, genre) VALUES ${values}
-         ON CONFLICT (user_id, genre) DO NOTHING`,
-        params
+      // Delete existing preferences
+      await client.query(
+        `DELETE FROM user_genre_preferences WHERE user_id = $1`,
+        [userId]
       );
+
+      // Batch insert new preferences
+      if (genres.length > 0) {
+        const values = genres
+          .map((_, i) => `($1, $${i + 2})`)
+          .join(', ');
+        const params = [userId, ...genres];
+
+        await client.query(
+          `INSERT INTO user_genre_preferences (user_id, genre) VALUES ${values}
+           ON CONFLICT (user_id, genre) DO NOTHING`,
+          params
+        );
+      }
+
+      await client.query('COMMIT');
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
     }
   }
 

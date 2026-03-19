@@ -186,10 +186,12 @@ export class SearchService {
     const exactTerm = query.toLowerCase();
     const prefixTerm = `${query.toLowerCase()}%`;
 
+    // PERF-015: Use denormalized u.total_checkins column instead of
+    // unbounded COUNT(*) correlated subquery per row.
     const sql = `
       SELECT u.id, u.username, u.first_name, u.last_name,
         u.profile_image_url, u.bio, u.is_verified,
-        (SELECT COUNT(*)::int FROM checkins WHERE user_id = u.id) AS total_checkins
+        COALESCE(u.total_checkins, 0) AS total_checkins
       FROM users u
       WHERE u.is_active = true
         AND (LOWER(u.username) LIKE $1

@@ -92,11 +92,13 @@ export class BandService {
     const values: any[] = [];
     let paramCount = 1;
 
-    // Text search
+    // PERF-016: Use tsvector full-text search instead of ILIKE on unnested
+    // genres. The search_vector GIN index (migration 034) makes this O(1)
+    // instead of O(n) ILIKE scans with unnest.
     if (q.trim()) {
-      conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE g ILIKE $${paramCount}) OR hometown ILIKE $${paramCount})`);
-      values.push(`%${q.trim()}%`);
-      paramCount++;
+      conditions.push(`(search_vector @@ websearch_to_tsquery('english', $${paramCount}) OR name ILIKE $${paramCount + 1})`);
+      values.push(q.trim(), `%${q.trim()}%`);
+      paramCount += 2;
     }
 
     // Genre filter (uses genres TEXT[] column)

@@ -173,8 +173,21 @@ export class CheckinCreatorService {
         }
       }
 
+      // PERF-013: Query follower IDs once and pass to both cache invalidation
+      // and Pub/Sub notification, avoiding a duplicate followers query.
+      const followerIdsPromise = this.db.query(
+        'SELECT follower_id FROM user_followers WHERE following_id = $1',
+        [userId]
+      ).then(r => r.rows.map((row: any) => row.follower_id as string))
+       .catch((err) => {
+         logger.debug('Warning: follower query failed', { error: err instanceof Error ? err.message : String(err) });
+         return [] as string[];
+       });
+
       // Fire-and-forget: invalidate feed caches for followers and event
-      this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
+      followerIdsPromise.then(followerIds =>
+        this.invalidateFeedCachesForCheckin(userId, eventId, followerIds)
+      ).catch((err) =>
         logger.debug('Warning: feed cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
@@ -190,13 +203,16 @@ export class CheckinCreatorService {
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
       // and enqueue batched push notifications for followers
-      this.publishCheckinAndNotify(
-        checkinId,
-        userId,
-        eventId,
-        event.event_name || '',
-        event.venue_id,
-        result.rows[0].created_at
+      followerIdsPromise.then(followerIds =>
+        this.publishCheckinAndNotify(
+          checkinId,
+          userId,
+          eventId,
+          event.event_name || '',
+          event.venue_id,
+          result.rows[0].created_at,
+          followerIds
+        )
       ).catch((err) =>
         logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
       );
@@ -447,15 +463,12 @@ export class CheckinCreatorService {
    * event feed cache, and happening-now cache.
    * Fire-and-forget: errors are logged but never block check-in response.
    */
-  private async invalidateFeedCachesForCheckin(userId: string, eventId: string | null): Promise<void> {
+  private async invalidateFeedCachesForCheckin(
+    userId: string,
+    eventId: string | null,
+    followerIds: string[]
+  ): Promise<void> {
     try {
-      // Get follower IDs of the check-in creator
-      const followerResult = await this.db.query(
-        'SELECT follower_id FROM user_followers WHERE following_id = $1',
-        [userId]
-      );
-
-      const followerIds: string[] = followerResult.rows.map((r: any) => r.follower_id);
 
       // Invalidate friends feed + happening_now cache for each follower
       const invalidations: Promise<void>[] = [];
@@ -500,18 +513,17 @@ export class CheckinCreatorService {
     eventId: string,
     eventName: string,
     venueId: string,
-    createdAt: string
+    createdAt: string,
+    followerIds: string[]
   ): Promise<void> {
     try {
       const redis = getRedis();
       if (!redis) return;
+      if (followerIds.length === 0) return;
 
-      // Query follower IDs and user info in parallel
-      const [followerResult, userResult, venueResult] = await Promise.all([
-        this.db.query(
-          'SELECT follower_id FROM user_followers WHERE following_id = $1',
-          [userId]
-        ),
+      // PERF-013: followerIds are pre-fetched by caller. Only query user
+      // and venue info here (these were already parallelized).
+      const [userResult, venueResult] = await Promise.all([
         this.db.query(
           'SELECT username, profile_image_url FROM users WHERE id = $1',
           [userId]
@@ -521,9 +533,6 @@ export class CheckinCreatorService {
           [venueId]
         ),
       ]);
-
-      const followerIds = followerResult.rows.map((r: any) => r.follower_id);
-      if (followerIds.length === 0) return;
 
       const username = userResult.rows[0]?.username || '';
       const userAvatarUrl = userResult.rows[0]?.profile_image_url || null;

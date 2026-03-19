@@ -191,7 +191,7 @@ export class DiscoveryService {
         LEFT JOIN recent_trending rt ON e.id = rt.event_id
         WHERE e.event_date >= CURRENT_DATE
           AND e.is_cancelled = FALSE
-          AND e.id NOT IN (SELECT event_id FROM checkins WHERE user_id = $1 AND event_id IS NOT NULL)
+          AND NOT EXISTS (SELECT 1 FROM checkins WHERE user_id = $1 AND event_id = e.id)
           AND NOT EXISTS (
             SELECT 1 FROM user_blocks
             WHERE (blocker_id = $1 AND blocked_id = e.created_by_user_id)
