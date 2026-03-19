@@ -31,6 +31,8 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 }
 
 export async function down(pgm: MigrationBuilder): Promise<void> {
-  // No-op: cannot un-detect old schema or un-enable an extension safely.
-  // pg_trgm is harmless to leave enabled.
+  // Intentional no-op (DB-022): Dropping pg_trgm could break other
+  // migrations/indexes that depend on it. The conditional table cleanup
+  // in up() is also not reversible -- recreating the wrong-schema events
+  // table would cause more harm than good. This is by design.
 }

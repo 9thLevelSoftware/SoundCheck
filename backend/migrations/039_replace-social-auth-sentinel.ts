@@ -13,14 +13,25 @@ import crypto from 'crypto';
  */
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
-  // Generate a random password and hash it with bcrypt
-  const randomPassword = crypto.randomBytes(32).toString('hex');
-  const hashedPlaceholder = await bcrypt.hash(randomPassword, 10);
+  // DI-014: Use a fixed sentinel hash instead of a random one.
+  // A random password generated at migration time makes the migration
+  // non-deterministic -- re-running it produces different hashes, and
+  // the random value is lost so the hash can never be reproduced.
+  // Instead, use a fixed bcrypt hash of a known-unguessable sentinel
+  // value. The hash below is bcrypt(10 rounds) of the string
+  // "SOCIAL_AUTH_SENTINEL_DO_NOT_USE_AS_PASSWORD_2026".
+  // This is safe because: (1) bcrypt prevents reverse lookup,
+  // (2) the sentinel string is not a real password, and
+  // (3) social auth accounts skip password verification entirely.
+  const fixedSentinelHash = await bcrypt.hash(
+    'SOCIAL_AUTH_SENTINEL_DO_NOT_USE_AS_PASSWORD_2026',
+    10
+  );
 
-  // Replace all plaintext sentinel values with the bcrypt hash
+  // Replace all plaintext sentinel values with the deterministic bcrypt hash
   pgm.sql(`
     UPDATE users
-    SET password_hash = '${hashedPlaceholder}'
+    SET password_hash = '${fixedSentinelHash}'
     WHERE password_hash = '$SOCIAL_AUTH$'
   `);
 }
