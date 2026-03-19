@@ -384,7 +384,7 @@ class _StatsRow extends StatelessWidget {
         children: [
           _StatItem(
             value: _formatNumber(band.totalReviews),
-            label: 'Reviews',
+            label: 'Check-ins',
           ),
           _StatDivider(),
           _StatItem(
