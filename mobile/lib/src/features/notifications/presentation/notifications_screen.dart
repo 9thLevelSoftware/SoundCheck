@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../../core/services/log_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../domain/notification.dart';
 import 'providers/notification_providers.dart';
@@ -260,7 +261,7 @@ class NotificationsScreen extends ConsumerWidget {
 
       default:
         // For unknown types, log and do nothing
-        debugPrint('Unknown notification type: ${notification.type}');
+        LogService.w('Unknown notification type: ${notification.type}');
     }
   }
 

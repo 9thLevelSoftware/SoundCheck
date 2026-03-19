@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import '../../../core/services/log_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../../../shared/utils/haptic_feedback.dart';
@@ -769,7 +770,7 @@ class _SectionHeader extends StatelessWidget {
             TextButton(
               onPressed: onTrailingTap ??
                   () {
-                    debugPrint('$title - $trailing tapped');
+                    LogService.d('$title - $trailing tapped');
                   },
               style: TextButton.styleFrom(
                 minimumSize: const Size(0, 44),

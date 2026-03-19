@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'settings_provider.dart';
 import 'providers/profile_providers.dart';
+import '../../../core/services/log_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
 import '../../../core/utils/app_info.dart';
@@ -230,10 +231,15 @@ class SettingsScreen extends ConsumerWidget {
           context.go('/login');
         }
       } catch (e) {
+        // SEC-063: Log the raw exception for diagnostics but show a
+        // generic user-facing message to avoid leaking internal details.
+        LogService.e('Account deletion request failed', e);
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to delete account: $e'),
+            const SnackBar(
+              content: Text(
+                'Unable to delete account. Please try again later or contact support.',
+              ),
               backgroundColor: AppTheme.error,
             ),
           );
