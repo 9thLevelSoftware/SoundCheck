@@ -75,16 +75,18 @@
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>SoundCheck uses your location to help you discover nearby concert venues, live music events, and connect with other music fans in your area.</string>
 
-	<!-- Location Access (always - for background geofencing in future) -->
-	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-	<string>SoundCheck uses your location to discover nearby venues and can notify you about upcoming events at your favorite venues.</string>
-
-	<!-- Motion & Fitness (for activity detection in future) -->
-	<key>NSMotionUsageDescription</key>
-	<string>SoundCheck may use motion data to enhance your concert experience and automatically detect when you're at a venue.</string>
+	<!-- SEC-061: Removed NSLocationAlwaysAndWhenInUseUsageDescription and
+	     NSMotionUsageDescription. These permissions are for unimplemented
+	     features (background geofencing, activity detection) and will trigger
+	     App Store review scrutiny. Re-add only when the features are built
+	     and the usage descriptions accurately reflect functionality. -->
 	<key>FlutterDeepLinkingEnabled</key>
 	<true/>
 	<!-- Custom URL scheme for deep links (e.g., password reset) -->
+	<!-- SEC-056: SECURITY WARNING — Custom URL schemes are vulnerable to URI
+	     hijacking. For production, migrate to Universal Links with
+	     apple-app-site-association. Never pass sensitive tokens via custom
+	     scheme without server-side validation. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

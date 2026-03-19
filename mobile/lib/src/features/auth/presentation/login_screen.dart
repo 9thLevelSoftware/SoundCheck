@@ -140,9 +140,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await ref.read(authStateProvider.notifier).refreshUser();
         await HapticFeedbackUtil.successVibration();
         if (!mounted) return;
+        // SEC-060: Use generic success message — do not display user
+        // email in UI SnackBars to avoid PII leakage on shared screens.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Google Sign-In successful: ${result.user.email}'),
+            content: const Text('Signed in with Google successfully'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),
@@ -181,12 +183,11 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         await ref.read(authStateProvider.notifier).refreshUser();
         await HapticFeedbackUtil.successVibration();
         if (!mounted) return;
-        final displayText = result.user.email.isNotEmpty
-            ? result.user.email
-            : 'User authenticated';
+        // SEC-060: Use generic success message — do not display user
+        // email in UI SnackBars to avoid PII leakage on shared screens.
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Apple Sign-In successful: $displayText'),
+            content: const Text('Signed in with Apple successfully'),
             backgroundColor: AppTheme.success,
             behavior: SnackBarBehavior.floating,
             margin: const EdgeInsets.all(16),

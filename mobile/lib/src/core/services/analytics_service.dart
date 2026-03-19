@@ -16,7 +16,8 @@ library;
 
 import 'package:firebase_analytics/firebase_analytics.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/foundation.dart';
+
+import 'log_service.dart';
 
 class AnalyticsService {
   static FirebaseAnalytics? _analytics;
@@ -32,9 +33,9 @@ class AnalyticsService {
       _analytics = FirebaseAnalytics.instance;
       _observer = FirebaseAnalyticsObserver(analytics: _analytics!);
       _initialized = true;
-      debugPrint('Analytics initialized');
+      LogService.i('Analytics initialized');
     } catch (e) {
-      debugPrint('Analytics initialization failed: $e');
+      LogService.e('Analytics initialization failed', e);
       _initialized = true; // Mark as initialized to prevent retry loops
     }
   }
@@ -51,7 +52,7 @@ class AnalyticsService {
     Map<String, Object>? parameters,
   }) async {
     if (!_initialized || _analytics == null) {
-      debugPrint('Analytics (not initialized): $name - $parameters');
+      LogService.w('Analytics (not initialized): $name - $parameters');
       return;
     }
     await _analytics!.logEvent(name: name, parameters: parameters);
@@ -81,7 +82,7 @@ class AnalyticsService {
   /// Log a screen view
   static Future<void> logScreenView(String screenName) async {
     if (!_initialized || _analytics == null) {
-      debugPrint('Analytics (not initialized): screen_view - $screenName');
+      LogService.w('Analytics (not initialized): screen_view - $screenName');
       return;
     }
     await _analytics!.logScreenView(screenName: screenName);

@@ -80,10 +80,13 @@ class DioClient {
       ),
     );
 
-    // Add logging interceptor
+    // Add logging interceptor in dev mode only.
+    // SEC-058: Disable requestHeader to prevent logging Authorization
+    // headers (JWTs) even in debug builds.
     if (ApiConfig.isDev) {
       _dio.interceptors.add(
         LogInterceptor(
+          requestHeader: false,
           requestBody: true,
           responseBody: true,
           error: true,
