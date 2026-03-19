@@ -228,8 +228,8 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
                       _RatingsSection(checkIn: checkIn),
 
                     // Notes
-                    if (checkIn.reviewText != null && checkIn.reviewText!.isNotEmpty)
-                      _NotesSection(noteText: checkIn.reviewText!),
+                    if (checkIn.noteText != null && checkIn.noteText!.isNotEmpty)
+                      _NotesSection(noteText: checkIn.noteText!),
 
                     // Vibe Tags
                     if (checkIn.vibeTags != null && checkIn.vibeTags!.isNotEmpty)

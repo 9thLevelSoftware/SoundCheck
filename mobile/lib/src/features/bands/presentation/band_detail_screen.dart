@@ -383,7 +383,7 @@ class _StatsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatItem(
-            value: _formatNumber(band.totalReviews),
+            value: _formatNumber(band.totalCheckins),
             label: 'Check-ins',
           ),
           _StatDivider(),
@@ -1270,11 +1270,11 @@ class _CheckInPreviewCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (checkin.reviewText != null &&
-                      checkin.reviewText!.isNotEmpty) ...[
+                  if (checkin.noteText != null &&
+                      checkin.noteText!.isNotEmpty) ...[
                     const SizedBox(height: 8),
                     Text(
-                      checkin.reviewText!,
+                      checkin.noteText!,
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(

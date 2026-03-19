@@ -783,7 +783,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                                 ),
                                 const SizedBox(width: 4),
                                 Text(
-                                  '${venue.totalReviews} check-ins',
+                                  '${venue.totalCheckins} check-ins',
                                   style: const TextStyle(
                                     color: AppTheme.textTertiary,
                                     fontSize: 14,
@@ -2086,7 +2086,7 @@ class _PopularBandListItem extends StatelessWidget {
         ),
       ),
       subtitle: Text(
-        '${band.totalReviews} check-ins  ${band.genre ?? "Various"}',
+        '${band.totalCheckins} check-ins  ${band.genre ?? "Various"}',
         style: const TextStyle(color: AppTheme.textTertiary, fontSize: 12),
       ),
       trailing: Row(

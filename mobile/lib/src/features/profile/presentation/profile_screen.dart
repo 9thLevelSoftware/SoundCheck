@@ -726,9 +726,7 @@ class _LevelProgress extends StatelessWidget {
 // Section Header
 class _SectionHeader extends StatelessWidget {
   const _SectionHeader({
-    super.key,
     required this.title,
-    this.subtitle,
     this.trailing,
     this.onTrailingTap,
   });
