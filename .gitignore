@@ -44,3 +44,4 @@ local.propertiescal.properties
 /.planning/
 /.claude_commits/
 /docs/
+.claude/worktrees/
