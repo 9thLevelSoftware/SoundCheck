@@ -11,16 +11,16 @@ final wrappedRepositoryProvider = Provider<WrappedRepository>((ref) {
 });
 
 final wrappedStatsProvider =
-    FutureProvider.family<WrappedStats, int>((ref, year) {
+    FutureProvider.autoDispose.family<WrappedStats, int>((ref, year) {
   return ref.read(wrappedRepositoryProvider).getWrappedStats(year);
 });
 
 final wrappedDetailProvider =
-    FutureProvider.family<WrappedStats, int>((ref, year) {
+    FutureProvider.autoDispose.family<WrappedStats, int>((ref, year) {
   return ref.read(wrappedRepositoryProvider).getWrappedDetailStats(year);
 });
 
 final wrappedSummaryCardProvider =
-    FutureProvider.family<ShareCardUrls, int>((ref, year) {
+    FutureProvider.autoDispose.family<ShareCardUrls, int>((ref, year) {
   return ref.read(wrappedRepositoryProvider).generateSummaryCard(year);
 });

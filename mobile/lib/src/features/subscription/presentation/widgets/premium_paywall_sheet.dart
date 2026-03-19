@@ -50,6 +50,8 @@ class _PremiumPaywallSheetState extends ConsumerState<PremiumPaywallSheet> {
             customerInfo.entitlements.all['pro']?.isActive ?? false;
         if (hasPro) {
           ref.read(isPremiumProvider.notifier).set(true);
+          // Sync premium status with backend immediately
+          ref.invalidate(serverSubscriptionStatusProvider);
           AnalyticsService.logEvent(name: 'subscription_started');
           Navigator.of(context).pop();
         }
@@ -76,6 +78,7 @@ class _PremiumPaywallSheetState extends ConsumerState<PremiumPaywallSheet> {
               customerInfo.entitlements.all['pro']?.isActive ?? false;
           if (hasPro) {
             ref.read(isPremiumProvider.notifier).set(true);
+            ref.invalidate(serverSubscriptionStatusProvider);
             AnalyticsService.logEvent(name: 'subscription_restored');
             Navigator.of(context).pop();
           } else {

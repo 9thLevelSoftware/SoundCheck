@@ -25,6 +25,7 @@ class ClaimSubmissionScreen extends ConsumerStatefulWidget {
 }
 
 class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
+  final _formKey = GlobalKey<FormState>();
   final _evidenceTextController = TextEditingController();
   final _evidenceUrlController = TextEditingController();
   bool _isSubmitting = false;
@@ -38,6 +39,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
 
   Future<void> _submit() async {
     if (_isSubmitting) return;
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() => _isSubmitting = true);
 
@@ -89,7 +91,9 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
-        child: Column(
+        child: Form(
+          key: _formKey,
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             // Info card
@@ -141,6 +145,15 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
               controller: _evidenceTextController,
               maxLines: 4,
               style: const TextStyle(color: AppTheme.textPrimary),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please describe your connection to this $entityLabel';
+                }
+                if (value.trim().length < 10) {
+                  return 'Please provide at least 10 characters of evidence';
+                }
+                return null;
+              },
               decoration: InputDecoration(
                 hintText:
                     'Explain your connection to this $entityLabel...',
@@ -243,6 +256,7 @@ class _ClaimSubmissionScreenState extends ConsumerState<ClaimSubmissionScreen> {
               ),
             ),
           ],
+        ),
         ),
       ),
     );

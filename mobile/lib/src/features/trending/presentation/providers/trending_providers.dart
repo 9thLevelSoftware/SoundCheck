@@ -13,7 +13,7 @@ final trendingRepositoryProvider = Provider<TrendingRepository>((ref) {
 /// Auto-dispose so it refetches on re-entry to the discover screen.
 final trendingFeedProvider =
     FutureProvider.autoDispose<List<TrendingEvent>>((ref) async {
-  final repo = ref.read(trendingRepositoryProvider);
+  final repo = ref.watch(trendingRepositoryProvider);
   final position = await ref.watch(currentLocationProvider.future);
   if (position == null) return [];
   return repo.getTrendingNearby(

@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:sentry_flutter/sentry_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/dio_client.dart';
 import '../services/analytics_service.dart';
@@ -195,6 +196,20 @@ class AuthState extends _$AuthState {
     // Clear all user-scoped data providers to prevent stale data leaking
     // between accounts on shared devices
     _clearUserData();
+
+    // Clear user-scoped SharedPreferences keys (MOB-013)
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      final userScopedPrefixes = ['user_', 'feed_', 'onboarding_', 'notification_'];
+      for (final key in keys) {
+        if (userScopedPrefixes.any((prefix) => key.startsWith(prefix))) {
+          await prefs.remove(key);
+        }
+      }
+    } catch (_) {
+      // SharedPreferences cleanup should not block logout
+    }
 
     await authRepository.logout();
 

@@ -29,6 +29,17 @@ class BadgeRepository {
     }
   }
 
+  /// Get a specific user's earned badges
+  Future<List<UserBadge>> getUserBadges(String userId) async {
+    try {
+      final response = await _dioClient.get('${ApiConfig.badges}/user/$userId');
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return data.map((json) => UserBadge.fromJson(json as Map<String, dynamic>)).toList();
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Get user's badge progress
   Future<List<BadgeProgress>> getMyProgress() async {
     try {

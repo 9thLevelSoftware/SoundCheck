@@ -757,6 +757,8 @@ class _UpcomingEventItem extends StatelessWidget {
   }
 }
 
+
+
 /// Widget that displays recent bands from venue check-ins
 class _RecentBandsSection extends ConsumerWidget {
   final String venueId;

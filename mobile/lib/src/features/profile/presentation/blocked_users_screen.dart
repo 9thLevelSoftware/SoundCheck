@@ -1,7 +1,9 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/theme/app_theme.dart';
+import '../../../shared/widgets/error_state_widget.dart';
 import 'providers/block_providers.dart';
 
 /// Screen displaying all blocked users with unblock capability.
@@ -19,27 +21,15 @@ class BlockedUsersScreen extends ConsumerWidget {
       ),
       body: blockedUsers.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+        error: (err, stack) => RefreshIndicator(
+          onRefresh: () async => ref.invalidate(blockedUsersProvider),
+          child: ListView(
             children: [
-              const Icon(Icons.error_outline, size: 48, color: AppTheme.error),
-              const SizedBox(height: AppTheme.spacing16),
-              Text(
-                'Failed to load blocked users',
-                style: Theme.of(context).textTheme.bodyLarge,
-              ),
-              const SizedBox(height: AppTheme.spacing8),
-              Text(
-                err.toString(),
-                style: Theme.of(context).textTheme.bodySmall,
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: AppTheme.spacing16),
-              TextButton.icon(
-                onPressed: () => ref.invalidate(blockedUsersProvider),
-                icon: const Icon(Icons.refresh),
-                label: const Text('Retry'),
+              ErrorStateWidget(
+                error: err,
+                stackTrace: stack,
+                customMessage: 'Failed to load blocked users',
+                onRetry: () => ref.invalidate(blockedUsersProvider),
               ),
             ],
           ),
@@ -95,7 +85,7 @@ class BlockedUsersScreen extends ConsumerWidget {
                 leading: CircleAvatar(
                   backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   backgroundImage: profileImageUrl != null
-                      ? NetworkImage(profileImageUrl)
+                      ? CachedNetworkImageProvider(profileImageUrl)
                       : null,
                   child: profileImageUrl == null
                       ? Text(

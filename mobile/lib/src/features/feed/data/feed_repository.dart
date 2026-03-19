@@ -66,6 +66,24 @@ class FeedRepository {
     }
   }
 
+  /// Get event-based feed showing activity from events user has attended
+  /// GET /feed/events?cursor=X&limit=N
+  Future<FeedPage> getEventsFeed({String? cursor, int limit = 20}) async {
+    try {
+      final queryParams = <String, dynamic>{'limit': limit};
+      if (cursor != null) queryParams['cursor'] = cursor;
+
+      final response = await _dioClient.get(
+        '/feed/events',
+        queryParameters: queryParams,
+      );
+
+      return FeedPage.fromJson(response.data['data'] as Map<String, dynamic>);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Get happening now groups (friends at events today)
   /// GET /feed/happening-now
   Future<List<HappeningNowGroup>> getHappeningNow() async {

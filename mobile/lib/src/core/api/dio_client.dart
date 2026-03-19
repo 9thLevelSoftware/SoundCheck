@@ -80,9 +80,44 @@ class DioClient {
       ),
     );
 
+    // Add retry interceptor for idempotent GET requests (MOB-010)
+    _dio.interceptors.add(
+      InterceptorsWrapper(
+        onError: (error, handler) async {
+          final isRetryable = error.requestOptions.method == 'GET' &&
+              (error.type == DioExceptionType.connectionTimeout ||
+               error.type == DioExceptionType.receiveTimeout ||
+               error.type == DioExceptionType.connectionError ||
+               (error.type == DioExceptionType.unknown &&
+                (error.message?.contains('SocketException') ?? false)));
+
+          final retryCount =
+              error.requestOptions.extra['_retryCount'] as int? ?? 0;
+          const maxRetries = 2;
+
+          if (isRetryable && retryCount < maxRetries) {
+            final nextRetry = retryCount + 1;
+            final delay = Duration(milliseconds: 500 * (1 << retryCount));
+            LogService.d(
+              'Retrying GET ${error.requestOptions.path} '
+              '(attempt $nextRetry/$maxRetries, backoff ${delay.inMilliseconds}ms)',
+            );
+            await Future<void>.delayed(delay);
+            error.requestOptions.extra['_retryCount'] = nextRetry;
+            try {
+              final response = await _dio.fetch(error.requestOptions);
+              return handler.resolve(response);
+            } on DioException catch (retryError) {
+              return handler.next(retryError);
+            }
+          }
+          return handler.next(error);
+        },
+      ),
+    );
+
     // Add logging interceptor in dev mode only.
-    // SEC-058: Disable requestHeader to prevent logging Authorization
-    // headers (JWTs) even in debug builds.
+    // SEC-058: requestHeader: false prevents logging Authorization headers (JWTs).
     if (ApiConfig.isDev) {
       _dio.interceptors.add(
         LogInterceptor(

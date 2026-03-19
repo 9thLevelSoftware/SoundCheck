@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:io';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/error/failures.dart';
 import '../../../core/providers/providers.dart';
 
 class EditProfileScreen extends ConsumerStatefulWidget {
@@ -120,8 +121,20 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
+        String message;
+        if (e is ValidationFailure) {
+          message = e.message;
+        } else if (e is NetworkFailure) {
+          message = 'Network error. Please check your connection and try again.';
+        } else if (e is AuthFailure) {
+          message = 'Session expired. Please log in again.';
+        } else if (e is ServerFailure) {
+          message = 'Server error. Please try again later.';
+        } else {
+          message = 'Could not update profile. Please try again.';
+        }
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error updating profile: $e')),
+          SnackBar(content: Text(message)),
         );
       }
     } finally {
@@ -285,6 +298,12 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                 ),
                 maxLines: 4,
                 maxLength: 200,
+                validator: (value) {
+                  if (value != null && value.length > 200) {
+                    return 'Bio must be 200 characters or less';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: AppTheme.spacing24),
 

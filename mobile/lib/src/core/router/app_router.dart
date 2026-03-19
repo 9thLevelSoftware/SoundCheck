@@ -49,9 +49,8 @@ class _AuthStateNotifier extends ChangeNotifier {
 
 @riverpod
 GoRouter goRouter(Ref ref) {
-  final authState = ref.watch(authStateProvider);
-  final onboardingState = ref.watch(onboardingStateProvider);
-  final hasSeenOnboarding = onboardingState.asData?.value ?? true; // default true to avoid blocking on load
+  // Use ref.listen via refreshListenable instead of ref.watch to avoid
+  // rebuilding the entire GoRouter on every auth state change (MOB-014).
   final notifier = _AuthStateNotifier(ref);
 
   return GoRouter(
@@ -60,6 +59,10 @@ GoRouter goRouter(Ref ref) {
       if (AnalyticsService.observer != null) AnalyticsService.observer!,
     ],
     redirect: (context, state) {
+      // Read auth/onboarding state lazily inside redirect (triggered by refreshListenable)
+      final authState = ref.read(authStateProvider);
+      final onboardingState = ref.read(onboardingStateProvider);
+      final hasSeenOnboarding = onboardingState.asData?.value ?? true;
       final isLoading = authState.isLoading;
       final isAuthenticated = authState.hasValue && authState.value != null;
       final isError = authState.hasError;

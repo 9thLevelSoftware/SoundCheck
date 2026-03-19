@@ -371,14 +371,16 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       
                       // Social Login Buttons
                       Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           // Apple Sign-In only available on iOS/macOS
-                          if (Platform.isIOS || Platform.isMacOS)
+                          if (Platform.isIOS || Platform.isMacOS) ...[
                             _SocialLoginButton(
                               icon: Icons.apple,
                               onTap: _isLoading ? null : _handleAppleSignIn,
                             ),
+                            const SizedBox(width: 24),
+                          ],
                           _SocialLoginButton(
                             icon: Icons.g_mobiledata, // Google icon
                             onTap: _isLoading ? null : _handleGoogleSignIn,
@@ -444,13 +446,17 @@ class _SocialLoginButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isEnabled = onTap != null;
-    return InkWell(
+    return Semantics(
+      label: icon == Icons.apple ? 'Sign in with Apple' : 'Sign in with Google',
+      button: true,
+      enabled: isEnabled,
+      child: InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(50),
       child: Opacity(
         opacity: isEnabled ? 1.0 : 0.5,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             border: Border.all(color: Theme.of(context).colorScheme.surfaceContainerHighest),
             shape: BoxShape.circle,
@@ -462,6 +468,7 @@ class _SocialLoginButton extends StatelessWidget {
           ),
         ),
       ),
+    ),
     );
   }
 }

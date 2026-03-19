@@ -240,9 +240,8 @@ class NotificationsScreen extends ConsumerWidget {
         break;
 
       case 'badge_earned':
-        // Navigate to user's own profile to see badges
-        // No dedicated badges route exists, so go to profile
-        context.go('/profile');
+        // Navigate to badge collection screen
+        context.push('/badges');
         break;
 
       case 'show_reminder':

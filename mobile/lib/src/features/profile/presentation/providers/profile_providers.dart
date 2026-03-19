@@ -50,7 +50,7 @@ Future<List<Map<String, dynamic>>> userGenreStats(Ref ref, String userId) async 
 @riverpod
 Future<List<UserBadge>> userBadges(Ref ref, String userId) async {
   final repository = ref.watch(badgeRepositoryProvider);
-  return repository.getMyBadges();
+  return repository.getUserBadges(userId);
 }
 
 /// Provider for concert cred aggregate stats from server

@@ -7,19 +7,31 @@ import '../../../core/services/analytics_service.dart';
 import '../domain/wrapped_stats.dart';
 import 'wrapped_providers.dart';
 
-class WrappedDetailScreen extends ConsumerWidget {
+class WrappedDetailScreen extends ConsumerStatefulWidget {
   final int year;
 
   const WrappedDetailScreen({required this.year, super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final detailAsync = ref.watch(wrappedDetailProvider(year));
+  ConsumerState<WrappedDetailScreen> createState() =>
+      _WrappedDetailScreenState();
+}
 
+class _WrappedDetailScreenState extends ConsumerState<WrappedDetailScreen> {
+  int get year => widget.year;
+
+  @override
+  void initState() {
+    super.initState();
     AnalyticsService.logEvent(
       name: 'wrapped_detail_viewed',
       parameters: {'year': year},
     );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final detailAsync = ref.watch(wrappedDetailProvider(year));
 
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
