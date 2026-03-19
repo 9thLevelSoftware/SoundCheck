@@ -134,7 +134,11 @@ export class NotificationService {
         LEFT JOIN badges b ON n.badge_id = b.id
         LEFT JOIN events ev ON n.event_id = ev.id
         LEFT JOIN venues evv ON ev.venue_id = evv.id
-        LEFT JOIN event_lineup el ON ev.id = el.event_id AND el.is_headliner = true
+        LEFT JOIN LATERAL (
+          SELECT el2.band_id FROM event_lineup el2
+          WHERE el2.event_id = ev.id AND el2.is_headliner = true
+          ORDER BY el2.set_order ASC LIMIT 1
+        ) el ON TRUE
         LEFT JOIN bands evb ON el.band_id = evb.id
         WHERE n.user_id = $1
         ORDER BY n.created_at DESC

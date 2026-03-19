@@ -93,7 +93,7 @@ export class TrendingService {
             ${this.blockService.getBlockFilterSQL(userId, 'er.user_id')}
         ) friend_stats ON TRUE
         WHERE e.event_date >= CURRENT_DATE
-          AND e.event_date <= CURRENT_DATE + ($4 || ' days')::INTERVAL
+          AND e.event_date <= CURRENT_DATE + make_interval(days => $4)
           AND e.is_cancelled = FALSE
           AND v.latitude IS NOT NULL
           AND v.longitude IS NOT NULL

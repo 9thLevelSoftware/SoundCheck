@@ -110,10 +110,10 @@ export class CheckinCreatorService {
       const insertQuery = `
         INSERT INTO checkins (
           user_id, event_id, venue_id, band_id,
-          is_verified, review_text, checkin_latitude, checkin_longitude,
+          is_verified, checkin_latitude, checkin_longitude,
           event_date, rating, comment
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `;
 
@@ -125,7 +125,6 @@ export class CheckinCreatorService {
           event.venue_id,
           headlinerBandId,
           isVerified,
-          comment || null,
           locationLat || null,
           locationLon || null,
           event.event_date,
@@ -367,8 +366,23 @@ export class CheckinCreatorService {
         todayStr = nowLocal.toISOString().substring(0, 10);
       }
 
-      // If today's date doesn't match event date, disallow
-      if (todayStr !== eventDateStr) return false;
+      // Allow check-ins on the event date OR until 4 AM the next day
+      // (post-midnight events are common for concerts/shows)
+      if (todayStr !== eventDateStr) {
+        // Check if we are in the early morning hours (before 4 AM) of the day AFTER the event
+        const eventDateObj = new Date(eventDateStr + 'T00:00:00');
+        const nextDay = new Date(eventDateObj);
+        nextDay.setDate(nextDay.getDate() + 1);
+        const nextDayStr = nextDay.toISOString().substring(0, 10);
+
+        const currentHour = nowLocal.getHours();
+        if (todayStr === nextDayStr && currentHour < 4) {
+          // Allow check-in: it's before 4 AM the day after the event
+          return true;
+        }
+
+        return false;
+      }
 
       // If no time information at all, allow all-day window
       const doorsTime = event.doors_time;

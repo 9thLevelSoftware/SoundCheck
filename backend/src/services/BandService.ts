@@ -214,16 +214,22 @@ export class BandService {
   }
 
   /**
-   * Get popular bands (by average rating and review count)
+   * Get popular bands (by average rating and rating count from checkin_band_ratings)
    */
   async getPopularBands(limit: number = 10): Promise<Band[]> {
     const query = `
-      SELECT id, name, description, genre, formed_year, website_url, spotify_url,
-             instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
-      FROM bands
-      WHERE is_active = true AND total_reviews >= 3
-      ORDER BY (average_rating * 0.7 + LEAST(total_reviews/50.0, 1.0) * 0.3) DESC
+      SELECT b.id, b.name, b.description, b.genre, b.formed_year, b.website_url, b.spotify_url,
+             b.instagram_url, b.facebook_url, b.image_url, b.hometown, b.average_rating,
+             COALESCE(rc.rating_count, 0) AS total_reviews,
+             b.is_active, b.claimed_by_user_id, b.created_at, b.updated_at
+      FROM bands b
+      LEFT JOIN (
+        SELECT band_id, COUNT(*)::int AS rating_count
+        FROM checkin_band_ratings
+        GROUP BY band_id
+      ) rc ON rc.band_id = b.id
+      WHERE b.is_active = true AND COALESCE(rc.rating_count, 0) >= 3
+      ORDER BY (b.average_rating * 0.7 + LEAST(COALESCE(rc.rating_count, 0)/50.0, 1.0) * 0.3) DESC
       LIMIT $1
     `;
 
@@ -241,7 +247,7 @@ export class BandService {
              total_reviews, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE is_active = true AND $1 = ANY(genres)
-      ORDER BY average_rating DESC, total_reviews DESC
+      ORDER BY average_rating DESC, total_checkins DESC
       LIMIT $2
     `;
 
@@ -254,14 +260,20 @@ export class BandService {
    */
   async getTrendingBands(limit: number = 10): Promise<Band[]> {
     const query = `
-      SELECT id, name, description, genre, formed_year, website_url, spotify_url,
-             instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
-      FROM bands
-      WHERE is_active = true
-        AND created_at >= CURRENT_DATE - INTERVAL '30 days'
-        AND (total_reviews = 0 OR average_rating >= 3.5)
-      ORDER BY created_at DESC, average_rating DESC
+      SELECT b.id, b.name, b.description, b.genre, b.formed_year, b.website_url, b.spotify_url,
+             b.instagram_url, b.facebook_url, b.image_url, b.hometown, b.average_rating,
+             COALESCE(rc.rating_count, 0) AS total_reviews,
+             b.is_active, b.claimed_by_user_id, b.created_at, b.updated_at
+      FROM bands b
+      LEFT JOIN (
+        SELECT band_id, COUNT(*)::int AS rating_count
+        FROM checkin_band_ratings
+        GROUP BY band_id
+      ) rc ON rc.band_id = b.id
+      WHERE b.is_active = true
+        AND b.created_at >= CURRENT_DATE - INTERVAL '30 days'
+        AND (COALESCE(rc.rating_count, 0) = 0 OR b.average_rating >= 3.5)
+      ORDER BY b.created_at DESC, b.average_rating DESC
       LIMIT $1
     `;
 

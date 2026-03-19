@@ -247,7 +247,7 @@ export class MusicBrainzService {
       imageUrl: row.image_url,
       hometown: row.hometown,
       averageRating: parseFloat(row.average_rating || 0),
-      totalReviews: parseInt(row.total_reviews || 0),
+      totalRatings: parseInt(row.total_reviews || 0),
       isActive: row.is_active,
       musicbrainzId: row.musicbrainz_id,
       source: row.source,

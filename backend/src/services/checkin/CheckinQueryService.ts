@@ -115,12 +115,14 @@ export class CheckinQueryService {
         if (latitude !== undefined && longitude !== undefined) {
           // Use Haversine formula for ~40 mile radius (64.4 km)
           whereClause = `
-            WHERE (
-              6371 * acos(
+            WHERE v.latitude IS NOT NULL
+              AND v.longitude IS NOT NULL
+              AND (
+              6371 * acos(LEAST(GREATEST(
                 cos(radians($2)) * cos(radians(v.latitude)) *
                 cos(radians(v.longitude) - radians($3)) +
                 sin(radians($2)) * sin(radians(v.latitude))
-              )
+              , -1), 1))
             ) <= 64.4
           `;
           params.push(latitude, longitude);

@@ -273,9 +273,9 @@ export class VenueService {
                latitude, longitude, website_url, phone, email, capacity, venue_type,
                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
                created_at, updated_at,
-               (6371 * acos(cos(radians($1)) * cos(radians(latitude)) *
+               (6371 * acos(LEAST(GREATEST(cos(radians($1)) * cos(radians(latitude)) *
                 cos(radians(longitude) - radians($2)) +
-                sin(radians($1)) * sin(radians(latitude)))) AS distance
+                sin(radians($1)) * sin(radians(latitude)), -1), 1))) AS distance
         FROM venues
         WHERE is_active = true
           AND latitude IS NOT NULL

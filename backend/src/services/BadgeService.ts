@@ -127,8 +127,19 @@ export class BadgeService {
       const evaluator = evaluatorRegistry.get(type);
       if (!evaluator) continue;
 
-      // Use criteria from the first badge in the group (they share the same type/genre)
+      // Use criteria from the first badge in the group (they share the same type/genre).
+      // Assertion: all badges in a group must share the same criteria.type (and genre for genre_explorer).
+      // The threshold may differ between badges -- that is handled below
+      // by checking each badge's individual threshold against the evaluator result.
       const criteria = badges[0].criteria || {};
+      if (badges.length > 1) {
+        for (const badge of badges) {
+          const badgeCriteriaType = badge.criteria?.type;
+          if (badgeCriteriaType !== type) {
+            logger.error(`[BadgeService] Badge ${badge.id} has criteria.type '${badgeCriteriaType}' but is grouped under '${type}' -- evaluation may be incorrect`);
+          }
+        }
+      }
 
       try {
         const result: EvalResult = await evaluator(userId, criteria);

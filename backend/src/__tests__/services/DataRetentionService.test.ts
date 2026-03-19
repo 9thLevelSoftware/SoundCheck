@@ -16,6 +16,7 @@ const mockPool = {
 const mockDb = {
   query: jest.fn(),
   getPool: jest.fn().mockReturnValue(mockPool),
+  getClient: jest.fn().mockResolvedValue(mockClient),
 };
 
 (Database.getInstance as jest.Mock).mockReturnValue(mockDb);

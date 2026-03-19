@@ -148,7 +148,7 @@ export class DataRetentionService {
     const anonymizedUsername = `deleted_user_${anonymizedSuffix}`;
 
     // Get database client for transaction
-    const client = await this.db.getPool().connect();
+    const client = await this.db.getClient();
 
     // Start tracking deletions
     let deletedNotifications = 0;
