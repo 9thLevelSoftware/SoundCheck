@@ -61,8 +61,8 @@ class ImageCompression {
     );
   }
 
-  /// Compress image for review/post (medium size)
-  static Future<File?> compressReviewImage(File file) async {
+  /// Compress image for check-in photo (medium size)
+  static Future<File?> compressCheckinImage(File file) async {
     return compressImage(
       file,
       maxWidth: 1920,

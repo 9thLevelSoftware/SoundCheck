@@ -58,6 +58,7 @@ export class ShareCardService {
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
+    }
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
@@ -90,6 +91,7 @@ export class ShareCardService {
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
+    }
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
@@ -119,6 +121,7 @@ export class ShareCardService {
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
+    }
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
@@ -145,6 +148,7 @@ export class ShareCardService {
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
+    }
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;

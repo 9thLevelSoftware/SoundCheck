@@ -25,7 +25,7 @@ sealed class Band with _$Band {
     String? coverImageUrl,
     String? hometown,
     // Stats for the "Beer page" model
-    @Default(0) int totalReviews,
+    @Default(0) int totalCheckins,
     @Default(0) int uniqueFans,
     @Default(0) int monthlyCheckins,
     // Claimed owner user ID (Phase 11 - verification claims)

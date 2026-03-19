@@ -253,7 +253,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       const SizedBox(height: AppTheme.spacing8),
                       
                       Text(
-                        'Discover, Review, Connect',
+                        'Check In, Share, Connect',
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: AppTheme.textSecondary,
                             ),

@@ -116,7 +116,6 @@ describe('User Stats Routes', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual({
         totalCheckins: 5,
-        totalReviews: 3,
         badgesEarned: 2,
         followersCount: 10,
         followingCount: 15,
@@ -234,7 +233,6 @@ describe('User Stats Routes', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data).toEqual({
         totalCheckins: 0,
-        totalReviews: 0,
         badgesEarned: 0,
         followersCount: 0,
         followingCount: 0,

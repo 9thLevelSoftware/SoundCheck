@@ -8,7 +8,6 @@ import '../../../core/providers/providers.dart';
 import '../domain/venue.dart';
 import '../../checkins/presentation/providers/checkin_providers.dart';
 import '../../checkins/domain/checkin.dart';
-import '../../verification/presentation/providers/claim_providers.dart';
 
 final venueDetailProvider = FutureProvider.autoDispose.family<Venue, String>((ref, id) async {
   final repository = ref.watch(venueRepositoryProvider);

@@ -48,7 +48,7 @@ We use the collected information for the following purposes:
 
 ### 1. Provide and Improve Our Services
 - Create and manage your user account
-- Display your reviews and ratings to other users
+- Display your check-ins and ratings to other users
 - Enable you to discover venues and bands
 - Personalize your experience based on your preferences
 - Improve app functionality and user experience
@@ -76,7 +76,7 @@ We use the collected information for the following purposes:
 ### We Share Information In These Limited Cases:
 
 #### 1. Public Information
-- Your username, profile picture, and reviews are publicly visible to all App users
+- Your username, profile picture, and check-ins are publicly visible to all App users
 - Other users can see your ratings and comments on venues and bands
 
 #### 2. Service Providers
@@ -122,7 +122,7 @@ We may disclose your information if required by law:
 - Change your password
 
 #### 3. Delete Your Data
-- Delete individual reviews or comments
+- Delete individual check-ins or comments
 - Request deletion of your entire account
 - Contact us at support@soundcheck.app to request data deletion
 

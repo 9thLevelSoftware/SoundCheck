@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:shimmer/shimmer.dart';
-import '../../core/theme/app_theme.dart';
 
 /// A reusable skeleton loader for list items
 class SkeletonListItem extends StatelessWidget {

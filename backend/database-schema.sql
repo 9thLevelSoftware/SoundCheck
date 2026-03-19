@@ -60,10 +60,9 @@ CREATE TABLE IF NOT EXISTS venues (
     venue_type VARCHAR(50), -- 'concert_hall', 'club', 'arena', 'outdoor', 'bar', 'theater', 'stadium', 'other'
     image_url VARCHAR(500),
     cover_image_url VARCHAR(500),
-    -- Stats (DB-020: NOT NULL matches migration 041; DI-021: total_reviews from migration 047)
+    -- Stats (DB-020: NOT NULL matches migration 041; DI-021/048: total_checkins from migration 048)
     total_checkins INTEGER NOT NULL DEFAULT 0,
     unique_visitors INTEGER NOT NULL DEFAULT 0,
-    total_reviews INTEGER NOT NULL DEFAULT 0,
     average_rating DECIMAL(3, 2) DEFAULT 0.00,
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
@@ -86,11 +85,10 @@ CREATE TABLE IF NOT EXISTS bands (
     image_url VARCHAR(500), -- Square logo
     cover_image_url VARCHAR(500),
     hometown VARCHAR(255),
-    -- Stats (DB-020: NOT NULL matches migration 041; DI-005/DI-021: columns from migration 047)
+    -- Stats (DB-020: NOT NULL matches migration 041; DI-005/DI-021/048: columns from migrations 047+048)
     total_checkins INTEGER NOT NULL DEFAULT 0,
     unique_fans INTEGER NOT NULL DEFAULT 0,
     monthly_checkins INTEGER NOT NULL DEFAULT 0,
-    total_reviews INTEGER NOT NULL DEFAULT 0,
     average_rating DECIMAL(3, 2) DEFAULT 0.00,
     is_active BOOLEAN DEFAULT TRUE,
     claimed_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
@@ -125,7 +123,7 @@ CREATE TABLE IF NOT EXISTS checkins (
     rating DECIMAL(2, 1) NOT NULL DEFAULT 0 CHECK (rating >= 0 AND rating <= 5),
     venue_rating DECIMAL(2, 1) CHECK (venue_rating >= 0 AND venue_rating <= 5),
     -- Content
-    comment TEXT, -- "What's the vibe?" - optional review text
+    comment TEXT, -- "What's the vibe?" - optional check-in note
     photo_url VARCHAR(500), -- Concert photo
     -- Location data (for verification)
     checkin_latitude DECIMAL(10, 8),
