@@ -22,7 +22,7 @@ sealed class CheckIn with _$CheckIn {
     double? venueRating,
     double? bandRating,
     // Check-in note text
-    @JsonKey(name: 'reviewText') String? noteText,
+    String? noteText,
     // Image URLs (backend sends array)
     List<String>? imageUrls,
     // Event ID for the check-in
