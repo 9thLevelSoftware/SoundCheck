@@ -11,7 +11,7 @@ import '../domain/checkin_comment.dart';
 import 'providers/checkin_providers.dart';
 
 /// CheckInDetailScreen - Shows full details of a single check-in
-/// Displays user info, event details, ratings, review, vibes, photos, and comments
+/// Displays user info, event details, ratings, notes, vibes, photos, and comments
 class CheckInDetailScreen extends ConsumerStatefulWidget {
   final String checkinId;
 
@@ -227,9 +227,9 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
                     if (checkIn.bandRating != null || checkIn.venueRating != null)
                       _RatingsSection(checkIn: checkIn),
 
-                    // Review Text
+                    // Notes
                     if (checkIn.reviewText != null && checkIn.reviewText!.isNotEmpty)
-                      _ReviewSection(reviewText: checkIn.reviewText!),
+                      _NotesSection(noteText: checkIn.reviewText!),
 
                     // Vibe Tags
                     if (checkIn.vibeTags != null && checkIn.vibeTags!.isNotEmpty)
@@ -701,11 +701,11 @@ class _RatingsSection extends StatelessWidget {
   }
 }
 
-/// Review Section - User's written review
-class _ReviewSection extends StatelessWidget {
-  final String reviewText;
+/// Notes Section - User's check-in notes
+class _NotesSection extends StatelessWidget {
+  final String noteText;
 
-  const _ReviewSection({required this.reviewText});
+  const _NotesSection({required this.noteText});
 
   @override
   Widget build(BuildContext context) {
@@ -730,7 +730,7 @@ class _ReviewSection extends StatelessWidget {
                 ),
                 SizedBox(width: 8),
                 Text(
-                  'Review',
+                  'Notes',
                   style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.w600,
@@ -741,7 +741,7 @@ class _ReviewSection extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              reviewText,
+              noteText,
               style: const TextStyle(
                 fontSize: 15,
                 color: AppTheme.textPrimary,
