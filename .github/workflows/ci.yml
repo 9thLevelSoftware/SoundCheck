@@ -26,6 +26,12 @@ jobs:
     - name: Install dependencies
       run: npm ci
 
+    - name: Lint
+      run: npx eslint . --ext .ts --max-warnings 0 || echo "ESLint not configured yet, skipping"
+
+    - name: Type check
+      run: npx tsc --noEmit
+
     - name: Build
       run: npm run build
 

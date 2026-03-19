@@ -334,7 +334,7 @@ const startServer = async () => {
 
     // Warn about CORS configuration in production
     if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
-      logWarn('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
+      logWarn('CORS_ORIGIN not set - browser-origin requests will be REJECTED. Mobile (no-origin) requests still allowed. Set CORS_ORIGIN to enable web clients.');
     }
 
     // Initialize WebSocket server
@@ -403,11 +403,14 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
+  // INF-012: Log and report but do NOT exit the process.
+  // Unhandled rejections are often transient (e.g., a failed fire-and-forget
+  // cache invalidation). Exiting burns through restartPolicyMaxRetries and
+  // can take the service down permanently.
   logError('Unhandled Rejection', { reason, promise });
   if (reason instanceof Error) {
     sentryCaptureException(reason, { type: 'unhandledRejection' });
   }
-  process.exit(1);
 });
 
 startServer();

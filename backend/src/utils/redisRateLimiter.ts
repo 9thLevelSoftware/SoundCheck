@@ -83,15 +83,25 @@ export async function checkRateLimit(
   windowMs: number
 ): Promise<RateLimitResult> {
   if (!redis) {
-    // Fail-closed: deny when Redis is unavailable (in-memory fallback handled by caller)
-    return { allowed: false, remaining: 0, resetAt: Date.now() + windowMs };
+    // Fail-open: allow requests when Redis is unavailable.
+    // The route-level rateLimit middleware in auth.ts has an in-memory
+    // fallback that provides basic protection. Blocking ALL traffic when
+    // Redis is temporarily unreachable would cause a total outage.
+    return { allowed: true, remaining: maxRequests, resetAt: Date.now() + windowMs };
   }
 
   const now = Date.now();
   const windowStart = now - windowMs;
 
   try {
-    // Use Redis sorted set for sliding window rate limiting
+    // Use Redis sorted set for sliding window rate limiting.
+    //
+    // PERF-012: Each request adds a scored member to the sorted set.
+    // Members from expired windows are pruned by zremrangebyscore, and
+    // pexpire guarantees the key is fully cleaned up after the window.
+    // At beta scale (~2,000 users), key accumulation is negligible.
+    // If scaling beyond ~50k concurrent users, consider switching to
+    // a fixed-window counter (INCR + EXPIREAT) to reduce memory.
     const pipeline = redis.pipeline();
     pipeline.zremrangebyscore(key, 0, windowStart);
     pipeline.zcard(key);
@@ -100,8 +110,8 @@ export async function checkRateLimit(
 
     const results = await pipeline.exec();
     if (!results) {
-      // Fail-closed: deny when pipeline returns no results
-      return { allowed: false, remaining: 0, resetAt: now + windowMs };
+      // Fail-open: allow when pipeline returns no results (Redis issue)
+      return { allowed: true, remaining: maxRequests, resetAt: now + windowMs };
     }
 
     // Results format: [[error, result], [error, result], ...]
@@ -118,8 +128,9 @@ export async function checkRateLimit(
     };
   } catch (error) {
     logger.error('Rate limit check error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-    // Fail-closed: deny when rate limit check errors
-    return { allowed: false, remaining: 0, resetAt: now + windowMs };
+    // Fail-open: allow requests when rate limit check errors.
+    // The in-memory fallback in auth.ts middleware provides basic protection.
+    return { allowed: true, remaining: maxRequests, resetAt: now + windowMs };
   }
 }
 
@@ -179,12 +190,9 @@ export class RedisRateLimiter {
         next();
       } catch (error) {
         logger.error('Rate limiting error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-        // Fail-closed: deny request when rate limiting fails
-        const response: ApiResponse = {
-          success: false,
-          error: 'Service temporarily unavailable, please try again later',
-        };
-        res.status(429).json(response);
+        // Fail-open: allow request through when rate limiting itself errors.
+        // Blocking all traffic due to a transient Redis issue causes a full outage.
+        next();
       }
     };
   }

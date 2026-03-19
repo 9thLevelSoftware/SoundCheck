@@ -5,6 +5,20 @@
  * maxRetriesPerRequest: null (uses blocking commands like BRPOPLPUSH).
  * This is SEPARATE from the rate limiter's Redis connection which
  * uses maxRetriesPerRequest: 3.
+ *
+ * IMPORTANT: Redis eviction policy recommendation
+ * ================================================
+ * Production Redis instances should be configured with `maxmemory-policy allkeys-lru`.
+ * This ensures that when memory is exhausted, the least-recently-used keys are
+ * evicted rather than returning OOM errors. Without this, BullMQ jobs and
+ * rate limiter keys can cause Redis to reject writes under memory pressure.
+ *
+ * Configure via redis.conf or provider dashboard:
+ *   maxmemory 256mb
+ *   maxmemory-policy allkeys-lru
+ *
+ * Railway Redis addon: set via environment variable REDIS_MAXMEMORY_POLICY=allkeys-lru
+ * or configure in the Redis dashboard.
  */
 
 import IORedis from 'ioredis';

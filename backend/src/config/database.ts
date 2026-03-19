@@ -35,6 +35,10 @@ class Database {
     const sslConfig = getSSLConfig();
     const sslMode = process.env.DB_SSL?.toLowerCase() || 'verify';
 
+    // Pool size: configurable via DATABASE_POOL_SIZE env var (default: 20)
+    const poolSize = parseInt(process.env.DATABASE_POOL_SIZE || '20', 10);
+    const maxPoolSize = Number.isNaN(poolSize) || poolSize < 1 ? 20 : poolSize;
+
     // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
     if (process.env.DATABASE_URL) {
       logger.info('Using DATABASE_URL for database connection');
@@ -61,7 +65,7 @@ class Database {
       this.pool = new Pool({
         connectionString,
         ssl: sslConfig,
-        max: 20,
+        max: maxPoolSize,
         idleTimeoutMillis: 30000,
         connectionTimeoutMillis: 2000,
       });
@@ -81,7 +85,7 @@ class Database {
       this.pool = new Pool({
         ...config,
         ssl: sslConfig,
-        max: 20, // Maximum number of clients in the pool
+        max: maxPoolSize, // Configurable via DATABASE_POOL_SIZE env var (default: 20)
         idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
         connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
       });

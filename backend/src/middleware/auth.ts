@@ -195,6 +195,11 @@ export const requirePremium = () => {
  */
 const inMemoryRateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
+// INF-018: Cap in-memory rate limit map to prevent unbounded memory growth.
+// At 10,000 entries (~1KB each), the map uses ~10MB -- acceptable for the
+// fallback case. If this limit is reached, expired entries are purged first.
+const MAX_RATE_LIMIT_ENTRIES = 10_000;
+
 /**
  * In-memory rate limit check (fallback when Redis unavailable)
  */
@@ -207,6 +212,20 @@ function checkInMemoryRateLimit(
   const clientData = inMemoryRateLimitStore.get(clientIP);
 
   if (!clientData || now > clientData.resetTime) {
+    // Enforce max size before adding new entries
+    if (inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES && !inMemoryRateLimitStore.has(clientIP)) {
+      // Purge expired entries first
+      for (const [key, data] of inMemoryRateLimitStore.entries()) {
+        if (now > data.resetTime) {
+          inMemoryRateLimitStore.delete(key);
+        }
+      }
+      // If still at capacity after purge, allow request without tracking
+      // (fail-open for memory safety)
+      if (inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES) {
+        return { allowed: true, remaining: maxRequests - 1 };
+      }
+    }
     inMemoryRateLimitStore.set(clientIP, {
       count: 1,
       resetTime: now + windowMs,
