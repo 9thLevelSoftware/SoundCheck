@@ -3,6 +3,11 @@ builder = "NIXPACKS"
 watchPaths = ["backend/**"]
 
 [deploy]
+# INF-011: Migrations run inline before server start. This is safe for a single
+# Railway instance. Before scaling to multiple replicas, either:
+#   1. Move migrations to a separate deploy step / release phase, OR
+#   2. Add a PostgreSQL advisory lock (SELECT pg_advisory_lock(1)) in the
+#      migration runner to prevent concurrent migration execution.
 startCommand = "cd backend && npm run migrate:up && npm start"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10

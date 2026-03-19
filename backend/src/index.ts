@@ -12,7 +12,7 @@ import { initSentry, setupSentryForExpress, closeSentry, captureException as sen
 initSentry();
 
 // Initialize Redis for distributed rate limiting and caching
-import { initRedis, closeRedis, getRedis } from './utils/redisRateLimiter';
+import { initRedis, closeRedis } from './utils/redisRateLimiter';
 initRedis();
 
 import express from 'express';
@@ -51,7 +51,6 @@ import Database from './config/database';
 import { ApiResponse } from './types';
 import logger, { logHttp, logInfo, logError, logWarn } from './utils/logger';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
-import { pushNotificationService } from './services/PushNotificationService';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
 import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
 import { startNotificationWorker, stopNotificationWorker } from './jobs/notificationWorker';
@@ -61,7 +60,6 @@ import { Worker } from 'bullmq';
 import { readFileSync } from 'fs';
 import { join } from 'path';
 import { authenticateToken, requireAdmin } from './middleware/auth';
-import { buildErrorResponse } from './middleware/validate';
 
 // Read package version for health endpoint
 const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
@@ -167,58 +165,29 @@ app.use((req, res, next) => {
   next();
 });
 
-// Health check endpoint with timeout and Redis ping
+// Health check endpoint
 app.get('/health', async (req, res) => {
-  let responded = false;
-  const timeout = setTimeout(() => {
-    if (!responded) {
-      responded = true;
-      res.status(503).json({
-        success: false,
-        data: { status: 'timeout', db: 'unknown', redis: 'unknown' },
-      });
-    }
-  }, 5000);
-
   try {
     const db = Database.getInstance();
-    const redis = getRedis();
+    const isDbHealthy = await db.healthCheck();
     const wsStats = getWebSocketStats();
-
-    const [dbResult, redisResult] = await Promise.all([
-      db.healthCheck().then(() => 'ok' as const).catch(() => 'error' as const),
-      redis ? redis.ping().then(() => 'ok' as const).catch(() => 'error' as const) : Promise.resolve('not_configured' as const),
-    ]);
-
-    clearTimeout(timeout);
-    if (responded) return;
-    responded = true;
-
-    const status = dbResult === 'ok' && (redisResult === 'ok' || redisResult === 'not_configured')
-      ? 'healthy'
-      : 'degraded';
 
     const response: ApiResponse = {
       success: true,
       data: {
-        status,
+        status: 'healthy',
         timestamp: new Date().toISOString(),
         version: APP_VERSION,
-        database: dbResult === 'ok' ? 'connected' : 'disconnected',
-        redis: redisResult,
+        database: isDbHealthy ? 'connected' : 'disconnected',
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,
         },
-        pushNotifications: pushNotificationService.isAvailable ? 'enabled' : 'disabled',
       },
     };
 
-    res.status(status === 'healthy' ? 200 : 503).json(response);
+    res.status(200).json(response);
   } catch (error) {
-    clearTimeout(timeout);
-    if (responded) return;
-    responded = true;
     const response: ApiResponse = {
       success: false,
       error: 'Health check failed',
@@ -281,9 +250,11 @@ app.get('/api/debug/sentry-test', authenticateToken, requireAdmin(), (req: expre
 
 // 404 handler
 app.use('*', (req, res) => {
-  res.status(404).json(
-    buildErrorResponse('NOT_FOUND', `Route ${req.originalUrl} not found`),
-  );
+  const response: ApiResponse = {
+    success: false,
+    error: `Route ${req.originalUrl} not found`,
+  };
+  res.status(404).json(response);
 });
 
 // Setup Sentry Express error handler - must be before other error handlers
@@ -315,19 +286,19 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
     });
   }
 
-  // Build canonical error response
-  const errorCode = statusCode >= 500 ? 'INTERNAL_ERROR' : error.code || 'REQUEST_ERROR';
-  const errorMessage = process.env.NODE_ENV === 'development'
-    ? error.message
-    : statusCode >= 500
-      ? 'Internal server error'
-      : error.message || 'Request failed';
-
-  const response = buildErrorResponse(errorCode, errorMessage);
+  // Build response
+  const response: ApiResponse = {
+    success: false,
+    error: process.env.NODE_ENV === 'development'
+      ? error.message
+      : statusCode >= 500
+        ? 'Internal server error'
+        : error.message || 'Request failed',
+  };
 
   // Include stack trace only in development
   if (process.env.NODE_ENV === 'development' && error.stack) {
-    response.error.details = { stack: error.stack };
+    (response as any).stack = error.stack;
   }
 
   res.status(statusCode).json(response);
@@ -362,10 +333,8 @@ const startServer = async () => {
     logInfo('Database connection established');
 
     // Warn about CORS configuration in production
-    // CORS_ORIGIN is not strictly needed for mobile-only API (mobile apps don't send Origin headers),
-    // but should be set if a web client is added later.
     if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
-      logWarn('CORS_ORIGIN not set in production — defaulting to mobile-only mode (no origin required)');
+      logWarn('CORS_ORIGIN not set - browser-origin requests will be REJECTED. Mobile (no-origin) requests still allowed. Set CORS_ORIGIN to enable web clients.');
     }
 
     // Initialize WebSocket server
@@ -398,13 +367,8 @@ const startServer = async () => {
 };
 
 // Handle graceful shutdown
-const gracefulShutdown = async (signal: string) => {
-  logInfo(`${signal} received, starting graceful shutdown`);
-  // Stop accepting new connections first
-  server.close(() => {
-    logInfo('HTTP server closed');
-  });
-  // Stop BullMQ workers
+process.on('SIGTERM', async () => {
+  logInfo('SIGTERM received, shutting down gracefully');
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
@@ -415,10 +379,21 @@ const gracefulShutdown = async (signal: string) => {
   const db = Database.getInstance();
   await db.close();
   process.exit(0);
-};
+});
 
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGINT', async () => {
+  logInfo('SIGINT received, shutting down gracefully');
+  if (syncWorker) await stopEventSyncWorker(syncWorker);
+  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
+  if (notifWorker) await stopNotificationWorker(notifWorker);
+  if (modWorker) await stopModerationWorker(modWorker);
+  await closeSentry(2000); // Wait up to 2s for pending Sentry events
+  await closeRedis();
+  websocket.close();
+  const db = Database.getInstance();
+  await db.close();
+  process.exit(0);
+});
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
@@ -428,11 +403,14 @@ process.on('uncaughtException', (error) => {
 });
 
 process.on('unhandledRejection', (reason, promise) => {
+  // INF-012: Log and report but do NOT exit the process.
+  // Unhandled rejections are often transient (e.g., a failed fire-and-forget
+  // cache invalidation). Exiting burns through restartPolicyMaxRetries and
+  // can take the service down permanently.
   logError('Unhandled Rejection', { reason, promise });
   if (reason instanceof Error) {
     sentryCaptureException(reason, { type: 'unhandledRejection' });
   }
-  process.exit(1);
 });
 
 startServer();

@@ -32,13 +32,9 @@ export class CheckinRatingService {
    * Ratings must be 0.5-5.0 in 0.5 steps.
    */
   async addRatings(checkinId: string, userId: string, ratings: AddRatingsRequest): Promise<Checkin> {
-    // Wrap all writes in a transaction to ensure atomicity (CFR-BE-002)
-    const client = await this.db.getClient();
     try {
-      await client.query('BEGIN');
-
       // Verify checkin belongs to userId
-      const checkinResult = await client.query(
+      const checkinResult = await this.db.query(
         'SELECT user_id, event_id FROM checkins WHERE id = $1',
         [checkinId]
       );
@@ -56,7 +52,7 @@ export class CheckinRatingService {
       // Handle venue rating
       if (ratings.venueRating !== undefined) {
         this.validateRating(ratings.venueRating);
-        await client.query(
+        await this.db.query(
           'UPDATE checkins SET venue_rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [ratings.venueRating, checkinId]
         );
@@ -64,47 +60,59 @@ export class CheckinRatingService {
 
       // Handle per-set band ratings
       if (ratings.bandRatings && ratings.bandRatings.length > 0) {
+        // Validate all ratings first (fast, no I/O)
         for (const br of ratings.bandRatings) {
           this.validateRating(br.rating);
-
-          // Verify band is in event lineup (if event-based check-in)
-          if (eventId) {
-            const lineupCheck = await client.query(
-              'SELECT 1 FROM event_lineup WHERE event_id = $1 AND band_id = $2',
-              [eventId, br.bandId]
-            );
-            if (lineupCheck.rows.length === 0) {
-              throw new Error(`Band ${br.bandId} is not in the event lineup`);
-            }
-          }
-
-          // Upsert band rating
-          await client.query(
-            `INSERT INTO checkin_band_ratings (checkin_id, band_id, rating)
-             VALUES ($1, $2, $3)
-             ON CONFLICT (checkin_id, band_id) DO UPDATE SET rating = $3`,
-            [checkinId, br.bandId, br.rating]
-          );
         }
 
+        // PERF-008: Batch lineup check -- verify all bands in a single query
+        // instead of N sequential queries.
+        if (eventId) {
+          const bandIds = ratings.bandRatings.map(br => br.bandId);
+          const lineupCheck = await this.db.query(
+            'SELECT band_id FROM event_lineup WHERE event_id = $1 AND band_id = ANY($2)',
+            [eventId, bandIds]
+          );
+          const validBandIds = new Set(lineupCheck.rows.map((r: any) => r.band_id));
+          for (const bandId of bandIds) {
+            if (!validBandIds.has(bandId)) {
+              throw new Error(`Band ${bandId} is not in the event lineup`);
+            }
+          }
+        }
+
+        // PERF-008: Batch UPSERT all band ratings in a single query
+        // instead of N sequential UPSERTs.
+        const valuesClauses: string[] = [];
+        const params: any[] = [checkinId]; // $1 = checkinId
+        let paramIdx = 2;
+        for (const br of ratings.bandRatings) {
+          valuesClauses.push(`($1, $${paramIdx}, $${paramIdx + 1})`);
+          params.push(br.bandId, br.rating);
+          paramIdx += 2;
+        }
+
+        await this.db.query(
+          `INSERT INTO checkin_band_ratings (checkin_id, band_id, rating)
+           VALUES ${valuesClauses.join(', ')}
+           ON CONFLICT (checkin_id, band_id) DO UPDATE SET rating = EXCLUDED.rating`,
+          params
+        );
+
         // Update the legacy rating column to average of all band ratings for backward compat
-        const avgResult = await client.query(
+        const avgResult = await this.db.query(
           `SELECT AVG(rating) as avg_rating FROM checkin_band_ratings WHERE checkin_id = $1`,
           [checkinId]
         );
         const avgRating = avgResult.rows[0]?.avg_rating
           ? parseFloat(avgResult.rows[0].avg_rating)
           : 0;
-        await client.query(
+        await this.db.query(
           'UPDATE checkins SET rating = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
           [avgRating, checkinId]
         );
-      }
 
-      await client.query('COMMIT');
-
-      // Fire-and-forget cache invalidation (outside transaction)
-      if (ratings.bandRatings && ratings.bandRatings.length > 0) {
+        // Fire-and-forget: invalidate band aggregate cache for each rated band
         for (const br of ratings.bandRatings) {
           cache.del(CacheKeys.bandAggregate(br.bandId)).catch((err) =>
             logger.debug('Warning: band aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
@@ -112,6 +120,7 @@ export class CheckinRatingService {
         }
       }
 
+      // Fire-and-forget: invalidate venue aggregate cache if venue was rated
       if (ratings.venueRating !== undefined) {
         const checkinForVenue = await this.db.query(
           'SELECT venue_id FROM checkins WHERE id = $1',
@@ -127,11 +136,8 @@ export class CheckinRatingService {
 
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
-      await client.query('ROLLBACK');
       logger.error('Add ratings error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       throw error;
-    } finally {
-      client.release();
     }
   }
 
@@ -142,8 +148,7 @@ export class CheckinRatingService {
     if (rating < 0.5 || rating > 5.0) {
       throw new Error('Rating must be between 0.5 and 5.0');
     }
-    // Use integer arithmetic to avoid floating-point modulo precision issues
-    if ((rating * 2) % 1 !== 0) {
+    if (rating % 0.5 !== 0) {
       throw new Error('Rating must be in 0.5 increments');
     }
   }

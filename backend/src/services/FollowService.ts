@@ -119,21 +119,13 @@ export class FollowService {
     const limit = Math.min(options.limit || 20, 100);
     const offset = (page - 1) * limit;
 
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM user_followers uf
-      INNER JOIN users u ON u.id = uf.follower_id
-      WHERE uf.following_id = $1 AND u.is_active = true
-    `;
-    const countResult = await this.db.query(countQuery, [userId]);
-    const total = parseInt(countResult.rows[0].total) || 0;
-
-    // Get followers with user details
+    // PERF-010: Fold COUNT into the main query via window function,
+    // eliminating a redundant sequential query.
     const query = `
       SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.bio,
              u.profile_image_url, u.location, u.date_of_birth, u.is_verified,
-             u.is_active, u.created_at, u.updated_at, uf.created_at as followed_at
+             u.is_active, u.created_at, u.updated_at, uf.created_at as followed_at,
+             COUNT(*) OVER() AS total_count
       FROM user_followers uf
       INNER JOIN users u ON u.id = uf.follower_id
       WHERE uf.following_id = $1 AND u.is_active = true
@@ -142,6 +134,7 @@ export class FollowService {
     `;
 
     const result = await this.db.query(query, [userId, limit, offset]);
+    const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count) || 0 : 0;
     const users = result.rows.map((row: any) => mapDbUserToUser(row));
 
     return {
@@ -171,21 +164,13 @@ export class FollowService {
     const limit = Math.min(options.limit || 20, 100);
     const offset = (page - 1) * limit;
 
-    // Get total count
-    const countQuery = `
-      SELECT COUNT(*) as total
-      FROM user_followers uf
-      INNER JOIN users u ON u.id = uf.following_id
-      WHERE uf.follower_id = $1 AND u.is_active = true
-    `;
-    const countResult = await this.db.query(countQuery, [userId]);
-    const total = parseInt(countResult.rows[0].total) || 0;
-
-    // Get following with user details
+    // PERF-010: Fold COUNT into the main query via window function,
+    // eliminating a redundant sequential query.
     const query = `
       SELECT u.id, u.email, u.username, u.first_name, u.last_name, u.bio,
              u.profile_image_url, u.location, u.date_of_birth, u.is_verified,
-             u.is_active, u.created_at, u.updated_at, uf.created_at as followed_at
+             u.is_active, u.created_at, u.updated_at, uf.created_at as followed_at,
+             COUNT(*) OVER() AS total_count
       FROM user_followers uf
       INNER JOIN users u ON u.id = uf.following_id
       WHERE uf.follower_id = $1 AND u.is_active = true
@@ -194,6 +179,7 @@ export class FollowService {
     `;
 
     const result = await this.db.query(query, [userId, limit, offset]);
+    const total = result.rows.length > 0 ? parseInt(result.rows[0].total_count) || 0 : 0;
     const users = result.rows.map((row: any) => mapDbUserToUser(row));
 
     return {

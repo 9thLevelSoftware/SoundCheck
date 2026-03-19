@@ -146,7 +146,8 @@ export class EventService {
    */
   async getEventById(eventId: string): Promise<Event> {
     try {
-      // Get event with venue
+      // PERF-009: Run all three queries in parallel instead of serially.
+      // The event+venue query, lineup query, and checkin count are independent.
       const eventQuery = `
         SELECT
           e.*,
@@ -157,13 +158,6 @@ export class EventService {
         WHERE e.id = $1
       `;
 
-      const eventResult = await this.db.query(eventQuery, [eventId]);
-
-      if (eventResult.rows.length === 0) {
-        throw new Error('Event not found');
-      }
-
-      // Get lineup entries with band details
       const lineupQuery = `
         SELECT
           el.id, el.band_id, el.set_order, el.set_time, el.is_headliner,
@@ -175,14 +169,20 @@ export class EventService {
         ORDER BY el.set_order ASC
       `;
 
-      const lineupResult = await this.db.query(lineupQuery, [eventId]);
-
-      // Get checkin count
       const countQuery = `
         SELECT COUNT(*) as checkin_count FROM checkins
         WHERE event_id = $1
       `;
-      const countResult = await this.db.query(countQuery, [eventId]);
+
+      const [eventResult, lineupResult, countResult] = await Promise.all([
+        this.db.query(eventQuery, [eventId]),
+        this.db.query(lineupQuery, [eventId]),
+        this.db.query(countQuery, [eventId]),
+      ]);
+
+      if (eventResult.rows.length === 0) {
+        throw new Error('Event not found');
+      }
 
       return this.mapDbEventToEvent(
         eventResult.rows[0],

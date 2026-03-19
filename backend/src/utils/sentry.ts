@@ -25,7 +25,11 @@ export function initSentry(): void {
   Sentry.init({
     dsn,
     environment: process.env.NODE_ENV || 'development',
-    release: process.env.npm_package_version || '1.0.0',
+    // Prefer explicit SENTRY_RELEASE env var over npm_package_version.
+    // npm_package_version is only set when the process is started via `npm start`
+    // and is unreliable in container environments where the process may be
+    // started directly via `node dist/index.js`.
+    release: process.env.SENTRY_RELEASE || process.env.npm_package_version || '1.0.0',
     tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.1 : 1.0,
     integrations: [
       // Enable HTTP request tracing

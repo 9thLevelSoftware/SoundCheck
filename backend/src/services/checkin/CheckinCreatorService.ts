@@ -106,58 +106,47 @@ export class CheckinCreatorService {
         ? headlinerResult.rows[0].band_id
         : null;
 
-      // INSERT the check-in + vibe tags inside a single transaction
-      // so a vibe tag failure rolls back the checkin (prevents partial state)
+      // INSERT the check-in
       const insertQuery = `
         INSERT INTO checkins (
           user_id, event_id, venue_id, band_id,
-          is_verified, checkin_latitude, checkin_longitude,
+          is_verified, review_text, checkin_latitude, checkin_longitude,
           event_date, rating, comment
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
         RETURNING *
       `;
 
-      let checkinId: string;
-      let checkinCreatedAt: string;
-      const client = await this.db.getClient();
+      let result;
       try {
-        await client.query('BEGIN');
-
-        const result = await client.query(insertQuery, [
+        result = await this.db.query(insertQuery, [
           userId,
           eventId,
           event.venue_id,
           headlinerBandId,
           isVerified,
+          comment || null,
           locationLat || null,
           locationLon || null,
           event.event_date,
           0,                      // rating starts at 0, set via PATCH /ratings
           comment || null,
         ]);
-
-        checkinId = result.rows[0].id;
-        checkinCreatedAt = result.rows[0].created_at;
-
-        // Add vibe tags if provided (within the same transaction)
-        if (vibeTagIds && vibeTagIds.length > 0) {
-          await this.addVibeTagsToCheckin(checkinId, vibeTagIds, client);
-        }
-
-        await client.query('COMMIT');
       } catch (error: any) {
-        await client.query('ROLLBACK');
-
-        // Re-throw unique constraint violation as 409
+        // Catch unique constraint violation for user+event
         if (error.code === '23505' && error.constraint && error.constraint.includes('user_event')) {
           const dupErr = new Error('You have already checked in to this event');
           (dupErr as any).statusCode = 409;
           throw dupErr;
         }
         throw error;
-      } finally {
-        client.release();
+      }
+
+      const checkinId = result.rows[0].id;
+
+      // Add vibe tags if provided
+      if (vibeTagIds && vibeTagIds.length > 0) {
+        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
       }
 
       // Promote user-created events if organic verification threshold met
@@ -184,8 +173,21 @@ export class CheckinCreatorService {
         }
       }
 
+      // PERF-013: Query follower IDs once and pass to both cache invalidation
+      // and Pub/Sub notification, avoiding a duplicate followers query.
+      const followerIdsPromise = this.db.query(
+        'SELECT follower_id FROM user_followers WHERE following_id = $1',
+        [userId]
+      ).then(r => r.rows.map((row: any) => row.follower_id as string))
+       .catch((err) => {
+         logger.debug('Warning: follower query failed', { error: err instanceof Error ? err.message : String(err) });
+         return [] as string[];
+       });
+
       // Fire-and-forget: invalidate feed caches for followers and event
-      this.invalidateFeedCachesForCheckin(userId, eventId).catch((err) =>
+      followerIdsPromise.then(followerIds =>
+        this.invalidateFeedCachesForCheckin(userId, eventId, followerIds)
+      ).catch((err) =>
         logger.debug('Warning: feed cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
       );
 
@@ -201,13 +203,16 @@ export class CheckinCreatorService {
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
       // and enqueue batched push notifications for followers
-      this.publishCheckinAndNotify(
-        checkinId,
-        userId,
-        eventId,
-        event.event_name || '',
-        event.venue_id,
-        checkinCreatedAt
+      followerIdsPromise.then(followerIds =>
+        this.publishCheckinAndNotify(
+          checkinId,
+          userId,
+          eventId,
+          event.event_name || '',
+          event.venue_id,
+          result.rows[0].created_at,
+          followerIds
+        )
       ).catch((err) =>
         logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
       );
@@ -236,15 +241,11 @@ export class CheckinCreatorService {
       );
 
       if (checkin.rows.length === 0) {
-        const err = new Error('Check-in not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw new Error('Check-in not found');
       }
 
       if (checkin.rows[0].user_id !== userId) {
-        const err = new Error('You can only delete your own check-ins');
-        (err as any).statusCode = 403;
-        throw err;
+        throw new Error('Unauthorized to delete this check-in');
       }
 
       const venueId = checkin.rows[0].venue_id;
@@ -255,13 +256,6 @@ export class CheckinCreatorService {
         [checkinId]
       );
       const bandIds: string[] = bandRatingsResult.rows.map((r: any) => r.band_id);
-
-      // CFR-DI-008: Dismiss pending reports for this checkin before deletion
-      await this.db.query(
-        `UPDATE reports SET status = 'dismissed', review_notes = 'content_deleted'
-         WHERE content_type = 'checkin' AND content_id = $1 AND status = 'pending'`,
-        [checkinId]
-      );
 
       // Delete check-in (cascades to toasts and comments)
       await this.db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
@@ -389,23 +383,8 @@ export class CheckinCreatorService {
         todayStr = nowLocal.toISOString().substring(0, 10);
       }
 
-      // Allow check-ins on the event date OR until 4 AM the next day
-      // (post-midnight events are common for concerts/shows)
-      if (todayStr !== eventDateStr) {
-        // Check if we are in the early morning hours (before 4 AM) of the day AFTER the event
-        const eventDateObj = new Date(eventDateStr + 'T00:00:00');
-        const nextDay = new Date(eventDateObj);
-        nextDay.setDate(nextDay.getDate() + 1);
-        const nextDayStr = nextDay.toISOString().substring(0, 10);
-
-        const currentHour = nowLocal.getHours();
-        if (todayStr === nextDayStr && currentHour < 4) {
-          // Allow check-in: it's before 4 AM the day after the event
-          return true;
-        }
-
-        return false;
-      }
+      // If today's date doesn't match event date, disallow
+      if (todayStr !== eventDateStr) return false;
 
       // If no time information at all, allow all-day window
       const doorsTime = event.doors_time;
@@ -458,18 +437,16 @@ export class CheckinCreatorService {
   // ============================================
 
   /**
-   * Add vibe tags to a check-in.
-   * Accepts an optional client to execute within an existing transaction.
+   * Add vibe tags to a check-in
    */
-  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[], client?: any): Promise<void> {
+  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[]): Promise<void> {
     try {
       if (!vibeTagIds || vibeTagIds.length === 0) return;
 
       const values = vibeTagIds.map((_, i) => `($1, $${i + 2})`).join(', ');
       const params = [checkinId, ...vibeTagIds];
 
-      const queryExecutor = client || this.db;
-      await queryExecutor.query(
+      await this.db.query(
         `INSERT INTO checkin_vibes (checkin_id, vibe_tag_id) VALUES ${values}
          ON CONFLICT (checkin_id, vibe_tag_id) DO NOTHING`,
         params
@@ -486,15 +463,12 @@ export class CheckinCreatorService {
    * event feed cache, and happening-now cache.
    * Fire-and-forget: errors are logged but never block check-in response.
    */
-  private async invalidateFeedCachesForCheckin(userId: string, eventId: string | null): Promise<void> {
+  private async invalidateFeedCachesForCheckin(
+    userId: string,
+    eventId: string | null,
+    followerIds: string[]
+  ): Promise<void> {
     try {
-      // Get follower IDs of the check-in creator
-      const followerResult = await this.db.query(
-        'SELECT follower_id FROM user_followers WHERE following_id = $1',
-        [userId]
-      );
-
-      const followerIds: string[] = followerResult.rows.map((r: any) => r.follower_id);
 
       // Invalidate friends feed + happening_now cache for each follower
       const invalidations: Promise<void>[] = [];
@@ -539,18 +513,17 @@ export class CheckinCreatorService {
     eventId: string,
     eventName: string,
     venueId: string,
-    createdAt: string
+    createdAt: string,
+    followerIds: string[]
   ): Promise<void> {
     try {
       const redis = getRedis();
       if (!redis) return;
+      if (followerIds.length === 0) return;
 
-      // Query follower IDs and user info in parallel
-      const [followerResult, userResult, venueResult] = await Promise.all([
-        this.db.query(
-          'SELECT follower_id FROM user_followers WHERE following_id = $1',
-          [userId]
-        ),
+      // PERF-013: followerIds are pre-fetched by caller. Only query user
+      // and venue info here (these were already parallelized).
+      const [userResult, venueResult] = await Promise.all([
         this.db.query(
           'SELECT username, profile_image_url FROM users WHERE id = $1',
           [userId]
@@ -560,9 +533,6 @@ export class CheckinCreatorService {
           [venueId]
         ),
       ]);
-
-      const followerIds = followerResult.rows.map((r: any) => r.follower_id);
-      if (followerIds.length === 0) return;
 
       const username = userResult.rows[0]?.username || '';
       const userAvatarUrl = userResult.rows[0]?.profile_image_url || null;
@@ -600,22 +570,13 @@ export class CheckinCreatorService {
         venueName: venueName || '',
       });
 
-      // Use Redis pipeline for batch RPUSH (avoids sequential round-trips)
-      const pipeline = redis.pipeline();
-      for (const followerId of followerIds) {
-        const listKey = `notif:batch:${followerId}`;
-        pipeline.rpush(listKey, notifData);
-        pipeline.expire(listKey, 300); // 5-minute safety TTL
-      }
-      try {
-        await pipeline.exec();
-      } catch (err) {
-        logger.debug('Warning: pipelined notification RPUSH failed', { error: err instanceof Error ? err.message : String(err) });
-      }
-
-      // Enqueue BullMQ jobs (these are already deduped by jobId)
       for (const followerId of followerIds) {
         try {
+          const listKey = `notif:batch:${followerId}`;
+          await redis.rpush(listKey, notifData);
+          await redis.expire(listKey, 300); // 5-minute safety TTL
+
+          // Enqueue delayed job with dedup (one per user per batching window)
           if (notificationQueue) {
             await notificationQueue.add('send-batch', { userId: followerId }, {
               delay: 120_000, // 2-minute batching window

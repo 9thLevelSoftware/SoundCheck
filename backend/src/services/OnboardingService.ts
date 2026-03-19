@@ -22,7 +22,8 @@ export class OnboardingService {
       throw new Error('Must select between 3 and 8 genres');
     }
 
-    // Wrap DELETE + INSERT in a transaction to avoid partial state
+    // PERF-022: Wrap DELETE + INSERT in a transaction to prevent
+    // partial state if the INSERT fails after DELETE commits.
     const client = await this.db.getClient();
     try {
       await client.query('BEGIN');
@@ -48,9 +49,9 @@ export class OnboardingService {
       }
 
       await client.query('COMMIT');
-    } catch (error) {
+    } catch (err) {
       await client.query('ROLLBACK');
-      throw error;
+      throw err;
     } finally {
       client.release();
     }

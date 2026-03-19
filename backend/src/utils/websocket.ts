@@ -43,6 +43,11 @@ interface Client {
   lastMessageReset: number;
 }
 
+// Maximum concurrent WebSocket connections. Prevents resource exhaustion
+// from connection floods. At beta scale (~2,000 users) with multiple
+// tabs/devices, 1,000 connections provides generous headroom.
+const MAX_CONNECTIONS = parseInt(process.env.WS_MAX_CONNECTIONS || '1000', 10);
+
 class WebSocketServer {
   private wss?: WebSocket.Server;
   private clients: Map<string, Client> = new Map();
@@ -88,6 +93,13 @@ class WebSocketServer {
     });
 
     this.wss.on('connection', (ws: WebSocket, req) => {
+      // Enforce connection limit to prevent resource exhaustion
+      if (this.clients.size >= MAX_CONNECTIONS) {
+        winstonLogger.warn(`WebSocket connection rejected: max connections reached (${MAX_CONNECTIONS})`);
+        ws.close(1013, 'Maximum connections reached');
+        return;
+      }
+
       const clientId = this.generateClientId();
       const userId = (req as any).userId; // Set from verifyClient
       const client: Client = {

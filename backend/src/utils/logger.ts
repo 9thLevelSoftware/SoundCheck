@@ -1,14 +1,16 @@
 import winston from 'winston';
-import DailyRotateFile from 'winston-daily-rotate-file';
-import path from 'path';
 
 /**
  * Production-grade logger with:
- * - Console output in development
- * - File rotation in production
- * - Separate error log file
+ * - Console output in development (colorized, human-readable)
+ * - JSON console output in production (captured by container platform stdout)
  * - Structured JSON logging
  * - Timestamp on all logs
+ *
+ * NOTE: File-based transports (DailyRotateFile) were removed because
+ * production runs in ephemeral containers (Railway/Docker). Container
+ * filesystems are wiped on restart, making file-based logs unreliable.
+ * Container platforms capture stdout/stderr natively.
  */
 
 // Define log levels
@@ -56,41 +58,14 @@ if (process.env.NODE_ENV !== 'production') {
   );
 }
 
-// Production transports
+// Production transports: JSON console only (container platforms capture stdout)
 if (process.env.NODE_ENV === 'production') {
-  // JSON console transport for container platforms (Railway, Docker)
-  // Container hosts capture stdout — file transports alone are invisible
   transports.push(
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
         winston.format.json()
       ),
-    })
-  );
-
-  // General logs with rotation
-  transports.push(
-    new DailyRotateFile({
-      dirname: path.join(__dirname, '../../logs'),
-      filename: 'soundcheck-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '20m',
-      maxFiles: '14d', // Keep logs for 14 days
-      format,
-    })
-  );
-
-  // Error logs separately
-  transports.push(
-    new DailyRotateFile({
-      dirname: path.join(__dirname, '../../logs'),
-      filename: 'soundcheck-error-%DATE%.log',
-      datePattern: 'YYYY-MM-DD',
-      maxSize: '20m',
-      maxFiles: '30d', // Keep error logs for 30 days
-      level: 'error',
-      format,
     })
   );
 }
