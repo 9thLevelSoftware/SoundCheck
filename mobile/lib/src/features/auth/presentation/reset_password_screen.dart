@@ -6,6 +6,19 @@ import '../../../core/providers/providers.dart';
 import '../../../core/error/failures.dart';
 import '../../../shared/utils/validators.dart';
 
+/// SEC-057: Validates that a reset token has the expected format before
+/// sending it to the backend. Accepts hex strings and UUID-v4 patterns.
+/// Returns true if the token looks structurally valid.
+bool _isValidTokenFormat(String token) {
+  if (token.isEmpty) return false;
+  // Accept hex tokens (32-128 chars) or UUID-v4
+  final hexPattern = RegExp(r'^[0-9a-fA-F]{32,128}$');
+  final uuidPattern = RegExp(
+    r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-4[0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}$',
+  );
+  return hexPattern.hasMatch(token) || uuidPattern.hasMatch(token);
+}
+
 /// Reset Password Screen - Three-state screen for completing password reset via deep link.
 ///
 /// State 1 (Error): Invalid or missing token — shows error with "Back to Login".
@@ -111,7 +124,9 @@ class _ResetPasswordScreenState extends ConsumerState<ResetPasswordScreen> {
   }
 
   Widget _buildContent() {
-    if (widget.token.isEmpty) {
+    // SEC-057: Validate token format client-side before allowing use.
+    // Rejects empty, malformed, or suspiciously crafted tokens early.
+    if (!_isValidTokenFormat(widget.token)) {
       return _buildErrorState();
     }
     if (_resetComplete) {

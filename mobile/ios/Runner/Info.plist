@@ -84,6 +84,12 @@
 	<string>SoundCheck may use motion data to enhance your concert experience and automatically detect when you're at a venue.</string>
 	<key>FlutterDeepLinkingEnabled</key>
 	<true/>
+	<!-- SEC-056: SECURITY WARNING — Custom URL schemes (soundcheck://) are
+	     vulnerable to URI hijacking on iOS. Any app can register the same
+	     scheme. For production hardening, migrate to Universal Links
+	     (apple-app-site-association) which are verified against the domain.
+	     Until then, never pass sensitive tokens via this scheme without
+	     server-side validation. -->
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>

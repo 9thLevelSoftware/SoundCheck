@@ -46,6 +46,14 @@
             <meta-data
                 android:name="flutter_deeplinking_enabled"
                 android:value="true" />
+            <!-- SEC-056: SECURITY WARNING — Custom URL schemes (soundcheck://)
+                 are vulnerable to URI hijacking on Android. Any app can
+                 register the same scheme. For production hardening, add
+                 Android App Links with a verified assetlinks.json on the
+                 domain. Until then, never pass sensitive tokens via this
+                 scheme without server-side validation.
+                 Note: android:autoVerify="true" only applies to https
+                 App Links, not to custom schemes. -->
             <intent-filter android:autoVerify="true">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
