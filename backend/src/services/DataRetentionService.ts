@@ -181,6 +181,43 @@ export class DataRetentionService {
       );
       deletedWishlists = wishlistResult.rowCount || 0;
 
+      // 3a. DB-010: Delete user badges (not purged in original implementation)
+      await client.query(
+        'DELETE FROM user_badges WHERE user_id = $1',
+        [userId]
+      );
+
+      // 3b. DB-010: Delete band ratings from user's check-ins
+      await client.query(
+        `DELETE FROM checkin_band_ratings
+         WHERE checkin_id IN (SELECT id FROM checkins WHERE user_id = $1)`,
+        [userId]
+      );
+
+      // 3c. DB-010: Delete toasts given by this user
+      await client.query(
+        'DELETE FROM toasts WHERE user_id = $1',
+        [userId]
+      );
+
+      // 3d. DB-010: Delete comments made by this user
+      await client.query(
+        'DELETE FROM checkin_comments WHERE user_id = $1',
+        [userId]
+      );
+
+      // 3e. DB-010: Delete user's social account links
+      await client.query(
+        'DELETE FROM user_social_accounts WHERE user_id = $1',
+        [userId]
+      );
+
+      // 3f. DB-010: Delete user consents
+      await client.query(
+        'DELETE FROM user_consents WHERE user_id = $1',
+        [userId]
+      );
+
       // 4. Revoke all refresh tokens
       const tokenResult = await client.query(
         `UPDATE refresh_tokens

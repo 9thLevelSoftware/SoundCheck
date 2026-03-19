@@ -122,30 +122,51 @@ export class BlockService {
    * The fragment checks both directions: content author blocked by viewer,
    * AND viewer blocked by content author.
    *
+   * DB-017: userId is cast to UUID in the SQL fragment using PostgreSQL's ::uuid
+   * cast rather than string interpolation. The userId is still embedded as a
+   * literal (not a $N parameter) because this fragment is composed into larger
+   * queries with pre-existing parameter lists. The UUID regex validation
+   * ensures the literal is safe from injection.
+   *
    * @param userId - The authenticated user viewing content
    * @param userColumn - The SQL column referencing the content author (e.g., 'c.user_id', 'u.id')
    * @returns SQL AND clause string
-   *
-   * SECURITY: userId is validated as a UUID before interpolation.
    */
   getBlockFilterSQL(userId: string, userColumn: string): string {
     this.validateUUID(userId);
+    // Allowlist userColumn to known safe column references
+    this.validateColumnRef(userColumn);
 
     return `AND NOT EXISTS (
       SELECT 1 FROM user_blocks
-      WHERE (blocker_id = '${userId}' AND blocked_id = ${userColumn})
-         OR (blocker_id = ${userColumn} AND blocked_id = '${userId}')
+      WHERE (blocker_id = '${userId}'::uuid AND blocked_id = ${userColumn})
+         OR (blocker_id = ${userColumn} AND blocked_id = '${userId}'::uuid)
     )`;
   }
 
   /**
    * Validate that a string is a valid UUID v4 format.
-   * Prevents SQL injection when userId is interpolated into SQL fragments.
+   * Prevents SQL injection when userId is used in SQL fragments.
    */
   private validateUUID(value: string): void {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(value)) {
       const err = new Error('Invalid user ID format');
+      (err as any).statusCode = 400;
+      throw err;
+    }
+  }
+
+  /**
+   * Validate that a column reference matches expected patterns.
+   * DB-017: Prevents injection through the userColumn parameter by
+   * restricting to known safe SQL column references.
+   */
+  private validateColumnRef(column: string): void {
+    // Allow patterns like: c.user_id, u.id, er.user_id, c2.user_id
+    const columnRefRegex = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/i;
+    if (!columnRefRegex.test(column)) {
+      const err = new Error('Invalid column reference format');
       (err as any).statusCode = 400;
       throw err;
     }

@@ -94,6 +94,15 @@ export class DataExportService {
   private db = Database.getInstance();
 
   /**
+   * Maximum rows per export section.
+   * DB-019/CFR-024: Prevents unbounded SELECT queries that could cause
+   * memory exhaustion on accounts with very large datasets.
+   * 10,000 is generous enough for any realistic beta user while still
+   * providing a safety cap.
+   */
+  private static readonly EXPORT_ROW_LIMIT = 10000;
+
+  /**
    * Export all user data for GDPR compliance
    * Collects profile, checkins, followers, following, wishlist, badges,
    * toasts, comments, and notifications
@@ -182,6 +191,7 @@ export class DataExportService {
       LEFT JOIN bands b ON c.band_id = b.id
       WHERE c.user_id = $1
       ORDER BY c.created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -212,6 +222,7 @@ export class DataExportService {
       INNER JOIN users u ON u.id = uf.follower_id
       WHERE uf.following_id = $1 AND u.is_active = true
       ORDER BY uf.created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -233,6 +244,7 @@ export class DataExportService {
       INNER JOIN users u ON u.id = uf.following_id
       WHERE uf.follower_id = $1 AND u.is_active = true
       ORDER BY uf.created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -255,6 +267,7 @@ export class DataExportService {
       INNER JOIN bands b ON b.id = uw.band_id
       WHERE uw.user_id = $1 AND b.is_active = true
       ORDER BY uw.created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -279,6 +292,7 @@ export class DataExportService {
       JOIN badges b ON ub.badge_id = b.id
       WHERE ub.user_id = $1
       ORDER BY ub.earned_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -304,6 +318,7 @@ export class DataExportService {
       INNER JOIN users u ON u.id = c.user_id
       WHERE t.user_id = $1
       ORDER BY t.created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -328,6 +343,7 @@ export class DataExportService {
       INNER JOIN users u ON u.id = c.user_id
       WHERE cc.user_id = $1
       ORDER BY cc.created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
@@ -350,6 +366,7 @@ export class DataExportService {
       FROM notifications
       WHERE user_id = $1
       ORDER BY created_at DESC
+      LIMIT ${DataExportService.EXPORT_ROW_LIMIT}
     `;
 
     const result = await this.db.query(query, [userId]);
