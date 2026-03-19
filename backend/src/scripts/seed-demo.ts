@@ -116,10 +116,15 @@ async function seedAccount(
     eventDate.setDate(eventDate.getDate() - ev.daysAgo);
     const dateStr = eventDate.toISOString().split('T')[0];
 
+    // DI-015: ON CONFLICT now works correctly with the idx_events_user_dedup
+    // partial unique index added in migration 047. The index covers
+    // (venue_id, event_date, event_name, created_by_user_id) WHERE source = 'user_created'.
     const result = await db.query(
       `INSERT INTO events (venue_id, event_date, event_name, source, is_verified, created_by_user_id)
        VALUES ($1, $2, $3, 'user_created', true, $4)
-       ON CONFLICT DO NOTHING
+       ON CONFLICT (venue_id, event_date, event_name, created_by_user_id)
+         WHERE source = 'user_created'
+       DO NOTHING
        RETURNING id`,
       [venues[venueIdx].id, dateStr, ev.name, userId]
     );
@@ -194,14 +199,17 @@ async function seedAccount(
   console.log(`  Band ratings: ${ratingCount}`);
 
   // Award badges
-  const badgeNames = ['first_show', 'genre_explorer', 'venue_collector'];
-  const badgeSubset = badgeNames.slice(0, 2 + (accountIndex % 2)); // 2-3 badges per account
+  // DI-018: Use exact badge_type lookup instead of imprecise ILIKE matching
+  // which could match wrong badges (e.g., 'venue_collector' ILIKE matching
+  // 'Venue Explorer' instead of 'Venue Collector').
+  const badgeTypes = ['checkin_count', 'genre_explorer', 'unique_venues'];
+  const badgeSubset = badgeTypes.slice(0, 2 + (accountIndex % 2)); // 2-3 badges per account
   let badgeCount = 0;
 
-  for (const badgeName of badgeSubset) {
+  for (const badgeType of badgeSubset) {
     const badgeResult = await db.query(
-      'SELECT id FROM badges WHERE badge_type = $1 OR name ILIKE $2 LIMIT 1',
-      [badgeName, `%${badgeName.replace('_', ' ')}%`]
+      'SELECT id FROM badges WHERE badge_type = $1 ORDER BY requirement_value ASC LIMIT 1',
+      [badgeType]
     );
 
     if (badgeResult.rows[0]) {
@@ -231,7 +239,12 @@ async function seedAllDemoAccounts() {
     }
     console.log('Database connection successful\n');
 
-    // Ensure is_demo column exists
+    // DI-017: is_demo column is added here outside migrations. This is
+    // intentional for demo-only infrastructure that should not affect the
+    // production migration chain. The column is used solely by seed-demo.ts
+    // to identify and manage demo accounts, and IF NOT EXISTS ensures
+    // idempotency. If this column is needed in production code, it should
+    // be moved to a proper migration.
     console.log('Ensuring is_demo column exists...');
     await db.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_demo BOOLEAN DEFAULT false`);
     console.log('  is_demo column ready\n');

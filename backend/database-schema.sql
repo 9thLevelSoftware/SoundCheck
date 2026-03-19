@@ -1,12 +1,18 @@
 -- SoundCheck Database Schema
 -- PostgreSQL Database Design - "Untappd for Music" Model
 -- The Check-in is King
+--
+-- NOTE: This file is a reference schema for documentation purposes.
+-- The authoritative schema is produced by running the migration chain
+-- (backend/migrations/*.ts). Changes here MUST be synced with migrations
+-- to avoid schema drift (CFR-022, CFR-042, DI-020).
 
 -- Create database (run this separately)
 -- CREATE DATABASE soundcheck;
 
 -- Enable UUID extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- =====================================================
 -- CORE TABLES
@@ -27,9 +33,10 @@ CREATE TABLE IF NOT EXISTS users (
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
     -- Gamification stats (denormalized for performance)
-    total_checkins INTEGER DEFAULT 0,
-    unique_bands INTEGER DEFAULT 0,
-    unique_venues INTEGER DEFAULT 0,
+    -- DB-020: NOT NULL matches migration 040
+    total_checkins INTEGER NOT NULL DEFAULT 0,
+    unique_bands INTEGER NOT NULL DEFAULT 0,
+    unique_venues INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -53,12 +60,14 @@ CREATE TABLE IF NOT EXISTS venues (
     venue_type VARCHAR(50), -- 'concert_hall', 'club', 'arena', 'outdoor', 'bar', 'theater', 'stadium', 'other'
     image_url VARCHAR(500),
     cover_image_url VARCHAR(500),
-    -- Stats
-    total_checkins INTEGER DEFAULT 0,
-    unique_visitors INTEGER DEFAULT 0,
+    -- Stats (DB-020: NOT NULL matches migration 041; DI-021: total_reviews from migration 047)
+    total_checkins INTEGER NOT NULL DEFAULT 0,
+    unique_visitors INTEGER NOT NULL DEFAULT 0,
+    total_reviews INTEGER NOT NULL DEFAULT 0,
     average_rating DECIMAL(3, 2) DEFAULT 0.00,
     is_verified BOOLEAN DEFAULT FALSE,
     is_active BOOLEAN DEFAULT TRUE,
+    claimed_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -77,12 +86,14 @@ CREATE TABLE IF NOT EXISTS bands (
     image_url VARCHAR(500), -- Square logo
     cover_image_url VARCHAR(500),
     hometown VARCHAR(255),
-    -- Stats
-    total_checkins INTEGER DEFAULT 0,
-    unique_fans INTEGER DEFAULT 0,
-    monthly_checkins INTEGER DEFAULT 0,
+    -- Stats (DB-020: NOT NULL matches migration 041; DI-005/DI-021: columns from migration 047)
+    total_checkins INTEGER NOT NULL DEFAULT 0,
+    unique_fans INTEGER NOT NULL DEFAULT 0,
+    monthly_checkins INTEGER NOT NULL DEFAULT 0,
+    total_reviews INTEGER NOT NULL DEFAULT 0,
     average_rating DECIMAL(3, 2) DEFAULT 0.00,
     is_active BOOLEAN DEFAULT TRUE,
+    claimed_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
@@ -101,27 +112,33 @@ CREATE TABLE IF NOT EXISTS vibe_tags (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
 );
 
--- Check-ins table (The King - replaces Reviews)
+-- Check-ins table (The King)
+-- DB-020: band_id and venue_id are nullable (event-based check-ins derive them
+-- from event_lineup and events tables). rating default is 0, not NOT NULL.
 CREATE TABLE IF NOT EXISTS checkins (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    band_id UUID NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
-    venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+    band_id UUID REFERENCES bands(id) ON DELETE CASCADE,
+    venue_id UUID REFERENCES venues(id) ON DELETE CASCADE,
+    event_id UUID REFERENCES events(id) ON DELETE CASCADE,
     -- Rating (0-5, allows half stars via decimal)
-    rating DECIMAL(2, 1) NOT NULL CHECK (rating >= 0 AND rating <= 5),
+    rating DECIMAL(2, 1) NOT NULL DEFAULT 0 CHECK (rating >= 0 AND rating <= 5),
+    venue_rating DECIMAL(2, 1) CHECK (venue_rating >= 0 AND venue_rating <= 5),
     -- Content
     comment TEXT, -- "What's the vibe?" - optional review text
     photo_url VARCHAR(500), -- Concert photo
     -- Location data (for verification)
     checkin_latitude DECIMAL(10, 8),
     checkin_longitude DECIMAL(11, 8),
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_hidden BOOLEAN DEFAULT FALSE,
     -- Timestamps
     event_date DATE, -- Date of the concert
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    -- Denormalized counts for performance
-    toast_count INTEGER DEFAULT 0,
-    comment_count INTEGER DEFAULT 0
+    -- Denormalized counts for performance (migration 024 + 037)
+    toast_count INTEGER NOT NULL DEFAULT 0,
+    comment_count INTEGER NOT NULL DEFAULT 0
 );
 
 -- Check-in vibe tags (many-to-many)
@@ -131,6 +148,16 @@ CREATE TABLE IF NOT EXISTS checkin_vibes (
     vibe_tag_id UUID NOT NULL REFERENCES vibe_tags(id) ON DELETE CASCADE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
     UNIQUE(checkin_id, vibe_tag_id)
+);
+
+-- Check-in band ratings (per-band ratings within a multi-band event)
+CREATE TABLE IF NOT EXISTS checkin_band_ratings (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    checkin_id UUID NOT NULL REFERENCES checkins(id) ON DELETE CASCADE,
+    band_id UUID NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+    rating DECIMAL(2, 1) NOT NULL CHECK (rating >= 0.5 AND rating <= 5),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(checkin_id, band_id)
 );
 
 -- =====================================================
@@ -166,6 +193,15 @@ CREATE TABLE IF NOT EXISTS user_followers (
     CONSTRAINT no_self_follow CHECK (follower_id != following_id)
 );
 
+-- User blocks (trust & safety)
+CREATE TABLE IF NOT EXISTS user_blocks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    blocker_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    blocked_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(blocker_id, blocked_id)
+);
+
 -- =====================================================
 -- GAMIFICATION
 -- =====================================================
@@ -178,6 +214,7 @@ CREATE TABLE IF NOT EXISTS badges (
     icon_url VARCHAR(500),
     badge_type VARCHAR(50), -- 'checkin_count', 'unique_bands', 'unique_venues', 'genre_master', etc.
     requirement_value INTEGER, -- threshold for earning badge
+    criteria JSONB, -- data-driven evaluation criteria (migration 008)
     color VARCHAR(7), -- hex color code
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
@@ -195,10 +232,57 @@ CREATE TABLE IF NOT EXISTS user_badges (
 );
 
 -- =====================================================
--- EVENTS & SHOWS (Venue "Beer Menu" equivalent)
+-- EVENTS (Replaces legacy shows table for multi-band events)
 -- =====================================================
 
--- Upcoming shows at venues
+CREATE TABLE IF NOT EXISTS events (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
+    event_date DATE NOT NULL,
+    event_name VARCHAR(500),
+    doors_time TIME,
+    start_time TIME,
+    end_time TIME,
+    ticket_url VARCHAR(500),
+    ticket_price_min DECIMAL(10, 2),
+    ticket_price_max DECIMAL(10, 2),
+    description TEXT,
+    image_url VARCHAR(500),
+    source VARCHAR(50) DEFAULT 'user_created', -- 'user_created', 'ticketmaster', 'setlist_fm'
+    external_id VARCHAR(500),
+    is_verified BOOLEAN DEFAULT FALSE,
+    is_sold_out BOOLEAN DEFAULT FALSE,
+    is_cancelled BOOLEAN DEFAULT FALSE,
+    status VARCHAR(50) DEFAULT 'scheduled',
+    total_checkins INTEGER NOT NULL DEFAULT 0,
+    created_by_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Event lineup (many-to-many between events and bands)
+CREATE TABLE IF NOT EXISTS event_lineup (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    band_id UUID NOT NULL REFERENCES bands(id) ON DELETE CASCADE,
+    set_order INTEGER DEFAULT 1,
+    is_headliner BOOLEAN DEFAULT FALSE,
+    set_time TIME,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(event_id, band_id)
+);
+
+-- Event RSVPs
+CREATE TABLE IF NOT EXISTS event_rsvps (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    event_id UUID NOT NULL REFERENCES events(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    status VARCHAR(20) DEFAULT 'going',
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(event_id, user_id)
+);
+
+-- Legacy shows table (kept for backward compatibility with notifications FK)
 CREATE TABLE IF NOT EXISTS shows (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     venue_id UUID NOT NULL REFERENCES venues(id) ON DELETE CASCADE,
@@ -227,11 +311,6 @@ CREATE TABLE IF NOT EXISTS user_wishlist (
     UNIQUE(user_id, band_id)
 );
 
--- Wishlist indexes
-CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON user_wishlist(user_id);
-CREATE INDEX IF NOT EXISTS idx_wishlist_band_id ON user_wishlist(band_id);
-CREATE INDEX IF NOT EXISTS idx_wishlist_user_created ON user_wishlist(user_id, created_at DESC);
-
 -- =====================================================
 -- NOTIFICATIONS
 -- =====================================================
@@ -239,7 +318,7 @@ CREATE INDEX IF NOT EXISTS idx_wishlist_user_created ON user_wishlist(user_id, c
 CREATE TABLE IF NOT EXISTS notifications (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    type VARCHAR(50) NOT NULL, -- 'toast', 'comment', 'badge_earned', 'friend_checkin', 'show_reminder'
+    type VARCHAR(50) NOT NULL, -- 'toast', 'comment', 'badge_earned', 'friend_checkin', 'show_reminder', 'new_follower'
     title VARCHAR(255),
     message TEXT,
     -- Reference IDs
@@ -281,6 +360,8 @@ CREATE INDEX IF NOT EXISTS idx_checkins_event_date ON checkins(event_date);
 CREATE INDEX IF NOT EXISTS idx_checkins_rating ON checkins(rating);
 -- Composite index for feed queries
 CREATE INDEX IF NOT EXISTS idx_checkins_user_created ON checkins(user_id, created_at DESC);
+-- DB-016: Index for recommendation exclusion (migration 047)
+CREATE INDEX IF NOT EXISTS idx_checkins_user_event ON checkins(user_id, event_id);
 
 -- Social
 CREATE INDEX IF NOT EXISTS idx_toasts_checkin_id ON toasts(checkin_id);
@@ -292,10 +373,23 @@ CREATE INDEX IF NOT EXISTS idx_followers_following ON user_followers(following_i
 -- Badges
 CREATE INDEX IF NOT EXISTS idx_user_badges_user_id ON user_badges(user_id);
 
--- Shows
+-- Events
+CREATE INDEX IF NOT EXISTS idx_events_venue_id ON events(venue_id);
+CREATE INDEX IF NOT EXISTS idx_events_date ON events(event_date);
+-- DB-011: Dedup index for user-created events (migration 047)
+CREATE UNIQUE INDEX IF NOT EXISTS idx_events_user_dedup
+  ON events (venue_id, event_date, event_name, created_by_user_id)
+  WHERE source = 'user_created';
+
+-- Shows (legacy)
 CREATE INDEX IF NOT EXISTS idx_shows_venue_id ON shows(venue_id);
 CREATE INDEX IF NOT EXISTS idx_shows_band_id ON shows(band_id);
 CREATE INDEX IF NOT EXISTS idx_shows_date ON shows(show_date);
+
+-- Wishlists
+CREATE INDEX IF NOT EXISTS idx_wishlist_user_id ON user_wishlist(user_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_band_id ON user_wishlist(band_id);
+CREATE INDEX IF NOT EXISTS idx_wishlist_user_created ON user_wishlist(user_id, created_at DESC);
 
 -- Notifications
 CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
@@ -337,42 +431,117 @@ CREATE TRIGGER update_shows_updated_at BEFORE UPDATE ON shows FOR EACH ROW EXECU
 -- FUNCTIONS FOR STATS
 -- =====================================================
 
--- Function to update user stats after check-in
+-- Function to update user stats after check-in (synced with migration 009)
 CREATE OR REPLACE FUNCTION update_user_stats_on_checkin()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_band_id UUID;
+    v_venue_id UUID;
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        -- Update total check-ins
+        -- Determine band_id and venue_id from either path
+        IF NEW.event_id IS NOT NULL THEN
+            SELECT e.venue_id INTO v_venue_id
+            FROM events e WHERE e.id = NEW.event_id;
+
+            SELECT el.band_id INTO v_band_id
+            FROM event_lineup el
+            WHERE el.event_id = NEW.event_id
+            ORDER BY el.is_headliner DESC, el.set_order ASC
+            LIMIT 1;
+        ELSE
+            v_band_id := NEW.band_id;
+            v_venue_id := NEW.venue_id;
+        END IF;
+
+        -- Update total check-ins for user
         UPDATE users SET total_checkins = total_checkins + 1 WHERE id = NEW.user_id;
 
         -- Update unique bands count
         UPDATE users SET unique_bands = (
-            SELECT COUNT(DISTINCT band_id) FROM checkins WHERE user_id = NEW.user_id
+            SELECT COUNT(DISTINCT band_id) FROM (
+                SELECT band_id FROM checkins WHERE user_id = NEW.user_id AND band_id IS NOT NULL
+                UNION
+                SELECT el.band_id FROM checkins c
+                JOIN event_lineup el ON c.event_id = el.event_id
+                WHERE c.user_id = NEW.user_id AND c.event_id IS NOT NULL
+            ) sub
         ) WHERE id = NEW.user_id;
 
         -- Update unique venues count
         UPDATE users SET unique_venues = (
-            SELECT COUNT(DISTINCT venue_id) FROM checkins WHERE user_id = NEW.user_id
+            SELECT COUNT(DISTINCT venue_id) FROM (
+                SELECT venue_id FROM checkins WHERE user_id = NEW.user_id AND venue_id IS NOT NULL
+                UNION
+                SELECT e.venue_id FROM checkins c
+                JOIN events e ON c.event_id = e.id
+                WHERE c.user_id = NEW.user_id AND c.event_id IS NOT NULL
+            ) sub
         ) WHERE id = NEW.user_id;
 
-        -- Update band stats
-        UPDATE bands SET
-            total_checkins = total_checkins + 1,
-            unique_fans = (SELECT COUNT(DISTINCT user_id) FROM checkins WHERE band_id = NEW.band_id),
-            average_rating = (SELECT AVG(rating) FROM checkins WHERE band_id = NEW.band_id)
-        WHERE id = NEW.band_id;
+        -- Update band stats if we have a band
+        IF v_band_id IS NOT NULL THEN
+            UPDATE bands SET
+                total_checkins = total_checkins + 1,
+                unique_fans = (
+                    SELECT COUNT(DISTINCT user_id) FROM (
+                        SELECT user_id FROM checkins WHERE band_id = v_band_id
+                        UNION
+                        SELECT c.user_id FROM checkins c
+                        JOIN event_lineup el ON c.event_id = el.event_id
+                        WHERE el.band_id = v_band_id AND c.event_id IS NOT NULL
+                    ) sub
+                ),
+                average_rating = COALESCE(
+                    (SELECT AVG(rating) FROM (
+                        SELECT rating FROM checkins
+                        WHERE band_id = v_band_id AND rating IS NOT NULL AND rating > 0
+                        UNION ALL
+                        SELECT cbr.rating FROM checkin_band_ratings cbr
+                        WHERE cbr.band_id = v_band_id
+                    ) sub),
+                    0
+                )
+            WHERE id = v_band_id;
+        END IF;
 
-        -- Update venue stats
-        UPDATE venues SET
-            total_checkins = total_checkins + 1,
-            unique_visitors = (SELECT COUNT(DISTINCT user_id) FROM checkins WHERE venue_id = NEW.venue_id),
-            average_rating = (SELECT AVG(rating) FROM checkins WHERE venue_id = NEW.venue_id)
-        WHERE id = NEW.venue_id;
+        -- Update venue stats if we have a venue
+        IF v_venue_id IS NOT NULL THEN
+            UPDATE venues SET
+                total_checkins = total_checkins + 1,
+                unique_visitors = (
+                    SELECT COUNT(DISTINCT user_id) FROM (
+                        SELECT user_id FROM checkins WHERE venue_id = v_venue_id
+                        UNION
+                        SELECT c.user_id FROM checkins c
+                        JOIN events e ON c.event_id = e.id
+                        WHERE e.venue_id = v_venue_id AND c.event_id IS NOT NULL
+                    ) sub
+                ),
+                average_rating = COALESCE(
+                    (SELECT AVG(r) FROM (
+                        SELECT rating AS r FROM checkins
+                        WHERE venue_id = v_venue_id AND rating IS NOT NULL AND rating > 0
+                        UNION ALL
+                        SELECT c.venue_rating AS r FROM checkins c
+                        JOIN events e ON c.event_id = e.id
+                        WHERE e.venue_id = v_venue_id AND c.venue_rating IS NOT NULL
+                    ) sub),
+                    0
+                )
+            WHERE id = v_venue_id;
+        END IF;
+
+        -- Update event total_checkins if applicable
+        IF NEW.event_id IS NOT NULL THEN
+            UPDATE events SET total_checkins = total_checkins + 1
+            WHERE id = NEW.event_id;
+        END IF;
     END IF;
 
     RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
 DROP TRIGGER IF EXISTS trigger_update_stats_on_checkin ON checkins;
 CREATE TRIGGER trigger_update_stats_on_checkin
@@ -380,43 +549,69 @@ CREATE TRIGGER trigger_update_stats_on_checkin
     FOR EACH ROW
     EXECUTE FUNCTION update_user_stats_on_checkin();
 
--- Function to update toast count
-CREATE OR REPLACE FUNCTION update_toast_count()
+-- DB-009/CFR-042/DI-004: Toast count trigger with GREATEST() and parent-exists guard
+-- Synced with migration 037 + 047
+CREATE OR REPLACE FUNCTION update_checkin_toast_count()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        UPDATE checkins SET toast_count = toast_count + 1 WHERE id = NEW.checkin_id;
+        IF EXISTS (SELECT 1 FROM checkins WHERE id = NEW.checkin_id) THEN
+            UPDATE checkins SET toast_count = toast_count + 1 WHERE id = NEW.checkin_id;
+        END IF;
+        RETURN NEW;
     ELSIF TG_OP = 'DELETE' THEN
-        UPDATE checkins SET toast_count = toast_count - 1 WHERE id = OLD.checkin_id;
+        IF EXISTS (SELECT 1 FROM checkins WHERE id = OLD.checkin_id) THEN
+            UPDATE checkins SET toast_count = GREATEST(toast_count - 1, 0) WHERE id = OLD.checkin_id;
+        END IF;
+        RETURN OLD;
     END IF;
     RETURN NULL;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_update_toast_count ON toasts;
-CREATE TRIGGER trigger_update_toast_count
-    AFTER INSERT OR DELETE ON toasts
+DROP TRIGGER IF EXISTS trg_toast_count_insert ON toasts;
+CREATE TRIGGER trg_toast_count_insert
+    AFTER INSERT ON toasts
     FOR EACH ROW
-    EXECUTE FUNCTION update_toast_count();
+    EXECUTE FUNCTION update_checkin_toast_count();
 
--- Function to update comment count
-CREATE OR REPLACE FUNCTION update_comment_count()
+DROP TRIGGER IF EXISTS trg_toast_count_delete ON toasts;
+CREATE TRIGGER trg_toast_count_delete
+    AFTER DELETE ON toasts
+    FOR EACH ROW
+    EXECUTE FUNCTION update_checkin_toast_count();
+
+-- DB-009/CFR-042/DI-004: Comment count trigger with GREATEST() and parent-exists guard
+-- Synced with migration 037 + 047
+CREATE OR REPLACE FUNCTION update_checkin_comment_count()
 RETURNS TRIGGER AS $$
 BEGIN
     IF TG_OP = 'INSERT' THEN
-        UPDATE checkins SET comment_count = comment_count + 1 WHERE id = NEW.checkin_id;
+        IF EXISTS (SELECT 1 FROM checkins WHERE id = NEW.checkin_id) THEN
+            UPDATE checkins SET comment_count = comment_count + 1 WHERE id = NEW.checkin_id;
+        END IF;
+        RETURN NEW;
     ELSIF TG_OP = 'DELETE' THEN
-        UPDATE checkins SET comment_count = comment_count - 1 WHERE id = OLD.checkin_id;
+        IF EXISTS (SELECT 1 FROM checkins WHERE id = OLD.checkin_id) THEN
+            UPDATE checkins SET comment_count = GREATEST(comment_count - 1, 0) WHERE id = OLD.checkin_id;
+        END IF;
+        RETURN OLD;
     END IF;
     RETURN NULL;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
-DROP TRIGGER IF EXISTS trigger_update_comment_count ON checkin_comments;
-CREATE TRIGGER trigger_update_comment_count
-    AFTER INSERT OR DELETE ON checkin_comments
+DROP TRIGGER IF EXISTS trg_comment_count_insert ON checkin_comments;
+CREATE TRIGGER trg_comment_count_insert
+    AFTER INSERT ON checkin_comments
     FOR EACH ROW
-    EXECUTE FUNCTION update_comment_count();
+    EXECUTE FUNCTION update_checkin_comment_count();
+
+DROP TRIGGER IF EXISTS trg_comment_count_delete ON checkin_comments;
+CREATE TRIGGER trg_comment_count_delete
+    AFTER DELETE ON checkin_comments
+    FOR EACH ROW
+    EXECUTE FUNCTION update_checkin_comment_count();
 
 -- =====================================================
 -- SEED DATA
@@ -460,57 +655,8 @@ INSERT INTO badges (name, description, badge_type, requirement_value, color) VAL
 ('Genre Master', 'Check in to 20 shows of the same genre', 'genre_master', 20, '#7C4DFF')
 ON CONFLICT (name) DO NOTHING;
 
--- =====================================================
--- REVIEWS (Venue and Band Reviews)
--- =====================================================
-
--- Reviews for venues and bands
-CREATE TABLE IF NOT EXISTS reviews (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    venue_id UUID REFERENCES venues(id) ON DELETE CASCADE,
-    band_id UUID REFERENCES bands(id) ON DELETE CASCADE,
-    rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
-    title VARCHAR(100),
-    content TEXT,
-    event_date DATE,
-    image_urls TEXT[], -- Array of image URLs
-    is_verified BOOLEAN DEFAULT FALSE,
-    helpful_count INTEGER DEFAULT 0,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    -- Ensure review is for either venue OR band, not both or neither
-    CONSTRAINT review_target_check CHECK (
-        (venue_id IS NOT NULL AND band_id IS NULL) OR
-        (venue_id IS NULL AND band_id IS NOT NULL)
-    )
-);
-
--- Review helpfulness tracking (users marking reviews as helpful)
-CREATE TABLE IF NOT EXISTS review_helpfulness (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    review_id UUID NOT NULL REFERENCES reviews(id) ON DELETE CASCADE,
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-    is_helpful BOOLEAN NOT NULL,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    UNIQUE(review_id, user_id)
-);
-
--- Reviews indexes
-CREATE INDEX IF NOT EXISTS idx_reviews_user ON reviews(user_id);
-CREATE INDEX IF NOT EXISTS idx_reviews_venue ON reviews(venue_id);
-CREATE INDEX IF NOT EXISTS idx_reviews_band ON reviews(band_id);
-CREATE INDEX IF NOT EXISTS idx_reviews_rating ON reviews(rating);
-CREATE INDEX IF NOT EXISTS idx_reviews_created ON reviews(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_reviews_helpful ON reviews(helpful_count DESC);
-
--- Review helpfulness indexes
-CREATE INDEX IF NOT EXISTS idx_review_helpfulness_review ON review_helpfulness(review_id);
-CREATE INDEX IF NOT EXISTS idx_review_helpfulness_user ON review_helpfulness(user_id);
-
--- Trigger for reviews updated_at
-DROP TRIGGER IF EXISTS update_reviews_updated_at ON reviews;
-CREATE TRIGGER update_reviews_updated_at BEFORE UPDATE ON reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+-- NOTE: Reviews tables were dropped in migration 043. They are no longer
+-- part of the schema. Ratings are derived from checkin_band_ratings.
 
 -- =====================================================
 -- REFRESH TOKENS (JWT Revocation Support)

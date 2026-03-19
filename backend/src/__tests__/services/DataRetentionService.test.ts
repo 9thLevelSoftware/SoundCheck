@@ -105,11 +105,18 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: originalEmail }] });
 
       // Transaction queries (on client)
+      // DB-010: includes new DELETE statements for badges, ratings, toasts, comments, social accounts, consents
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 5 }) // Delete notifications
         .mockResolvedValueOnce({ rowCount: 10 }) // Delete follows
         .mockResolvedValueOnce({ rowCount: 3 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 2 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 1 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 4 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 3 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 1 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 2 }) // Delete consents (DB-010)
         .mockResolvedValueOnce({ rowCount: 2 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 4 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
@@ -139,13 +146,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.executeAccountDeletion(userId);
@@ -169,13 +182,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 8 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 8 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
@@ -193,13 +212,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 15 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 15 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
@@ -217,13 +242,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 5 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 5 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.executeAccountDeletion(userId);
@@ -241,13 +272,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
@@ -265,13 +302,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
@@ -297,6 +340,12 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
         .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
         .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
         .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 7 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
@@ -318,13 +367,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
@@ -476,12 +531,18 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
         .mockResolvedValueOnce({ rows: [{ id: 'user-1', email: 'test1@example.com' }] }); // User check
 
-      // Transaction queries (on client)
+      // Transaction queries (on client) - includes DB-010 cleanup steps
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 2 }) // Delete notifications
         .mockResolvedValueOnce({ rowCount: 3 }) // Delete follows
         .mockResolvedValueOnce({ rowCount: 1 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
         .mockResolvedValueOnce({ rowCount: 1 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
         .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
@@ -532,16 +593,22 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
         .mockResolvedValueOnce({ rows: [{ id: 'user-2', email: 'test2@example.com' }] }); // User check
 
-      // Transaction queries for second deletion (on client)
+      // Transaction queries for second deletion (on client) - includes DB-010 cleanup steps
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 2 })
-        .mockResolvedValueOnce({ rowCount: 3 })
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 2 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 3 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 1 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 1 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       const result = await dataRetentionService.processPendingDeletions();
@@ -684,13 +751,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'personal@email.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       await dataRetentionService.executeAccountDeletion(userId);
@@ -718,13 +791,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: userId, email: 'test@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       const result1 = await dataRetentionService.executeAccountDeletion(userId);
@@ -735,13 +814,19 @@ describe('DataRetentionService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: 'user-456', email: 'another@example.com' }] });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
-        .mockResolvedValueOnce({ rowCount: 0 })
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete follows
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete wishlists
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete user badges (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete band ratings (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete toasts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete comments (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete social accounts (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Delete consents (DB-010)
+        .mockResolvedValueOnce({ rowCount: 0 }) // Revoke tokens
         .mockResolvedValueOnce({ rowCount: 0 }) // Anonymize check-in photos
-        .mockResolvedValueOnce({ rowCount: 1 })
-        .mockResolvedValueOnce({ rowCount: 1 })
+        .mockResolvedValueOnce({ rowCount: 1 }) // Anonymize user
+        .mockResolvedValueOnce({ rowCount: 1 }) // Update deletion request
         .mockResolvedValueOnce({}); // COMMIT
 
       const result2 = await dataRetentionService.executeAccountDeletion('user-456');

@@ -18,6 +18,13 @@ import type { MigrationBuilder } from 'node-pg-migrate';
  */
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
+  // !! NON-IDEMPOTENT (DB-012 / CFR-031): This migration unconditionally
+  // deletes ALL existing badges and user_badges before re-seeding.
+  // Running it on a production database with user-earned badges will
+  // destroy those records. This is acceptable for initial setup but must
+  // NOT be re-run on a database with real user data. The down() migration
+  // is equally destructive (DI-012 / CFR-031).
+  //
   // 1. Clean old review-based badge data
   pgm.sql('DELETE FROM user_badges;');
   pgm.sql('DELETE FROM badges;');
@@ -112,7 +119,11 @@ export async function up(pgm: MigrationBuilder): Promise<void> {
 }
 
 export async function down(pgm: MigrationBuilder): Promise<void> {
-  // Destructive but acceptable for seed data
+  // !! DESTRUCTIVE (DI-012 / CFR-031): This down() deletes ALL badges
+  // and user_badges rows. On a production database with real user-earned
+  // badges, this causes permanent data loss. This is documented rather
+  // than "fixed" because the migration's purpose is seed data -- there
+  // is no way to restore the original pre-migration badge set.
   pgm.sql('DELETE FROM user_badges;');
   pgm.sql('DELETE FROM badges;');
 }

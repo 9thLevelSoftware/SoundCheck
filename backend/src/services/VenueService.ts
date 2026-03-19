@@ -269,6 +269,11 @@ export class VenueService {
 
   /**
    * Get venues near coordinates
+   *
+   * DB-018/CFR-023: Uses bounding-box pre-filter on lat/lon range before
+   * computing the expensive Haversine formula. This allows PostgreSQL to
+   * use the idx_venues_location index to eliminate most rows cheaply
+   * before the trig-heavy distance calculation runs on the remainder.
    */
   async getVenuesNear(
     latitude: number,
@@ -276,28 +281,44 @@ export class VenueService {
     radiusKm: number = 50,
     limit: number = 20
   ): Promise<Venue[]> {
-    // Use subquery to filter by computed distance column
-    // (can't use column alias in WHERE clause directly)
+    // Approximate degrees per km at the given latitude for bounding box.
+    // 1 degree latitude ~= 111 km everywhere.
+    // 1 degree longitude ~= 111 * cos(lat) km (shrinks toward poles).
+    const latDelta = radiusKm / 111.0;
+    const lonDelta = radiusKm / (111.0 * Math.cos((latitude * Math.PI) / 180));
+
     const query = `
       SELECT * FROM (
         SELECT id, name, description, address, city, state, country, postal_code,
                latitude, longitude, website_url, phone, email, capacity, venue_type,
                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
                created_at, updated_at,
-               (6371 * acos(LEAST(GREATEST(cos(radians($1)) * cos(radians(latitude)) *
+               (6371 * acos(LEAST(GREATEST(
+                cos(radians($1)) * cos(radians(latitude)) *
                 cos(radians(longitude) - radians($2)) +
                 sin(radians($1)) * sin(radians(latitude)), -1), 1))) AS distance
         FROM venues
         WHERE is_active = true
           AND latitude IS NOT NULL
           AND longitude IS NOT NULL
+          AND latitude BETWEEN $5 AND $6
+          AND longitude BETWEEN $7 AND $8
       ) AS venues_with_distance
       WHERE distance <= $3
       ORDER BY distance
       LIMIT $4
     `;
 
-    const result = await this.db.query(query, [latitude, longitude, radiusKm, limit]);
+    const result = await this.db.query(query, [
+      latitude,
+      longitude,
+      radiusKm,
+      limit,
+      latitude - latDelta,
+      latitude + latDelta,
+      longitude - lonDelta,
+      longitude + lonDelta,
+    ]);
     return result.rows.map((row: any) => this.mapDbVenueToVenue(row));
   }
 
