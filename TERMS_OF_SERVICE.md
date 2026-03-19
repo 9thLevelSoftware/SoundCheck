@@ -22,7 +22,7 @@ We reserve the right to modify these Terms at any time. We will notify you of ma
 SoundCheck is a mobile application that enables users to:
 - Discover concert venues and live music spaces
 - Browse and search for bands and musical artists
-- Read and write reviews for venues and bands
+- Check in at shows and rate venues and bands
 - Rate venues and bands on multiple criteria
 - Share experiences and connect with other music enthusiasts
 - Track personal concert history and favorites
@@ -66,7 +66,7 @@ You agree to:
 You agree to use SoundCheck only for lawful purposes. You will not:
 
 #### Prohibited Content:
-- Post false, misleading, or fraudulent reviews
+- Post false, misleading, or fraudulent check-ins
 - Upload obscene, offensive, or hateful content
 - Share content that infringes intellectual property rights
 - Post spam, advertisements, or promotional material
@@ -75,14 +75,14 @@ You agree to use SoundCheck only for lawful purposes. You will not:
 
 #### Prohibited Behavior:
 - Harass, threaten, or abuse other users
-- Manipulate ratings or reviews (vote manipulation)
+- Manipulate ratings or check-ins (vote manipulation)
 - Create fake accounts or impersonate others
 - Scrape or harvest data from the App
 - Interfere with the Service's operation
 - Circumvent security measures or access controls
 
 ### 4.2 User-Generated Content
-When you post content (reviews, comments, photos) on SoundCheck:
+When you post content (check-ins, comments, photos) on SoundCheck:
 
 #### Your Responsibilities:
 - You are solely responsible for your content
@@ -104,16 +104,16 @@ This license continues even if you delete your account, for content that has bee
 - You can delete your content at any time
 - Deletion may not affect content already shared by others
 
-### 4.3 Reviews and Ratings
-When submitting reviews:
+### 4.3 Check-ins and Ratings
+When submitting check-ins:
 
 #### Guidelines:
-- Reviews must be based on genuine personal experience
-- Reviews must be honest and factual
-- You may not accept compensation for positive reviews
-- You may not post fake or misleading reviews
-- You may not review your own business or a competitor's business
-- Reviews must comply with our Community Guidelines
+- Check-ins must be based on genuine personal experience
+- Check-ins must be honest and factual
+- You may not accept compensation for positive check-ins or ratings
+- You may not post fake or misleading check-ins
+- You may not check in to your own business fraudulently
+- Check-ins must comply with our Community Guidelines
 
 #### Consequences of Violations:
 - Removal of offending content
@@ -211,10 +211,10 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOUNDCHECK IS PROVIDED "AS IS" AND "AS A
 - **Security:** We do not guarantee absolute security of your data
 
 ### 9.2 User-Generated Content Disclaimer
-- Reviews and ratings reflect personal opinions only
-- We do not verify the accuracy of user reviews
-- We are not responsible for false or misleading reviews
-- Use reviews and ratings at your own risk
+- Check-ins and ratings reflect personal opinions only
+- We do not verify the accuracy of user check-ins
+- We are not responsible for false or misleading check-ins
+- Use check-ins and ratings at your own risk
 
 ### 9.3 Limitation of Liability
 TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOUNDCHECK AND ITS AFFILIATES, OFFICERS, DIRECTORS, EMPLOYEES, AND AGENTS SHALL NOT BE LIABLE FOR:
@@ -232,7 +232,7 @@ TO THE MAXIMUM EXTENT PERMITTED BY LAW, SOUNDCHECK AND ITS AFFILIATES, OFFICERS,
 - Unauthorized access to your account
 - Service interruptions or bugs
 - User-generated content or conduct of other users
-- Reliance on reviews or ratings
+- Reliance on check-ins or ratings
 
 #### Maximum Liability Cap:
 In no event shall our total liability to you exceed the greater of:
