@@ -245,7 +245,6 @@ class AnalyticsProperties {
   static const String venueName = 'venue_name';
   static const String bandId = 'band_id';
   static const String bandName = 'band_name';
-  static const String reviewId = 'review_id';
   static const String rating = 'rating';
   static const String searchQuery = 'search_term';
   static const String filterType = 'filter_type';

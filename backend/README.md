@@ -1,13 +1,13 @@
 # SoundCheck Backend API
 
-A comprehensive Node.js/Express/TypeScript API for the SoundCheck mobile application, allowing users to discover and review concert venues and bands.
+A comprehensive Node.js/Express/TypeScript API for the SoundCheck mobile application, allowing users to discover venues and bands, check in at shows, and earn badges.
 
 ## 🚀 Features
 
 - **User Authentication** - JWT-based auth with registration, login, and profile management
 - **Venue Discovery** - CRUD operations, search, filtering, and location-based queries
 - **Band Discovery** - CRUD operations, search by genre, trending bands
-- **Reviews & Ratings** - Create, read, update, delete reviews with helpfulness voting
+- **Check-ins & Ratings** - Create, read, update, delete check-ins with ratings and notes
 - **Gamification** - Automatic badge earning system based on user activity
 - **Rate Limiting** - Protection against abuse with configurable limits
 - **PostgreSQL Database** - Robust relational database schema with indexes
@@ -67,11 +67,10 @@ The application uses PostgreSQL with the following main tables:
 - **users** - User accounts and profiles
 - **venues** - Concert venues and their details
 - **bands** - Musical artists and their information
-- **reviews** - User reviews for venues and bands
+- **check_ins** - User check-ins at venues with ratings and notes
 - **badges** - Achievement badges
 - **user_badges** - User badge earnings
 - **user_followers** - User following relationships
-- **review_helpfulness** - Review helpful votes
 
 ## 🌐 API Endpoints
 
@@ -111,18 +110,16 @@ GET    /api/bands/genres             # Get all genres
 GET    /api/bands/genre/:genre       # Get bands by genre
 ```
 
-### ⭐ Reviews
+### ✓ Check-ins
 ```
-GET    /api/reviews                  # Search reviews with filters
-GET    /api/reviews/:id              # Get review by ID
-POST   /api/reviews                  # Create review (auth required)
-PUT    /api/reviews/:id              # Update review (auth required)
-DELETE /api/reviews/:id              # Delete review (auth required)
-POST   /api/reviews/:id/helpful      # Mark review helpful (auth required)
-GET    /api/reviews/my-review        # Get user's review for venue/band
-GET    /api/reviews/venue/:venueId   # Get reviews for venue
-GET    /api/reviews/band/:bandId     # Get reviews for band
-GET    /api/reviews/user/:userId     # Get reviews by user
+GET    /api/check-ins                # Search check-ins with filters
+GET    /api/check-ins/:id            # Get check-in by ID
+POST   /api/check-ins                # Create check-in (auth required)
+PUT    /api/check-ins/:id            # Update check-in (auth required)
+DELETE /api/check-ins/:id            # Delete check-in (auth required)
+GET    /api/check-ins/venue/:venueId # Get check-ins for venue
+GET    /api/check-ins/band/:bandId   # Get check-ins for band
+GET    /api/check-ins/user/:userId   # Get check-ins by user
 ```
 
 ### 🏆 Badges
@@ -158,18 +155,17 @@ Content-Type: application/json
 }
 ```
 
-### Create Review
+### Create Check-in
 ```bash
-POST /api/reviews
+POST /api/check-ins
 Authorization: Bearer <jwt-token>
 Content-Type: application/json
 
 {
   "venueId": "uuid-here",
   "rating": 5,
-  "title": "Amazing concert hall!",
-  "content": "Great acoustics and atmosphere...",
-  "eventDate": "2024-01-15",
+  "notes": "Great acoustics and atmosphere...",
+  "visitDate": "2024-01-15",
   "imageUrls": ["https://example.com/image1.jpg"]
 }
 ```
@@ -199,13 +195,13 @@ Rate limiting is implemented to prevent abuse:
 ## 🎯 Badge System
 
 Users automatically earn badges based on their activity:
-- **First Review** - Write your first review
-- **Review Master** - Write 10 reviews  
-- **Review Legend** - Write 50 reviews
-- **Venue Explorer** - Review 5 different venues
-- **Music Lover** - Review 10 different bands
-- **Concert Goer** - Attend and review 25 events
-- **Helpful Reviewer** - Get 20 helpful votes
+- **First Check-in** - Check in to your first show
+- **Check-in Champion** - Check in to 10 shows
+- **Check-in Legend** - Check in to 50 shows
+- **Venue Explorer** - Check in at 5 different venues
+- **Band Collector** - Check in to 10 different bands
+- **Concert Goer** - Check in to 25 shows
+- **Popular Spot** - Your venue check-ins get 20 likes
 
 ## 🔍 Search & Filtering
 

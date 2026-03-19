@@ -49,7 +49,7 @@ sealed class Venue with _$Venue {
     String? imageUrl,
     String? coverImageUrl,
     // Stats for the "Brewery page" model
-    @Default(0) int totalReviews,
+    @Default(0) int totalCheckins,
     @Default(0) int uniqueVisitors,
     @Default(false) bool isVerified,
     // Claimed owner user ID (Phase 11 - verification claims)

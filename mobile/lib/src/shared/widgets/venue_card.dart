@@ -138,7 +138,7 @@ class VenueCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '(${venue.totalReviews})',
+                          '${venue.totalCheckins} check-ins',
                           style: const TextStyle(
                             color: Colors.white70,
                             fontSize: 12,

@@ -9,7 +9,7 @@ enum VenueSortBy {
   nameDesc,
   ratingDesc,
   ratingAsc,
-  reviewCountDesc,
+  checkinCountDesc,
   newestFirst,
 }
 
@@ -24,8 +24,8 @@ extension VenueSortByExtension on VenueSortBy {
         return 'Rating (Highest First)';
       case VenueSortBy.ratingAsc:
         return 'Rating (Lowest First)';
-      case VenueSortBy.reviewCountDesc:
-        return 'Most Reviewed';
+      case VenueSortBy.checkinCountDesc:
+        return 'Most Popular';
       case VenueSortBy.newestFirst:
         return 'Newest First';
     }
@@ -41,8 +41,8 @@ extension VenueSortByExtension on VenueSortBy {
         return '-rating';
       case VenueSortBy.ratingAsc:
         return 'rating';
-      case VenueSortBy.reviewCountDesc:
-        return '-reviewCount';
+      case VenueSortBy.checkinCountDesc:
+        return '-total_checkins';
       case VenueSortBy.newestFirst:
         return '-createdAt';
     }

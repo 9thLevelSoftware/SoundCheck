@@ -21,8 +21,8 @@ sealed class CheckIn with _$CheckIn {
     // Rating fields - backend sends separate venue and band ratings
     double? venueRating,
     double? bandRating,
-    // Review text (was 'comment')
-    String? reviewText,
+    // Check-in note text
+    String? noteText,
     // Image URLs (backend sends array)
     List<String>? imageUrls,
     // Event ID for the check-in

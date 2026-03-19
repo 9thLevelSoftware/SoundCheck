@@ -65,7 +65,7 @@ class SettingsScreen extends ConsumerWidget {
               const _SectionHeader(title: 'Notifications'),
               _SettingsTile(
                 title: 'Push Notifications',
-                subtitle: 'New reviews, badges, and followers',
+                subtitle: 'New check-ins, badges, and followers',
                 leading: const Icon(Icons.notifications_outlined),
                 trailing: Switch(
                   value: pushEnabled,
@@ -140,8 +140,8 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     children: [
                       const Text(
-                        'Discover and review concert venues and bands. '
-                        'Share your experiences with the music community.',
+                        'Check in at live shows. Track your concert history. '
+                        'Share the moment with friends.',
                       ),
                     ],
                   );

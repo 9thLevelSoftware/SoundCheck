@@ -8,7 +8,7 @@ enum BandSortBy {
   nameDesc,
   ratingDesc,
   ratingAsc,
-  reviewCountDesc,
+  checkinCountDesc,
   formedYearDesc,
   formedYearAsc,
 }
@@ -24,8 +24,8 @@ extension BandSortByExtension on BandSortBy {
         return 'Rating (Highest First)';
       case BandSortBy.ratingAsc:
         return 'Rating (Lowest First)';
-      case BandSortBy.reviewCountDesc:
-        return 'Most Reviewed';
+      case BandSortBy.checkinCountDesc:
+        return 'Most Popular';
       case BandSortBy.formedYearDesc:
         return 'Formed Year (Newest)';
       case BandSortBy.formedYearAsc:
@@ -43,8 +43,8 @@ extension BandSortByExtension on BandSortBy {
         return '-rating';
       case BandSortBy.ratingAsc:
         return 'rating';
-      case BandSortBy.reviewCountDesc:
-        return '-reviewCount';
+      case BandSortBy.checkinCountDesc:
+        return '-total_checkins';
       case BandSortBy.formedYearDesc:
         return '-formedYear';
       case BandSortBy.formedYearAsc:

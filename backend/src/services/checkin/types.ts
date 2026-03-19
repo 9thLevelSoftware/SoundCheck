@@ -78,7 +78,7 @@ export interface Checkin {
   // Event-model fields
   eventId?: string;
   venueRating?: number;
-  reviewText?: string;
+  noteText?: string;
   imageUrls?: string[];
   isVerified?: boolean;
   event?: { id: string; eventDate?: Date; eventName?: string };
@@ -181,7 +181,7 @@ export function mapDbCheckinToCheckin(row: any): Checkin {
     // Event-model fields
     eventId: row.event_id || undefined,
     venueRating: row.venue_rating ? parseFloat(row.venue_rating) : undefined,
-    reviewText: row.review_text || undefined,
+    noteText: row.review_text || undefined,
     imageUrls: row.image_urls || undefined,
     isVerified: row.is_verified || false,
     event: row.event_id ? {

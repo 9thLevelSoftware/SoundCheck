@@ -33,7 +33,7 @@ export class VenueService {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING id, name, description, address, city, state, country, postal_code,
                 latitude, longitude, website_url, phone, email, capacity, venue_type,
-                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+                image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
                 created_at, updated_at
     `;
 
@@ -66,7 +66,7 @@ export class VenueService {
     const query = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
              created_at, updated_at
       FROM venues
       WHERE id = $1 AND is_active = true
@@ -135,7 +135,7 @@ export class VenueService {
     }
 
     // Validate sort column
-    const allowedSortColumns = ['name', 'city', 'average_rating', 'total_reviews', 'capacity', 'created_at'];
+    const allowedSortColumns = ['name', 'city', 'average_rating', 'total_checkins', 'capacity', 'created_at'];
     const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
     const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
 
@@ -150,7 +150,7 @@ export class VenueService {
     const mainQuery = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
              created_at, updated_at
       FROM venues
       WHERE ${conditions.join(' AND ')}
@@ -211,7 +211,7 @@ export class VenueService {
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, name, description, address, city, state, country, postal_code,
                 latitude, longitude, website_url, phone, email, capacity, venue_type,
-                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+                image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
                 created_at, updated_at
     `;
 
@@ -255,11 +255,11 @@ export class VenueService {
     const query = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
              created_at, updated_at
       FROM venues
-      WHERE is_active = true AND total_reviews >= 5
-      ORDER BY (average_rating * 0.7 + LEAST(total_reviews/100.0, 1.0) * 0.3) DESC
+      WHERE is_active = true AND total_checkins >= 5
+      ORDER BY (average_rating * 0.7 + LEAST(total_checkins/100.0, 1.0) * 0.3) DESC
       LIMIT $1
     `;
 
@@ -291,7 +291,7 @@ export class VenueService {
       SELECT * FROM (
         SELECT id, name, description, address, city, state, country, postal_code,
                latitude, longitude, website_url, phone, email, capacity, venue_type,
-               image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+               image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
                created_at, updated_at,
                (6371 * acos(LEAST(GREATEST(
                 cos(radians($1)) * cos(radians(latitude)) *
@@ -334,7 +334,7 @@ export class VenueService {
           FROM checkins
           WHERE venue_id = $1 AND venue_rating IS NOT NULL
         ),
-        total_reviews = (
+        total_checkins = (
           SELECT COUNT(*)
           FROM checkins
           WHERE venue_id = $1 AND venue_rating IS NOT NULL
@@ -442,7 +442,7 @@ export class VenueService {
       imageUrl: row.image_url,
       coverImageUrl: row.cover_image_url || null,
       averageRating: parseFloat(row.average_rating || 0),
-      totalReviews: parseInt(row.total_reviews || 0),
+      totalCheckins: parseInt(row.total_checkins || 0),
       isActive: row.is_active,
       claimedByUserId: row.claimed_by_user_id || undefined,
       createdAt: row.created_at,

@@ -37,6 +37,8 @@ jobs:
 
     - name: Run Tests
       run: npm test
+      env:
+        JWT_SECRET: ci-test-secret-must-be-at-least-32-characters-long
 
   mobile-analyze-and-test:
     runs-on: ubuntu-latest
@@ -51,7 +53,7 @@ jobs:
       uses: subosito/flutter-action@v2
       with:
         channel: 'stable'
-        flutter-version: '3.27.x'
+        flutter-version: '3.38.x'
         cache: true
 
     - name: Get Dependencies

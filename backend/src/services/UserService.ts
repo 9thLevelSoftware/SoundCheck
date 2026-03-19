@@ -305,7 +305,6 @@ export class UserService {
    */
   async getUserStats(userId: string): Promise<{
     totalCheckins: number;
-    totalReviews: number;
     badgesEarned: number;
     followersCount: number;
     followingCount: number;
@@ -329,7 +328,6 @@ export class UserService {
       if (!result.rows.length) {
         return {
           totalCheckins: 0,
-          totalReviews: 0,
           badgesEarned: 0,
           followersCount: 0,
           followingCount: 0,
@@ -341,7 +339,6 @@ export class UserService {
 
       return {
         totalCheckins: parseInt(stats.checkin_count, 10) || 0,
-        totalReviews: parseInt(stats.review_count, 10) || 0,
         badgesEarned: parseInt(stats.badge_count, 10) || 0,
         followersCount: parseInt(stats.follower_count, 10) || 0,
         followingCount: parseInt(stats.following_count, 10) || 0,

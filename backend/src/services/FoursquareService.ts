@@ -306,7 +306,7 @@ export class FoursquareService {
       venueType: row.venue_type,
       imageUrl: row.image_url,
       averageRating: parseFloat(row.average_rating || 0),
-      totalRatings: parseInt(row.total_reviews || 0),
+      totalRatings: parseInt(row.total_checkins || 0),
       isActive: row.is_active,
       foursquarePlaceId: row.foursquare_place_id,
       source: row.source,

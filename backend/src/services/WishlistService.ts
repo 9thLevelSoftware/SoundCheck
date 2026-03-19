@@ -248,7 +248,7 @@ export class WishlistService {
         imageUrl: row.b_image_url || undefined,
         hometown: row.b_hometown || undefined,
         averageRating: parseFloat(row.b_average_rating) || 0,
-        totalReviews: parseInt(row.b_total_checkins) || 0, // Maps total_checkins column; field name kept for Band type compat
+        totalCheckins: parseInt(row.b_total_checkins) || 0,
         isActive: row.b_is_active,
         createdAt: row.b_created_at,
         updatedAt: row.b_updated_at,

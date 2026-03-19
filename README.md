@@ -1,12 +1,12 @@
 # 🎵 SoundCheck
 
-A full-stack mobile application for discovering and reviewing concert venues and bands, built with Flutter and Node.js.
+A social concert check-in app — the Untappd of live music. Check in at shows, rate bands and venues, earn badges, and see what your friends are attending.
 
 ## 📱 Overview
 
 **SoundCheck** is a cross-platform mobile application that allows music enthusiasts to:
 - Discover concert venues and bands
-- Write and read reviews with ratings
+- Check in at live shows with ratings and notes
 - Earn badges based on activity
 - Search and filter venues/bands by various criteria
 - Build a profile and track activity
@@ -105,7 +105,7 @@ SoundCheckMobile/
 ### User Features
 - User registration and authentication
 - Profile management with stats
-- Review creation and management
+- Check-in creation and management
 - Badge earning system
 - Search and discovery
 
@@ -118,7 +118,7 @@ SoundCheckMobile/
 
 ### Gamification
 - Activity-based badges
-- Review milestones
+- Check-in milestones
 - User statistics tracking
 
 ## 🔒 Security
