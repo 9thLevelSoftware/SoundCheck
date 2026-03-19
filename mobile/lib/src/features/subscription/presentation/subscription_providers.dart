@@ -27,5 +27,5 @@ final packagesProvider = FutureProvider<List<Package>>((ref) {
 });
 
 final serverSubscriptionStatusProvider = FutureProvider((ref) {
-  return ref.read(subscriptionRepositoryProvider).getStatus();
+  return ref.watch(subscriptionRepositoryProvider).getStatus();
 });

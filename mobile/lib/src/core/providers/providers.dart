@@ -1,6 +1,7 @@
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/dio_client.dart';
 import '../services/analytics_service.dart';
@@ -180,6 +181,20 @@ class AuthState extends _$AuthState {
       await SubscriptionService.logout();
       ref.read(isPremiumProvider.notifier).set(false);
     } catch (_) {}
+
+    // Clear user-scoped SharedPreferences keys
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = prefs.getKeys();
+      final userScopedPrefixes = ['user_', 'feed_', 'onboarding_', 'notification_'];
+      for (final key in keys) {
+        if (userScopedPrefixes.any((prefix) => key.startsWith(prefix))) {
+          await prefs.remove(key);
+        }
+      }
+    } catch (_) {
+      // SharedPreferences cleanup should not block logout
+    }
 
     await authRepository.logout();
     state = const AsyncValue.data(null);

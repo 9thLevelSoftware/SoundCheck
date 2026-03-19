@@ -60,21 +60,30 @@ class DiscoverSearchResults {
   int get totalCount => bands.length + venues.length + users.length + events.length;
 }
 
-/// Provider for band search results in discover
+/// Provider for band search results in discover (debounced)
 @riverpod
 Future<List<Band>> discoverBandSearch(Ref ref) async {
   final query = ref.watch(discoverSearchQueryProvider);
   if (query.length < 2) return [];
 
+  // Debounce: wait 300ms after last keystroke before firing API call
+  await Future<void>.delayed(const Duration(milliseconds: 300));
+  // If query changed during the delay, Riverpod will cancel this provider
+  // rebuild and start a new one with the latest value
+  if (ref.watch(discoverSearchQueryProvider) != query) return [];
+
   final repository = ref.watch(bandRepositoryProvider);
   return repository.getBands(search: query, limit: 10);
 }
 
-/// Provider for venue search results in discover
+/// Provider for venue search results in discover (debounced)
 @riverpod
 Future<List<Venue>> discoverVenueSearch(Ref ref) async {
   final query = ref.watch(discoverSearchQueryProvider);
   if (query.length < 2) return [];
+
+  await Future<void>.delayed(const Duration(milliseconds: 300));
+  if (ref.watch(discoverSearchQueryProvider) != query) return [];
 
   final repository = ref.watch(venueRepositoryProvider);
   return repository.getVenues(search: query, limit: 10);
@@ -124,11 +133,14 @@ class UserSearchResult {
   }
 }
 
-/// Provider for user search results in discover
+/// Provider for user search results in discover (debounced)
 @riverpod
 Future<List<User>> discoverUserSearch(Ref ref) async {
   final query = ref.watch(discoverSearchQueryProvider);
   if (query.length < 2) return [];
+
+  await Future<void>.delayed(const Duration(milliseconds: 300));
+  if (ref.watch(discoverSearchQueryProvider) != query) return [];
 
   final dioClient = ref.watch(dioClientProvider);
 
@@ -154,11 +166,14 @@ Future<List<User>> discoverUserSearch(Ref ref) async {
   }
 }
 
-/// Provider for event search results in discover
+/// Provider for event search results in discover (debounced)
 @riverpod
 Future<List<DiscoverEvent>> discoverEventSearch(Ref ref) async {
   final query = ref.watch(discoverSearchQueryProvider);
   if (query.length < 2) return [];
+
+  await Future<void>.delayed(const Duration(milliseconds: 300));
+  if (ref.watch(discoverSearchQueryProvider) != query) return [];
 
   final repository = ref.watch(discoveryRepositoryProvider);
 

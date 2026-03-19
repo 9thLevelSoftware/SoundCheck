@@ -15,7 +15,6 @@ class WebSocketEvents {
   static const String joinedRoom = 'joined_room';
   static const String leftRoom = 'left_room';
   static const String newCheckin = 'new_checkin';
-  static const String newReview = 'new_review';
   static const String newFollower = 'new_follower';
   static const String newComment = 'new_comment';
   static const String newToast = 'new_toast';
