@@ -1,4 +1,5 @@
 import { Request, Response } from 'express';
+import crypto from 'crypto';
 import { SubscriptionService } from '../services/SubscriptionService';
 import logger from '../utils/logger';
 
@@ -21,7 +22,11 @@ export class SubscriptionController {
 
       const authHeader = req.headers.authorization || '';
       const token = authHeader.replace('Bearer ', '');
-      if (token !== webhookAuth) {
+
+      // SEC-016/CFR-018: Use timing-safe comparison to prevent timing attacks
+      const tokenBuf = Buffer.from(token);
+      const expectedBuf = Buffer.from(webhookAuth);
+      if (tokenBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(tokenBuf, expectedBuf)) {
         logger.warn('SubscriptionController: Invalid webhook authorization');
         res.status(401).json({ error: 'Unauthorized' });
         return;
@@ -41,11 +46,12 @@ export class SubscriptionController {
         app_user_id: event.app_user_id,
       });
 
-      res.status(200).json({ message: result.reason });
+      // API-031: Use canonical ApiResponse format for webhook responses
+      res.status(200).json({ success: true, data: { message: result.reason } });
     } catch (error) {
       // Always return 200 to prevent RevenueCat retry storms
       logger.error('SubscriptionController webhook error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      res.status(200).json({ message: 'Error processed' });
+      res.status(200).json({ success: true, data: { message: 'Error processed' } });
     }
   };
 
@@ -54,9 +60,11 @@ export class SubscriptionController {
    */
   getStatus = async (req: Request, res: Response): Promise<void> => {
     try {
-      const userId = req.user!.id;
+      // CFR-017: Guard non-null assertion; API-032: Use explicit status
+      const userId = req.user?.id;
+      if (!userId) { res.status(401).json({ success: false, error: 'Authentication required' }); return; }
       const status = await this.subscriptionService.getSubscriptionStatus(userId);
-      res.json({ success: true, data: status });
+      res.status(200).json({ success: true, data: status });
     } catch (error) {
       logger.error('SubscriptionController.getStatus error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       res.status(500).json({ success: false, error: 'Failed to check subscription status' });

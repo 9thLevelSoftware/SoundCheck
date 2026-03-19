@@ -136,8 +136,8 @@ export class AdminController {
 
       const db = Database.getInstance();
 
-      // Get user info
-      const usersResult = await db.query('SELECT id, username, email, created_at FROM users WHERE id = $1', [userId]);
+      // Get user info -- SEC-012: Exclude email to prevent PII exposure
+      const usersResult = await db.query('SELECT id, username, created_at FROM users WHERE id = $1', [userId]);
 
       if (!usersResult.rows || usersResult.rows.length === 0) {
         const response: ApiResponse = {

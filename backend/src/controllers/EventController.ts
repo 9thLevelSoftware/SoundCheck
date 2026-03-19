@@ -5,6 +5,7 @@ import { TicketmasterAdapter } from '../services/TicketmasterAdapter';
 import { BandMatcher } from '../services/BandMatcher';
 import { DiscoveryService } from '../services/DiscoveryService';
 import { ApiResponse } from '../types';
+import { AppError, NotFoundError } from '../utils/errors';
 import logger from '../utils/logger';
 
 export class EventController {
@@ -105,12 +106,16 @@ export class EventController {
     } catch (error) {
       logger.error('Create event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
+      // API-020: Only expose AppError messages to clients; hide raw error details
+      const statusCode = error instanceof AppError ? error.statusCode : 500;
+      const message = error instanceof AppError ? error.message : 'Failed to create event';
+
       const response: ApiResponse = {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to create event',
+        error: message,
       };
 
-      res.status(500).json(response);
+      res.status(statusCode).json(response);
     }
   };
 
@@ -133,12 +138,19 @@ export class EventController {
     } catch (error) {
       logger.error('Get event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
+      // API-017/CFR-030: Distinguish NotFound from server errors
+      if (error instanceof NotFoundError || (error instanceof Error && error.message === 'Event not found')) {
+        const response: ApiResponse = { success: false, error: 'Event not found' };
+        res.status(404).json(response);
+        return;
+      }
+
       const response: ApiResponse = {
         success: false,
-        error: 'Event not found',
+        error: 'Failed to fetch event',
       };
 
-      res.status(404).json(response);
+      res.status(500).json(response);
     }
   };
 
@@ -150,7 +162,9 @@ export class EventController {
     try {
       const { id } = req.params;
       const upcoming = req.query.upcoming === 'true';
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      // API-014: Bounded parseInt with NaN handling
+      const rawLimit = parseInt(req.query.limit as string, 10);
+      const limit = isNaN(rawLimit) ? 50 : Math.max(1, Math.min(200, rawLimit));
 
       const events = await this.eventService.getEventsByVenue(id, { upcoming, limit });
 
@@ -180,7 +194,8 @@ export class EventController {
     try {
       const { id } = req.params;
       const upcoming = req.query.upcoming === 'true';
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const rawLimit2 = parseInt(req.query.limit as string, 10);
+      const limit = isNaN(rawLimit2) ? 50 : Math.max(1, Math.min(200, rawLimit2));
 
       const events = await this.eventService.getEventsByBand(id, { upcoming, limit });
 
@@ -208,7 +223,8 @@ export class EventController {
    */
   getUpcomingEvents = async (req: Request, res: Response): Promise<void> => {
     try {
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 50;
+      const rawUpLimit = parseInt(req.query.limit as string, 10);
+      const limit = isNaN(rawUpLimit) ? 50 : Math.max(1, Math.min(200, rawUpLimit));
 
       const events = await this.eventService.getUpcomingEvents(limit);
 
@@ -241,10 +257,20 @@ export class EventController {
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
       const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
       const lon = req.query.lon ? parseFloat(req.query.lon as string) : undefined;
-      const radius = req.query.radius ? parseFloat(req.query.radius as string) : 50;
+      const rawRadius = req.query.radius ? parseFloat(req.query.radius as string) : 50;
+      // API-022: Cap radius at 500 km
+      const radius = Math.max(0.1, Math.min(500, isNaN(rawRadius) ? 50 : rawRadius));
 
       // If lat/lon provided, use location-aware trending
+      // API-021: Validate geo coordinate ranges
       if (lat !== undefined && lon !== undefined && !isNaN(lat) && !isNaN(lon)) {
+        if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+          res.status(400).json({
+            success: false,
+            error: 'lat must be between -90 and 90, lon must be between -180 and 180',
+          } as ApiResponse);
+          return;
+        }
         const events = await this.eventService.getTrendingNearby(lat, lon, radius, 7, limit);
 
         const response: ApiResponse = {
@@ -364,6 +390,7 @@ export class EventController {
       const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
       const lng = req.query.lng ? parseFloat(req.query.lng as string) : undefined;
 
+      // API-021: Range-validate geo coordinates
       if (lat === undefined || lng === undefined || isNaN(lat) || isNaN(lng)) {
         res.status(400).json({
           success: false,
@@ -371,8 +398,17 @@ export class EventController {
         } as ApiResponse);
         return;
       }
+      if (lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+        res.status(400).json({
+          success: false,
+          error: 'lat must be between -90 and 90, lng must be between -180 and 180',
+        } as ApiResponse);
+        return;
+      }
 
-      const radius = req.query.radius ? parseFloat(req.query.radius as string) : 10;
+      const rawRadius = req.query.radius ? parseFloat(req.query.radius as string) : 10;
+      // API-022: Cap radius at 500 km
+      const radius = Math.max(0.1, Math.min(500, isNaN(rawRadius) ? 10 : rawRadius));
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
       const events = await this.eventService.getNearbyEvents(lat, lng, radius, limit);
@@ -404,6 +440,7 @@ export class EventController {
       const lat = req.query.lat ? parseFloat(req.query.lat as string) : undefined;
       const lon = req.query.lon ? parseFloat(req.query.lon as string) : undefined;
 
+      // API-021: Range-validate geo coordinates
       if (lat === undefined || lon === undefined || isNaN(lat) || isNaN(lon)) {
         res.status(400).json({
           success: false,
@@ -411,8 +448,17 @@ export class EventController {
         } as ApiResponse);
         return;
       }
+      if (lat < -90 || lat > 90 || lon < -180 || lon > 180) {
+        res.status(400).json({
+          success: false,
+          error: 'lat must be between -90 and 90, lon must be between -180 and 180',
+        } as ApiResponse);
+        return;
+      }
 
-      const radius = req.query.radius ? parseFloat(req.query.radius as string) : 50;
+      const rawRadius = req.query.radius ? parseFloat(req.query.radius as string) : 50;
+      // API-022: Cap radius at 500 km
+      const radius = Math.max(0.1, Math.min(500, isNaN(rawRadius) ? 50 : rawRadius));
       const days = req.query.days ? parseInt(req.query.days as string) : 30;
       const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
 
@@ -452,8 +498,11 @@ export class EventController {
         return;
       }
 
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
-      const offset = req.query.offset ? parseInt(req.query.offset as string) : 0;
+      // API-014: Bounded parseInt with NaN handling
+      const rawGenreLimit = parseInt(req.query.limit as string, 10);
+      const limit = isNaN(rawGenreLimit) ? 20 : Math.max(1, Math.min(100, rawGenreLimit));
+      const rawGenreOffset = parseInt(req.query.offset as string, 10);
+      const offset = isNaN(rawGenreOffset) ? 0 : Math.max(0, rawGenreOffset);
 
       const events = await this.eventService.getByGenre(genre, limit, offset);
 
@@ -582,12 +631,16 @@ export class EventController {
     } catch (error) {
       logger.error('Delete event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
+      // API-020: Only expose AppError messages to clients
+      const statusCode = error instanceof AppError ? error.statusCode : 500;
+      const message = error instanceof AppError ? error.message : 'Failed to delete event';
+
       const response: ApiResponse = {
         success: false,
-        error: error instanceof Error ? error.message : 'Failed to delete event',
+        error: message,
       };
 
-      res.status(500).json(response);
+      res.status(statusCode).json(response);
     }
   };
 }

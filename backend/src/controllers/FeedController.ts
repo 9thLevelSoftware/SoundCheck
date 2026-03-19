@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { FeedService } from '../services/FeedService';
+import { FeedService, decodeCursor } from '../services/FeedService';
 import { ApiResponse } from '../types';
 import logger from '../utils/logger';
 
@@ -25,6 +25,13 @@ export class FeedController {
       const cursor = req.query.cursor as string | undefined;
       const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
       const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 20 : rawLimit));
+
+      // API-015: Validate cursor format -- return 400 for malformed cursors
+      if (cursor && !decodeCursor(cursor)) {
+        const response: ApiResponse = { success: false, error: 'Invalid cursor format' };
+        res.status(400).json(response);
+        return;
+      }
 
       const result = await this.feedService.getFriendsFeed(userId, cursor, limit);
 
@@ -58,6 +65,13 @@ export class FeedController {
       const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
       const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 20 : rawLimit));
 
+      // API-015: Validate cursor format -- return 400 for malformed cursors
+      if (cursor && !decodeCursor(cursor)) {
+        const response: ApiResponse = { success: false, error: 'Invalid cursor format' };
+        res.status(400).json(response);
+        return;
+      }
+
       const result = await this.feedService.getGlobalFeed(userId, cursor, limit);
 
       const response: ApiResponse = { success: true, data: result };
@@ -89,6 +103,13 @@ export class FeedController {
       const cursor = req.query.cursor as string | undefined;
       const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 20;
       const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 20 : rawLimit));
+
+      // API-015: Validate cursor format
+      if (cursor && !decodeCursor(cursor)) {
+        const response: ApiResponse = { success: false, error: 'Invalid cursor format' };
+        res.status(400).json(response);
+        return;
+      }
 
       const result = await this.feedService.getEventFeed(eventId, cursor, limit);
 

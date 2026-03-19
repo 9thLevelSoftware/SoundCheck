@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { EventController } from '../controllers/EventController';
 import { authenticateToken } from '../middleware/auth';
+import { createPerUserRateLimit, RateLimitPresets } from '../middleware/perUserRateLimit';
 
 const router = Router();
 const eventController = new EventController();
@@ -32,12 +33,14 @@ router.get('/nearby', authenticateToken, eventController.getNearbyEvents);
 router.get('/lookup/:ticketmasterId', authenticateToken, eventController.lookupEvent);
 
 // Create a new event (requires auth)
-router.post('/', authenticateToken, eventController.createEvent);
+// SEC-013/CFR-014: Rate limit event creation
+router.post('/', authenticateToken, createPerUserRateLimit(RateLimitPresets.write), eventController.createEvent);
 
 // Get event by ID (public)
 router.get('/:id', eventController.getEventById);
 
 // Delete event (requires auth)
-router.delete('/:id', authenticateToken, eventController.deleteEvent);
+// SEC-013/CFR-014: Rate limit event deletion
+router.delete('/:id', authenticateToken, createPerUserRateLimit(RateLimitPresets.write), eventController.deleteEvent);
 
 export default router;

@@ -87,6 +87,9 @@ export class R2Service {
     const randomId = crypto.randomBytes(16).toString('hex');
     const objectKey = `${prefix}/${randomId}.${ext}`;
 
+    // API-059: Enforce max file size (10 MB) via ContentLength condition
+    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
     // Generate presigned PUT URL with 10-minute expiry
     const uploadUrl = await getSignedUrl(
       this.s3,
@@ -94,6 +97,7 @@ export class R2Service {
         Bucket: this.bucket,
         Key: objectKey,
         ContentType: contentType,
+        ContentLength: MAX_FILE_SIZE,
       }),
       { expiresIn: 600 }
     );

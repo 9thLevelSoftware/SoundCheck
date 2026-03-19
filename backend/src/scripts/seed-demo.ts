@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import * as dotenv from 'dotenv';
+import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import logger from '../utils/logger';
 
@@ -8,7 +9,9 @@ dotenv.config();
 
 const db = Database.getInstance();
 
-const DEMO_PASSWORD = 'SoundCheck2026!';
+// SEC-015: Read demo password from env or generate a random one.
+// Never use a hardcoded password in seed scripts.
+const DEMO_PASSWORD = process.env.DEMO_PASSWORD || crypto.randomBytes(16).toString('base64url');
 const SALT_ROUNDS = 12; // matches AuthUtils.hashPassword
 
 interface DemoAccountConfig {

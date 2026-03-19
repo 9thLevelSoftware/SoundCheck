@@ -1,12 +1,16 @@
 import { Router } from 'express';
 import { FeedController } from '../controllers/FeedController';
 import { authenticateToken } from '../middleware/auth';
+import { createPerUserRateLimit, RateLimitPresets } from '../middleware/perUserRateLimit';
 
 const router = Router();
 const feedController = new FeedController();
 
 // All feed routes require authentication
 router.use(authenticateToken);
+
+// SEC-014/CFR-014: Rate limit feed endpoints
+router.use(createPerUserRateLimit(RateLimitPresets.read));
 
 // New feed endpoints (Phase 5)
 router.get('/friends', feedController.getFriendsFeed);

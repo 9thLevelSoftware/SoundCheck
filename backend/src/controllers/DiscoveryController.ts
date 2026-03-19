@@ -67,6 +67,16 @@ export class DiscoveryController {
       const year = req.query.year ? parseInt(req.query.year as string) : undefined;
       const page = req.query.page ? parseInt(req.query.page as string) : 1;
 
+      // API-024: Require at least one search parameter to prevent unbounded queries
+      if (!artistName && !artistMbid && !venueId && !cityName && !date && !year) {
+        const response: ApiResponse = {
+          success: false,
+          error: 'At least one search parameter is required (artist, mbid, venue, city, date, or year)',
+        };
+        res.status(400).json(response);
+        return;
+      }
+
       const setlists = await this.setlistFmService.searchSetlists({
         artistName,
         artistMbid,

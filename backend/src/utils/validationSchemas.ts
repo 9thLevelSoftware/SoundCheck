@@ -1,5 +1,56 @@
 import { z } from 'zod';
 
+// ============================================
+// Shared validation utilities (API-030)
+// ============================================
+
+/**
+ * Canonical UUID v1-v5 regex. Shared across all controllers to avoid
+ * duplicated UUID_REGEX constants.
+ */
+export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/**
+ * Check whether a string is a valid UUID v1-v5.
+ * Returns false for null/undefined/empty strings.
+ */
+export function isValidUUID(value: string | undefined | null): value is string {
+  if (!value) return false;
+  return UUID_REGEX.test(value);
+}
+
+/**
+ * Escape user-generated strings for safe HTML template injection.
+ * Prevents XSS by replacing dangerous characters with HTML entities.
+ */
+export function escapeHtml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+/**
+ * Parse an integer from a query string value with NaN handling.
+ * Returns the clamped value within [min, max], or defaultValue if parsing fails.
+ * API-014: Consistent bounded parseInt pattern.
+ */
+export function parseBoundedInt(
+  value: string | undefined,
+  defaultValue: number,
+  min: number,
+  max: number
+): number {
+  if (value === undefined || value === null) return defaultValue;
+  const parsed = parseInt(value, 10);
+  if (isNaN(parsed)) return defaultValue;
+  return Math.max(min, Math.min(max, parsed));
+}
+
+// ============================================
+
 /**
  * User Validation Schemas
  */

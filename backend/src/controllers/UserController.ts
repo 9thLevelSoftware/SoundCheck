@@ -267,6 +267,10 @@ export class UserController {
   /**
    * Check username availability
    * GET /api/users/check-username/:username
+   *
+   * SEC-007/CFR-015: This endpoint enables username enumeration by design.
+   * Acceptable for beta with existing rate limits on the route. For post-beta,
+   * consider adding proof-of-work or CAPTCHA if abuse is detected.
    */
   checkUsername = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -299,6 +303,10 @@ export class UserController {
   /**
    * Check email availability
    * GET /api/users/check-email?email=test@example.com
+   *
+   * SEC-007/CFR-015/API-062: This endpoint enables email enumeration by design.
+   * Acceptable for beta with existing rate limits on the route. For post-beta,
+   * consider adding proof-of-work or CAPTCHA if abuse is detected.
    */
   checkEmail = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -363,7 +371,8 @@ export class UserController {
         success: true,
         data: stats,
       };
-      res.json(response);
+      // API-033: Use explicit status code
+      res.status(200).json(response);
     } catch (error) {
       logger.error('Error getting user stats', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
@@ -398,7 +407,8 @@ export class UserController {
         success: true,
         data: concertCred,
       };
-      res.json(response);
+      // API-033: Use explicit status code
+      res.status(200).json(response);
     } catch (error) {
       logger.error('Error getting concert cred', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
       const response: ApiResponse = {
@@ -441,7 +451,7 @@ export class UserController {
         },
       };
 
-      res.json(response);
+      res.status(200).json(response);
     } catch (error) {
       logger.error('User search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
 
