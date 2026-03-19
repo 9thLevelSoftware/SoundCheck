@@ -119,7 +119,6 @@ describe('UserService.getUserStats', () => {
 
     expect(stats).toEqual({
       totalCheckins: 0,
-      totalReviews: 0,
       badgesEarned: 0,
       followersCount: 0,
       followingCount: 0,
@@ -147,7 +146,6 @@ describe('UserService.getUserStats', () => {
 
     expect(stats).toEqual({
       totalCheckins: 0,
-      totalReviews: 0,
       badgesEarned: 0,
       followersCount: 0,
       followingCount: 0,

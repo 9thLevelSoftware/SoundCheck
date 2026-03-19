@@ -135,7 +135,7 @@ export class VenueService {
     }
 
     // Validate sort column
-    const allowedSortColumns = ['name', 'city', 'average_rating', 'total_reviews', 'capacity', 'created_at'];
+    const allowedSortColumns = ['name', 'city', 'average_rating', 'total_checkins', 'capacity', 'created_at'];
     const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
     const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
 

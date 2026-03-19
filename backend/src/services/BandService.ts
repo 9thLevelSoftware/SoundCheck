@@ -116,7 +116,7 @@ export class BandService {
     }
 
     // Validate sort column
-    const allowedSortColumns = ['name', 'genre', 'formed_year', 'hometown', 'average_rating', 'total_reviews', 'created_at'];
+    const allowedSortColumns = ['name', 'genre', 'formed_year', 'hometown', 'average_rating', 'total_checkins', 'created_at'];
     const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
     const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
 

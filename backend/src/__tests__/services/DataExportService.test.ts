@@ -245,7 +245,7 @@ describe('DataExportService', () => {
         id: 'userbadge-1',
         name: 'Concert Veteran',
         description: 'Attended 50 concerts',
-        badge_type: 'review_count',
+        badge_type: 'checkin_count',
         earned_at: new Date('2024-04-01'),
       };
 
@@ -265,7 +265,7 @@ describe('DataExportService', () => {
       expect(result.badges).toHaveLength(1);
       expect(result.badges[0].name).toBe('Concert Veteran');
       expect(result.badges[0].description).toBe('Attended 50 concerts');
-      expect(result.badges[0].badgeType).toBe('review_count');
+      expect(result.badges[0].badgeType).toBe('checkin_count');
     });
 
     it('should format dates as ISO strings', async () => {
