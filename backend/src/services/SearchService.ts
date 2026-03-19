@@ -54,7 +54,7 @@ export class SearchService {
       WITH fts_results AS (
         SELECT id, name, genre, genres, hometown, description, image_url, is_active,
           formed_year, website_url, spotify_url, instagram_url, facebook_url,
-          average_rating, total_reviews, created_at, updated_at,
+          average_rating, total_checkins, created_at, updated_at,
           ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank
         FROM bands
         WHERE search_vector @@ websearch_to_tsquery('english', $1)
@@ -65,7 +65,7 @@ export class SearchService {
       fuzzy_results AS (
         SELECT id, name, genre, genres, hometown, description, image_url, is_active,
           formed_year, website_url, spotify_url, instagram_url, facebook_url,
-          average_rating, total_reviews, created_at, updated_at,
+          average_rating, total_checkins, created_at, updated_at,
           similarity(name, $1) AS rank
         FROM bands
         WHERE similarity(name, $1) > 0.3
@@ -92,7 +92,7 @@ export class SearchService {
       WITH fts_results AS (
         SELECT id, name, description, address, city, state, country, postal_code,
           latitude, longitude, website_url, phone, email, capacity, venue_type,
-          image_url, average_rating, total_reviews, is_active, created_at, updated_at,
+          image_url, average_rating, total_checkins, is_active, created_at, updated_at,
           ts_rank(search_vector, websearch_to_tsquery('english', $1)) AS rank
         FROM venues
         WHERE search_vector @@ websearch_to_tsquery('english', $1)
@@ -103,7 +103,7 @@ export class SearchService {
       fuzzy_results AS (
         SELECT id, name, description, address, city, state, country, postal_code,
           latitude, longitude, website_url, phone, email, capacity, venue_type,
-          image_url, average_rating, total_reviews, is_active, created_at, updated_at,
+          image_url, average_rating, total_checkins, is_active, created_at, updated_at,
           similarity(name, $1) AS rank
         FROM venues
         WHERE similarity(name, $1) > 0.3
@@ -236,7 +236,7 @@ export class SearchService {
       imageUrl: row.image_url,
       hometown: row.hometown,
       averageRating: parseFloat(row.average_rating || 0),
-      totalCheckins: parseInt(row.total_reviews || 0),
+      totalCheckins: parseInt(row.total_checkins || 0),
       isActive: row.is_active,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
@@ -266,7 +266,7 @@ export class SearchService {
       imageUrl: row.image_url,
       coverImageUrl: row.cover_image_url || null,
       averageRating: parseFloat(row.average_rating || 0),
-      totalCheckins: parseInt(row.total_reviews || 0),
+      totalCheckins: parseInt(row.total_checkins || 0),
       isActive: row.is_active,
       createdAt: row.created_at,
       updatedAt: row.updated_at,

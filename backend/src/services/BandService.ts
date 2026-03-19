@@ -27,7 +27,7 @@ export class BandService {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, name, description, genre, formed_year, website_url, spotify_url,
                 instagram_url, facebook_url, image_url, hometown, average_rating,
-                total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+                total_checkins, is_active, claimed_by_user_id, created_at, updated_at
     `;
 
     const values = [
@@ -54,7 +54,7 @@ export class BandService {
     const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+             total_checkins, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE id = $1 AND is_active = true
     `;
@@ -131,7 +131,7 @@ export class BandService {
     const mainQuery = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+             total_checkins, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE ${conditions.join(' AND ')}
       ORDER BY ${sortColumn} ${sortOrder}
@@ -190,11 +190,11 @@ export class BandService {
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, name, description, genre, formed_year, website_url, spotify_url,
                 instagram_url, facebook_url, image_url, hometown, average_rating,
-                total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+                total_checkins, is_active, claimed_by_user_id, created_at, updated_at
     `;
 
     const result = await this.db.query(query, values);
-    
+
     if (result.rows.length === 0) {
       throw new Error('Band not found or inactive');
     }
@@ -230,7 +230,7 @@ export class BandService {
     const query = `
       SELECT b.id, b.name, b.description, b.genre, b.formed_year, b.website_url, b.spotify_url,
              b.instagram_url, b.facebook_url, b.image_url, b.hometown, b.average_rating,
-             COALESCE(rc.rating_count, 0) AS total_reviews,
+             COALESCE(rc.rating_count, 0) AS total_checkins,
              b.is_active, b.claimed_by_user_id, b.created_at, b.updated_at
       FROM bands b
       LEFT JOIN (
@@ -254,7 +254,7 @@ export class BandService {
     const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+             total_checkins, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE is_active = true AND $1 = ANY(genres)
       ORDER BY average_rating DESC, total_checkins DESC
@@ -272,7 +272,7 @@ export class BandService {
     const query = `
       SELECT b.id, b.name, b.description, b.genre, b.formed_year, b.website_url, b.spotify_url,
              b.instagram_url, b.facebook_url, b.image_url, b.hometown, b.average_rating,
-             COALESCE(rc.rating_count, 0) AS total_reviews,
+             COALESCE(rc.rating_count, 0) AS total_checkins,
              b.is_active, b.claimed_by_user_id, b.created_at, b.updated_at
       FROM bands b
       LEFT JOIN (
@@ -318,7 +318,7 @@ export class BandService {
           FROM checkin_band_ratings
           WHERE band_id = $1
         ),
-        total_reviews = (
+        total_checkins = (
           SELECT COUNT(*)
           FROM checkin_band_ratings
           WHERE band_id = $1
@@ -424,7 +424,7 @@ export class BandService {
       imageUrl: row.image_url,
       hometown: row.hometown,
       averageRating: parseFloat(row.average_rating || 0),
-      totalCheckins: parseInt(row.total_reviews || 0),
+      totalCheckins: parseInt(row.total_checkins || 0),
       isActive: row.is_active,
       claimedByUserId: row.claimed_by_user_id || undefined,
       createdAt: row.created_at,
