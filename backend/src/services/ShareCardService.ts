@@ -55,16 +55,13 @@ export class ShareCardService {
     checkinId: string,
     data: CheckinCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-<<<<<<< HEAD
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
-=======
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
       throw err;
->>>>>>> worktree-agent-ac41ef45
     }
 
     const ts = Date.now();
@@ -90,16 +87,13 @@ export class ShareCardService {
     badgeAwardId: string,
     data: BadgeCardData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-<<<<<<< HEAD
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
-=======
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
       throw err;
->>>>>>> worktree-agent-ac41ef45
     }
 
     const ts = Date.now();
@@ -122,16 +116,13 @@ export class ShareCardService {
     year: number,
     data: WrappedSummaryData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-<<<<<<< HEAD
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
-=======
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
       throw err;
->>>>>>> worktree-agent-ac41ef45
     }
     const ts = Date.now();
     const ogKey = `cards/wrapped/${userId}-${year}-summary-${ts}-og.png`;
@@ -151,16 +142,13 @@ export class ShareCardService {
     year: number,
     data: WrappedStatData
   ): Promise<{ ogUrl: string; storiesUrl: string }> {
-<<<<<<< HEAD
     if (!r2Service.isReady) {
       logger.warn('ShareCardService: R2 not configured, returning placeholder URLs');
       return { ogUrl: '', storiesUrl: '' };
-=======
     if (!r2Service.configured) {
       const err = new Error('Share card generation unavailable: storage not configured');
       (err as any).statusCode = 503;
       throw err;
->>>>>>> worktree-agent-ac41ef45
     }
     const ts = Date.now();
     const ogKey = `cards/wrapped/${userId}-${year}-${data.statType}-${ts}-og.png`;

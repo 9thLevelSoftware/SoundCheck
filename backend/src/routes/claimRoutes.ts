@@ -18,12 +18,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ClaimController } from '../controllers/ClaimController';
-<<<<<<< HEAD
-import { authenticateToken, requireAdmin } from '../middleware/auth';
-import { validate } from '../middleware/validate';
-=======
 import { authenticateToken, requireAdmin, rateLimit } from '../middleware/auth';
->>>>>>> worktree-agent-ac41ef45
+import { validate } from '../middleware/validate';
 
 const claimController = new ClaimController();
 
@@ -75,12 +71,8 @@ const reviewClaimSchema = z.object({
 
 const publicRouter = Router();
 
-<<<<<<< HEAD
-publicRouter.post('/', authenticateToken, validate(submitClaimSchema), claimController.submitClaim);
-=======
 // Rate limit claim submissions: 5 per 15 minutes per user
-publicRouter.post('/', authenticateToken, rateLimit(15 * 60 * 1000, 5), claimController.submitClaim);
->>>>>>> worktree-agent-ac41ef45
+publicRouter.post('/', authenticateToken, rateLimit(15 * 60 * 1000, 5), validate(submitClaimSchema), claimController.submitClaim);
 publicRouter.get('/me', authenticateToken, claimController.getMyClaims);
 
 // Claimed owner features

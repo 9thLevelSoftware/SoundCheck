@@ -47,7 +47,6 @@ export class FollowService {
     `;
 
     const result = await this.db.query(query, [followerId, followingId]);
-<<<<<<< HEAD
 
     // Only send notification if this is a new follow (not a duplicate)
     if (result.rows.length > 0) {
@@ -63,8 +62,6 @@ export class FollowService {
         logger.debug('Warning: follow notification failed', { error: err instanceof Error ? err.message : String(err) });
       }
     }
-=======
->>>>>>> worktree-agent-ac41ef45
 
     return { success: true, isFollowing: true, isNew: result.rows.length > 0 };
   }
