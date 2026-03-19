@@ -23,7 +23,7 @@ export interface Notification {
   };
   checkin?: {
     id: string;
-    reviewText?: string;
+    noteText?: string;
     band?: {
       id: string;
       name: string;
@@ -384,7 +384,7 @@ export class NotificationService {
     if (row.checkin_id) {
       notification.checkin = {
         id: row.checkin_id,
-        reviewText: row.checkin_comment,
+        noteText: row.checkin_comment,
       };
 
       if (row.checkin_band_id) {

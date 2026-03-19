@@ -307,7 +307,7 @@ export class BandService {
   }
 
   /**
-   * Update band rating after review
+   * Update band rating after check-in
    */
   async updateBandRating(bandId: string): Promise<void> {
     const query = `
@@ -424,7 +424,7 @@ export class BandService {
       imageUrl: row.image_url,
       hometown: row.hometown,
       averageRating: parseFloat(row.average_rating || 0),
-      totalReviews: parseInt(row.total_reviews || 0),
+      totalCheckins: parseInt(row.total_reviews || 0),
       isActive: row.is_active,
       claimedByUserId: row.claimed_by_user_id || undefined,
       createdAt: row.created_at,
