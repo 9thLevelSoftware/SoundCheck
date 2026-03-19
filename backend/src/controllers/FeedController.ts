@@ -111,7 +111,8 @@ export class FeedController {
         return;
       }
 
-      const result = await this.feedService.getEventFeed(eventId, cursor, limit);
+      const userId = req.user?.id;
+      const result = await this.feedService.getEventFeed(eventId, userId, cursor, limit);
 
       const response: ApiResponse = { success: true, data: result };
       res.status(200).json(response);
