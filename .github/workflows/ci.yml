@@ -37,6 +37,8 @@ jobs:
 
     - name: Run Tests
       run: npm test
+      env:
+        JWT_SECRET: ci-test-secret-must-be-at-least-32-characters-long
 
   mobile-analyze-and-test:
     runs-on: ubuntu-latest
