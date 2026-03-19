@@ -71,7 +71,7 @@ final filteredVenuesProvider = FutureProvider.autoDispose<List<Venue>>((ref) asy
     case VenueSortBy.ratingAsc:
       filtered.sort((a, b) => a.averageRating.compareTo(b.averageRating));
       break;
-    case VenueSortBy.reviewCountDesc:
+    case VenueSortBy.checkinCountDesc:
       filtered.sort((a, b) => b.totalReviews.compareTo(a.totalReviews));
       break;
     case VenueSortBy.newestFirst:
