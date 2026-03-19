@@ -99,21 +99,25 @@ The live check-in moment: a user at a show can check in fast, rate what they're 
 - Structured winston logging with Sentry error tracking
 - Smoke tests, deployment runbook, CI with gitleaks
 
-**Remaining Technical Debt:**
-- CheckinService still 1,400 LOC (facade pattern started, ~70% extraction deferred)
-- Legacy `reviews` table coexists with `checkin_band_ratings`
-- 686 hardcoded AppTheme.*Dark color references break light mode (shipping dark-only for beta)
+**Remaining Technical Debt:** *(updated 2026-03-14 after v4.0)*
+- ~~Legacy `reviews` table coexists with `checkin_band_ratings`~~ → RESOLVED (v4.0 Phase 26)
+- ~~686 hardcoded AppTheme.*Dark color references~~ → RESOLVED (v4.0 Phase 24)
+- ~~10 pre-existing test failures~~ → RESOLVED (v4.0 Phase 23)
+- ~~Legacy createCheckin(bandId+venueId) path~~ → RESOLVED (v4.0 Phase 25)
+- CheckinService still ~600 LOC after legacy removal (facade pattern, extraction deferred)
+- 13 production env vars missing (OPS-02 carry-forward — external provider accounts)
 - No mobile screen for claimed owner stats or band profile edit
 - No load testing or horizontal scaling
-- 10 pre-existing test failures (CheckinService + UserService UUID validation)
+- `checkin_providers.dart` + `checkin_screen.dart` reference removed `createCheckIn()` method
 
 **Shipped Milestones:**
 - v1.0 MVP (2026-02-27): 8 phases, 22 plans, 77 requirements
 - v1.1 Launch Readiness (2026-02-28): 9 phases, 30 plans, 32 requirements
 - v2.0 Beta Launch (2026-03-01): 5 phases, 10 plans, 28 requirements
 - v3.0 UI/UX Design Audit (2026-03-01): 4 phases, 9 plans, 33 requirements
+- v4.0 Technical Consolidation (2026-03-13): 6 phases, 8 plans, 9 requirements
 
-**Active Milestone:** v4.0 Technical Consolidation & Launch Hardening — 6 phases, 8 plans, 9 requirements
+**Active Milestone:** None — all milestones shipped. OPS-02 (provider accounts) carry-forward.
 
 ## Constraints
 

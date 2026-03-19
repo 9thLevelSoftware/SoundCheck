@@ -51,9 +51,9 @@ class BandCard extends StatelessWidget {
                               child: CircularProgressIndicator(),
                             ),
                           ),
-                          errorWidget: (context, url, error) => _buildPlaceholder(),
+                          errorWidget: (context, url, error) => _buildPlaceholder(context),
                         )
-                      : _buildPlaceholder(),
+                      : _buildPlaceholder(context),
                 ),
               ),
 
@@ -162,7 +162,7 @@ class BandCard extends StatelessWidget {
     );
   }
 
-  Widget _buildPlaceholder() {
+  Widget _buildPlaceholder(BuildContext context) {
     return Container(
       color: Theme.of(context).colorScheme.surfaceContainerHighest,
       child: const Center(

@@ -161,12 +161,12 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
                     color: AppTheme.voltLime,
                     backgroundColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                   ),
-                  SizedBox(height: 12),
-                  Text(
+                  const SizedBox(height: 12),
+                  const Text(
                     'Uploading photos...',
                     style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                 ],
               ),
 

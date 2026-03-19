@@ -50,8 +50,8 @@ class ShareCardPreview extends StatelessWidget {
 
   Widget _buildCardImage(BuildContext context) {
     return cardUrls.when(
-      loading: _buildShimmer,
-      error: (_, __) => _buildErrorState(),
+      loading: () => _buildShimmer(context),
+      error: (_, __) => _buildErrorState(context),
       data: (urls) => ClipRRect(
         borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
         child: Image.network(
@@ -61,15 +61,15 @@ class ShareCardPreview extends StatelessWidget {
           fit: BoxFit.cover,
           loadingBuilder: (context, child, loadingProgress) {
             if (loadingProgress == null) return child;
-            return _buildShimmer();
+            return _buildShimmer(context);
           },
-          errorBuilder: (_, __, ___) => _buildErrorState(),
+          errorBuilder: (ctx, __, ___) => _buildErrorState(ctx),
         ),
       ),
     );
   }
 
-  Widget _buildShimmer() {
+  Widget _buildShimmer(BuildContext context) {
     return Shimmer.fromColors(
       baseColor: Theme.of(context).colorScheme.surfaceContainerHighest,
       highlightColor: Theme.of(context).colorScheme.surfaceContainerHigh,
@@ -84,7 +84,7 @@ class ShareCardPreview extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorState() {
+  Widget _buildErrorState(BuildContext context) {
     return Container(
       width: double.infinity,
       height: 100,

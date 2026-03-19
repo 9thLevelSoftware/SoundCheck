@@ -8,7 +8,7 @@ import '../../../core/providers/providers.dart';
 import '../domain/venue.dart';
 import '../../checkins/presentation/providers/checkin_providers.dart';
 import '../../checkins/domain/checkin.dart';
-import '../../verification/presentation/providers/claim_providers.dart';
+
 
 final venueDetailProvider = FutureProvider.autoDispose.family<Venue, String>((ref, id) async {
   final repository = ref.watch(venueRepositoryProvider);
@@ -443,7 +443,7 @@ class _VenueStatsRow extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _StatItem(
-            value: _formatNumber(venue.totalCheckins),
+            value: _formatNumber(venue.totalReviews),
             label: 'Check-ins',
           ),
           _StatDivider(),
@@ -564,10 +564,10 @@ class _UpcomingEventsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Row(
+              Row(
                 children: [
                   Icon(
                     Icons.event,

@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v4.0
 milestone_name: "Technical Consolidation & Launch Hardening"
-status: active
-last_updated: "2026-03-12T00:00:00Z"
+status: complete
+last_updated: "2026-03-13T00:00:00Z"
 progress:
   total_phases: 6
-  completed_phases: 0
+  completed_phases: 5
   total_plans: 8
-  completed_plans: 0
+  completed_plans: 7
 ---
 
 # Project State
@@ -22,26 +22,28 @@ See: .planning/PROJECT.md (updated 2026-03-01)
 
 ## Current Position
 
-Phase: 22 of 27
-Phase Name: Launch Ops Foundation
-Status: Phase 22 executed -- OPS-03 complete, OPS-01/OPS-02 blocked
-Last Activity: Phase 22 execution (2026-03-12)
-Next Action: Rotate the remaining production secrets and configure the missing production env vars, then rerun `/legion:build` to finish Phase 22
+Phase: 27 of 27
+Phase Name: Validation Sweep
+Status: v4.0 milestone complete (OPS-02 carry-forward)
+Last Activity: v4.0 milestone completion (2026-03-13)
+Next Action: Set up external provider accounts for OPS-02, or start planning v5.0
 
 ## Milestone: v4.0 — Technical Consolidation & Launch Hardening
 
-Phases 22-27 | 0/6 phases complete | 0/8 plans complete
-Requirements: 1/9 satisfied (.planning/REQUIREMENTS.md)
+Phases 22-27 | 5/6 phases complete | 7/8 plans complete
+Requirements: 8/9 satisfied (.planning/REQUIREMENTS.md) — OPS-02 blocked on external provider accounts
 Exploration: .planning/exploration-technical-consolidation.md
 
 ## Recent Decisions
 
-- Kept Phase 22 as a single execution plan so the v4.0 roadmap remains 8 total plans and the operational work stays sequential.
-- Require `.planning/phases/22-launch-ops-foundation/22-01-OPS-EVIDENCE.md` as the sanitized evidence artifact for all launch-ops work.
-- If `npm run seed:demo` reports missing venues or bands, run `npm run seed` first and then rerun `npm run seed:demo`.
-- Treat the Railway service as `rootDirectory=backend`; clean manual deploys must upload the repo root, not the backend directory alone.
-- Production is currently not applying migrations automatically during deploy despite the planning assumption from `railway.toml`, so manual `npm run migrate:up` was required after successful deploys.
-- Corrective schema-drift migrations `040`, `041`, and `042` were required before production demo seeding could succeed.
+- v4.0 milestone complete (2026-03-13): 6 phases, 8 plans, 8/9 requirements. OPS-02 carry-forward.
+- Phase 26 complete: Entire reviews system eliminated — 3,317 lines deleted across 3 waves. Ratings repointed, stack deleted, tables dropped.
+- Phase 25 complete: Legacy createCheckin() removed from CheckinCreatorService, facade, controller. 282 lines deleted, tests green.
+- Phase 24 complete: All 253 AppTheme.*Dark refs replaced with Theme.of(context) across 50 files. flutter analyze deferred to Phase 27.
+- Phase 23 complete: All 10 test failures fixed (2 UserService + 8 CheckinService). Full suite: 368 passed, 0 failed.
+- OPS-01 completed: DB password rotated (Railway dashboard), JWT_SECRET rotated (crypto.randomBytes), SetlistFM key regenerated (provider).
+- OPS-02 remains blocked: 13 third-party integration variables require external provider accounts not yet created.
+- Quick-win vars set via Railway CLI: BASE_URL, MUSICBRAINZ_USER_AGENT, ENABLE_WEBSOCKET, APP_STORE_URL, PLAY_STORE_URL, NODE_TLS_REJECT_UNAUTHORIZED.
 
 ## GitHub
 
@@ -49,13 +51,23 @@ Exploration: .planning/exploration-technical-consolidation.md
 
 | Phase | Issue | Status |
 |-------|-------|--------|
-| Phase 22: Launch Ops Foundation | #14 | Blocked |
+| Phase 22: Launch Ops Foundation | #14 | Blocked (OPS-02) |
+| Phase 23: Test Suite Green | #15 | Complete |
+| Phase 24: Dark Color Cleanup | #16 | Complete |
+| Phase 25: CheckinCreator Legacy Removal | #17 | Complete |
+| Phase 26: Reviews System Consolidation | #18 | Complete |
+| Phase 27: Validation Sweep | #19 | Complete |
 
 ### Phase-to-PR Mapping
 
 | Phase | PR | Status |
 |-------|----|--------|
 | Phase 22: Launch Ops Foundation | — | Not created |
+| Phase 23: Test Suite Green | — | Not created |
+| Phase 24: Dark Color Cleanup | — | Not created |
+| Phase 25: CheckinCreator Legacy Removal | — | Not created |
+| Phase 26: Reviews System Consolidation | — | Not created |
+| Phase 27: Validation Sweep | — | Not created |
 
 ### Milestone Mapping
 
@@ -78,6 +90,6 @@ Exploration: .planning/exploration-technical-consolidation.md
 
 ## Session Continuity
 
-Last session: 2026-03-12
-Stopped at: Phase 22 execution blocked after OPS-03 completion
-Resume file: .planning/phases/22-launch-ops-foundation/22-01-SUMMARY.md
+Last session: 2026-03-14
+Stopped at: v4.0 milestone complete and archived.
+Resume file: .planning/milestones/v4.0-SUMMARY.md

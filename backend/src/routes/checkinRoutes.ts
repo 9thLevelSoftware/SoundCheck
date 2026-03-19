@@ -12,14 +12,20 @@ const checkinController = new CheckinController();
 
 const createCheckinSchema = z.object({
   body: z.object({
-    eventId: z.string().uuid('eventId must be a valid UUID'),
+    eventId: z.string().uuid('eventId must be a valid UUID').optional(),
+    bandId: z.string().uuid('bandId must be a valid UUID').optional(),
+    venueId: z.string().uuid('venueId must be a valid UUID').optional(),
+    rating: z.number().min(0).max(5).optional(),
     checkinLatitude: z.number().min(-90).max(90).optional(),
     checkinLongitude: z.number().min(-180).max(180).optional(),
     locationLat: z.number().min(-90).max(90).optional(),
     locationLon: z.number().min(-180).max(180).optional(),
     comment: z.string().max(2000, 'Comment must be 2000 characters or less').optional(),
     vibeTagIds: z.array(z.string().uuid()).optional(),
-  }),
+  }).refine(
+    (data) => data.eventId || (data.bandId && data.venueId),
+    { message: 'Either eventId OR both bandId and venueId are required' },
+  ),
 });
 
 const updateRatingsSchema = z.object({

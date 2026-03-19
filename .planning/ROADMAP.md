@@ -6,7 +6,7 @@
 - ✅ **v1.1 Launch Readiness & Growth Platform** — Phases 9-12 (shipped 2026-02-28)
 - ✅ **v2.0 Beta Launch** — Phases 13-17 (shipped 2026-03-01)
 - ✅ **v3.0 UI/UX Design Audit** — Phases 18-21 (shipped 2026-03-01)
-- 🔄 **v4.0 Technical Consolidation & Launch Hardening** — Phases 22-27
+- ✅ **v4.0 Technical Consolidation & Launch Hardening** — Phases 22-27 (shipped 2026-03-13, archived 2026-03-14)
 
 ## Phases
 
@@ -91,14 +91,22 @@ Plans:
 **Execution Order:**
 Phases execute in numeric order: 22 -> 23 -> 24 -> 25 -> 26 -> 27
 
+<details>
+<summary>✅ v4.0 Technical Consolidation & Launch Hardening (Phases 22-27) — SHIPPED 2026-03-13</summary>
+
+**Total: 6 phases, 8 plans, 9 requirements — 8 complete, 1 carry-forward (OPS-02)**
+**Archive:** `.planning/archive/v4.0/`, `.planning/milestones/v4.0-SUMMARY.md`
+
 | Phase | Milestone | Plans Complete | Status | Completed |
 |-------|-----------|----------------|--------|-----------|
-| 22. Launch Ops Foundation | v4.0 | 0/1 | Blocked | — |
-| 23. Test Suite Green | v4.0 | 0/1 | Pending | — |
-| 24. Dark Color Cleanup | v4.0 | 0/1 | Pending | — |
-| 25. CheckinCreator Legacy Removal | v4.0 | 0/1 | Pending | — |
-| 26. Reviews System Consolidation | v4.0 | 0/3 | Pending | — |
-| 27. Validation Sweep | v4.0 | 0/1 | Pending | — |
+| 22. Launch Ops Foundation | v4.0 | 0/1 | Blocked (OPS-02) | — |
+| 23. Test Suite Green | v4.0 | 1/1 | Complete | 2026-03-13 |
+| 24. Dark Color Cleanup | v4.0 | 1/1 | Complete | 2026-03-13 |
+| 25. CheckinCreator Legacy Removal | v4.0 | 1/1 | Complete | 2026-03-13 |
+| 26. Reviews System Consolidation | v4.0 | 3/3 | Complete | 2026-03-13 |
+| 27. Validation Sweep | v4.0 | 1/1 | Complete | 2026-03-13 |
+
+</details>
 
 <details>
 <summary>✅ v1.0 MVP (Phases 1-8) — SHIPPED 2026-02-27</summary>

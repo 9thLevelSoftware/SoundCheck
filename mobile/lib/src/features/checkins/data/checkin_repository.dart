@@ -149,6 +149,41 @@ class CheckInRepository {
     }
   }
 
+  /// Create a manual check-in (band + venue, no event required)
+  /// Fallback for users who can't find their show in nearby events
+  Future<CheckIn> createManualCheckIn({
+    required String bandId,
+    required String venueId,
+    double? rating,
+    String? comment,
+    List<String>? vibeTagIds,
+    double? locationLat,
+    double? locationLon,
+  }) async {
+    try {
+      final body = <String, dynamic>{
+        'bandId': bandId,
+        'venueId': venueId,
+      };
+      if (rating != null && rating > 0) body['rating'] = rating;
+      if (comment != null && comment.isNotEmpty) body['comment'] = comment;
+      if (vibeTagIds != null && vibeTagIds.isNotEmpty) {
+        body['vibeTagIds'] = vibeTagIds;
+      }
+      if (locationLat != null) body['locationLat'] = locationLat;
+      if (locationLon != null) body['locationLon'] = locationLon;
+
+      final response = await _dioClient.post(
+        ApiConfig.checkins,
+        data: body,
+      );
+      final checkinData = response.data['data'] as Map<String, dynamic>;
+      return CheckIn.fromJson(checkinData);
+    } catch (e) {
+      rethrow;
+    }
+  }
+
   /// Submit per-band ratings and/or venue rating for a check-in
   Future<CheckIn> submitRatings(
     String checkinId, {

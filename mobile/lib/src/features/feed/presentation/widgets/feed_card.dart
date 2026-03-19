@@ -234,8 +234,7 @@ class FeedCard extends ConsumerWidget {
 
 /// User avatar with CachedNetworkImage or initial letter fallback
 class _UserAvatar extends StatelessWidget {
-  _UserAvatar({
-    super.key,
+  const _UserAvatar({
     required this.username,
     this.avatarUrl,
     double size = 40,

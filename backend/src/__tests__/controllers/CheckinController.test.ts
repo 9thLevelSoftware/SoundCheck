@@ -122,14 +122,18 @@ describe('CheckinController', () => {
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('eventId is required');
+      expect(response.body.error).toBe('Either eventId OR both bandId and venueId are required');
       expect(mockCheckinService.createEventCheckin).not.toHaveBeenCalled();
     });
 
-    it('should return 400 when legacy bandId+venueId is sent without eventId', async () => {
+    it('should create manual check-in when bandId+venueId sent without eventId', async () => {
       setupApp('user-123');
+      mockCheckinService.createManualCheckin = jest.fn().mockResolvedValue({
+        ...mockCheckin,
+        eventId: undefined,
+      });
 
-      const legacyData = {
+      const manualData = {
         venueId: 'venue-123',
         bandId: 'band-123',
         rating: 4,
@@ -137,11 +141,33 @@ describe('CheckinController', () => {
 
       const response = await request(app)
         .post('/checkins')
-        .send(legacyData);
+        .send(manualData);
+
+      expect(response.status).toBe(201);
+      expect(response.body.success).toBe(true);
+      expect(mockCheckinService.createManualCheckin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-123',
+          bandId: 'band-123',
+          venueId: 'venue-123',
+          rating: 4,
+        }),
+      );
+    });
+
+    it('should return 400 when neither eventId nor bandId+venueId provided', async () => {
+      setupApp('user-123');
+
+      const incompleteData = {
+        rating: 4,
+      };
+
+      const response = await request(app)
+        .post('/checkins')
+        .send(incompleteData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('eventId is required');
     });
 
     it('should return 400 when service throws an error', async () => {

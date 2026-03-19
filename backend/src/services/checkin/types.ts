@@ -110,6 +110,17 @@ export interface CreateEventCheckinRequest {
   vibeTagIds?: string[];
 }
 
+export interface CreateManualCheckinRequest {
+  userId: string;
+  bandId: string;
+  venueId: string;
+  rating?: number;
+  locationLat?: number;
+  locationLon?: number;
+  comment?: string;
+  vibeTagIds?: string[];
+}
+
 export interface AddRatingsRequest {
   bandRatings?: { bandId: string; rating: number }[];
   venueRating?: number;

@@ -203,7 +203,7 @@ class AuthState extends _$AuthState {
       final keys = prefs.getKeys();
       final userScopedPrefixes = ['user_', 'feed_', 'onboarding_', 'notification_'];
       for (final key in keys) {
-        if (userScopedPrefixes.any((prefix) => key.startsWith(prefix))) {
+        if (userScopedPrefixes.any(key.startsWith)) {
           await prefs.remove(key);
         }
       }

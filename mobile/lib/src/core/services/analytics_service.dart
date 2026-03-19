@@ -206,13 +206,6 @@ class AnalyticsEvents {
   static const String bandFollowed = 'band_followed';
   static const String bandUnfollowed = 'band_unfollowed';
 
-  // Reviews
-  static const String reviewCreated = 'review_created';
-  static const String reviewUpdated = 'review_updated';
-  static const String reviewDeleted = 'review_deleted';
-  static const String reviewLiked = 'review_liked';
-  static const String reviewUnliked = 'review_unliked';
-
   // Check-ins
   static const String checkinCreated = 'checkin';
   static const String checkinDeleted = 'checkin_deleted';

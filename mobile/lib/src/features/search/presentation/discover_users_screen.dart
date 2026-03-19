@@ -20,7 +20,6 @@ class DiscoverUsersScreen extends ConsumerStatefulWidget {
 class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
   final Set<String> _followedIds = {};
   final Set<String> _loadingIds = {};
-  bool _followsFetched = false;
 
   @override
   void initState() {
@@ -40,12 +39,11 @@ class _DiscoverUsersScreenState extends ConsumerState<DiscoverUsersScreen> {
               (f['followedId'] ?? f['id'] ?? '') as String,
             ).where((id) => id.isNotEmpty),
           );
-          _followsFetched = true;
+
         });
       }
     } catch (_) {
       // Non-critical: local state will still work for new follows
-      _followsFetched = true;
     }
   }
 

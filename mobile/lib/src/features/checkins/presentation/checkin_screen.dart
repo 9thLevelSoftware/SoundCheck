@@ -787,7 +787,67 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
     );
   }
 
-  // ======== MANUAL CHECK-IN (LEGACY FALLBACK) ========
+  // ======== MANUAL CHECK-IN (FALLBACK) ========
+
+  bool get _canSubmitManual =>
+      _selectedBandId != null &&
+      _selectedVenueId != null &&
+      !_isSubmittingManual;
+
+  bool _isSubmittingManual = false;
+
+  Future<void> _submitManualCheckIn() async {
+    if (!_canSubmitManual) return;
+
+    setState(() => _isSubmittingManual = true);
+
+    final position = _cachedPosition ?? await LocationService.getCurrentPosition();
+
+    final notifier = ref.read(createManualCheckInProvider.notifier);
+    final checkIn = await notifier.submit(
+      bandId: _selectedBandId!,
+      venueId: _selectedVenueId!,
+      rating: _rating > 0 ? _rating : null,
+      comment: _commentController.text.isNotEmpty
+          ? _commentController.text
+          : null,
+      vibeTagIds: _selectedVibes.isNotEmpty ? _selectedVibes.toList() : null,
+      locationLat: position?.latitude,
+      locationLon: position?.longitude,
+    );
+
+    if (!mounted) return;
+
+    if (checkIn != null) {
+      setState(() {
+        _completedCheckIn = checkIn;
+        _screenState = _ScreenState.success;
+        _isSubmittingManual = false;
+      });
+    } else {
+      // Check for duplicate (409)
+      final error = ref.read(createManualCheckInProvider);
+      final errorMsg = error.error?.toString() ?? '';
+      final isDuplicate = errorMsg.contains('already') ||
+          errorMsg.contains('duplicate') ||
+          errorMsg.contains('409');
+
+      setState(() => _isSubmittingManual = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            isDuplicate
+                ? "You've already checked in to this band here today"
+                : errorMsg.isNotEmpty
+                    ? errorMsg
+                    : 'Failed to check in. Please try again.',
+          ),
+          backgroundColor: isDuplicate ? AppTheme.warning : AppTheme.error,
+        ),
+      );
+    }
+  }
 
   void _selectBand(String id, String name) {
     setState(() {
@@ -1267,13 +1327,12 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           ),
           const SizedBox(height: 32),
 
-          // Submit Button — disabled; legacy band+venue check-in path removed
-          // All check-ins go through the event-first CreateEventCheckIn flow
+          // Submit Button — manual check-in (band + venue fallback)
           SizedBox(
             width: double.infinity,
             height: 56,
             child: ElevatedButton(
-              onPressed: null,
+              onPressed: _canSubmitManual ? _submitManualCheckIn : null,
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.voltLime,
                 shape: RoundedRectangleBorder(

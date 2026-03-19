@@ -20,6 +20,7 @@ import { notificationQueue } from '../../jobs/notificationQueue';
 import {
   Checkin,
   CreateEventCheckinRequest,
+  CreateManualCheckinRequest,
 } from './types';
 import logger from '../../utils/logger';
 
@@ -221,6 +222,173 @@ export class CheckinCreatorService {
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
       logger.error('Create event check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      throw error;
+    }
+  }
+
+  // ============================================
+  // Manual check-in creation (band + venue fallback)
+  // ============================================
+
+  /**
+   * Create a manual check-in when no event is available.
+   * Fallback for users at shows not in the Ticketmaster pipeline.
+   * Skips event lookup and time window validation.
+   * Enforces one check-in per user per band+venue per day via application logic.
+   */
+  async createManualCheckin(data: CreateManualCheckinRequest): Promise<Checkin> {
+    try {
+      const { userId, bandId, venueId, rating, locationLat, locationLon, comment, vibeTagIds } = data;
+
+      // Validate band and venue exist
+      const [bandResult, venueResult] = await Promise.all([
+        this.db.query('SELECT id, name FROM bands WHERE id = $1', [bandId]),
+        this.db.query(
+          'SELECT id, name, latitude, longitude, venue_type FROM venues WHERE id = $1',
+          [venueId],
+        ),
+      ]);
+
+      if (bandResult.rows.length === 0) {
+        const err = new Error('Band not found');
+        (err as any).statusCode = 404;
+        throw err;
+      }
+
+      if (venueResult.rows.length === 0) {
+        const err = new Error('Venue not found');
+        (err as any).statusCode = 404;
+        throw err;
+      }
+
+      const venue = venueResult.rows[0];
+      const band = bandResult.rows[0];
+
+      // Prevent duplicate: same user + band + venue on the same calendar day
+      const dupCheck = await this.db.query(
+        `SELECT id FROM checkins
+         WHERE user_id = $1 AND band_id = $2 AND venue_id = $3
+           AND created_at::date = CURRENT_DATE`,
+        [userId, bandId, venueId],
+      );
+      if (dupCheck.rows.length > 0) {
+        const dupErr = new Error('You have already checked in to this band at this venue today');
+        (dupErr as any).statusCode = 409;
+        throw dupErr;
+      }
+
+      // Non-blocking location verification
+      const isVerified = this.verifyLocation(
+        locationLat,
+        locationLon,
+        venue.latitude ? parseFloat(venue.latitude) : null,
+        venue.longitude ? parseFloat(venue.longitude) : null,
+        venue.venue_type,
+      );
+
+      // INSERT the check-in (no event_id)
+      const insertQuery = `
+        INSERT INTO checkins (
+          user_id, venue_id, band_id,
+          is_verified, review_text, comment, rating,
+          checkin_latitude, checkin_longitude
+        )
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        RETURNING *
+      `;
+
+      const result = await this.db.query(insertQuery, [
+        userId,
+        venueId,
+        bandId,
+        isVerified,
+        comment || null,
+        comment || null,
+        rating || 0,
+        locationLat || null,
+        locationLon || null,
+      ]);
+
+      const checkinId = result.rows[0].id;
+
+      // Add vibe tags if provided
+      if (vibeTagIds && vibeTagIds.length > 0) {
+        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
+      }
+
+      // Enqueue async badge evaluation (30-second delay for anti-farming)
+      if (badgeEvalQueue) {
+        try {
+          await badgeEvalQueue.add(
+            'evaluate',
+            { userId, checkinId },
+            {
+              delay: 30000,
+              jobId: `badge-eval-${userId}-${checkinId}`,
+            },
+          );
+        } catch (err) {
+          logger.debug('Warning: failed to enqueue badge evaluation', {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      // Fire-and-forget: follower queries, cache invalidation, notifications
+      const followerIdsPromise = this.db.query(
+        'SELECT follower_id FROM user_followers WHERE following_id = $1',
+        [userId],
+      ).then(r => r.rows.map((row: any) => row.follower_id as string))
+       .catch((err) => {
+         logger.debug('Warning: follower query failed', {
+           error: err instanceof Error ? err.message : String(err),
+         });
+         return [] as string[];
+       });
+
+      followerIdsPromise.then(followerIds =>
+        this.invalidateFeedCachesForCheckin(userId, null, followerIds),
+      ).catch((err) =>
+        logger.debug('Warning: feed cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+
+      cache.del(`stats:concert-cred:${userId}`).catch((err) =>
+        logger.debug('Warning: stats cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+
+      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
+        logger.debug('Warning: recommendations cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+
+      // Pub/Sub + push notifications
+      followerIdsPromise.then(followerIds =>
+        this.publishCheckinAndNotify(
+          checkinId,
+          userId,
+          null,                              // no eventId
+          `${band.name} at ${venue.name}`,   // descriptive label for notifications
+          venueId,
+          result.rows[0].created_at,
+          followerIds,
+        ),
+      ).catch((err) =>
+        logger.debug('Warning: Pub/Sub publish or notification enqueue failed', {
+          error: err instanceof Error ? err.message : String(err),
+        }),
+      );
+
+      return this.getCheckinByIdFn(checkinId, userId);
+    } catch (error) {
+      logger.error('Create manual check-in error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -510,7 +678,7 @@ export class CheckinCreatorService {
   private async publishCheckinAndNotify(
     checkinId: string,
     userId: string,
-    eventId: string,
+    eventId: string | null,
     eventName: string,
     venueId: string,
     createdAt: string,

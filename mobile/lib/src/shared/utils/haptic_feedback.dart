@@ -44,7 +44,7 @@ class HapticFeedbackUtil {
   /// Vibration feedback for errors or important notifications
   static Future<void> errorVibration() async {
     try {
-      if (await Vibration.hasVibrator() ?? false) {
+      if (await Vibration.hasVibrator()) {
         await Vibration.vibrate(duration: 200, pattern: [0, 100, 50, 100]);
       }
     } catch (e) {
@@ -55,7 +55,7 @@ class HapticFeedbackUtil {
   /// Success feedback for successful operations
   static Future<void> successVibration() async {
     try {
-      if (await Vibration.hasVibrator() ?? false) {
+      if (await Vibration.hasVibrator()) {
         await Vibration.vibrate(duration: 50);
       }
     } catch (e) {

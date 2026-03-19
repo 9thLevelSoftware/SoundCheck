@@ -271,6 +271,51 @@ class CreateEventCheckIn extends _$CreateEventCheckIn {
   }
 }
 
+/// Notifier for creating manual check-ins (band + venue, no event)
+/// Fallback when user can't find their show in nearby events
+@riverpod
+class CreateManualCheckIn extends _$CreateManualCheckIn {
+  @override
+  Future<void> build() async {}
+
+  Future<CheckIn?> submit({
+    required String bandId,
+    required String venueId,
+    double? rating,
+    String? comment,
+    List<String>? vibeTagIds,
+    double? locationLat,
+    double? locationLon,
+  }) async {
+    state = const AsyncValue.loading();
+
+    final repository = ref.read(checkInRepositoryProvider);
+
+    try {
+      final checkIn = await repository.createManualCheckIn(
+        bandId: bandId,
+        venueId: venueId,
+        rating: rating,
+        comment: comment,
+        vibeTagIds: vibeTagIds,
+        locationLat: locationLat,
+        locationLon: locationLon,
+      );
+
+      // Invalidate feed and nearby events to refresh
+      ref.invalidate(globalFeedProvider);
+      ref.invalidate(friendsFeedProvider);
+      ref.invalidate(nearbyEventsProvider);
+
+      state = const AsyncValue.data(null);
+      return checkIn;
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+      return null;
+    }
+  }
+}
+
 /// Notifier for submitting per-band and venue ratings
 @riverpod
 class SubmitRatings extends _$SubmitRatings {

@@ -14,8 +14,9 @@ export class CheckinController {
    * Create a new check-in
    * POST /api/checkins
    *
-   * Request format (event-first only):
-   *   { eventId, locationLat?, locationLon?, comment?, vibeTagIds? }
+   * Supports two paths:
+   *   Event-first: { eventId, locationLat?, locationLon?, comment?, vibeTagIds? }
+   *   Manual:      { bandId, venueId, rating?, locationLat?, locationLon?, comment?, vibeTagIds? }
    */
   createCheckin = async (req: Request, res: Response): Promise<void> => {
     try {
@@ -32,6 +33,9 @@ export class CheckinController {
 
       const {
         eventId,
+        bandId,
+        venueId,
+        rating,
         checkinLatitude,
         checkinLongitude,
         locationLat,
@@ -40,27 +44,47 @@ export class CheckinController {
         vibeTagIds,
       } = req.body;
 
-      // eventId is required -- legacy bandId+venueId path has been removed
-      if (!eventId) {
+      let checkin;
+
+      if (eventId) {
+        // Event-first path (primary)
+        checkin = await this.checkinService.createEventCheckin({
+          userId,
+          eventId,
+          locationLat: locationLat ?? checkinLatitude,
+          locationLon: locationLon ?? checkinLongitude,
+          comment,
+          vibeTagIds,
+        });
+      } else if (bandId && venueId) {
+        // Manual fallback path (band + venue, no event)
+        checkin = await this.checkinService.createManualCheckin({
+          userId,
+          bandId,
+          venueId,
+          rating,
+          locationLat: locationLat ?? checkinLatitude,
+          locationLon: locationLon ?? checkinLongitude,
+          comment,
+          vibeTagIds,
+        });
+      } else {
         const response: ApiResponse = {
           success: false,
-          error: 'eventId is required',
+          error: 'Either eventId OR both bandId and venueId are required',
         };
         res.status(400).json(response);
         return;
       }
 
-      const checkin = await this.checkinService.createEventCheckin({
-        userId,
-        eventId,
-        locationLat: locationLat ?? checkinLatitude,
-        locationLon: locationLon ?? checkinLongitude,
-        comment,
-        vibeTagIds,
-      });
-
       // Audit log: check-in created
-      this.auditService.logCheckinCreated(userId, checkin.id, { eventId, isVerified: checkin.isVerified }, req);
+      this.auditService.logCheckinCreated(userId, checkin.id, {
+        eventId: eventId || undefined,
+        bandId: bandId || undefined,
+        venueId: venueId || undefined,
+        isVerified: checkin.isVerified,
+        manual: !eventId,
+      }, req);
 
       const response: ApiResponse = {
         success: true,

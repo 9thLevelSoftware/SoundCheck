@@ -23,6 +23,7 @@ import {
   Toast,
   Comment,
   CreateEventCheckinRequest,
+  CreateManualCheckinRequest,
   AddRatingsRequest,
   GetCheckinsOptions,
 } from './checkin';
@@ -90,6 +91,14 @@ export class CheckinService {
    */
   async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
     return this.creatorService.createEventCheckin(data);
+  }
+
+  /**
+   * Create a manual check-in (band + venue, no event required).
+   * Fallback path when user can't find their show in nearby events.
+   */
+  async createManualCheckin(data: CreateManualCheckinRequest): Promise<Checkin> {
+    return this.creatorService.createManualCheckin(data);
   }
 
   /**
