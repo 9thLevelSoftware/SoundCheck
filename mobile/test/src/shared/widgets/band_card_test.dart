@@ -25,7 +25,7 @@ void main() {
       description: 'A great band',
       genre: 'Rock',
       averageRating: 4.5,
-      totalReviews: 150,
+      totalCheckins: 150,
       isActive: true,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
@@ -55,7 +55,7 @@ void main() {
       expect(find.text('Rock'), findsOneWidget);
     });
 
-    testWidgets('displays total reviews count', (WidgetTester tester) async {
+    testWidgets('displays total check-ins count', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -64,7 +64,7 @@ void main() {
         ),
       );
 
-      expect(find.text('(150)'), findsOneWidget);
+      expect(find.text('150 check-ins'), findsOneWidget);
     });
 
     testWidgets('shows music icon for genre', (WidgetTester tester) async {
@@ -119,7 +119,7 @@ void main() {
         id: '1',
         name: 'Test Band',
         averageRating: 4.5,
-        totalReviews: 150,
+        totalCheckins: 150,
         isActive: true,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',

@@ -26,7 +26,7 @@ void main() {
       city: 'San Francisco',
       state: 'CA',
       averageRating: 4.5,
-      totalReviews: 100,
+      totalCheckins: 100,
       isActive: true,
       createdAt: '2024-01-01T00:00:00Z',
       updatedAt: '2024-01-01T00:00:00Z',
@@ -56,7 +56,7 @@ void main() {
       expect(find.text('San Francisco, CA'), findsOneWidget);
     });
 
-    testWidgets('displays total reviews count', (WidgetTester tester) async {
+    testWidgets('displays total check-ins count', (WidgetTester tester) async {
       await tester.pumpWidget(
         const MaterialApp(
           home: Scaffold(
@@ -65,7 +65,7 @@ void main() {
         ),
       );
 
-      expect(find.text('(100)'), findsOneWidget);
+      expect(find.text('100 check-ins'), findsOneWidget);
     });
 
     testWidgets('shows location icon', (WidgetTester tester) async {
@@ -120,7 +120,7 @@ void main() {
         id: '1',
         name: 'Test Venue',
         averageRating: 4.5,
-        totalReviews: 100,
+        totalCheckins: 100,
         isActive: true,
         createdAt: '2024-01-01T00:00:00Z',
         updatedAt: '2024-01-01T00:00:00Z',

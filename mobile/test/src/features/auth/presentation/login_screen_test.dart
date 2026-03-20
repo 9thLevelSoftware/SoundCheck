@@ -30,7 +30,7 @@ void main() {
       expect(find.text('SoundCheck'), findsOneWidget);
       
       // Check for tagline
-      expect(find.text('Discover, Review, Connect'), findsOneWidget);
+      expect(find.text('Check In, Share, Connect'), findsOneWidget);
       
       // Check for email field
       expect(find.widgetWithText(TextFormField, 'Email'), findsOneWidget);
