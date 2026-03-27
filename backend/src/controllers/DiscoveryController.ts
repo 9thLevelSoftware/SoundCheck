@@ -42,7 +42,10 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Search venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search venues error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -71,7 +74,8 @@ export class DiscoveryController {
       if (!artistName && !artistMbid && !venueId && !cityName && !date && !year) {
         const response: ApiResponse = {
           success: false,
-          error: 'At least one search parameter is required (artist, mbid, venue, city, date, or year)',
+          error:
+            'At least one search parameter is required (artist, mbid, venue, city, date, or year)',
         };
         res.status(400).json(response);
         return;
@@ -94,7 +98,10 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Search setlists error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search setlists error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -132,7 +139,10 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Search bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search bands error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -170,7 +180,10 @@ export class DiscoveryController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Search bands by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search bands by genre error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,

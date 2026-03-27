@@ -31,6 +31,11 @@ router.post('/:eventId', rsvpRateLimit, validate(eventIdParamSchema), rsvpContro
 
 // Get friends going to an event
 // GET /api/rsvp/:eventId/friends
-router.get('/:eventId/friends', generalRateLimit, validate(eventIdParamSchema), rsvpController.getFriendsGoing);
+router.get(
+  '/:eventId/friends',
+  generalRateLimit,
+  validate(eventIdParamSchema),
+  rsvpController.getFriendsGoing
+);
 
 export default router;

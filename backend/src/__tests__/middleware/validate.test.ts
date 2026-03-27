@@ -75,7 +75,7 @@ describe('Validation Middleware', () => {
         expect.arrayContaining([
           expect.objectContaining({ field: expect.stringContaining('body.name') }),
           expect.objectContaining({ field: expect.stringContaining('body.age') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -99,7 +99,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ field: expect.stringContaining('query.page') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -123,7 +123,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ field: expect.stringContaining('params.id') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -197,7 +197,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('Invalid email') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -219,7 +219,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('uppercase') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -241,7 +241,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('special character') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -263,7 +263,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('at least 8 characters') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -285,7 +285,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('at least 3 characters') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -309,7 +309,7 @@ describe('Validation Middleware', () => {
           expect.objectContaining({
             message: expect.stringContaining('letters, numbers, dots, hyphens, and underscores'),
           }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -358,7 +358,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('Password is required') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -417,7 +417,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('less than 500 characters') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -437,7 +437,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('Invalid URL') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });
@@ -483,7 +483,7 @@ describe('Validation Middleware', () => {
       expect(responseData.error.details).toEqual(
         expect.arrayContaining([
           expect.objectContaining({ message: expect.stringContaining('Invalid email') }),
-        ]),
+        ])
       );
       expect(mockNext).not.toHaveBeenCalled();
     });

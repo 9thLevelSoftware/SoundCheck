@@ -1,0 +1,21 @@
+# Build output
+dist/
+
+# Dependencies
+node_modules/
+
+# Generated files
+*.d.ts
+
+# Database
+*.sql
+
+# Logs
+logs/
+*.log
+
+# Test coverage
+coverage/
+
+# Uploads (if any committed files)
+uploads/

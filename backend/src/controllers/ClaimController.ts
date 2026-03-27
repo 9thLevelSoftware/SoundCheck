@@ -31,7 +31,10 @@ export class ClaimController {
       };
       res.status(201).json(response);
     } catch (error) {
-      logger.error('Submit claim error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Submit claim error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       const statusCode = error instanceof AppError ? error.statusCode : 400;
       res.status(statusCode).json({
         success: false,
@@ -55,7 +58,10 @@ export class ClaimController {
 
       res.status(200).json({ success: true, data: claims } as ApiResponse);
     } catch (error) {
-      logger.error('Get my claims error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get my claims error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       res.status(500).json({ success: false, error: 'Failed to fetch claims' } as ApiResponse);
     }
   };
@@ -75,7 +81,10 @@ export class ClaimController {
 
       res.status(200).json({ success: true, data: claim } as ApiResponse);
     } catch (error) {
-      logger.error('Get claim by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get claim by ID error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       const statusCode = error instanceof AppError ? error.statusCode : 500;
       res.status(statusCode).json({
         success: false,
@@ -94,8 +103,13 @@ export class ClaimController {
 
       res.status(200).json({ success: true, data: claims } as ApiResponse);
     } catch (error) {
-      logger.error('Get pending claims error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      res.status(500).json({ success: false, error: 'Failed to fetch pending claims' } as ApiResponse);
+      logger.error('Get pending claims error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+      res
+        .status(500)
+        .json({ success: false, error: 'Failed to fetch pending claims' } as ApiResponse);
     }
   };
 
@@ -110,7 +124,10 @@ export class ClaimController {
 
       res.status(200).json({ success: true, data: claims } as ApiResponse);
     } catch (error) {
-      logger.error('Get all claims error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get all claims error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       res.status(500).json({ success: false, error: 'Failed to fetch claims' } as ApiResponse);
     }
   };
@@ -147,7 +164,10 @@ export class ClaimController {
         message: `Claim ${status} successfully`,
       } as ApiResponse);
     } catch (error) {
-      logger.error('Review claim error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Review claim error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       const statusCode = error instanceof AppError ? error.statusCode : 400;
       res.status(statusCode).json({
         success: false,
@@ -202,7 +222,10 @@ export class ClaimController {
 
       res.status(200).json({ success: true, data: stats } as ApiResponse);
     } catch (error) {
-      logger.error('Get entity stats error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get entity stats error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       const statusCode = error instanceof AppError ? error.statusCode : 500;
       res.status(statusCode).json({
         success: false,

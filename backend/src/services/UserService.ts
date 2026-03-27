@@ -111,7 +111,7 @@ export class UserService {
     `;
 
     const result = await this.db.query(query, [userId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -132,7 +132,7 @@ export class UserService {
     `;
 
     const result = await this.db.query(query, [email]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -143,7 +143,9 @@ export class UserService {
   /**
    * Find user by email including password hash (for authentication)
    */
-  private async findByEmailWithPassword(email: string): Promise<(User & { passwordHash: string }) | null> {
+  private async findByEmailWithPassword(
+    email: string
+  ): Promise<(User & { passwordHash: string }) | null> {
     const query = `
       SELECT id, email, password_hash, username, first_name, last_name, bio,
              profile_image_url, location, date_of_birth, is_verified, is_active,
@@ -153,7 +155,7 @@ export class UserService {
     `;
 
     const result = await this.db.query(query, [email]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -178,7 +180,7 @@ export class UserService {
     `;
 
     const result = await this.db.query(query, [username]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -190,7 +192,14 @@ export class UserService {
    * Update user profile
    */
   async updateProfile(userId: string, updateData: Partial<User>): Promise<User> {
-    const allowedFields = ['firstName', 'lastName', 'bio', 'profileImageUrl', 'location', 'dateOfBirth'];
+    const allowedFields = [
+      'firstName',
+      'lastName',
+      'bio',
+      'profileImageUrl',
+      'location',
+      'dateOfBirth',
+    ];
     const updates: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -346,7 +355,10 @@ export class UserService {
         uniqueBands: parseInt(stats.unique_bands, 10) || 0,
       };
     } catch (error) {
-      logger.error('Error getting user stats', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Error getting user stats', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw new Error('Failed to retrieve user statistics');
     }
   }

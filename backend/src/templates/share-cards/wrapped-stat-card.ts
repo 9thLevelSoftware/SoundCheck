@@ -20,9 +20,9 @@ export interface WrappedStatData {
   username: string;
   year: number;
   statType: 'top-artist' | 'top-venue' | 'top-genre';
-  statLabel: string;   // e.g., "#1 Artist", "#1 Venue", "#1 Genre"
-  statValue: string;   // e.g., band name, venue name, genre name
-  statDetail: string;  // e.g., "Seen 8 times", "Visited 5 times", "68% of your shows"
+  statLabel: string; // e.g., "#1 Artist", "#1 Venue", "#1 Genre"
+  statValue: string; // e.g., band name, venue name, genre name
+  statDetail: string; // e.g., "Seen 8 times", "Visited 5 times", "68% of your shows"
 }
 
 // Satori element type (React.createElement output format)
@@ -35,7 +35,11 @@ interface SatoriElement {
 // Helpers
 // ============================================
 
-function el(type: string, props: Record<string, any>, ...children: (string | SatoriElement)[]): SatoriElement {
+function el(
+  type: string,
+  props: Record<string, any>,
+  ...children: (string | SatoriElement)[]
+): SatoriElement {
   return {
     type,
     props: {
@@ -57,93 +61,121 @@ function truncate(text: string, maxLength: number): string {
 export function wrappedStatCardOG(data: WrappedStatData): SatoriElement {
   const statValue = truncate(data.statValue, 25);
 
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '48px 56px',
-      fontFamily: 'Inter',
-    },
-  },
-    // Top row: branding with year
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: '48px',
-      },
-    },
-      el('span', {
-        style: {
-          color: '#D2FF00',
-          fontSize: '20px',
-          letterSpacing: '0.1em',
-          fontWeight: 700,
-        },
-      }, `SOUNDCHECK WRAPPED ${data.year}`),
-    ),
-
-    // Main content area
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
         flexDirection: 'column',
-        flex: '1',
-        justifyContent: 'center',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '48px 56px',
+        fontFamily: 'Inter',
       },
     },
-      // Stat label
-      el('div', {
+    // Top row: branding with year
+    el(
+      'div',
+      {
         style: {
-          color: '#9CA3AF',
-          fontSize: '24px',
-          marginBottom: '16px',
           display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '48px',
         },
-      }, data.statLabel),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#D2FF00',
+            fontSize: '20px',
+            letterSpacing: '0.1em',
+            fontWeight: 700,
+          },
+        },
+        `SOUNDCHECK WRAPPED ${data.year}`
+      )
+    ),
+
+    // Main content area
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          flex: '1',
+          justifyContent: 'center',
+        },
+      },
+      // Stat label
+      el(
+        'div',
+        {
+          style: {
+            color: '#9CA3AF',
+            fontSize: '24px',
+            marginBottom: '16px',
+            display: 'flex',
+          },
+        },
+        data.statLabel
+      ),
 
       // Stat value (large)
-      el('div', {
-        style: {
-          color: '#FFFFFF',
-          fontSize: '64px',
-          fontWeight: 700,
-          lineHeight: '1.1',
-          marginBottom: '16px',
-          overflow: 'hidden',
-          display: 'flex',
+      el(
+        'div',
+        {
+          style: {
+            color: '#FFFFFF',
+            fontSize: '64px',
+            fontWeight: 700,
+            lineHeight: '1.1',
+            marginBottom: '16px',
+            overflow: 'hidden',
+            display: 'flex',
+          },
         },
-      }, statValue),
+        statValue
+      ),
 
       // Stat detail
-      el('div', {
-        style: {
-          color: '#D2FF00',
-          fontSize: '28px',
-          display: 'flex',
+      el(
+        'div',
+        {
+          style: {
+            color: '#D2FF00',
+            fontSize: '28px',
+            display: 'flex',
+          },
         },
-      }, data.statDetail),
+        data.statDetail
+      )
     ),
 
     // Bottom: username
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-      },
-    },
-      el('span', {
+    el(
+      'div',
+      {
         style: {
-          color: '#6B7280',
-          fontSize: '18px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
         },
-      }, `@${data.username}`),
-    ),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#6B7280',
+            fontSize: '18px',
+          },
+        },
+        `@${data.username}`
+      )
+    )
   );
 }
 
@@ -154,81 +186,105 @@ export function wrappedStatCardOG(data: WrappedStatData): SatoriElement {
 export function wrappedStatCardStories(data: WrappedStatData): SatoriElement {
   const statValue = truncate(data.statValue, 25);
 
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '120px 64px',
-      fontFamily: 'Inter',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  },
-    // Branding with year
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '120px 64px',
+        fontFamily: 'Inter',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: '120px',
       },
     },
-      el('span', {
+    // Branding with year
+    el(
+      'div',
+      {
         style: {
-          color: '#D2FF00',
-          fontSize: '24px',
-          letterSpacing: '0.1em',
-          fontWeight: 700,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '120px',
         },
-      }, `SOUNDCHECK WRAPPED ${data.year}`),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#D2FF00',
+            fontSize: '24px',
+            letterSpacing: '0.1em',
+            fontWeight: 700,
+          },
+        },
+        `SOUNDCHECK WRAPPED ${data.year}`
+      )
     ),
 
     // Stat label
-    el('div', {
-      style: {
-        color: '#9CA3AF',
-        fontSize: '28px',
-        textAlign: 'center',
-        marginBottom: '24px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#9CA3AF',
+          fontSize: '28px',
+          textAlign: 'center',
+          marginBottom: '24px',
+          display: 'flex',
+        },
       },
-    }, data.statLabel),
+      data.statLabel
+    ),
 
     // Stat value (huge)
-    el('div', {
-      style: {
-        color: '#FFFFFF',
-        fontSize: '80px',
-        fontWeight: 700,
-        lineHeight: '1.1',
-        textAlign: 'center',
-        marginBottom: '24px',
-        overflow: 'hidden',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#FFFFFF',
+          fontSize: '80px',
+          fontWeight: 700,
+          lineHeight: '1.1',
+          textAlign: 'center',
+          marginBottom: '24px',
+          overflow: 'hidden',
+          display: 'flex',
+        },
       },
-    }, statValue),
+      statValue
+    ),
 
     // Stat detail
-    el('div', {
-      style: {
-        color: '#D2FF00',
-        fontSize: '36px',
-        textAlign: 'center',
-        marginBottom: '120px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#D2FF00',
+          fontSize: '36px',
+          textAlign: 'center',
+          marginBottom: '120px',
+          display: 'flex',
+        },
       },
-    }, data.statDetail),
+      data.statDetail
+    ),
 
     // Username
-    el('div', {
-      style: {
-        color: '#6B7280',
-        fontSize: '22px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#6B7280',
+          fontSize: '22px',
+          display: 'flex',
+        },
       },
-    }, `@${data.username}`),
+      `@${data.username}`
+    )
   );
 }

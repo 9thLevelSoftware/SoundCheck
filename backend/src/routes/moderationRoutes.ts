@@ -23,10 +23,7 @@ const reviewItemSchema = z.object({
       required_error: 'Action is required',
       invalid_type_error: 'Invalid action. Must be: approved, removed, or user_warned',
     }),
-    notes: z
-      .string()
-      .max(1000, 'Notes must be 1000 characters or less')
-      .optional(),
+    notes: z.string().max(1000, 'Notes must be 1000 characters or less').optional(),
   }),
   params: z.object({
     itemId: z.string().uuid('Item ID must be a valid UUID'),

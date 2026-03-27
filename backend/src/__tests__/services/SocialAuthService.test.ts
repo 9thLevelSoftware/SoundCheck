@@ -260,8 +260,9 @@ describe('SocialAuthService', () => {
         .mockResolvedValueOnce({ rows: [mockUser] }) // findUserByEmail - found
         .mockResolvedValueOnce({ rows: [] }); // userHasSocialAccounts - no social accounts (password-only)
 
-      await expect(socialAuthService.authenticateOrCreate(mockProfile))
-        .rejects.toThrow('An account with this email already exists');
+      await expect(socialAuthService.authenticateOrCreate(mockProfile)).rejects.toThrow(
+        'An account with this email already exists'
+      );
     });
 
     it('should create new user when no existing account found', async () => {

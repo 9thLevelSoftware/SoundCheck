@@ -117,11 +117,13 @@ router.post(
       }
 
       // API-063: Return 401 for auth failures instead of falling through to 500
-      const statusCode = error instanceof Error && (
-        error.message.includes('token') ||
-        error.message.includes('auth') ||
-        error.message.includes('Authentication')
-      ) ? 401 : 500;
+      const statusCode =
+        error instanceof Error &&
+        (error.message.includes('token') ||
+          error.message.includes('auth') ||
+          error.message.includes('Authentication'))
+          ? 401
+          : 500;
       const response: ApiResponse = {
         success: false,
         error: statusCode === 401 ? 'Authentication failed' : 'An unexpected error occurred',
@@ -224,11 +226,13 @@ router.post(
       }
 
       // API-063: Return 401 for auth failures instead of falling through to 500
-      const statusCode = error instanceof Error && (
-        error.message.includes('token') ||
-        error.message.includes('auth') ||
-        error.message.includes('Authentication')
-      ) ? 401 : 500;
+      const statusCode =
+        error instanceof Error &&
+        (error.message.includes('token') ||
+          error.message.includes('auth') ||
+          error.message.includes('Authentication'))
+          ? 401
+          : 500;
       const appleResponse: ApiResponse = {
         success: false,
         error: statusCode === 401 ? 'Authentication failed' : 'An unexpected error occurred',

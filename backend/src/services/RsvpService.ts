@@ -66,7 +66,10 @@ export class RsvpService {
   async getFriendsGoing(
     userId: string,
     eventId: string
-  ): Promise<{ count: number; friends: { id: string; username: string; profileImageUrl: string | null }[] }> {
+  ): Promise<{
+    count: number;
+    friends: { id: string; username: string; profileImageUrl: string | null }[];
+  }> {
     // Count of friends going (users the current user follows who have RSVP'd)
     const countQuery = `
       SELECT COUNT(DISTINCT er.user_id)::int as friend_count

@@ -10,14 +10,15 @@ const db = Database.getInstance();
 const venues = [
   {
     name: 'The Fillmore',
-    description: 'Historic music venue with incredible acoustics and an intimate atmosphere. Known for hosting legendary performances since 1965.',
+    description:
+      'Historic music venue with incredible acoustics and an intimate atmosphere. Known for hosting legendary performances since 1965.',
     address: '1805 Geary Boulevard',
     city: 'San Francisco',
     state: 'California',
     country: 'USA',
     postal_code: '94115',
     latitude: 37.7841,
-    longitude: -122.4330,
+    longitude: -122.433,
     website_url: 'https://www.thefillmore.com',
     phone: '+1-415-346-3000',
     capacity: 1315,
@@ -26,7 +27,8 @@ const venues = [
   },
   {
     name: 'Red Rocks Amphitheatre',
-    description: 'World-famous outdoor amphitheatre carved into stunning red rock formations. Perfect natural acoustics and breathtaking views.',
+    description:
+      'World-famous outdoor amphitheatre carved into stunning red rock formations. Perfect natural acoustics and breathtaking views.',
     address: '18300 W Alameda Parkway',
     city: 'Morrison',
     state: 'Colorado',
@@ -42,7 +44,8 @@ const venues = [
   },
   {
     name: 'Brooklyn Steel',
-    description: 'Industrial-chic concert venue with a massive dance floor, state-of-the-art sound system, and rooftop bar.',
+    description:
+      'Industrial-chic concert venue with a massive dance floor, state-of-the-art sound system, and rooftop bar.',
     address: '319 Frost Street',
     city: 'Brooklyn',
     state: 'New York',
@@ -58,13 +61,14 @@ const venues = [
   },
   {
     name: 'The Troubadour',
-    description: 'Legendary West Hollywood nightclub that launched the careers of countless artists. Intimate setting with incredible history.',
+    description:
+      'Legendary West Hollywood nightclub that launched the careers of countless artists. Intimate setting with incredible history.',
     address: '9081 Santa Monica Boulevard',
     city: 'West Hollywood',
     state: 'California',
     country: 'USA',
     postal_code: '90069',
-    latitude: 34.0900,
+    latitude: 34.09,
     longitude: -118.3877,
     website_url: 'https://www.troubadour.com',
     phone: '+1-310-276-1158',
@@ -74,7 +78,8 @@ const venues = [
   },
   {
     name: 'House of Blues Chicago',
-    description: 'Multi-level concert venue with Southern-inspired decor, great sightlines, and an energetic atmosphere.',
+    description:
+      'Multi-level concert venue with Southern-inspired decor, great sightlines, and an energetic atmosphere.',
     address: '329 N Dearborn Street',
     city: 'Chicago',
     state: 'Illinois',
@@ -90,7 +95,8 @@ const venues = [
   },
   {
     name: 'The Roxy Theatre',
-    description: 'Iconic Sunset Strip venue known for its intimate vibe and stellar sound. A must-visit for rock music fans.',
+    description:
+      'Iconic Sunset Strip venue known for its intimate vibe and stellar sound. A must-visit for rock music fans.',
     address: '9009 Sunset Boulevard',
     city: 'West Hollywood',
     state: 'California',
@@ -106,7 +112,8 @@ const venues = [
   },
   {
     name: 'Terminal 5',
-    description: 'Three-level concert venue in Hell\'s Kitchen with excellent sightlines from every floor and top-notch sound.',
+    description:
+      "Three-level concert venue in Hell's Kitchen with excellent sightlines from every floor and top-notch sound.",
     address: '610 W 56th Street',
     city: 'New York',
     state: 'New York',
@@ -122,7 +129,8 @@ const venues = [
   },
   {
     name: 'First Avenue',
-    description: 'Minneapolis institution immortalized in Prince\'s Purple Rain. Iconic venue with incredible local music history.',
+    description:
+      "Minneapolis institution immortalized in Prince's Purple Rain. Iconic venue with incredible local music history.",
     address: '701 N 1st Avenue',
     city: 'Minneapolis',
     state: 'Minnesota',
@@ -138,7 +146,8 @@ const venues = [
   },
   {
     name: 'The Gorge Amphitheatre',
-    description: 'Stunning outdoor venue overlooking the Columbia River Gorge. One of the most beautiful concert settings in the world.',
+    description:
+      'Stunning outdoor venue overlooking the Columbia River Gorge. One of the most beautiful concert settings in the world.',
     address: '754 Silica Road NW',
     city: 'Quincy',
     state: 'Washington',
@@ -153,8 +162,9 @@ const venues = [
     image_url: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800',
   },
   {
-    name: 'Emo\'s Austin',
-    description: 'Austin\'s premier rock club with indoor and outdoor stages. Great sound, awesome vibes, and Texas hospitality.',
+    name: "Emo's Austin",
+    description:
+      "Austin's premier rock club with indoor and outdoor stages. Great sound, awesome vibes, and Texas hospitality.",
     address: '2015 E Riverside Drive',
     city: 'Austin',
     state: 'Texas',
@@ -170,13 +180,14 @@ const venues = [
   },
   {
     name: 'The Wiltern',
-    description: 'Art Deco masterpiece in Los Angeles with stunning architecture and excellent acoustics. A truly special venue.',
+    description:
+      'Art Deco masterpiece in Los Angeles with stunning architecture and excellent acoustics. A truly special venue.',
     address: '3790 Wilshire Boulevard',
     city: 'Los Angeles',
     state: 'California',
     country: 'USA',
     postal_code: '90010',
-    latitude: 34.0620,
+    latitude: 34.062,
     longitude: -118.3091,
     website_url: 'https://www.wiltern.com',
     phone: '+1-213-388-1400',
@@ -186,7 +197,8 @@ const venues = [
   },
   {
     name: 'Exit/In',
-    description: 'Nashville\'s legendary rock club since 1971. Intimate setting where you can get up close with amazing artists.',
+    description:
+      "Nashville's legendary rock club since 1971. Intimate setting where you can get up close with amazing artists.",
     address: '2208 Elliston Place',
     city: 'Nashville',
     state: 'Tennessee',
@@ -202,7 +214,8 @@ const venues = [
   },
   {
     name: 'The Bowery Ballroom',
-    description: 'Perfect-sized venue in Manhattan with ornate balcony, excellent sightlines, and pristine sound quality.',
+    description:
+      'Perfect-sized venue in Manhattan with ornate balcony, excellent sightlines, and pristine sound quality.',
     address: '6 Delancey Street',
     city: 'New York',
     state: 'New York',
@@ -218,7 +231,8 @@ const venues = [
   },
   {
     name: 'The Observatory',
-    description: 'Santa Ana venue in a renovated 1930s building. Great sound system and an eclectic mix of shows.',
+    description:
+      'Santa Ana venue in a renovated 1930s building. Great sound system and an eclectic mix of shows.',
     address: '3503 S Harbor Boulevard',
     city: 'Santa Ana',
     state: 'California',
@@ -234,7 +248,8 @@ const venues = [
   },
   {
     name: 'Sloss Furnaces',
-    description: 'Historic industrial site turned concert venue in Birmingham. Unique atmosphere with incredible acoustics.',
+    description:
+      'Historic industrial site turned concert venue in Birmingham. Unique atmosphere with incredible acoustics.',
     address: '20 32nd Street N',
     city: 'Birmingham',
     state: 'Alabama',
@@ -253,7 +268,8 @@ const venues = [
 const bands = [
   {
     name: 'The Midnight Riders',
-    description: 'High-energy rock band blending classic rock influences with modern sensibilities. Known for electrifying live performances.',
+    description:
+      'High-energy rock band blending classic rock influences with modern sensibilities. Known for electrifying live performances.',
     genre: 'Rock',
     formed_year: 2018,
     hometown: 'Austin, TX',
@@ -261,7 +277,8 @@ const bands = [
   },
   {
     name: 'Neon Pulse',
-    description: 'Synthwave duo creating nostalgic 80s-inspired electronic music with a modern twist. Dance floor essentials.',
+    description:
+      'Synthwave duo creating nostalgic 80s-inspired electronic music with a modern twist. Dance floor essentials.',
     genre: 'Electronic',
     formed_year: 2020,
     hometown: 'Los Angeles, CA',
@@ -269,7 +286,8 @@ const bands = [
   },
   {
     name: 'Velvet Underground Revival',
-    description: 'Indie rock collective with dreamy vocals and atmospheric guitar work. Perfect for late-night contemplation.',
+    description:
+      'Indie rock collective with dreamy vocals and atmospheric guitar work. Perfect for late-night contemplation.',
     genre: 'Indie Rock',
     formed_year: 2017,
     hometown: 'Brooklyn, NY',
@@ -277,7 +295,8 @@ const bands = [
   },
   {
     name: 'Bass Drop Collective',
-    description: 'Hard-hitting dubstep crew pushing the boundaries of electronic bass music. Bring ear protection!',
+    description:
+      'Hard-hitting dubstep crew pushing the boundaries of electronic bass music. Bring ear protection!',
     genre: 'Dubstep',
     formed_year: 2019,
     hometown: 'Denver, CO',
@@ -285,7 +304,8 @@ const bands = [
   },
   {
     name: 'The Wildflowers',
-    description: 'Folk-rock quartet with beautiful harmonies and heartfelt storytelling. Music that touches the soul.',
+    description:
+      'Folk-rock quartet with beautiful harmonies and heartfelt storytelling. Music that touches the soul.',
     genre: 'Folk Rock',
     formed_year: 2016,
     hometown: 'Nashville, TN',
@@ -293,7 +313,8 @@ const bands = [
   },
   {
     name: 'Crimson Tide',
-    description: 'Progressive metal band with technical prowess and crushing breakdowns. Not for the faint of heart.',
+    description:
+      'Progressive metal band with technical prowess and crushing breakdowns. Not for the faint of heart.',
     genre: 'Metal',
     formed_year: 2015,
     hometown: 'Birmingham, AL',
@@ -301,7 +322,8 @@ const bands = [
   },
   {
     name: 'Smooth Operators',
-    description: 'Contemporary jazz ensemble bringing fresh energy to classic jazz standards and original compositions.',
+    description:
+      'Contemporary jazz ensemble bringing fresh energy to classic jazz standards and original compositions.',
     genre: 'Jazz',
     formed_year: 2019,
     hometown: 'Chicago, IL',
@@ -309,7 +331,8 @@ const bands = [
   },
   {
     name: 'Electric Avenue',
-    description: 'Funk and soul powerhouse guaranteed to get you dancing. Tight grooves and infectious energy.',
+    description:
+      'Funk and soul powerhouse guaranteed to get you dancing. Tight grooves and infectious energy.',
     genre: 'Funk',
     formed_year: 2018,
     hometown: 'Minneapolis, MN',
@@ -317,7 +340,8 @@ const bands = [
   },
   {
     name: 'Desert Storm',
-    description: 'Psychedelic rock band with hypnotic rhythms and cosmic soundscapes. A journey for your mind.',
+    description:
+      'Psychedelic rock band with hypnotic rhythms and cosmic soundscapes. A journey for your mind.',
     genre: 'Psychedelic Rock',
     formed_year: 2017,
     hometown: 'Phoenix, AZ',
@@ -325,7 +349,8 @@ const bands = [
   },
   {
     name: 'The Crooners',
-    description: 'Classic vocal group reviving the golden age of doo-wop and early rock and roll. Timeless entertainment.',
+    description:
+      'Classic vocal group reviving the golden age of doo-wop and early rock and roll. Timeless entertainment.',
     genre: 'Doo-Wop',
     formed_year: 2020,
     hometown: 'Philadelphia, PA',
@@ -333,7 +358,8 @@ const bands = [
   },
   {
     name: 'Voltage',
-    description: 'High-octane punk rock trio with raw energy and anthemic choruses. Mosh pit guaranteed.',
+    description:
+      'High-octane punk rock trio with raw energy and anthemic choruses. Mosh pit guaranteed.',
     genre: 'Punk Rock',
     formed_year: 2019,
     hometown: 'Seattle, WA',
@@ -341,7 +367,8 @@ const bands = [
   },
   {
     name: 'Lunar Echo',
-    description: 'Ambient electronic project creating ethereal soundscapes perfect for introspection and meditation.',
+    description:
+      'Ambient electronic project creating ethereal soundscapes perfect for introspection and meditation.',
     genre: 'Ambient',
     formed_year: 2021,
     hometown: 'Portland, OR',
@@ -349,7 +376,8 @@ const bands = [
   },
   {
     name: 'The Revival',
-    description: 'Blues rock band keeping the tradition alive with soulful vocals and blistering guitar solos.',
+    description:
+      'Blues rock band keeping the tradition alive with soulful vocals and blistering guitar solos.',
     genre: 'Blues Rock',
     formed_year: 2016,
     hometown: 'Memphis, TN',
@@ -357,7 +385,8 @@ const bands = [
   },
   {
     name: 'Urban Legends',
-    description: 'Hip-hop crew with clever wordplay and boom-bap beats. Real hip-hop for real heads.',
+    description:
+      'Hip-hop crew with clever wordplay and boom-bap beats. Real hip-hop for real heads.',
     genre: 'Hip Hop',
     formed_year: 2018,
     hometown: 'Atlanta, GA',
@@ -365,7 +394,8 @@ const bands = [
   },
   {
     name: 'Starlight Symphony',
-    description: 'Orchestral pop band blending classical instrumentation with contemporary songwriting. Truly unique sound.',
+    description:
+      'Orchestral pop band blending classical instrumentation with contemporary songwriting. Truly unique sound.',
     genre: 'Orchestral Pop',
     formed_year: 2019,
     hometown: 'San Francisco, CA',
@@ -373,7 +403,8 @@ const bands = [
   },
   {
     name: 'Coastal Drift',
-    description: 'Surf rock band with infectious beach vibes and reverb-drenched guitar tones. Summer all year round.',
+    description:
+      'Surf rock band with infectious beach vibes and reverb-drenched guitar tones. Summer all year round.',
     genre: 'Surf Rock',
     formed_year: 2020,
     hometown: 'San Diego, CA',
@@ -381,7 +412,8 @@ const bands = [
   },
   {
     name: 'The Alchemists',
-    description: 'Experimental rock group fusing genres and pushing boundaries. Never the same show twice.',
+    description:
+      'Experimental rock group fusing genres and pushing boundaries. Never the same show twice.',
     genre: 'Experimental Rock',
     formed_year: 2017,
     hometown: 'Detroit, MI',
@@ -389,7 +421,8 @@ const bands = [
   },
   {
     name: 'Rhythm Section',
-    description: 'Latin jazz fusion ensemble bringing Afro-Cuban rhythms and jazz improvisation together beautifully.',
+    description:
+      'Latin jazz fusion ensemble bringing Afro-Cuban rhythms and jazz improvisation together beautifully.',
     genre: 'Latin Jazz',
     formed_year: 2018,
     hometown: 'Miami, FL',
@@ -397,7 +430,8 @@ const bands = [
   },
   {
     name: 'Echo Chamber',
-    description: 'Shoegaze revival band with walls of distorted guitars and ethereal vocals. Loud and beautiful.',
+    description:
+      'Shoegaze revival band with walls of distorted guitars and ethereal vocals. Loud and beautiful.',
     genre: 'Shoegaze',
     formed_year: 2019,
     hometown: 'Boston, MA',
@@ -405,7 +439,8 @@ const bands = [
   },
   {
     name: 'The Remedy',
-    description: 'Reggae band spreading positive vibes with infectious grooves and conscious lyrics.',
+    description:
+      'Reggae band spreading positive vibes with infectious grooves and conscious lyrics.',
     genre: 'Reggae',
     formed_year: 2020,
     hometown: 'Honolulu, HI',

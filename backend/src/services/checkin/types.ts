@@ -157,24 +157,30 @@ export function mapDbCheckinToCheckin(row: any): Checkin {
     eventDate: row.event_date,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    user: row.username ? {
-      id: row.user_id,
-      username: row.username,
-      profileImageUrl: row.profile_image_url,
-    } : undefined,
-    venue: row.venue_name ? {
-      id: row.venue_id,
-      name: row.venue_name,
-      city: row.venue_city,
-      state: row.venue_state,
-      imageUrl: row.venue_image,
-    } : undefined,
-    band: row.band_name ? {
-      id: row.band_id,
-      name: row.band_name,
-      genre: row.band_genre,
-      imageUrl: row.band_image,
-    } : undefined,
+    user: row.username
+      ? {
+          id: row.user_id,
+          username: row.username,
+          profileImageUrl: row.profile_image_url,
+        }
+      : undefined,
+    venue: row.venue_name
+      ? {
+          id: row.venue_id,
+          name: row.venue_name,
+          city: row.venue_city,
+          state: row.venue_state,
+          imageUrl: row.venue_image,
+        }
+      : undefined,
+    band: row.band_name
+      ? {
+          id: row.band_id,
+          name: row.band_name,
+          genre: row.band_genre,
+          imageUrl: row.band_image,
+        }
+      : undefined,
     toastCount: parseInt(row.toast_count || 0),
     commentCount: parseInt(row.comment_count || 0),
     hasUserToasted: row.has_user_toasted || false,
@@ -184,10 +190,12 @@ export function mapDbCheckinToCheckin(row: any): Checkin {
     noteText: row.review_text || undefined,
     imageUrls: row.image_urls || undefined,
     isVerified: row.is_verified || false,
-    event: row.event_id ? {
-      id: row.event_id,
-      eventDate: row.ev_event_date,
-      eventName: row.ev_event_name,
-    } : undefined,
+    event: row.event_id
+      ? {
+          id: row.event_id,
+          eventDate: row.ev_event_date,
+          eventName: row.ev_event_name,
+        }
+      : undefined,
   };
 }

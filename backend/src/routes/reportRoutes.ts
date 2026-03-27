@@ -27,10 +27,7 @@ const createReportSchema = z.object({
       required_error: 'Report reason is required',
       invalid_type_error: 'Invalid report reason',
     }),
-    description: z
-      .string()
-      .max(500, 'Description must be 500 characters or less')
-      .optional(),
+    description: z.string().max(500, 'Description must be 500 characters or less').optional(),
   }),
 });
 

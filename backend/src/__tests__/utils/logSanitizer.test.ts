@@ -4,7 +4,7 @@ describe('Log Sanitizer', () => {
   describe('redactHeaders', () => {
     test('should redact Authorization header', () => {
       const headers = {
-        'Authorization': 'Bearer secret-token-123',
+        Authorization: 'Bearer secret-token-123',
         'Content-Type': 'application/json',
       };
 
@@ -17,7 +17,7 @@ describe('Log Sanitizer', () => {
     test('should redact API key headers', () => {
       const headers = {
         'X-Api-Key': 'fsq_secret_key',
-        'Accept': 'application/json',
+        Accept: 'application/json',
       };
 
       const sanitized = redactHeaders(headers);
@@ -28,7 +28,7 @@ describe('Log Sanitizer', () => {
 
     test('should redact cookie headers', () => {
       const headers = {
-        'Cookie': 'session=abc123; token=xyz789',
+        Cookie: 'session=abc123; token=xyz789',
         'Set-Cookie': 'session=abc123; HttpOnly; Secure',
         'Content-Length': '100',
       };
@@ -42,8 +42,8 @@ describe('Log Sanitizer', () => {
 
     test('should handle case-insensitive header names', () => {
       const headers = {
-        'authorization': 'Bearer token',
-        'AUTHORIZATION': 'Bearer another-token',
+        authorization: 'Bearer token',
+        AUTHORIZATION: 'Bearer another-token',
         'x-api-key': 'secret',
         'X-AUTH-TOKEN': 'auth-token',
       };
@@ -167,8 +167,8 @@ describe('Log Sanitizer', () => {
         url: '/places/search',
         params: { query: 'venue', limit: 20 },
         headers: {
-          'Authorization': 'Bearer fsq_secret_api_key',
-          'Accept': 'application/json',
+          Authorization: 'Bearer fsq_secret_api_key',
+          Accept: 'application/json',
           'X-Places-Api-Version': '2025-11-14',
         },
       };

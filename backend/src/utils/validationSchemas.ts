@@ -8,7 +8,8 @@ import { z } from 'zod';
  * Canonical UUID v1-v5 regex. Shared across all controllers to avoid
  * duplicated UUID_REGEX constants.
  */
-export const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+export const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 /**
  * Check whether a string is a valid UUID v1-v5.
@@ -58,16 +59,21 @@ export function parseBoundedInt(
 export const createUserSchema = z.object({
   body: z.object({
     email: z.string().email('Invalid email address'),
-    password: z.string()
+    password: z
+      .string()
       .min(8, 'Password must be at least 8 characters')
       .regex(/(?=.*[a-z])/, 'Password must contain at least one lowercase letter')
       .regex(/(?=.*[A-Z])/, 'Password must contain at least one uppercase letter')
       .regex(/(?=.*\d)/, 'Password must contain at least one number')
       .regex(/(?=.*[@$!%*?&])/, 'Password must contain at least one special character (@$!%*?&)'),
-    username: z.string()
+    username: z
+      .string()
       .min(3, 'Username must be at least 3 characters')
       .max(30, 'Username must be no more than 30 characters')
-      .regex(/^[a-zA-Z0-9_.-]+$/, 'Username can only contain letters, numbers, dots, hyphens, and underscores'),
+      .regex(
+        /^[a-zA-Z0-9_.-]+$/,
+        'Username can only contain letters, numbers, dots, hyphens, and underscores'
+      ),
     firstName: z.string().optional(),
     lastName: z.string().optional(),
   }),
@@ -119,6 +125,9 @@ export const toggleRsvpSchema = z.object({
 
 export const saveGenrePreferencesSchema = z.object({
   body: z.object({
-    genres: z.array(z.string().min(1).max(100)).min(3, 'Must select at least 3 genres').max(8, 'Cannot select more than 8 genres'),
+    genres: z
+      .array(z.string().min(1).max(100))
+      .min(3, 'Must select at least 3 genres')
+      .max(8, 'Cannot select more than 8 genres'),
   }),
 });

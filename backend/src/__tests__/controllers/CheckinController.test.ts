@@ -72,23 +72,25 @@ describe('CheckinController', () => {
         locationLon: -74.006,
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(checkinData);
+      const response = await request(app).post('/checkins').send(checkinData);
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual(expect.objectContaining({
-        id: 'checkin-123',
-        userId: 'user-123',
-      }));
+      expect(response.body.data).toEqual(
+        expect.objectContaining({
+          id: 'checkin-123',
+          userId: 'user-123',
+        })
+      );
       expect(response.body.message).toBe('Check-in created successfully');
-      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(expect.objectContaining({
-        userId: 'user-123',
-        eventId: 'event-123',
-        locationLat: 40.7128,
-        locationLon: -74.006,
-      }));
+      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-123',
+          eventId: 'event-123',
+          locationLat: 40.7128,
+          locationLon: -74.006,
+        })
+      );
     });
 
     it('should return 401 when not authenticated', async () => {
@@ -98,9 +100,7 @@ describe('CheckinController', () => {
         eventId: 'event-123',
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(checkinData);
+      const response = await request(app).post('/checkins').send(checkinData);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -116,9 +116,7 @@ describe('CheckinController', () => {
         locationLon: -74.006,
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(incompleteData);
+      const response = await request(app).post('/checkins').send(incompleteData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -139,9 +137,7 @@ describe('CheckinController', () => {
         rating: 4,
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(manualData);
+      const response = await request(app).post('/checkins').send(manualData);
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -151,7 +147,7 @@ describe('CheckinController', () => {
           bandId: 'band-123',
           venueId: 'venue-123',
           rating: 4,
-        }),
+        })
       );
     });
 
@@ -162,9 +158,7 @@ describe('CheckinController', () => {
         rating: 4,
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(incompleteData);
+      const response = await request(app).post('/checkins').send(incompleteData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -172,15 +166,15 @@ describe('CheckinController', () => {
 
     it('should return 400 when service throws an error', async () => {
       setupApp('user-123');
-      mockCheckinService.createEventCheckin.mockRejectedValue(new Error('Event not found or cancelled'));
+      mockCheckinService.createEventCheckin.mockRejectedValue(
+        new Error('Event not found or cancelled')
+      );
 
       const checkinData = {
         eventId: 'nonexistent-event',
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(checkinData);
+      const response = await request(app).post('/checkins').send(checkinData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -197,17 +191,17 @@ describe('CheckinController', () => {
         vibeTagIds: ['vibe-1', 'vibe-2'],
       };
 
-      const response = await request(app)
-        .post('/checkins')
-        .send(checkinData);
+      const response = await request(app).post('/checkins').send(checkinData);
 
       expect(response.status).toBe(201);
-      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(expect.objectContaining({
-        userId: 'user-123',
-        eventId: 'event-123',
-        comment: 'Amazing show!',
-        vibeTagIds: ['vibe-1', 'vibe-2'],
-      }));
+      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-123',
+          eventId: 'event-123',
+          comment: 'Amazing show!',
+          vibeTagIds: ['vibe-1', 'vibe-2'],
+        })
+      );
     });
   });
 
@@ -243,24 +237,23 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getActivityFeed.mockResolvedValue(mockFeedCheckins);
 
-      const response = await request(app)
-        .get('/checkins/feed');
+      const response = await request(app).get('/checkins/feed');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
       expect(response.body.data).toHaveLength(2);
-      expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith(
-        'user-123',
-        'friends',
-        { limit: 50, offset: 0, latitude: undefined, longitude: undefined }
-      );
+      expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith('user-123', 'friends', {
+        limit: 50,
+        offset: 0,
+        latitude: undefined,
+        longitude: undefined,
+      });
     });
 
     it('should return 401 when not authenticated', async () => {
       setupApp(null);
 
-      const response = await request(app)
-        .get('/checkins/feed');
+      const response = await request(app).get('/checkins/feed');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -272,23 +265,22 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getActivityFeed.mockResolvedValue([mockFeedCheckins[0]]);
 
-      const response = await request(app)
-        .get('/checkins/feed?limit=10&offset=5');
+      const response = await request(app).get('/checkins/feed?limit=10&offset=5');
 
       expect(response.status).toBe(200);
-      expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith(
-        'user-123',
-        'friends',
-        { limit: 10, offset: 5, latitude: undefined, longitude: undefined }
-      );
+      expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith('user-123', 'friends', {
+        limit: 10,
+        offset: 5,
+        latitude: undefined,
+        longitude: undefined,
+      });
     });
 
     it('should handle different filter types', async () => {
       setupApp('user-123');
       mockCheckinService.getActivityFeed.mockResolvedValue(mockFeedCheckins);
 
-      const response = await request(app)
-        .get('/checkins/feed?filter=global');
+      const response = await request(app).get('/checkins/feed?filter=global');
 
       expect(response.status).toBe(200);
       expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith(
@@ -302,23 +294,24 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getActivityFeed.mockResolvedValue(mockFeedCheckins);
 
-      const response = await request(app)
-        .get('/checkins/feed?filter=nearby&lat=40.7128&lng=-74.0060');
+      const response = await request(app).get(
+        '/checkins/feed?filter=nearby&lat=40.7128&lng=-74.0060'
+      );
 
       expect(response.status).toBe(200);
-      expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith(
-        'user-123',
-        'nearby',
-        { limit: 50, offset: 0, latitude: 40.7128, longitude: -74.0060 }
-      );
+      expect(mockCheckinService.getActivityFeed).toHaveBeenCalledWith('user-123', 'nearby', {
+        limit: 50,
+        offset: 0,
+        latitude: 40.7128,
+        longitude: -74.006,
+      });
     });
 
     it('should return 500 when service throws an error', async () => {
       setupApp('user-123');
       mockCheckinService.getActivityFeed.mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app)
-        .get('/checkins/feed');
+      const response = await request(app).get('/checkins/feed');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -343,8 +336,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getCheckinById.mockResolvedValue(mockCheckin);
 
-      const response = await request(app)
-        .get('/checkins/checkin-123');
+      const response = await request(app).get('/checkins/checkin-123');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -356,8 +348,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getCheckinById.mockRejectedValue(new Error('Check-in not found'));
 
-      const response = await request(app)
-        .get('/checkins/nonexistent');
+      const response = await request(app).get('/checkins/nonexistent');
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -370,8 +361,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.toastCheckin.mockResolvedValue({ toastCount: 1, ownerId: 'owner-123' });
 
-      const response = await request(app)
-        .post('/checkins/checkin-123/toast');
+      const response = await request(app).post('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -382,8 +372,7 @@ describe('CheckinController', () => {
     it('should return 401 when not authenticated', async () => {
       setupApp(null);
 
-      const response = await request(app)
-        .post('/checkins/checkin-123/toast');
+      const response = await request(app).post('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -394,8 +383,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.toastCheckin.mockRejectedValue(new Error('Already toasted this check-in'));
 
-      const response = await request(app)
-        .post('/checkins/checkin-123/toast');
+      const response = await request(app).post('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -408,8 +396,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.untoastCheckin.mockResolvedValue();
 
-      const response = await request(app)
-        .delete('/checkins/checkin-123/toast');
+      const response = await request(app).delete('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -420,8 +407,7 @@ describe('CheckinController', () => {
     it('should return 401 when not authenticated', async () => {
       setupApp(null);
 
-      const response = await request(app)
-        .delete('/checkins/checkin-123/toast');
+      const response = await request(app).delete('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -455,7 +441,11 @@ describe('CheckinController', () => {
       expect(response.body.success).toBe(true);
       expect(response.body.data.content).toBe('Nice show!');
       expect(response.body.message).toBe('Comment added successfully');
-      expect(mockCheckinService.addComment).toHaveBeenCalledWith('user-123', 'checkin-123', 'Nice show!');
+      expect(mockCheckinService.addComment).toHaveBeenCalledWith(
+        'user-123',
+        'checkin-123',
+        'Nice show!'
+      );
     });
 
     it('should return 401 when not authenticated', async () => {
@@ -473,9 +463,7 @@ describe('CheckinController', () => {
     it('should return 400 when comment text is missing', async () => {
       setupApp('user-123');
 
-      const response = await request(app)
-        .post('/checkins/checkin-123/comments')
-        .send({});
+      const response = await request(app).post('/checkins/checkin-123/comments').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -517,8 +505,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getComments.mockResolvedValue(mockComments);
 
-      const response = await request(app)
-        .get('/checkins/checkin-123/comments');
+      const response = await request(app).get('/checkins/checkin-123/comments');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -530,8 +517,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getComments.mockRejectedValue(new Error('Database error'));
 
-      const response = await request(app)
-        .get('/checkins/checkin-123/comments');
+      const response = await request(app).get('/checkins/checkin-123/comments');
 
       expect(response.status).toBe(500);
       expect(response.body.success).toBe(false);
@@ -544,8 +530,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.deleteCheckin.mockResolvedValue();
 
-      const response = await request(app)
-        .delete('/checkins/checkin-123');
+      const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -556,8 +541,7 @@ describe('CheckinController', () => {
     it('should return 401 when not authenticated', async () => {
       setupApp(null);
 
-      const response = await request(app)
-        .delete('/checkins/checkin-123');
+      const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -570,8 +554,7 @@ describe('CheckinController', () => {
       (err as any).statusCode = 403;
       mockCheckinService.deleteCheckin.mockRejectedValue(err);
 
-      const response = await request(app)
-        .delete('/checkins/checkin-123');
+      const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(403);
       expect(response.body.success).toBe(false);
@@ -584,8 +567,7 @@ describe('CheckinController', () => {
       (err as any).statusCode = 404;
       mockCheckinService.deleteCheckin.mockRejectedValue(err);
 
-      const response = await request(app)
-        .delete('/checkins/checkin-123');
+      const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -612,8 +594,7 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getCheckins.mockResolvedValue(mockCheckins);
 
-      const response = await request(app)
-        .get('/checkins');
+      const response = await request(app).get('/checkins');
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -630,40 +611,43 @@ describe('CheckinController', () => {
       setupApp('user-123');
       mockCheckinService.getCheckins.mockResolvedValue(mockCheckins);
 
-      const response = await request(app)
-        .get('/checkins?venueId=venue-123');
+      const response = await request(app).get('/checkins?venueId=venue-123');
 
       expect(response.status).toBe(200);
-      expect(mockCheckinService.getCheckins).toHaveBeenCalledWith(expect.objectContaining({
-        venueId: 'venue-123',
-      }));
+      expect(mockCheckinService.getCheckins).toHaveBeenCalledWith(
+        expect.objectContaining({
+          venueId: 'venue-123',
+        })
+      );
     });
 
     it('should filter checkins by bandId', async () => {
       setupApp('user-123');
       mockCheckinService.getCheckins.mockResolvedValue(mockCheckins);
 
-      const response = await request(app)
-        .get('/checkins?bandId=band-123');
+      const response = await request(app).get('/checkins?bandId=band-123');
 
       expect(response.status).toBe(200);
-      expect(mockCheckinService.getCheckins).toHaveBeenCalledWith(expect.objectContaining({
-        bandId: 'band-123',
-      }));
+      expect(mockCheckinService.getCheckins).toHaveBeenCalledWith(
+        expect.objectContaining({
+          bandId: 'band-123',
+        })
+      );
     });
 
     it('should apply custom pagination', async () => {
       setupApp('user-123');
       mockCheckinService.getCheckins.mockResolvedValue(mockCheckins);
 
-      const response = await request(app)
-        .get('/checkins?page=2&limit=10');
+      const response = await request(app).get('/checkins?page=2&limit=10');
 
       expect(response.status).toBe(200);
-      expect(mockCheckinService.getCheckins).toHaveBeenCalledWith(expect.objectContaining({
-        page: 2,
-        limit: 10,
-      }));
+      expect(mockCheckinService.getCheckins).toHaveBeenCalledWith(
+        expect.objectContaining({
+          page: 2,
+          limit: 10,
+        })
+      );
     });
   });
 });

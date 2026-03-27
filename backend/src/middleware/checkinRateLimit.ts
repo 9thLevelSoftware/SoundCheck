@@ -47,7 +47,10 @@ export const dailyCheckinRateLimit = async (
 
     next();
   } catch (error) {
-    logger.error('Daily check-in rate limit error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    logger.error('Daily check-in rate limit error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     // Fail-closed: deny check-in when rate limit check fails
     res.status(429).json({
       success: false,

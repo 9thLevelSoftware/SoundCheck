@@ -23,7 +23,8 @@ const forgotPasswordSchema = z.object({
 const resetPasswordSchema = z.object({
   body: z.object({
     token: z.string().min(64, 'Invalid reset token').max(128, 'Invalid reset token'),
-    newPassword: z.string()
+    newPassword: z
+      .string()
       .min(8, 'Password must be at least 8 characters')
       .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
       .regex(/[a-z]/, 'Password must contain at least one lowercase letter')

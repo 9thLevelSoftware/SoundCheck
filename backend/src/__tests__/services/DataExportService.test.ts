@@ -95,8 +95,7 @@ describe('DataExportService', () => {
     it('should throw error if user not found', async () => {
       mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(dataExportService.exportUserData(userId))
-        .rejects.toThrow('User not found');
+      await expect(dataExportService.exportUserData(userId)).rejects.toThrow('User not found');
     });
 
     it('should handle empty data gracefully', async () => {

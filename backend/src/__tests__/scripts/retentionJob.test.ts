@@ -107,9 +107,7 @@ describe('retentionJob', () => {
       expect(mockDbQuery).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM user_consents')
       );
-      expect(mockDbQuery).toHaveBeenCalledWith(
-        expect.stringContaining("INTERVAL '2 years'")
-      );
+      expect(mockDbQuery).toHaveBeenCalledWith(expect.stringContaining("INTERVAL '2 years'"));
     });
 
     it('should clean up old notifications', async () => {
@@ -131,9 +129,7 @@ describe('retentionJob', () => {
       expect(mockDbQuery).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM notifications')
       );
-      expect(mockDbQuery).toHaveBeenCalledWith(
-        expect.stringContaining("INTERVAL '90 days'")
-      );
+      expect(mockDbQuery).toHaveBeenCalledWith(expect.stringContaining("INTERVAL '90 days'"));
     });
 
     it('should clean up expired refresh tokens', async () => {
@@ -155,15 +151,11 @@ describe('retentionJob', () => {
       expect(mockDbQuery).toHaveBeenCalledWith(
         expect.stringContaining('DELETE FROM refresh_tokens')
       );
-      expect(mockDbQuery).toHaveBeenCalledWith(
-        expect.stringContaining("INTERVAL '7 days'")
-      );
+      expect(mockDbQuery).toHaveBeenCalledWith(expect.stringContaining("INTERVAL '7 days'"));
     });
 
     it('should call process.exit(1) on error', async () => {
-      mockProcessPendingDeletions.mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      mockProcessPendingDeletions.mockRejectedValue(new Error('Database connection failed'));
 
       const { runRetentionJob } = await import('../../scripts/retentionJob');
 
@@ -237,8 +229,8 @@ describe('retentionJob', () => {
       await runRetentionJob();
 
       // Verify the query uses 2 years interval
-      const consentQuery = mockDbQuery.mock.calls.find(
-        (call: any[]) => call[0].includes('user_consents')
+      const consentQuery = mockDbQuery.mock.calls.find((call: any[]) =>
+        call[0].includes('user_consents')
       );
       expect(consentQuery).toBeDefined();
       expect(consentQuery[0]).toContain("INTERVAL '2 years'");
@@ -258,8 +250,8 @@ describe('retentionJob', () => {
       await runRetentionJob();
 
       // Verify the query uses 90 days interval
-      const notificationQuery = mockDbQuery.mock.calls.find(
-        (call: any[]) => call[0].includes('notifications')
+      const notificationQuery = mockDbQuery.mock.calls.find((call: any[]) =>
+        call[0].includes('notifications')
       );
       expect(notificationQuery).toBeDefined();
       expect(notificationQuery[0]).toContain("INTERVAL '90 days'");
@@ -279,8 +271,8 @@ describe('retentionJob', () => {
       await runRetentionJob();
 
       // Verify the query uses 7 days interval
-      const tokenQuery = mockDbQuery.mock.calls.find(
-        (call: any[]) => call[0].includes('refresh_tokens')
+      const tokenQuery = mockDbQuery.mock.calls.find((call: any[]) =>
+        call[0].includes('refresh_tokens')
       );
       expect(tokenQuery).toBeDefined();
       expect(tokenQuery[0]).toContain("INTERVAL '7 days'");

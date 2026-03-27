@@ -18,14 +18,7 @@ const SENSITIVE_HEADERS = [
 ];
 
 /** Field names that typically contain sensitive data */
-const SENSITIVE_FIELDS = [
-  'password',
-  'token',
-  'secret',
-  'apikey',
-  'api_key',
-  'credentials',
-];
+const SENSITIVE_FIELDS = ['password', 'token', 'secret', 'apikey', 'api_key', 'credentials'];
 
 /**
  * Redact sensitive headers from a headers object.

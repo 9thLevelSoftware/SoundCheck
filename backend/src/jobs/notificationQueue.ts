@@ -34,7 +34,9 @@ try {
   });
   logger.info('[NotificationQueue] Notification batch queue initialized');
 } catch {
-  logger.warn('[NotificationQueue] REDIS_URL not configured. Notification batch queue is disabled.');
+  logger.warn(
+    '[NotificationQueue] REDIS_URL not configured. Notification batch queue is disabled.'
+  );
   notificationQueue = null;
 }
 

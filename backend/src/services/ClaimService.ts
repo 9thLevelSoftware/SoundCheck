@@ -207,10 +207,10 @@ export class ClaimService {
       // If approved, update the entity with claimed_by_user_id
       if (decision.status === 'approved') {
         const table = ClaimService.resolveTable(claim.entity_type);
-        await client.query(
-          `UPDATE ${table} SET claimed_by_user_id = $1 WHERE id = $2`,
-          [claim.user_id, claim.entity_id]
-        );
+        await client.query(`UPDATE ${table} SET claimed_by_user_id = $1 WHERE id = $2`, [
+          claim.user_id,
+          claim.entity_id,
+        ]);
       }
 
       await client.query('COMMIT');

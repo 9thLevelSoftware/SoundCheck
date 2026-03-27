@@ -40,8 +40,11 @@ export class VenueController {
 
       res.status(201).json(response);
     } catch (error) {
-      logger.error('Create venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Create venue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to create venue',
@@ -77,8 +80,11 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get venues error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch venues',
@@ -120,7 +126,10 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get venue by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get venue by ID error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -150,7 +159,12 @@ export class VenueController {
       const isOwner = await this.venueService.isClaimedOwner(id, req.user.id);
 
       if (!isAdmin && !isOwner) {
-        res.status(403).json({ success: false, error: 'Only admins or claimed owners can update this venue' } as ApiResponse);
+        res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Only admins or claimed owners can update this venue',
+          } as ApiResponse);
         return;
       }
 
@@ -165,7 +179,10 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Update venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Update venue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -195,7 +212,12 @@ export class VenueController {
       const isOwner = await this.venueService.isClaimedOwner(id, req.user.id);
 
       if (!isAdmin && !isOwner) {
-        res.status(403).json({ success: false, error: 'Only admins or claimed owners can delete this venue' } as ApiResponse);
+        res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Only admins or claimed owners can delete this venue',
+          } as ApiResponse);
         return;
       }
 
@@ -208,7 +230,10 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Delete venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete venue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -235,8 +260,11 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get popular venues error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get popular venues error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch popular venues',
@@ -284,8 +312,11 @@ export class VenueController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get venues near error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get venues near error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch nearby venues',
@@ -318,12 +349,17 @@ export class VenueController {
       const response: ApiResponse = {
         success: true,
         data: venue,
-        message: venue.alreadyExists ? 'Venue already exists in database' : 'Venue imported successfully',
+        message: venue.alreadyExists
+          ? 'Venue already exists in database'
+          : 'Venue imported successfully',
       };
 
       res.status(venue.alreadyExists ? 200 : 201).json(response);
     } catch (error) {
-      logger.error('Import venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Import venue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,

@@ -12,16 +12,36 @@ const userDiscoveryController = new UserDiscoveryController();
 // to protect third-party API keys (setlist.fm, MusicBrainz)
 
 // Search venues from setlist.fm
-router.get('/venues', authenticateToken, createPerUserRateLimit(RateLimitPresets.read), discoveryController.searchVenues);
+router.get(
+  '/venues',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.read),
+  discoveryController.searchVenues
+);
 
 // Search setlists (concerts/events) from setlist.fm
-router.get('/setlists', authenticateToken, createPerUserRateLimit(RateLimitPresets.read), discoveryController.searchSetlists);
+router.get(
+  '/setlists',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.read),
+  discoveryController.searchSetlists
+);
 
 // Search bands from MusicBrainz
-router.get('/bands', authenticateToken, createPerUserRateLimit(RateLimitPresets.read), discoveryController.searchBands);
+router.get(
+  '/bands',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.read),
+  discoveryController.searchBands
+);
 
 // Search bands by genre from MusicBrainz
-router.get('/bands/genre', authenticateToken, createPerUserRateLimit(RateLimitPresets.read), discoveryController.searchBandsByGenre);
+router.get(
+  '/bands/genre',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.read),
+  discoveryController.searchBandsByGenre
+);
 
 // User discovery: follow suggestions (Phase 17)
 router.get(

@@ -49,9 +49,12 @@ class PerUserRateLimiter {
 
   constructor() {
     // Cleanup old entries every 5 minutes
-    this.cleanupInterval = setInterval(() => {
-      this.cleanup();
-    }, 5 * 60 * 1000);
+    this.cleanupInterval = setInterval(
+      () => {
+        this.cleanup();
+      },
+      5 * 60 * 1000
+    );
   }
 
   private cleanup(): void {
@@ -85,7 +88,10 @@ class PerUserRateLimiter {
     return `ip:${ip}`;
   }
 
-  checkLimit(req: Request, config: RateLimitConfig): {
+  checkLimit(
+    req: Request,
+    config: RateLimitConfig
+  ): {
     allowed: boolean;
     remaining: number;
     resetAt: number;

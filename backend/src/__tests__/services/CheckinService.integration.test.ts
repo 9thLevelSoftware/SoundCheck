@@ -75,7 +75,9 @@ describeIntegration('CheckinService Integration Tests', () => {
     // Clean up test data in reverse order of dependencies
     if (createdCheckinIds.length > 0) {
       await db.query('DELETE FROM checkin_vibes WHERE checkin_id = ANY($1)', [createdCheckinIds]);
-      await db.query('DELETE FROM checkin_comments WHERE checkin_id = ANY($1)', [createdCheckinIds]);
+      await db.query('DELETE FROM checkin_comments WHERE checkin_id = ANY($1)', [
+        createdCheckinIds,
+      ]);
       await db.query('DELETE FROM toasts WHERE checkin_id = ANY($1)', [createdCheckinIds]);
       await db.query('DELETE FROM checkins WHERE id = ANY($1)', [createdCheckinIds]);
     }
@@ -101,7 +103,9 @@ describeIntegration('CheckinService Integration Tests', () => {
     // Clean up checkins created during each test
     if (createdCheckinIds.length > 0) {
       await db.query('DELETE FROM checkin_vibes WHERE checkin_id = ANY($1)', [createdCheckinIds]);
-      await db.query('DELETE FROM checkin_comments WHERE checkin_id = ANY($1)', [createdCheckinIds]);
+      await db.query('DELETE FROM checkin_comments WHERE checkin_id = ANY($1)', [
+        createdCheckinIds,
+      ]);
       await db.query('DELETE FROM toasts WHERE checkin_id = ANY($1)', [createdCheckinIds]);
       await db.query('DELETE FROM checkins WHERE id = ANY($1)', [createdCheckinIds]);
       createdCheckinIds = [];
@@ -222,29 +226,38 @@ describeIntegration('CheckinService Integration Tests', () => {
     it('should enforce rating constraint (0-5)', async () => {
       // Test rating below minimum
       await expect(
-        db.query(`
+        db.query(
+          `
           INSERT INTO checkins (user_id, venue_id, band_id, rating)
           VALUES ($1, $2, $3, -1)
-        `, [testUserId, testVenueId, testBandId])
+        `,
+          [testUserId, testVenueId, testBandId]
+        )
       ).rejects.toThrow();
 
       // Test rating above maximum
       await expect(
-        db.query(`
+        db.query(
+          `
           INSERT INTO checkins (user_id, venue_id, band_id, rating)
           VALUES ($1, $2, $3, 6)
-        `, [testUserId, testVenueId, testBandId])
+        `,
+          [testUserId, testVenueId, testBandId]
+        )
       ).rejects.toThrow();
     });
   });
 
   describe('Checkin CRUD Operations', () => {
     it('should create a checkin with venue_id and band_id', async () => {
-      const result = await db.query(`
+      const result = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating, comment, event_date)
         VALUES ($1, $2, $3, 4.5, 'Great show!', CURRENT_DATE)
         RETURNING *
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
 
       createdCheckinIds.push(result.rows[0].id);
 
@@ -259,23 +272,29 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     it('should read a checkin with venue and band joins', async () => {
       // Create a checkin first
-      const insertResult = await db.query(`
+      const insertResult = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating, comment)
         VALUES ($1, $2, $3, 4, 'Test checkin')
         RETURNING id
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
 
       createdCheckinIds.push(insertResult.rows[0].id);
 
       // Read with joins (this is what the service does)
-      const result = await db.query(`
+      const result = await db.query(
+        `
         SELECT c.*, u.username, v.name as venue_name, b.name as band_name
         FROM checkins c
         LEFT JOIN users u ON c.user_id = u.id
         LEFT JOIN venues v ON c.venue_id = v.id
         LEFT JOIN bands b ON c.band_id = b.id
         WHERE c.id = $1
-      `, [insertResult.rows[0].id]);
+      `,
+        [insertResult.rows[0].id]
+      );
 
       expect(result.rows[0].username).toBe('checkintestuser');
       expect(result.rows[0].venue_name).toBe('Test Checkin Venue');
@@ -284,11 +303,14 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     it('should delete a checkin', async () => {
       // Create a checkin first
-      const insertResult = await db.query(`
+      const insertResult = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating)
         VALUES ($1, $2, $3, 4)
         RETURNING id
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
 
       const checkinId = insertResult.rows[0].id;
 
@@ -307,11 +329,14 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     beforeEach(async () => {
       // Create a checkin
-      const checkinResult = await db.query(`
+      const checkinResult = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating)
         VALUES ($1, $2, $3, 4)
         RETURNING id
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
       checkinId = checkinResult.rows[0].id;
       createdCheckinIds.push(checkinId);
 
@@ -331,11 +356,14 @@ describeIntegration('CheckinService Integration Tests', () => {
     });
 
     it('should create a toast in toasts table', async () => {
-      const result = await db.query(`
+      const result = await db.query(
+        `
         INSERT INTO toasts (checkin_id, user_id)
         VALUES ($1, $2)
         RETURNING *
-      `, [checkinId, toasterUserId]);
+      `,
+        [checkinId, toasterUserId]
+      );
 
       expect(result.rows[0].checkin_id).toBe(checkinId);
       expect(result.rows[0].user_id).toBe(toasterUserId);
@@ -343,36 +371,42 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     it('should prevent duplicate toasts', async () => {
       // First toast
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO toasts (checkin_id, user_id)
         VALUES ($1, $2)
-      `, [checkinId, toasterUserId]);
+      `,
+        [checkinId, toasterUserId]
+      );
 
       // Duplicate toast should fail
       await expect(
-        db.query(`
+        db.query(
+          `
           INSERT INTO toasts (checkin_id, user_id)
           VALUES ($1, $2)
-        `, [checkinId, toasterUserId])
+        `,
+          [checkinId, toasterUserId]
+        )
       ).rejects.toThrow();
     });
 
     it('should cascade delete toasts when checkin is deleted', async () => {
       // Create toast
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO toasts (checkin_id, user_id)
         VALUES ($1, $2)
-      `, [checkinId, toasterUserId]);
+      `,
+        [checkinId, toasterUserId]
+      );
 
       // Delete checkin
       await db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
-      createdCheckinIds = createdCheckinIds.filter(id => id !== checkinId);
+      createdCheckinIds = createdCheckinIds.filter((id) => id !== checkinId);
 
       // Verify toast is also deleted
-      const result = await db.query(
-        'SELECT * FROM toasts WHERE checkin_id = $1',
-        [checkinId]
-      );
+      const result = await db.query('SELECT * FROM toasts WHERE checkin_id = $1', [checkinId]);
       expect(result.rows.length).toBe(0);
     });
   });
@@ -383,11 +417,14 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     beforeEach(async () => {
       // Create a checkin
-      const checkinResult = await db.query(`
+      const checkinResult = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating)
         VALUES ($1, $2, $3, 4)
         RETURNING id
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
       checkinId = checkinResult.rows[0].id;
       createdCheckinIds.push(checkinId);
 
@@ -407,11 +444,14 @@ describeIntegration('CheckinService Integration Tests', () => {
     });
 
     it('should create a comment with content column', async () => {
-      const result = await db.query(`
+      const result = await db.query(
+        `
         INSERT INTO checkin_comments (checkin_id, user_id, content)
         VALUES ($1, $2, 'Great review!')
         RETURNING *
-      `, [checkinId, commenterUserId]);
+      `,
+        [checkinId, commenterUserId]
+      );
 
       expect(result.rows[0].checkin_id).toBe(checkinId);
       expect(result.rows[0].user_id).toBe(commenterUserId);
@@ -420,20 +460,22 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     it('should cascade delete comments when checkin is deleted', async () => {
       // Create comment
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO checkin_comments (checkin_id, user_id, content)
         VALUES ($1, $2, 'Test comment')
-      `, [checkinId, commenterUserId]);
+      `,
+        [checkinId, commenterUserId]
+      );
 
       // Delete checkin
       await db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
-      createdCheckinIds = createdCheckinIds.filter(id => id !== checkinId);
+      createdCheckinIds = createdCheckinIds.filter((id) => id !== checkinId);
 
       // Verify comment is also deleted
-      const result = await db.query(
-        'SELECT * FROM checkin_comments WHERE checkin_id = $1',
-        [checkinId]
-      );
+      const result = await db.query('SELECT * FROM checkin_comments WHERE checkin_id = $1', [
+        checkinId,
+      ]);
       expect(result.rows.length).toBe(0);
     });
   });
@@ -461,27 +503,36 @@ describeIntegration('CheckinService Integration Tests', () => {
       }
 
       // Create a checkin
-      const checkinResult = await db.query(`
+      const checkinResult = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating)
         VALUES ($1, $2, $3, 4)
         RETURNING id
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
       const checkinId = checkinResult.rows[0].id;
       createdCheckinIds.push(checkinId);
 
       // Associate vibe tag
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO checkin_vibes (checkin_id, vibe_tag_id)
         VALUES ($1, $2)
-      `, [checkinId, testVibeTagId]);
+      `,
+        [checkinId, testVibeTagId]
+      );
 
       // Read back with join
-      const result = await db.query(`
+      const result = await db.query(
+        `
         SELECT vt.id, vt.name, vt.icon, vt.category
         FROM vibe_tags vt
         INNER JOIN checkin_vibes cv ON vt.id = cv.vibe_tag_id
         WHERE cv.checkin_id = $1
-      `, [checkinId]);
+      `,
+        [checkinId]
+      );
 
       expect(result.rows.length).toBe(1);
       expect(result.rows[0]).toHaveProperty('icon');
@@ -493,18 +544,24 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     beforeAll(async () => {
       // Create a test event for event-first check-in tests
-      const eventResult = await db.query(`
+      const eventResult = await db.query(
+        `
         INSERT INTO events (venue_id, event_date, event_name, is_cancelled)
         VALUES ($1, CURRENT_DATE, 'Test Event', FALSE)
         RETURNING id
-      `, [testVenueId]);
+      `,
+        [testVenueId]
+      );
       testEventId = eventResult.rows[0].id;
 
       // Add band to event lineup
-      await db.query(`
+      await db.query(
+        `
         INSERT INTO event_lineup (event_id, band_id, is_headliner, set_order)
         VALUES ($1, $2, TRUE, 1)
-      `, [testEventId, testBandId]);
+      `,
+        [testEventId, testBandId]
+      );
     });
 
     afterAll(async () => {
@@ -530,11 +587,14 @@ describeIntegration('CheckinService Integration Tests', () => {
 
     it('should get checkin by ID via service', async () => {
       // Create checkin directly
-      const insertResult = await db.query(`
+      const insertResult = await db.query(
+        `
         INSERT INTO checkins (user_id, venue_id, band_id, rating, comment)
         VALUES ($1, $2, $3, 4, 'Test for getById')
         RETURNING id
-      `, [testUserId, testVenueId, testBandId]);
+      `,
+        [testUserId, testVenueId, testBandId]
+      );
       const checkinId = insertResult.rows[0].id;
       createdCheckinIds.push(checkinId);
 

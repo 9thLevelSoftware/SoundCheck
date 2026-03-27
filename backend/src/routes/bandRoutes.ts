@@ -17,10 +17,18 @@ const createRateLimit = rateLimit(15 * 60 * 1000, 10); // 10 create requests per
 
 const createBandSchema = z.object({
   body: z.object({
-    name: z.string().min(1, 'Band name is required').max(500, 'Band name must be 500 characters or less'),
+    name: z
+      .string()
+      .min(1, 'Band name is required')
+      .max(500, 'Band name must be 500 characters or less'),
     description: z.string().max(5000).optional(),
     genre: z.string().max(100).optional(),
-    formedYear: z.number().int().min(1900).max(new Date().getFullYear() + 1).optional(),
+    formedYear: z
+      .number()
+      .int()
+      .min(1900)
+      .max(new Date().getFullYear() + 1)
+      .optional(),
     websiteUrl: z.string().url().max(2000).optional().or(z.literal('')),
     spotifyUrl: z.string().url().max(2000).optional().or(z.literal('')),
     instagramUrl: z.string().url().max(2000).optional().or(z.literal('')),
@@ -38,7 +46,12 @@ const updateBandSchema = z.object({
     name: z.string().min(1).max(500).optional(),
     description: z.string().max(5000).optional(),
     genre: z.string().max(100).optional(),
-    formedYear: z.number().int().min(1900).max(new Date().getFullYear() + 1).optional(),
+    formedYear: z
+      .number()
+      .int()
+      .min(1900)
+      .max(new Date().getFullYear() + 1)
+      .optional(),
     websiteUrl: z.string().url().max(2000).optional().or(z.literal('')),
     spotifyUrl: z.string().url().max(2000).optional().or(z.literal('')),
     instagramUrl: z.string().url().max(2000).optional().or(z.literal('')),
@@ -60,15 +73,44 @@ router.get('/trending', generalRateLimit, bandController.getTrendingBands);
 router.get('/genres', generalRateLimit, bandController.getGenres);
 router.get('/genre/:genre', generalRateLimit, bandController.getBandsByGenre);
 router.get('/', generalRateLimit, optionalAuth, bandController.getBands);
-router.get('/:id', generalRateLimit, optionalAuth, validate(bandIdParamSchema), bandController.getBandById);
+router.get(
+  '/:id',
+  generalRateLimit,
+  optionalAuth,
+  validate(bandIdParamSchema),
+  bandController.getBandById
+);
 
 // Protected routes (authentication required)
-router.post('/', authenticateToken, createRateLimit, validate(createBandSchema), bandController.createBand);
+router.post(
+  '/',
+  authenticateToken,
+  createRateLimit,
+  validate(createBandSchema),
+  bandController.createBand
+);
 router.post('/import', authenticateToken, createRateLimit, bandController.importBand);
-router.put('/:id', authenticateToken, generalRateLimit, validate(updateBandSchema), bandController.updateBand);
-router.delete('/:id', authenticateToken, generalRateLimit, validate(bandIdParamSchema), bandController.deleteBand);
+router.put(
+  '/:id',
+  authenticateToken,
+  generalRateLimit,
+  validate(updateBandSchema),
+  bandController.updateBand
+);
+router.delete(
+  '/:id',
+  authenticateToken,
+  generalRateLimit,
+  validate(bandIdParamSchema),
+  bandController.deleteBand
+);
 
 // Band events
-router.get('/:id/events', generalRateLimit, validate(bandIdParamSchema), eventController.getEventsByBand);
+router.get(
+  '/:id/events',
+  generalRateLimit,
+  validate(bandIdParamSchema),
+  eventController.getEventsByBand
+);
 
 export default router;

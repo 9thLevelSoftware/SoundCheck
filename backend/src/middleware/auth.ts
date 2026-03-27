@@ -61,7 +61,10 @@ export const authenticateToken = async (
 
     next();
   } catch (error) {
-    logger.error('Authentication middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    logger.error('Authentication middleware error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     const response: ApiResponse = {
       success: false,
       error: 'Authentication failed',
@@ -97,7 +100,10 @@ export const optionalAuth = async (
 
     next();
   } catch (error) {
-    logger.error('Optional auth middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    logger.error('Optional auth middleware error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     // Continue without authentication
     next();
   }
@@ -183,7 +189,10 @@ function checkInMemoryRateLimit(
 
   if (!clientData || now > clientData.resetTime) {
     // Enforce max size before adding new entries
-    if (inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES && !inMemoryRateLimitStore.has(clientIP)) {
+    if (
+      inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES &&
+      !inMemoryRateLimitStore.has(clientIP)
+    ) {
       // Purge expired entries first
       for (const [key, data] of inMemoryRateLimitStore.entries()) {
         if (now > data.resetTime) {
@@ -253,7 +262,10 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
 
       next();
     } catch (error) {
-      logger.error('Rate limit error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Rate limit error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Fail-closed: deny request when rate limiting is unavailable
       const response: ApiResponse = {
         success: false,

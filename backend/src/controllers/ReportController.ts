@@ -104,7 +104,7 @@ export class ReportController {
         pagination: {
           limit,
           offset: (page - 1) * limit,
-          hasMore: (page * limit) < result.total,
+          hasMore: page * limit < result.total,
           total: result.total,
         },
       };

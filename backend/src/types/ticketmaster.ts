@@ -44,14 +44,14 @@ export interface TicketmasterEvent {
   url: string;
   dates: {
     start: {
-      localDate: string;       // "2026-03-15"
-      localTime?: string;      // "19:30:00"
-      dateTime?: string;       // ISO 8601 UTC
+      localDate: string; // "2026-03-15"
+      localTime?: string; // "19:30:00"
+      dateTime?: string; // ISO 8601 UTC
     };
     status: {
       code: 'onsale' | 'offsale' | 'canceled' | 'postponed' | 'rescheduled';
     };
-    timezone?: string;         // IANA timezone
+    timezone?: string; // IANA timezone
   };
   priceRanges?: Array<{
     min: number;
@@ -77,7 +77,7 @@ export interface TicketmasterSearchResponse {
     size: number;
     totalElements: number;
     totalPages: number;
-    number: number;              // zero-indexed page number
+    number: number; // zero-indexed page number
   };
 }
 
@@ -90,8 +90,8 @@ export interface TicketmasterSearchResponse {
 export interface NormalizedEvent {
   externalId: string;
   name: string;
-  date: string;                 // "YYYY-MM-DD"
-  startTime: string | null;     // "HH:MM:SS" or null
+  date: string; // "YYYY-MM-DD"
+  startTime: string | null; // "HH:MM:SS" or null
   status: 'active' | 'cancelled' | 'postponed' | 'rescheduled';
   ticketUrl: string;
   priceMin: number | null;
@@ -119,10 +119,10 @@ export interface NormalizedEvent {
 // ─── Search Parameters ────────────────────────────────────────────────
 
 export interface TicketmasterSearchParams {
-  latlong: string;              // "lat,lon"
-  radius: number;               // miles
-  startDateTime: string;        // ISO 8601 with Z suffix
-  endDateTime: string;          // ISO 8601 with Z suffix
-  size?: number;                // max 200 (default 200)
-  page?: number;                // zero-indexed (default 0)
+  latlong: string; // "lat,lon"
+  radius: number; // miles
+  startDateTime: string; // ISO 8601 with Z suffix
+  endDateTime: string; // ISO 8601 with Z suffix
+  size?: number; // max 200 (default 200)
+  page?: number; // zero-indexed (default 0)
 }

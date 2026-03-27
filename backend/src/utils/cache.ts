@@ -40,7 +40,10 @@ export async function getCache<T>(key: string): Promise<T | null> {
       const value = await redis.get(key);
       return value ? JSON.parse(value) : null;
     } catch (error) {
-      logger.error('Redis get error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Redis get error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Fall through to memory cache
     }
   }
@@ -68,7 +71,10 @@ export async function setCache<T>(key: string, value: T, ttlSeconds: number): Pr
       await redis.setex(key, ttlSeconds, JSON.stringify(value));
       return;
     } catch (error) {
-      logger.error('Redis setex error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Redis setex error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Fall through to memory cache
     }
   }
@@ -91,7 +97,10 @@ export async function deleteCache(key: string): Promise<void> {
       await redis.del(key);
       return;
     } catch (error) {
-      logger.error('Redis del error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Redis del error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Fall through to memory cache
     }
   }
@@ -148,7 +157,10 @@ class CacheService {
       try {
         return (await redis.exists(key)) > 0;
       } catch (error) {
-        logger.error('Redis exists error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger.error('Redis exists error', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         // Fall through to memory cache
       }
     }
@@ -176,7 +188,10 @@ class CacheService {
         await redis.flushdb();
         return;
       } catch (error) {
-        logger.error('Redis flushdb error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger.error('Redis flushdb error', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     }
 
@@ -186,11 +201,7 @@ class CacheService {
   /**
    * Get or set value (cache-aside pattern)
    */
-  async getOrSet<T>(
-    key: string,
-    factory: () => Promise<T>,
-    ttl: number = 3600
-  ): Promise<T> {
+  async getOrSet<T>(key: string, factory: () => Promise<T>, ttl: number = 3600): Promise<T> {
     // Try to get from cache
     const cached = await this.get<T>(key);
     if (cached !== null) {
@@ -217,9 +228,7 @@ class CacheService {
       try {
         let cursor = '0';
         do {
-          const [nextCursor, keys] = await redis.scan(
-            cursor, 'MATCH', pattern, 'COUNT', 100
-          );
+          const [nextCursor, keys] = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
           cursor = nextCursor;
           if (keys.length > 0) {
             await redis.unlink(...keys); // UNLINK is non-blocking DEL
@@ -227,7 +236,10 @@ class CacheService {
         } while (cursor !== '0');
         return;
       } catch (error) {
-        logger.error('Redis del pattern error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger.error('Redis del pattern error', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     }
 
@@ -309,8 +321,10 @@ export const CacheKeys = {
   concertCred: (userId: string) => `stats:concert-cred:${userId}`,
   bandAggregate: (bandId: string) => `band:aggregate:${bandId}`,
   venueAggregate: (venueId: string) => `venue:aggregate:${venueId}`,
-  nearbyEvents: (lat: number, lon: number, radius: number) => `events:nearby:${lat.toFixed(2)}:${lon.toFixed(2)}:${radius}`,
-  trendingEvents: (lat: number, lon: number) => `events:trending:${lat.toFixed(2)}:${lon.toFixed(2)}`,
+  nearbyEvents: (lat: number, lon: number, radius: number) =>
+    `events:nearby:${lat.toFixed(2)}:${lon.toFixed(2)}:${radius}`,
+  trendingEvents: (lat: number, lon: number) =>
+    `events:trending:${lat.toFixed(2)}:${lon.toFixed(2)}`,
   genreEvents: (genre: string) => `events:genre:${genre.toLowerCase()}`,
   recommendations: (userId: string) => `events:recs:${userId}`,
 };

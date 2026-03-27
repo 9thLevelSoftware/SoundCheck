@@ -12,14 +12,30 @@ const apiRouter = Router();
 apiRouter.get('/:year', authenticateToken, wrappedController.getWrapped);
 
 // GET /api/wrapped/:year/detail — Premium detail stats
-apiRouter.get('/:year/detail', authenticateToken, requirePremium(), wrappedController.getWrappedDetail);
+apiRouter.get(
+  '/:year/detail',
+  authenticateToken,
+  requirePremium(),
+  wrappedController.getWrappedDetail
+);
 
 // POST /api/wrapped/:year/card/summary — Generate summary card (free)
 // API-058: Rate limit CPU-intensive card generation
-apiRouter.post('/:year/card/summary', authenticateToken, createPerUserRateLimit(RateLimitPresets.expensive), wrappedController.generateSummaryCard);
+apiRouter.post(
+  '/:year/card/summary',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.expensive),
+  wrappedController.generateSummaryCard
+);
 
 // POST /api/wrapped/:year/card/:statType — Generate per-stat card (premium)
-apiRouter.post('/:year/card/:statType', authenticateToken, requirePremium(), createPerUserRateLimit(RateLimitPresets.expensive), wrappedController.generateStatCard);
+apiRouter.post(
+  '/:year/card/:statType',
+  authenticateToken,
+  requirePremium(),
+  createPerUserRateLimit(RateLimitPresets.expensive),
+  wrappedController.generateStatCard
+);
 
 // Public Router (landing pages)
 const publicRouter = Router();

@@ -68,24 +68,28 @@ describe('Authentication Integration Tests', () => {
     app.post('/api/users/login', userController.login);
 
     // Protected route with mock auth middleware
-    app.get('/api/users/profile', (req: Request, res: Response, next: NextFunction) => {
-      const authHeader = req.headers.authorization;
-      const token = mockAuthUtils.extractTokenFromHeader(authHeader);
+    app.get(
+      '/api/users/profile',
+      (req: Request, res: Response, next: NextFunction) => {
+        const authHeader = req.headers.authorization;
+        const token = mockAuthUtils.extractTokenFromHeader(authHeader);
 
-      if (!token) {
-        res.status(401).json({ success: false, error: 'Access token required' });
-        return;
-      }
+        if (!token) {
+          res.status(401).json({ success: false, error: 'Access token required' });
+          return;
+        }
 
-      const payload = mockAuthUtils.verifyToken(token);
-      if (!payload) {
-        res.status(401).json({ success: false, error: 'Invalid or expired token' });
-        return;
-      }
+        const payload = mockAuthUtils.verifyToken(token);
+        if (!payload) {
+          res.status(401).json({ success: false, error: 'Invalid or expired token' });
+          return;
+        }
 
-      req.user = mockUserResponse as any;
-      next();
-    }, userController.getProfile);
+        req.user = mockUserResponse as any;
+        next();
+      },
+      userController.getProfile
+    );
   });
 
   describe('POST /api/users/register', () => {
@@ -97,9 +101,7 @@ describe('Authentication Integration Tests', () => {
 
       mockUserService.createUser.mockResolvedValue(mockAuthResponse as any);
 
-      const response = await request(app)
-        .post('/api/users/register')
-        .send(testUser);
+      const response = await request(app).post('/api/users/register').send(testUser);
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -113,9 +115,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject duplicate email', async () => {
       mockUserService.createUser.mockRejectedValue(new Error('Email already exists'));
 
-      const response = await request(app)
-        .post('/api/users/register')
-        .send(testUser);
+      const response = await request(app).post('/api/users/register').send(testUser);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -174,12 +174,10 @@ describe('Authentication Integration Tests', () => {
 
       mockUserService.authenticateUser.mockResolvedValue(mockAuthResponse);
 
-      const response = await request(app)
-        .post('/api/users/login')
-        .send({
-          email: testUser.email,
-          password: testUser.password,
-        });
+      const response = await request(app).post('/api/users/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -195,12 +193,10 @@ describe('Authentication Integration Tests', () => {
     it('should reject incorrect password', async () => {
       mockUserService.authenticateUser.mockRejectedValue(new Error('Invalid email or password'));
 
-      const response = await request(app)
-        .post('/api/users/login')
-        .send({
-          email: testUser.email,
-          password: 'wrongpassword',
-        });
+      const response = await request(app).post('/api/users/login').send({
+        email: testUser.email,
+        password: 'wrongpassword',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -210,12 +206,10 @@ describe('Authentication Integration Tests', () => {
     it('should reject non-existent user', async () => {
       mockUserService.authenticateUser.mockRejectedValue(new Error('Invalid email or password'));
 
-      const response = await request(app)
-        .post('/api/users/login')
-        .send({
-          email: 'nonexistent@example.com',
-          password: 'password123',
-        });
+      const response = await request(app).post('/api/users/login').send({
+        email: 'nonexistent@example.com',
+        password: 'password123',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -224,9 +218,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject login with missing credentials', async () => {
       mockUserService.authenticateUser.mockRejectedValue(new Error('Email and password required'));
 
-      const response = await request(app)
-        .post('/api/users/login')
-        .send({ email: testUser.email });
+      const response = await request(app).post('/api/users/login').send({ email: testUser.email });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -236,7 +228,11 @@ describe('Authentication Integration Tests', () => {
   describe('Protected Routes', () => {
     it('should allow access with valid token', async () => {
       mockAuthUtils.extractTokenFromHeader.mockReturnValue('valid-token');
-      mockAuthUtils.verifyToken.mockReturnValue({ userId: 'user-123', email: 'test@example.com', username: 'testuser' });
+      mockAuthUtils.verifyToken.mockReturnValue({
+        userId: 'user-123',
+        email: 'test@example.com',
+        username: 'testuser',
+      });
       mockUserService.findById.mockResolvedValue(mockUserResponse as any);
       mockUserService.getUserStats.mockResolvedValue({
         totalCheckins: 10,
@@ -258,8 +254,7 @@ describe('Authentication Integration Tests', () => {
     it('should reject access without token', async () => {
       mockAuthUtils.extractTokenFromHeader.mockReturnValue(null);
 
-      const response = await request(app)
-        .get('/api/users/profile');
+      const response = await request(app).get('/api/users/profile');
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -296,12 +291,10 @@ describe('Authentication Integration Tests', () => {
       // Simulate rate limiting by making the service throw a rate limit error
       mockUserService.authenticateUser.mockRejectedValue(new Error('Rate limit exceeded'));
 
-      const response = await request(app)
-        .post('/api/users/login')
-        .send({
-          email: testUser.email,
-          password: 'wrongpassword',
-        });
+      const response = await request(app).post('/api/users/login').send({
+        email: testUser.email,
+        password: 'wrongpassword',
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -317,12 +310,10 @@ describe('Authentication Integration Tests', () => {
 
       // Make a few requests, all should succeed
       for (let i = 0; i < 3; i++) {
-        const response = await request(app)
-          .post('/api/users/login')
-          .send({
-            email: testUser.email,
-            password: testUser.password,
-          });
+        const response = await request(app).post('/api/users/login').send({
+          email: testUser.email,
+          password: testUser.password,
+        });
 
         expect(response.status).toBe(200);
         expect(response.body.success).toBe(true);
@@ -336,9 +327,7 @@ describe('Authentication Integration Tests', () => {
     it('should handle service errors during registration', async () => {
       mockUserService.createUser.mockRejectedValue(new Error('Database connection failed'));
 
-      const response = await request(app)
-        .post('/api/users/register')
-        .send(testUser);
+      const response = await request(app).post('/api/users/register').send(testUser);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -348,12 +337,10 @@ describe('Authentication Integration Tests', () => {
     it('should handle service errors during login', async () => {
       mockUserService.authenticateUser.mockRejectedValue(new Error('Service unavailable'));
 
-      const response = await request(app)
-        .post('/api/users/login')
-        .send({
-          email: testUser.email,
-          password: testUser.password,
-        });
+      const response = await request(app).post('/api/users/login').send({
+        email: testUser.email,
+        password: testUser.password,
+      });
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -363,9 +350,7 @@ describe('Authentication Integration Tests', () => {
     it('should handle unexpected errors gracefully', async () => {
       mockUserService.createUser.mockRejectedValue('Unexpected error type');
 
-      const response = await request(app)
-        .post('/api/users/register')
-        .send(testUser);
+      const response = await request(app).post('/api/users/register').send(testUser);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);

@@ -21,10 +21,22 @@ import { Resvg } from '@resvg/resvg-js';
 import fs from 'fs';
 import path from 'path';
 import { r2Service } from './R2Service';
-import { checkinCardOG, checkinCardStories, CheckinCardData } from '../templates/share-cards/checkin-card';
+import {
+  checkinCardOG,
+  checkinCardStories,
+  CheckinCardData,
+} from '../templates/share-cards/checkin-card';
 import { badgeCardOG, badgeCardStories, BadgeCardData } from '../templates/share-cards/badge-card';
-import { wrappedSummaryCardOG, wrappedSummaryCardStories, WrappedSummaryData } from '../templates/share-cards/wrapped-summary-card';
-import { wrappedStatCardOG, wrappedStatCardStories, WrappedStatData } from '../templates/share-cards/wrapped-stat-card';
+import {
+  wrappedSummaryCardOG,
+  wrappedSummaryCardStories,
+  WrappedSummaryData,
+} from '../templates/share-cards/wrapped-summary-card';
+import {
+  wrappedStatCardOG,
+  wrappedStatCardStories,
+  WrappedStatData,
+} from '../templates/share-cards/wrapped-stat-card';
 import logger from '../utils/logger';
 
 // ============================================
@@ -211,11 +223,7 @@ export class ShareCardService {
     const pngBuffer = pngData.asPng();
 
     // Upload to R2
-    const publicUrl = await r2Service.uploadBuffer(
-      Buffer.from(pngBuffer),
-      key,
-      'image/png'
-    );
+    const publicUrl = await r2Service.uploadBuffer(Buffer.from(pngBuffer), key, 'image/png');
 
     return publicUrl;
   }

@@ -34,13 +34,23 @@ router.get('/lookup/:ticketmasterId', authenticateToken, eventController.lookupE
 
 // Create a new event (requires auth)
 // SEC-013/CFR-014: Rate limit event creation
-router.post('/', authenticateToken, createPerUserRateLimit(RateLimitPresets.write), eventController.createEvent);
+router.post(
+  '/',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.write),
+  eventController.createEvent
+);
 
 // Get event by ID (public)
 router.get('/:id', eventController.getEventById);
 
 // Delete event (requires auth)
 // SEC-013/CFR-014: Rate limit event deletion
-router.delete('/:id', authenticateToken, createPerUserRateLimit(RateLimitPresets.write), eventController.deleteEvent);
+router.delete(
+  '/:id',
+  authenticateToken,
+  createPerUserRateLimit(RateLimitPresets.write),
+  eventController.deleteEvent
+);
 
 export default router;

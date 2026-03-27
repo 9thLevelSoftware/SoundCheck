@@ -1,4 +1,8 @@
-import { DataRetentionService, DeletionRequest, DeletionStatus } from '../../services/DataRetentionService';
+import {
+  DataRetentionService,
+  DeletionRequest,
+  DeletionStatus,
+} from '../../services/DataRetentionService';
 import Database from '../../config/database';
 
 // Mock dependencies
@@ -43,15 +47,17 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rows: [{ id: userId, is_active: true }] }) // User check
         .mockResolvedValueOnce({ rows: [] }) // No existing request
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'request-123',
-            user_id: userId,
-            status: 'pending',
-            requested_at: now,
-            scheduled_for: expectedScheduledDate,
-            completed_at: null,
-            cancelled_at: null,
-          }],
+          rows: [
+            {
+              id: 'request-123',
+              user_id: userId,
+              status: 'pending',
+              requested_at: now,
+              scheduled_for: expectedScheduledDate,
+              completed_at: null,
+              cancelled_at: null,
+            },
+          ],
         }) // Insert request
         .mockResolvedValueOnce({ rowCount: 1 }); // Deactivate user
 
@@ -74,8 +80,9 @@ describe('DataRetentionService', () => {
 
       mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(dataRetentionService.requestAccountDeletion(userId))
-        .rejects.toThrow('User not found');
+      await expect(dataRetentionService.requestAccountDeletion(userId)).rejects.toThrow(
+        'User not found'
+      );
     });
 
     it('should throw error if pending request already exists', async () => {
@@ -84,15 +91,18 @@ describe('DataRetentionService', () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [{ id: userId, is_active: true }] }) // User exists
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'existing-request',
-            status: 'pending',
-            scheduled_for: new Date(),
-          }],
+          rows: [
+            {
+              id: 'existing-request',
+              status: 'pending',
+              scheduled_for: new Date(),
+            },
+          ],
         }); // Existing request
 
-      await expect(dataRetentionService.requestAccountDeletion(userId))
-        .rejects.toThrow('A pending deletion request already exists');
+      await expect(dataRetentionService.requestAccountDeletion(userId)).rejects.toThrow(
+        'A pending deletion request already exists'
+      );
     });
   });
 
@@ -172,8 +182,9 @@ describe('DataRetentionService', () => {
 
       mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(dataRetentionService.executeAccountDeletion(userId))
-        .rejects.toThrow('User not found');
+      await expect(dataRetentionService.executeAccountDeletion(userId)).rejects.toThrow(
+        'User not found'
+      );
     });
 
     it('should delete notifications both received and sent', async () => {
@@ -320,13 +331,14 @@ describe('DataRetentionService', () => {
       await dataRetentionService.executeAccountDeletion(userId);
 
       // Verify personal fields are nullified
-      const anonymizeCall = mockClient.query.mock.calls.find((call: any[]) =>
-        call[0].includes('first_name = NULL') &&
-        call[0].includes('last_name = NULL') &&
-        call[0].includes('bio = NULL') &&
-        call[0].includes('profile_image_url = NULL') &&
-        call[0].includes('location = NULL') &&
-        call[0].includes('date_of_birth = NULL')
+      const anonymizeCall = mockClient.query.mock.calls.find(
+        (call: any[]) =>
+          call[0].includes('first_name = NULL') &&
+          call[0].includes('last_name = NULL') &&
+          call[0].includes('bio = NULL') &&
+          call[0].includes('profile_image_url = NULL') &&
+          call[0].includes('location = NULL') &&
+          call[0].includes('date_of_birth = NULL')
       );
       expect(anonymizeCall).toBeDefined();
     });
@@ -400,8 +412,9 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
         .mockRejectedValueOnce(new Error('Database error')); // Delete follows fails
 
-      await expect(dataRetentionService.executeAccountDeletion(userId))
-        .rejects.toThrow('Database error');
+      await expect(dataRetentionService.executeAccountDeletion(userId)).rejects.toThrow(
+        'Database error'
+      );
 
       // Verify rollback was called
       expect(mockClient.query).toHaveBeenCalledWith('ROLLBACK');
@@ -419,15 +432,17 @@ describe('DataRetentionService', () => {
           rows: [{ id: 'request-123' }],
         }) // Find pending request
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'request-123',
-            user_id: userId,
-            status: 'cancelled',
-            requested_at: now,
-            scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-            completed_at: null,
-            cancelled_at: now,
-          }],
+          rows: [
+            {
+              id: 'request-123',
+              user_id: userId,
+              status: 'cancelled',
+              requested_at: now,
+              scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+              completed_at: null,
+              cancelled_at: now,
+            },
+          ],
         }) // Cancel request
         .mockResolvedValueOnce({ rowCount: 1 }); // Reactivate user
 
@@ -448,8 +463,9 @@ describe('DataRetentionService', () => {
 
       mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(dataRetentionService.cancelDeletionRequest(userId))
-        .rejects.toThrow('No pending deletion request found');
+      await expect(dataRetentionService.cancelDeletionRequest(userId)).rejects.toThrow(
+        'No pending deletion request found'
+      );
     });
   });
 
@@ -626,15 +642,17 @@ describe('DataRetentionService', () => {
 
       mockDb.query
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'request-1',
-            user_id: 'user-1',
-            status: 'pending',
-            requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
-            scheduled_for: pastDate,
-            completed_at: null,
-            cancelled_at: null,
-          }],
+          rows: [
+            {
+              id: 'request-1',
+              user_id: 'user-1',
+              status: 'pending',
+              requested_at: new Date(pastDate.getTime() - 30 * 24 * 60 * 60 * 1000),
+              scheduled_for: pastDate,
+              completed_at: null,
+              cancelled_at: null,
+            },
+          ],
         })
         .mockResolvedValueOnce({ rowCount: 1 }) // Mark as processing
         .mockResolvedValueOnce({ rows: [] }) // User not found
@@ -667,15 +685,17 @@ describe('DataRetentionService', () => {
       const now = new Date();
 
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'request-123',
-          user_id: userId,
-          status: 'pending',
-          requested_at: now,
-          scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-          completed_at: null,
-          cancelled_at: null,
-        }],
+        rows: [
+          {
+            id: 'request-123',
+            user_id: userId,
+            status: 'pending',
+            requested_at: now,
+            scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+            completed_at: null,
+            cancelled_at: null,
+          },
+        ],
       });
 
       const result = await dataRetentionService.getDeletionRequestStatus(userId);
@@ -701,15 +721,17 @@ describe('DataRetentionService', () => {
       const completedAt = new Date();
 
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'request-123',
-          user_id: userId,
-          status: 'completed',
-          requested_at: new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000),
-          scheduled_for: new Date(now.getTime() - 24 * 60 * 60 * 1000),
-          completed_at: completedAt,
-          cancelled_at: null,
-        }],
+        rows: [
+          {
+            id: 'request-123',
+            user_id: userId,
+            status: 'completed',
+            requested_at: new Date(now.getTime() - 31 * 24 * 60 * 60 * 1000),
+            scheduled_for: new Date(now.getTime() - 24 * 60 * 60 * 1000),
+            completed_at: completedAt,
+            cancelled_at: null,
+          },
+        ],
       });
 
       const result = await dataRetentionService.getDeletionRequestStatus(userId);
@@ -725,15 +747,17 @@ describe('DataRetentionService', () => {
       const cancelledAt = new Date();
 
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'request-123',
-          user_id: userId,
-          status: 'cancelled',
-          requested_at: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
-          scheduled_for: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
-          completed_at: null,
-          cancelled_at: cancelledAt,
-        }],
+        rows: [
+          {
+            id: 'request-123',
+            user_id: userId,
+            status: 'cancelled',
+            requested_at: new Date(now.getTime() - 10 * 24 * 60 * 60 * 1000),
+            scheduled_for: new Date(now.getTime() + 20 * 24 * 60 * 60 * 1000),
+            completed_at: null,
+            cancelled_at: cancelledAt,
+          },
+        ],
       });
 
       const result = await dataRetentionService.getDeletionRequestStatus(userId);
@@ -811,7 +835,9 @@ describe('DataRetentionService', () => {
       // Reset mocks for second call
       jest.clearAllMocks();
       mockPool.connect.mockResolvedValue(mockClient);
-      mockDb.query.mockResolvedValueOnce({ rows: [{ id: 'user-456', email: 'another@example.com' }] });
+      mockDb.query.mockResolvedValueOnce({
+        rows: [{ id: 'user-456', email: 'another@example.com' }],
+      });
       mockClient.query
         .mockResolvedValueOnce({}) // BEGIN
         .mockResolvedValueOnce({ rowCount: 0 }) // Delete notifications
@@ -843,15 +869,17 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rows: [{ id: userId, is_active: true }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'request-123',
-            user_id: userId,
-            status: 'pending',
-            requested_at: now,
-            scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-            completed_at: null,
-            cancelled_at: null,
-          }],
+          rows: [
+            {
+              id: 'request-123',
+              user_id: userId,
+              status: 'pending',
+              requested_at: now,
+              scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+              completed_at: null,
+              cancelled_at: null,
+            },
+          ],
         })
         .mockResolvedValueOnce({ rowCount: 1 });
 
@@ -859,7 +887,9 @@ describe('DataRetentionService', () => {
 
       // Verify scheduled_for is approximately 30 days from now
       const scheduledDate = new Date(result.deletionRequest.scheduledFor);
-      const daysDifference = Math.round((scheduledDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000));
+      const daysDifference = Math.round(
+        (scheduledDate.getTime() - now.getTime()) / (24 * 60 * 60 * 1000)
+      );
 
       expect(daysDifference).toBeGreaterThanOrEqual(29);
       expect(daysDifference).toBeLessThanOrEqual(31);
@@ -874,15 +904,17 @@ describe('DataRetentionService', () => {
         .mockResolvedValueOnce({ rows: [{ id: userId, is_active: true }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'request-123',
-            user_id: userId,
-            status: 'pending',
-            requested_at: now,
-            scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-            completed_at: null,
-            cancelled_at: null,
-          }],
+          rows: [
+            {
+              id: 'request-123',
+              user_id: userId,
+              status: 'pending',
+              requested_at: now,
+              scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+              completed_at: null,
+              cancelled_at: null,
+            },
+          ],
         })
         .mockResolvedValueOnce({ rowCount: 1 });
 
@@ -894,15 +926,17 @@ describe('DataRetentionService', () => {
       mockDb.query
         .mockResolvedValueOnce({ rows: [{ id: 'request-123' }] })
         .mockResolvedValueOnce({
-          rows: [{
-            id: 'request-123',
-            user_id: userId,
-            status: 'cancelled',
-            requested_at: now,
-            scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
-            completed_at: null,
-            cancelled_at: now,
-          }],
+          rows: [
+            {
+              id: 'request-123',
+              user_id: userId,
+              status: 'cancelled',
+              requested_at: now,
+              scheduled_for: new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000),
+              completed_at: null,
+              cancelled_at: now,
+            },
+          ],
         })
         .mockResolvedValueOnce({ rowCount: 1 });
 

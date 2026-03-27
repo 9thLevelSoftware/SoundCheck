@@ -78,7 +78,7 @@ describe('CheckinService', () => {
       mockDb.query.mockResolvedValueOnce({ rows: [mockCheckinRow] });
 
       const latitude = 40.7128;
-      const longitude = -74.0060;
+      const longitude = -74.006;
 
       const result = await checkinService.getActivityFeed(mockUserId, 'nearby', {
         latitude,
@@ -140,47 +140,49 @@ describe('CheckinService', () => {
 
       // Use objectContaining to allow additional fields (event, eventId, imageUrls, etc.)
       // that may be undefined when not present in the mock data
-      expect(result[0]).toEqual(expect.objectContaining({
-        id: 'checkin-1',
-        userId: mockUserId,
-        venueId: 'venue-1',
-        bandId: 'band-1',
-        rating: 4.5,
-        comment: 'Great show!',
-        photoUrl: null,
-        eventDate: null,
-        createdAt: expect.any(Date),
-        updatedAt: expect.any(Date),
-        user: {
-          id: mockUserId,
-          username: 'testuser',
-          profileImageUrl: null,
-        },
-        venue: {
-          id: 'venue-1',
-          name: 'Test Venue',
-          city: 'Test City',
-          state: 'TS',
-          imageUrl: null,
-        },
-        band: {
-          id: 'band-1',
-          name: 'Test Band',
-          genre: 'Rock',
-          imageUrl: null,
-        },
-        toastCount: 5,
-        commentCount: 2,
-        hasUserToasted: false,
-      }));
+      expect(result[0]).toEqual(
+        expect.objectContaining({
+          id: 'checkin-1',
+          userId: mockUserId,
+          venueId: 'venue-1',
+          bandId: 'band-1',
+          rating: 4.5,
+          comment: 'Great show!',
+          photoUrl: null,
+          eventDate: null,
+          createdAt: expect.any(Date),
+          updatedAt: expect.any(Date),
+          user: {
+            id: mockUserId,
+            username: 'testuser',
+            profileImageUrl: null,
+          },
+          venue: {
+            id: 'venue-1',
+            name: 'Test Venue',
+            city: 'Test City',
+            state: 'TS',
+            imageUrl: null,
+          },
+          band: {
+            id: 'band-1',
+            name: 'Test Band',
+            genre: 'Rock',
+            imageUrl: null,
+          },
+          toastCount: 5,
+          commentCount: 2,
+          hasUserToasted: false,
+        })
+      );
     });
 
     it('should handle database errors gracefully', async () => {
       mockDb.query.mockRejectedValueOnce(new Error('Database connection failed'));
 
-      await expect(
-        checkinService.getActivityFeed(mockUserId, 'friends')
-      ).rejects.toThrow('Database connection failed');
+      await expect(checkinService.getActivityFeed(mockUserId, 'friends')).rejects.toThrow(
+        'Database connection failed'
+      );
     });
   });
 

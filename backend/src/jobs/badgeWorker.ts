@@ -56,7 +56,7 @@ export function startBadgeEvalWorker(): Worker | null {
       connection: createBullMQConnection(),
       concurrency: 3,
       lockDuration: 60000, // 1 min — badge evaluation involves multiple DB queries
-    },
+    }
   );
 
   // Event listeners for monitoring

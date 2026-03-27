@@ -15,7 +15,9 @@ export class EmailService {
   constructor() {
     const apiKey = process.env.RESEND_API_KEY;
     if (!apiKey) {
-      logWarn('RESEND_API_KEY not set - EmailService disabled. Password reset emails will not be sent.');
+      logWarn(
+        'RESEND_API_KEY not set - EmailService disabled. Password reset emails will not be sent.'
+      );
       this.configured = false;
       this.fromAddress = '';
       return;

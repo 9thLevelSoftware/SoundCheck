@@ -51,7 +51,7 @@ export class TicketmasterAdapter {
     if (!apiKey) {
       throw new Error(
         'TICKETMASTER_API_KEY environment variable is required. ' +
-        'Get a free API key at https://developer.ticketmaster.com/'
+          'Get a free API key at https://developer.ticketmaster.com/'
       );
     }
 
@@ -113,7 +113,7 @@ export class TicketmasterAdapter {
     latlong: string,
     radius: number,
     startDate: string,
-    endDate: string,
+    endDate: string
   ): Promise<NormalizedEvent[]> {
     const allNormalized: NormalizedEvent[] = [];
 
@@ -328,7 +328,7 @@ export class TicketmasterAdapter {
     if (currentCount >= DAILY_QUOTA_HARD_LIMIT) {
       throw new Error(
         `Ticketmaster daily API quota nearly exhausted (${currentCount}/${DAILY_QUOTA}). ` +
-        'Refusing further calls to reserve capacity for on-demand lookups.'
+          'Refusing further calls to reserve capacity for on-demand lookups.'
       );
     }
 
@@ -410,12 +410,9 @@ export class TicketmasterAdapter {
    */
   private getNextMidnightUTC(): number {
     const now = new Date();
-    const tomorrow = new Date(Date.UTC(
-      now.getUTCFullYear(),
-      now.getUTCMonth(),
-      now.getUTCDate() + 1,
-      0, 0, 0, 0,
-    ));
+    const tomorrow = new Date(
+      Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)
+    );
     return tomorrow.getTime();
   }
 

@@ -49,9 +49,7 @@ describe('UserController', () => {
 
       mockUserService.createUser.mockResolvedValue(mockUser as any);
 
-      const response = await request(app)
-        .post('/register')
-        .send(userData);
+      const response = await request(app).post('/register').send(userData);
 
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
@@ -66,9 +64,7 @@ describe('UserController', () => {
         // Missing password and username
       };
 
-      const response = await request(app)
-        .post('/register')
-        .send(userData);
+      const response = await request(app).post('/register').send(userData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -87,9 +83,7 @@ describe('UserController', () => {
 
       mockUserService.createUser.mockRejectedValue(new Error('Email already registered'));
 
-      const response = await request(app)
-        .post('/register')
-        .send(userData);
+      const response = await request(app).post('/register').send(userData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -121,9 +115,7 @@ describe('UserController', () => {
 
       mockUserService.authenticateUser.mockResolvedValue(mockAuthResponse);
 
-      const response = await request(app)
-        .post('/login')
-        .send(loginData);
+      const response = await request(app).post('/login').send(loginData);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -138,9 +130,7 @@ describe('UserController', () => {
         // Missing password
       };
 
-      const response = await request(app)
-        .post('/login')
-        .send(loginData);
+      const response = await request(app).post('/login').send(loginData);
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -157,9 +147,7 @@ describe('UserController', () => {
 
       mockUserService.authenticateUser.mockRejectedValue(new Error('Invalid email or password'));
 
-      const response = await request(app)
-        .post('/login')
-        .send(loginData);
+      const response = await request(app).post('/login').send(loginData);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);

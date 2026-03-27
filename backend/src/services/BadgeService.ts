@@ -101,7 +101,7 @@ export class BadgeService {
     const earnedBadgeIds = new Set(existingResult.rows.map((r: any) => r.badge_id));
 
     // 3. Filter to unearned badges only
-    const unearnedBadges = allBadges.filter(b => !earnedBadgeIds.has(b.id));
+    const unearnedBadges = allBadges.filter((b) => !earnedBadgeIds.has(b.id));
     if (unearnedBadges.length === 0) return newBadges;
 
     // 4. Group unearned badges by criteria.type
@@ -111,9 +111,10 @@ export class BadgeService {
       if (!type) continue;
 
       // For genre_explorer, group by type+genre to run one query per genre
-      const groupKey = type === 'genre_explorer'
-        ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
-        : type;
+      const groupKey =
+        type === 'genre_explorer'
+          ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
+          : type;
 
       if (!typeGroups.has(groupKey)) {
         typeGroups.set(groupKey, []);
@@ -136,7 +137,9 @@ export class BadgeService {
         for (const badge of badges) {
           const badgeCriteriaType = badge.criteria?.type;
           if (badgeCriteriaType !== type) {
-            logger.error(`[BadgeService] Badge ${badge.id} has criteria.type '${badgeCriteriaType}' but is grouped under '${type}' -- evaluation may be incorrect`);
+            logger.error(
+              `[BadgeService] Badge ${badge.id} has criteria.type '${badgeCriteriaType}' but is grouped under '${type}' -- evaluation may be incorrect`
+            );
           }
         }
       }
@@ -158,7 +161,10 @@ export class BadgeService {
           }
         }
       } catch (err) {
-        logger.error(`[BadgeService] Evaluator error for type '${type}'`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+        logger.error(`[BadgeService] Evaluator error for type '${type}'`, {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        });
         // Continue with other evaluators -- one failure should not block others
       }
     }
@@ -178,7 +184,10 @@ export class BadgeService {
             badgeId: badge.id,
           });
         } catch (err) {
-          logger.error(`[BadgeService] Notification create failed for badge ${badge.id}`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+          logger.error(`[BadgeService] Notification create failed for badge ${badge.id}`, {
+            error: err instanceof Error ? err.message : String(err),
+            stack: err instanceof Error ? err.stack : undefined,
+          });
           // Non-fatal -- badge was already awarded
         }
 
@@ -191,7 +200,10 @@ export class BadgeService {
             badgeIconUrl: badge.iconUrl,
           });
         } catch (err) {
-          logger.error(`[BadgeService] WebSocket send failed for badge ${badge.id}`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+          logger.error(`[BadgeService] WebSocket send failed for badge ${badge.id}`, {
+            error: err instanceof Error ? err.message : String(err),
+            stack: err instanceof Error ? err.stack : undefined,
+          });
           // Non-fatal -- badge was already awarded
         }
       }
@@ -219,15 +231,17 @@ export class BadgeService {
    * Get badge rarity: for each badge, how many users earned it vs total active users.
    * Returns earned_count and rarity_pct (percentage of users who have the badge).
    */
-  async getBadgeRarity(): Promise<Array<{
-    badgeId: string;
-    name: string;
-    category: string;
-    threshold: number;
-    earnedCount: number;
-    totalUsers: number;
-    rarityPct: number;
-  }>> {
+  async getBadgeRarity(): Promise<
+    Array<{
+      badgeId: string;
+      name: string;
+      category: string;
+      threshold: number;
+      earnedCount: number;
+      totalUsers: number;
+      rarityPct: number;
+    }>
+  > {
     const query = `
       SELECT
         b.id, b.name, b.badge_type as category, b.requirement_value,
@@ -281,17 +295,19 @@ export class BadgeService {
   /**
    * Get badge leaderboard (users with most badges)
    */
-  async getBadgeLeaderboard(limit: number = 20): Promise<Array<{
-    user: {
-      id: string;
-      username: string;
-      firstName?: string;
-      lastName?: string;
-      profileImageUrl?: string;
-    };
-    badgeCount: number;
-    recentBadges: Badge[];
-  }>> {
+  async getBadgeLeaderboard(limit: number = 20): Promise<
+    Array<{
+      user: {
+        id: string;
+        username: string;
+        firstName?: string;
+        lastName?: string;
+        profileImageUrl?: string;
+      };
+      badgeCount: number;
+      recentBadges: Badge[];
+    }>
+  > {
     // Single query: leaderboard users + their 3 most recent badges via LATERAL join
     const query = `
       SELECT
@@ -327,11 +343,20 @@ export class BadgeService {
     const result = await this.db.query(query, [limit]);
 
     // Group rows by user (each user may have up to 3 rows for recent badges)
-    const userMap = new Map<string, {
-      user: { id: string; username: string; firstName?: string; lastName?: string; profileImageUrl?: string };
-      badgeCount: number;
-      recentBadges: Badge[];
-    }>();
+    const userMap = new Map<
+      string,
+      {
+        user: {
+          id: string;
+          username: string;
+          firstName?: string;
+          lastName?: string;
+          profileImageUrl?: string;
+        };
+        badgeCount: number;
+        recentBadges: Badge[];
+      }
+    >();
 
     for (const row of result.rows) {
       if (!userMap.has(row.id)) {
@@ -350,17 +375,19 @@ export class BadgeService {
 
       // Append recent badge if present (LEFT JOIN may yield null)
       if (row.recent_badge_id) {
-        userMap.get(row.id)!.recentBadges.push(this.mapDbBadgeToBadge({
-          id: row.recent_badge_id,
-          name: row.recent_badge_name,
-          description: row.recent_badge_description,
-          icon_url: row.recent_badge_icon_url,
-          badge_type: row.recent_badge_type,
-          requirement_value: row.recent_badge_requirement_value,
-          color: row.recent_badge_color,
-          criteria: row.recent_badge_criteria,
-          created_at: row.recent_badge_created_at,
-        }));
+        userMap.get(row.id)!.recentBadges.push(
+          this.mapDbBadgeToBadge({
+            id: row.recent_badge_id,
+            name: row.recent_badge_name,
+            description: row.recent_badge_description,
+            icon_url: row.recent_badge_icon_url,
+            badge_type: row.recent_badge_type,
+            requirement_value: row.recent_badge_requirement_value,
+            color: row.recent_badge_color,
+            criteria: row.recent_badge_criteria,
+            created_at: row.recent_badge_created_at,
+          })
+        );
       }
     }
 
@@ -386,15 +413,17 @@ export class BadgeService {
    * Uses evaluator registry for data-driven progress calculation.
    * Groups badges by criteria.type and runs each evaluator once (N+1 optimization).
    */
-  async getUserBadgeProgress(userId: string): Promise<Array<{
-    badge: Badge;
-    progress: number;
-    isEarned: boolean;
-  }>> {
+  async getUserBadgeProgress(userId: string): Promise<
+    Array<{
+      badge: Badge;
+      progress: number;
+      isEarned: boolean;
+    }>
+  > {
     // Load all badge definitions with criteria
     const allBadges = await this.getAllBadges();
     const userBadges = await this.getUserBadges(userId);
-    const earnedBadgeIds = new Set(userBadges.map(ub => ub.badgeId));
+    const earnedBadgeIds = new Set(userBadges.map((ub) => ub.badgeId));
 
     // Group badges by criteria.type (genre_explorer grouped by genre)
     const typeGroups = new Map<string, Badge[]>();
@@ -407,9 +436,10 @@ export class BadgeService {
         continue;
       }
 
-      const groupKey = type === 'genre_explorer'
-        ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
-        : type;
+      const groupKey =
+        type === 'genre_explorer'
+          ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
+          : type;
 
       if (!typeGroups.has(groupKey)) {
         typeGroups.set(groupKey, []);
@@ -431,7 +461,10 @@ export class BadgeService {
         const result = await evaluator(userId, criteria);
         evalCache.set(groupKey, result);
       } catch (err) {
-        logger.error(`[BadgeService] Progress evaluator error for '${type}'`, { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+        logger.error(`[BadgeService] Progress evaluator error for '${type}'`, {
+          error: err instanceof Error ? err.message : String(err),
+          stack: err instanceof Error ? err.stack : undefined,
+        });
       }
     }
 

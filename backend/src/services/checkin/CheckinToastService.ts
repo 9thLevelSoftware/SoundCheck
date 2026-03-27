@@ -23,7 +23,10 @@ export class CheckinToastService {
    * Toast a check-in (like Untappd's toast feature)
    * Returns toast count and owner ID for WebSocket broadcasts
    */
-  async toastCheckin(userId: string, checkinId: string): Promise<{ toastCount: number; ownerId: string }> {
+  async toastCheckin(
+    userId: string,
+    checkinId: string
+  ): Promise<{ toastCount: number; ownerId: string }> {
     try {
       // Atomic upsert — eliminates TOCTOU race between SELECT and INSERT (CFR-BE-001)
       const insertResult = await this.db.query(
@@ -53,7 +56,10 @@ export class CheckinToastService {
         ownerId: result.rows[0]?.owner_id,
       };
     } catch (error) {
-      logger.error('Toast check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Toast check-in error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -63,12 +69,15 @@ export class CheckinToastService {
    */
   async untoastCheckin(userId: string, checkinId: string): Promise<void> {
     try {
-      await this.db.query(
-        'DELETE FROM toasts WHERE checkin_id = $1 AND user_id = $2',
-        [checkinId, userId]
-      );
+      await this.db.query('DELETE FROM toasts WHERE checkin_id = $1 AND user_id = $2', [
+        checkinId,
+        userId,
+      ]);
     } catch (error) {
-      logger.error('Untoast check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Untoast check-in error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -102,7 +111,10 @@ export class CheckinToastService {
         },
       }));
     } catch (error) {
-      logger.error('Get toasts error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get toasts error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -115,11 +127,7 @@ export class CheckinToastService {
    * Add a comment to a check-in
    * Returns comment with owner ID for WebSocket notifications
    */
-  async addComment(
-    userId: string,
-    checkinId: string,
-    content: string
-  ): Promise<Comment> {
+  async addComment(userId: string, checkinId: string, content: string): Promise<Comment> {
     try {
       const query = `
         INSERT INTO checkin_comments (checkin_id, user_id, content)
@@ -130,10 +138,9 @@ export class CheckinToastService {
       const result = await this.db.query(query, [checkinId, userId, content]);
 
       // Get check-in owner for WebSocket notification
-      const checkin = await this.db.query(
-        'SELECT user_id FROM checkins WHERE id = $1',
-        [checkinId]
-      );
+      const checkin = await this.db.query('SELECT user_id FROM checkins WHERE id = $1', [
+        checkinId,
+      ]);
 
       // Get comment with user details
       const comment = await this.getCommentById(result.rows[0].id);
@@ -143,7 +150,10 @@ export class CheckinToastService {
         ownerId: checkin.rows[0]?.user_id,
       };
     } catch (error) {
-      logger.error('Add comment error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Add comment error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -179,7 +189,10 @@ export class CheckinToastService {
         },
       }));
     } catch (error) {
-      logger.error('Get comments error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get comments error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -199,10 +212,9 @@ export class CheckinToastService {
         throw new Error('Comment not found');
       }
 
-      const checkin = await this.db.query(
-        'SELECT user_id FROM checkins WHERE id = $1',
-        [checkinId]
-      );
+      const checkin = await this.db.query('SELECT user_id FROM checkins WHERE id = $1', [
+        checkinId,
+      ]);
 
       if (!checkin.rows.length) {
         throw new Error('Checkin not found');
@@ -215,7 +227,10 @@ export class CheckinToastService {
 
       await this.db.query('DELETE FROM checkin_comments WHERE id = $1', [commentId]);
     } catch (error) {
-      logger.error('Delete comment error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete comment error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }

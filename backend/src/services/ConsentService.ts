@@ -38,10 +38,12 @@ export interface ConsentRecord {
  * Current consent status for a user (most recent consent for each purpose)
  */
 export interface UserConsents {
-  [purpose: string]: {
-    granted: boolean;
-    recordedAt: string;
-  } | undefined;
+  [purpose: string]:
+    | {
+        granted: boolean;
+        recordedAt: string;
+      }
+    | undefined;
 }
 
 /**
@@ -69,7 +71,9 @@ export class ConsentService {
   ): Promise<ConsentRecord> {
     // Validate purpose
     if (!this.validatePurpose(purpose)) {
-      throw new Error(`Invalid consent purpose: ${purpose}. Valid purposes are: ${VALID_PURPOSES.join(', ')}`);
+      throw new Error(
+        `Invalid consent purpose: ${purpose}. Valid purposes are: ${VALID_PURPOSES.join(', ')}`
+      );
     }
 
     const query = `
@@ -107,9 +111,8 @@ export class ConsentService {
     for (const row of result.rows) {
       consents[row.purpose] = {
         granted: row.granted,
-        recordedAt: row.recorded_at instanceof Date
-          ? row.recorded_at.toISOString()
-          : row.recorded_at,
+        recordedAt:
+          row.recorded_at instanceof Date ? row.recorded_at.toISOString() : row.recorded_at,
       };
     }
 
@@ -122,7 +125,9 @@ export class ConsentService {
   async getConsentHistory(userId: string, purpose: string): Promise<ConsentRecord[]> {
     // Validate purpose
     if (!this.validatePurpose(purpose)) {
-      throw new Error(`Invalid consent purpose: ${purpose}. Valid purposes are: ${VALID_PURPOSES.join(', ')}`);
+      throw new Error(
+        `Invalid consent purpose: ${purpose}. Valid purposes are: ${VALID_PURPOSES.join(', ')}`
+      );
     }
 
     const query = `
@@ -143,7 +148,9 @@ export class ConsentService {
   async hasConsent(userId: string, purpose: string): Promise<boolean> {
     // Validate purpose
     if (!this.validatePurpose(purpose)) {
-      throw new Error(`Invalid consent purpose: ${purpose}. Valid purposes are: ${VALID_PURPOSES.join(', ')}`);
+      throw new Error(
+        `Invalid consent purpose: ${purpose}. Valid purposes are: ${VALID_PURPOSES.join(', ')}`
+      );
     }
 
     const query = `
@@ -205,9 +212,7 @@ export class ConsentService {
       userId: row.user_id,
       purpose: row.purpose as ConsentPurpose,
       granted: row.granted,
-      recordedAt: row.recorded_at instanceof Date
-        ? row.recorded_at.toISOString()
-        : row.recorded_at,
+      recordedAt: row.recorded_at instanceof Date ? row.recorded_at.toISOString() : row.recorded_at,
       ipAddress: row.ip_address,
       userAgent: row.user_agent,
     };

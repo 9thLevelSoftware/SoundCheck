@@ -170,7 +170,10 @@ export class NotificationService {
         hasMore: offset + notifications.length < total,
       };
     } catch (error) {
-      logger.error('Get notifications error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get notifications error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -182,17 +185,8 @@ export class NotificationService {
    */
   async createNotification(data: CreateNotificationData): Promise<Notification> {
     try {
-      const {
-        userId,
-        type,
-        title,
-        message,
-        checkinId,
-        fromUserId,
-        badgeId,
-        showId,
-        eventId,
-      } = data;
+      const { userId, type, title, message, checkinId, fromUserId, badgeId, showId, eventId } =
+        data;
 
       // Write event_id to notifications table
       // The show_id column may not exist on production (created by migration 007 without it)
@@ -224,7 +218,10 @@ export class NotificationService {
       // Get full notification with related data
       return this.getNotificationById(result.rows[0].id);
     } catch (error) {
-      logger.error('Create notification error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Create notification error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -243,7 +240,10 @@ export class NotificationService {
         throw new Error('Notification not found or access denied');
       }
     } catch (error) {
-      logger.error('Mark as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Mark as read error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -260,7 +260,10 @@ export class NotificationService {
 
       return result.rowCount || 0;
     } catch (error) {
-      logger.error('Mark all as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Mark all as read error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -277,7 +280,10 @@ export class NotificationService {
 
       return parseInt(result.rows[0].count, 10);
     } catch (error) {
-      logger.error('Get unread count error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get unread count error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -296,7 +302,10 @@ export class NotificationService {
         throw new Error('Notification not found or access denied');
       }
     } catch (error) {
-      logger.error('Delete notification error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete notification error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -365,7 +374,7 @@ export class NotificationService {
       checkinId: row.checkin_id,
       fromUserId: row.from_user_id,
       badgeId: row.badge_id,
-      showId: row.event_id,   // Backward compat: showId = eventId
+      showId: row.event_id, // Backward compat: showId = eventId
       eventId: row.event_id,
       isRead: row.is_read,
       createdAt: row.created_at,

@@ -31,7 +31,7 @@ export function getRedisUrl(): string {
   if (!redisUrl) {
     throw new Error(
       'REDIS_URL environment variable is required for job queue. ' +
-      'Set it to your Redis instance URL (e.g. redis://localhost:6379).'
+        'Set it to your Redis instance URL (e.g. redis://localhost:6379).'
     );
   }
   return redisUrl;

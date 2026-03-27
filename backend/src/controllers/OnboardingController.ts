@@ -42,7 +42,8 @@ export class OnboardingController {
     } catch (error) {
       logError('Save genre preferences error:', { error });
 
-      const errorMessage = error instanceof Error ? error.message : 'Failed to save genre preferences';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to save genre preferences';
 
       if (errorMessage === 'Must select between 3 and 8 genres') {
         const response: ApiResponse = { success: false, error: errorMessage };

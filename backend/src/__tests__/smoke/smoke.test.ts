@@ -47,7 +47,9 @@ jest.mock('../../utils/redisRateLimiter', () => ({
   initRedis: jest.fn(),
   closeRedis: jest.fn(),
   getRedis: jest.fn().mockReturnValue(null),
-  checkRateLimit: jest.fn().mockResolvedValue({ allowed: true, remaining: 100, resetAt: Date.now() + 60000 }),
+  checkRateLimit: jest
+    .fn()
+    .mockResolvedValue({ allowed: true, remaining: 100, resetAt: Date.now() + 60000 }),
   RedisRateLimiter: jest.fn().mockImplementation(() => ({
     middleware: jest.fn().mockReturnValue((req: any, res: any, next: any) => next()),
   })),
@@ -174,15 +176,13 @@ describe('Smoke Tests — Critical API Paths', () => {
         token: 'jwt-smoke-token',
       } as any);
 
-      const res = await request(app)
-        .post('/api/users/register')
-        .send({
-          email: 'smoke@test.com',
-          username: 'smoketest',
-          password: 'Smoke123!@#',
-          firstName: 'Smoke',
-          lastName: 'Test',
-        });
+      const res = await request(app).post('/api/users/register').send({
+        email: 'smoke@test.com',
+        username: 'smoketest',
+        password: 'Smoke123!@#',
+        firstName: 'Smoke',
+        lastName: 'Test',
+      });
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
@@ -201,12 +201,10 @@ describe('Smoke Tests — Critical API Paths', () => {
         token: 'jwt-smoke-token',
       } as any);
 
-      const res = await request(app)
-        .post('/api/users/login')
-        .send({
-          email: 'smoke@test.com',
-          password: 'Smoke123!@#',
-        });
+      const res = await request(app).post('/api/users/login').send({
+        email: 'smoke@test.com',
+        password: 'Smoke123!@#',
+      });
 
       expect(res.status).toBe(200);
       expect(res.body.success).toBe(true);

@@ -47,7 +47,9 @@ export function startNotificationWorker(): Worker | null {
 
       // Short-circuit when Firebase is not configured to avoid wasteful Redis reads
       if (!pushNotificationService.isAvailable) {
-        logger.debug('Push notifications disabled (Firebase not configured). Skipping batch.', { userId });
+        logger.debug('Push notifications disabled (Firebase not configured). Skipping batch.', {
+          userId,
+        });
         return { sent: false, reason: 'fcm_disabled' };
       }
 
@@ -71,13 +73,15 @@ export function startNotificationWorker(): Worker | null {
         return { sent: false, reason: 'empty_batch' };
       }
 
-      const checkins = items.map((i) => {
-        try {
-          return JSON.parse(i);
-        } catch {
-          return null;
-        }
-      }).filter(Boolean);
+      const checkins = items
+        .map((i) => {
+          try {
+            return JSON.parse(i);
+          } catch {
+            return null;
+          }
+        })
+        .filter(Boolean);
 
       if (checkins.length === 0) {
         return { sent: false, reason: 'parse_error' };
@@ -110,7 +114,7 @@ export function startNotificationWorker(): Worker | null {
       connection: createBullMQConnection(),
       concurrency: 5,
       lockDuration: 30000, // 30s — notification sends are quick
-    },
+    }
   );
 
   // Event listeners for monitoring

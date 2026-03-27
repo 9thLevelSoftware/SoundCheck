@@ -1,4 +1,9 @@
-import { ConsentService, VALID_PURPOSES, ConsentRecord, UserConsents } from '../../services/ConsentService';
+import {
+  ConsentService,
+  VALID_PURPOSES,
+  ConsentRecord,
+  UserConsents,
+} from '../../services/ConsentService';
 import Database from '../../config/database';
 
 // Mock dependencies
@@ -54,12 +59,10 @@ describe('ConsentService', () => {
     it('should record consent with metadata', async () => {
       mockDb.query.mockResolvedValueOnce({ rows: [mockConsentRecord] });
 
-      const result = await consentService.recordConsent(
-        userId,
-        'analytics',
-        true,
-        { ipAddress: '192.168.1.1', userAgent: 'Mozilla/5.0' }
-      );
+      const result = await consentService.recordConsent(userId, 'analytics', true, {
+        ipAddress: '192.168.1.1',
+        userAgent: 'Mozilla/5.0',
+      });
 
       expect(mockDb.query).toHaveBeenCalledWith(
         expect.stringContaining('INSERT INTO user_consents'),
@@ -108,15 +111,15 @@ describe('ConsentService', () => {
     });
 
     it('should throw error for invalid purpose', async () => {
-      await expect(
-        consentService.recordConsent(userId, 'invalid_purpose', true)
-      ).rejects.toThrow('Invalid consent purpose: invalid_purpose');
+      await expect(consentService.recordConsent(userId, 'invalid_purpose', true)).rejects.toThrow(
+        'Invalid consent purpose: invalid_purpose'
+      );
     });
 
     it('should throw error mentioning valid purposes', async () => {
-      await expect(
-        consentService.recordConsent(userId, 'bad_purpose', true)
-      ).rejects.toThrow('Valid purposes are:');
+      await expect(consentService.recordConsent(userId, 'bad_purpose', true)).rejects.toThrow(
+        'Valid purposes are:'
+      );
     });
 
     it('should record consent for each valid purpose', async () => {
@@ -147,17 +150,24 @@ describe('ConsentService', () => {
     it('should return current consents for all purposes', async () => {
       const mockConsents = [
         { purpose: 'analytics', granted: true, recorded_at: new Date('2024-06-01T10:00:00Z') },
-        { purpose: 'marketing_emails', granted: false, recorded_at: new Date('2024-06-02T10:00:00Z') },
-        { purpose: 'personalization', granted: true, recorded_at: new Date('2024-06-03T10:00:00Z') },
+        {
+          purpose: 'marketing_emails',
+          granted: false,
+          recorded_at: new Date('2024-06-02T10:00:00Z'),
+        },
+        {
+          purpose: 'personalization',
+          granted: true,
+          recorded_at: new Date('2024-06-03T10:00:00Z'),
+        },
       ];
       mockDb.query.mockResolvedValueOnce({ rows: mockConsents });
 
       const result = await consentService.getUserConsents(userId);
 
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('DISTINCT ON (purpose)'),
-        [userId]
-      );
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('DISTINCT ON (purpose)'), [
+        userId,
+      ]);
       expect(result.analytics).toEqual({
         granted: true,
         recordedAt: expect.any(String),
@@ -249,9 +259,9 @@ describe('ConsentService', () => {
     });
 
     it('should throw error for invalid purpose', async () => {
-      await expect(
-        consentService.getConsentHistory(userId, 'invalid_purpose')
-      ).rejects.toThrow('Invalid consent purpose: invalid_purpose');
+      await expect(consentService.getConsentHistory(userId, 'invalid_purpose')).rejects.toThrow(
+        'Invalid consent purpose: invalid_purpose'
+      );
     });
 
     it('should order history by recorded_at DESC', async () => {
@@ -294,9 +304,9 @@ describe('ConsentService', () => {
     });
 
     it('should throw error for invalid purpose', async () => {
-      await expect(
-        consentService.hasConsent(userId, 'invalid_purpose')
-      ).rejects.toThrow('Invalid consent purpose: invalid_purpose');
+      await expect(consentService.hasConsent(userId, 'invalid_purpose')).rejects.toThrow(
+        'Invalid consent purpose: invalid_purpose'
+      );
     });
 
     it('should query with LIMIT 1 to get most recent', async () => {
@@ -304,10 +314,10 @@ describe('ConsentService', () => {
 
       await consentService.hasConsent(userId, 'analytics');
 
-      expect(mockDb.query).toHaveBeenCalledWith(
-        expect.stringContaining('LIMIT 1'),
-        [userId, 'analytics']
-      );
+      expect(mockDb.query).toHaveBeenCalledWith(expect.stringContaining('LIMIT 1'), [
+        userId,
+        'analytics',
+      ]);
     });
   });
 
@@ -326,26 +336,30 @@ describe('ConsentService', () => {
 
       // Mock recordConsent calls for each revocation
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'new-1',
-          user_id: userId,
-          purpose: 'analytics',
-          granted: false,
-          recorded_at: new Date(),
-          ip_address: null,
-          user_agent: null,
-        }],
+        rows: [
+          {
+            id: 'new-1',
+            user_id: userId,
+            purpose: 'analytics',
+            granted: false,
+            recorded_at: new Date(),
+            ip_address: null,
+            user_agent: null,
+          },
+        ],
       });
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'new-2',
-          user_id: userId,
-          purpose: 'marketing_emails',
-          granted: false,
-          recorded_at: new Date(),
-          ip_address: null,
-          user_agent: null,
-        }],
+        rows: [
+          {
+            id: 'new-2',
+            user_id: userId,
+            purpose: 'marketing_emails',
+            granted: false,
+            recorded_at: new Date(),
+            ip_address: null,
+            user_agent: null,
+          },
+        ],
       });
 
       const result = await consentService.revokeAllConsents(userId);
@@ -381,20 +395,20 @@ describe('ConsentService', () => {
 
     it('should include metadata when revoking', async () => {
       mockDb.query.mockResolvedValueOnce({
-        rows: [
-          { purpose: 'analytics', granted: true, recorded_at: new Date() },
-        ],
+        rows: [{ purpose: 'analytics', granted: true, recorded_at: new Date() }],
       });
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'new-1',
-          user_id: userId,
-          purpose: 'analytics',
-          granted: false,
-          recorded_at: new Date(),
-          ip_address: '10.0.0.1',
-          user_agent: 'Test Agent',
-        }],
+        rows: [
+          {
+            id: 'new-1',
+            user_id: userId,
+            purpose: 'analytics',
+            granted: false,
+            recorded_at: new Date(),
+            ip_address: '10.0.0.1',
+            user_agent: 'Test Agent',
+          },
+        ],
       });
 
       await consentService.revokeAllConsents(userId, {
@@ -416,15 +430,17 @@ describe('ConsentService', () => {
 
     it('should handle Date objects from database', async () => {
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'consent-1',
-          user_id: userId,
-          purpose: 'analytics',
-          granted: true,
-          recorded_at: new Date('2024-06-01T10:00:00Z'),
-          ip_address: null,
-          user_agent: null,
-        }],
+        rows: [
+          {
+            id: 'consent-1',
+            user_id: userId,
+            purpose: 'analytics',
+            granted: true,
+            recorded_at: new Date('2024-06-01T10:00:00Z'),
+            ip_address: null,
+            user_agent: null,
+          },
+        ],
       });
 
       const result = await consentService.recordConsent(userId, 'analytics', true);
@@ -434,15 +450,17 @@ describe('ConsentService', () => {
 
     it('should handle string dates from database', async () => {
       mockDb.query.mockResolvedValueOnce({
-        rows: [{
-          id: 'consent-1',
-          user_id: userId,
-          purpose: 'analytics',
-          granted: true,
-          recorded_at: '2024-06-01T10:00:00.000Z',
-          ip_address: null,
-          user_agent: null,
-        }],
+        rows: [
+          {
+            id: 'consent-1',
+            user_id: userId,
+            purpose: 'analytics',
+            granted: true,
+            recorded_at: '2024-06-01T10:00:00.000Z',
+            ip_address: null,
+            user_agent: null,
+          },
+        ],
       });
 
       const result = await consentService.recordConsent(userId, 'analytics', true);

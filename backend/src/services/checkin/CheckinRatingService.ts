@@ -31,7 +31,11 @@ export class CheckinRatingService {
    * Supports per-set band ratings and venue rating independently.
    * Ratings must be 0.5-5.0 in 0.5 steps.
    */
-  async addRatings(checkinId: string, userId: string, ratings: AddRatingsRequest): Promise<Checkin> {
+  async addRatings(
+    checkinId: string,
+    userId: string,
+    ratings: AddRatingsRequest
+  ): Promise<Checkin> {
     try {
       // Verify checkin belongs to userId
       const checkinResult = await this.db.query(
@@ -68,7 +72,7 @@ export class CheckinRatingService {
         // PERF-008: Batch lineup check -- verify all bands in a single query
         // instead of N sequential queries.
         if (eventId) {
-          const bandIds = ratings.bandRatings.map(br => br.bandId);
+          const bandIds = ratings.bandRatings.map((br) => br.bandId);
           const lineupCheck = await this.db.query(
             'SELECT band_id FROM event_lineup WHERE event_id = $1 AND band_id = ANY($2)',
             [eventId, bandIds]
@@ -114,29 +118,39 @@ export class CheckinRatingService {
 
         // Fire-and-forget: invalidate band aggregate cache for each rated band
         for (const br of ratings.bandRatings) {
-          cache.del(CacheKeys.bandAggregate(br.bandId)).catch((err) =>
-            logger.debug('Warning: band aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-          );
+          cache
+            .del(CacheKeys.bandAggregate(br.bandId))
+            .catch((err) =>
+              logger.debug('Warning: band aggregate cache invalidation failed', {
+                error: err instanceof Error ? err.message : String(err),
+              })
+            );
         }
       }
 
       // Fire-and-forget: invalidate venue aggregate cache if venue was rated
       if (ratings.venueRating !== undefined) {
-        const checkinForVenue = await this.db.query(
-          'SELECT venue_id FROM checkins WHERE id = $1',
-          [checkinId]
-        );
+        const checkinForVenue = await this.db.query('SELECT venue_id FROM checkins WHERE id = $1', [
+          checkinId,
+        ]);
         const venueId = checkinForVenue.rows[0]?.venue_id;
         if (venueId) {
-          cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
-            logger.debug('Warning: venue aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-          );
+          cache
+            .del(CacheKeys.venueAggregate(venueId))
+            .catch((err) =>
+              logger.debug('Warning: venue aggregate cache invalidation failed', {
+                error: err instanceof Error ? err.message : String(err),
+              })
+            );
         }
       }
 
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
-      logger.error('Add ratings error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Add ratings error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }

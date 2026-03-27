@@ -73,7 +73,11 @@ export class ConflictError extends AppError {
 export class ValidationError extends AppError {
   public readonly validationErrors?: any;
 
-  constructor(message: string = 'Validation failed', validationErrors?: any, internalMessage?: string) {
+  constructor(
+    message: string = 'Validation failed',
+    validationErrors?: any,
+    internalMessage?: string
+  ) {
     super(message, 422, internalMessage);
     this.validationErrors = validationErrors;
   }
@@ -83,7 +87,10 @@ export class ValidationError extends AppError {
  * 429 Too Many Requests - Rate limit exceeded
  */
 export class RateLimitError extends AppError {
-  constructor(message: string = 'Too many requests, please try again later', internalMessage?: string) {
+  constructor(
+    message: string = 'Too many requests, please try again later',
+    internalMessage?: string
+  ) {
     super(message, 429, internalMessage);
   }
 }

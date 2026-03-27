@@ -68,8 +68,9 @@ class WebSocketServer {
         try {
           // Extract token from query string or Authorization header
           const url = new URL(info.req.url || '', `http://${info.req.headers.host}`);
-          const token = url.searchParams.get('token')
-            || AuthUtils.extractTokenFromHeader(info.req.headers.authorization);
+          const token =
+            url.searchParams.get('token') ||
+            AuthUtils.extractTokenFromHeader(info.req.headers.authorization);
 
           if (!token) {
             callback(false, 401, 'Authentication required');
@@ -86,7 +87,9 @@ class WebSocketServer {
           (info.req as any).userId = payload.userId;
           callback(true);
         } catch (error) {
-          winstonLogger.error('WebSocket verifyClient error', { error: error instanceof Error ? error.message : String(error) });
+          winstonLogger.error('WebSocket verifyClient error', {
+            error: error instanceof Error ? error.message : String(error),
+          });
           callback(false, 500, 'Authentication error');
         }
       },
@@ -95,7 +98,9 @@ class WebSocketServer {
     this.wss.on('connection', (ws: WebSocket, req) => {
       // Enforce connection limit to prevent resource exhaustion
       if (this.clients.size >= MAX_CONNECTIONS) {
-        winstonLogger.warn(`WebSocket connection rejected: max connections reached (${MAX_CONNECTIONS})`);
+        winstonLogger.warn(
+          `WebSocket connection rejected: max connections reached (${MAX_CONNECTIONS})`
+        );
         ws.close(1013, 'Maximum connections reached');
         return;
       }
@@ -129,7 +134,10 @@ class WebSocketServer {
           const data = JSON.parse(message.toString());
           this.handleMessage(clientId, data);
         } catch (error) {
-          winstonLogger.error('Invalid WebSocket message', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+          winstonLogger.error('Invalid WebSocket message', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
         }
       });
 
@@ -169,13 +177,18 @@ class WebSocketServer {
           try {
             this.handleCheckinPubSub(JSON.parse(message));
           } catch (err) {
-            winstonLogger.error('Error handling checkin Pub/Sub message', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+            winstonLogger.error('Error handling checkin Pub/Sub message', {
+              error: err instanceof Error ? err.message : String(err),
+              stack: err instanceof Error ? err.stack : undefined,
+            });
           }
         }
       });
       winstonLogger.info('Redis Pub/Sub subscriber connected for WebSocket fan-out');
     } catch (err) {
-      winstonLogger.warn('Redis Pub/Sub not available, WebSocket fan-out disabled', { error: (err as Error).message });
+      winstonLogger.warn('Redis Pub/Sub not available, WebSocket fan-out disabled', {
+        error: (err as Error).message,
+      });
       this.subscriber = null;
     }
 
@@ -272,7 +285,9 @@ class WebSocketServer {
     const decoded = AuthUtils.verifyToken(token);
 
     if (!decoded || decoded.userId !== userId) {
-      winstonLogger.warn(`Client ${clientId} failed authentication: Invalid token or user mismatch`);
+      winstonLogger.warn(
+        `Client ${clientId} failed authentication: Invalid token or user mismatch`
+      );
       this.send(clientId, 'error', { message: 'Authentication failed' });
       // Close connection on auth failure
       const client = this.clients.get(clientId);
@@ -304,7 +319,7 @@ class WebSocketServer {
 
     // Validate room name format and authorize access
     const validRoomPrefixes = ['event:', 'venue:', 'user:'];
-    const isValidRoom = validRoomPrefixes.some(prefix => room.startsWith(prefix));
+    const isValidRoom = validRoomPrefixes.some((prefix) => room.startsWith(prefix));
     if (!isValidRoom) {
       this.send(clientId, 'error', { message: 'Invalid room name' });
       return;
@@ -312,7 +327,7 @@ class WebSocketServer {
 
     // User-specific rooms: only allow joining own room
     if (room.startsWith('user:') && room !== `user:${client.userId}`) {
-      this.send(clientId, 'error', { message: 'Cannot join another user\'s room' });
+      this.send(clientId, 'error', { message: "Cannot join another user's room" });
       return;
     }
 
@@ -360,7 +375,7 @@ class WebSocketServer {
     }
 
     // Leave all rooms
-    client.rooms.forEach(room => {
+    client.rooms.forEach((room) => {
       const roomClients = this.rooms.get(room);
       if (roomClients) {
         roomClients.delete(clientId);

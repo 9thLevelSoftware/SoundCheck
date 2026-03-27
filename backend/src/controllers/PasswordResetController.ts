@@ -82,9 +82,10 @@ export class PasswordResetController {
       res.status(200).json(response);
     } catch (error: any) {
       const statusCode = error.statusCode || 500;
-      const message = statusCode === 400
-        ? error.message
-        : 'An error occurred processing your request. Please try again later.';
+      const message =
+        statusCode === 400
+          ? error.message
+          : 'An error occurred processing your request. Please try again later.';
 
       logError('Error in resetPassword handler', { error: error.message || error });
 

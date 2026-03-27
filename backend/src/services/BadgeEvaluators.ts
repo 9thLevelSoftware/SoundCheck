@@ -30,10 +30,7 @@ export interface EvalResult {
   metadata?: Record<string, any>;
 }
 
-export type BadgeEvaluator = (
-  userId: string,
-  criteria: Record<string, any>
-) => Promise<EvalResult>;
+export type BadgeEvaluator = (userId: string, criteria: Record<string, any>) => Promise<EvalResult>;
 
 // ============================================
 // Registry
@@ -47,10 +44,9 @@ export const evaluatorRegistry: Map<string, BadgeEvaluator> = new Map();
 
 evaluatorRegistry.set('checkin_count', async (userId, criteria) => {
   const db = Database.getInstance();
-  const result = await db.query(
-    'SELECT COUNT(*)::int as cnt FROM checkins WHERE user_id = $1',
-    [userId]
-  );
+  const result = await db.query('SELECT COUNT(*)::int as cnt FROM checkins WHERE user_id = $1', [
+    userId,
+  ]);
   const current = result.rows[0]?.cnt || 0;
   const target = criteria.threshold || 0;
   return { current, target, earned: current >= target };
@@ -125,9 +121,7 @@ evaluatorRegistry.set('superfan', async (userId, criteria) => {
     current,
     target,
     earned,
-    metadata: earned
-      ? { bandId: row.band_id, bandName: row.band_name }
-      : undefined,
+    metadata: earned ? { bandId: row.band_id, bandName: row.band_name } : undefined,
   };
 });
 

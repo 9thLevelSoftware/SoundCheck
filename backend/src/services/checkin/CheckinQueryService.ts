@@ -42,10 +42,14 @@ export class CheckinQueryService {
           ev.event_date as ev_event_date, ev.event_name as ev_event_name,
           c.toast_count,
           c.comment_count
-          ${currentUserId ? `, EXISTS(
+          ${
+            currentUserId
+              ? `, EXISTS(
             SELECT 1 FROM toasts
             WHERE checkin_id = c.id AND user_id = $2
-          ) as has_user_toasted` : ''}
+          ) as has_user_toasted`
+              : ''
+          }
         FROM checkins c
         LEFT JOIN users u ON c.user_id = u.id
         LEFT JOIN venues v ON c.venue_id = v.id
@@ -82,7 +86,10 @@ export class CheckinQueryService {
 
       return checkin;
     } catch (error) {
-      logger.error('Get check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get check-in error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -169,7 +176,10 @@ export class CheckinQueryService {
 
       return result.rows.map((row: any) => mapDbCheckinToCheckin(row));
     } catch (error) {
-      logger.error('Get activity feed error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get activity feed error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -226,7 +236,10 @@ export class CheckinQueryService {
 
       return result.rows.map((row: any) => mapDbCheckinToCheckin(row));
     } catch (error) {
-      logger.error('Get check-ins error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get check-ins error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -251,7 +264,10 @@ export class CheckinQueryService {
         category: row.category,
       }));
     } catch (error) {
-      logger.error('Get vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get vibe tags error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }

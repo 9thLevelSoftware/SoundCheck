@@ -17,11 +17,7 @@ import { badgeEvalQueue } from '../../jobs/badgeQueue';
 import { cache, CacheKeys } from '../../utils/cache';
 import { getRedis } from '../../utils/redisRateLimiter';
 import { notificationQueue } from '../../jobs/notificationQueue';
-import {
-  Checkin,
-  CreateEventCheckinRequest,
-  CreateManualCheckinRequest,
-} from './types';
+import { Checkin, CreateEventCheckinRequest, CreateManualCheckinRequest } from './types';
 import logger from '../../utils/logger';
 
 // Venue type radius mapping for location verification
@@ -103,9 +99,8 @@ export class CheckinCreatorService {
          LIMIT 1`,
         [eventId]
       );
-      const headlinerBandId = headlinerResult.rows.length > 0
-        ? headlinerResult.rows[0].band_id
-        : null;
+      const headlinerBandId =
+        headlinerResult.rows.length > 0 ? headlinerResult.rows[0].band_id : null;
 
       // INSERT the check-in
       const insertQuery = `
@@ -130,7 +125,7 @@ export class CheckinCreatorService {
           locationLat || null,
           locationLon || null,
           event.event_date,
-          0,                      // rating starts at 0, set via PATCH /ratings
+          0, // rating starts at 0, set via PATCH /ratings
           comment || null,
         ]);
       } catch (error: any) {
@@ -154,7 +149,9 @@ export class CheckinCreatorService {
       try {
         await this.eventService.promoteIfVerified(eventId);
       } catch (err) {
-        logger.debug('Warning: could not check organic verification', { error: err instanceof Error ? err.message : String(err) });
+        logger.debug('Warning: could not check organic verification', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
 
       // Enqueue async badge evaluation (30-second delay for anti-farming)
@@ -169,59 +166,79 @@ export class CheckinCreatorService {
             }
           );
         } catch (err) {
-          logger.debug('Warning: failed to enqueue badge evaluation', { error: err instanceof Error ? err.message : String(err) });
+          logger.debug('Warning: failed to enqueue badge evaluation', {
+            error: err instanceof Error ? err.message : String(err),
+          });
           // Non-fatal -- check-in succeeds even if badge queue fails
         }
       }
 
       // PERF-013: Query follower IDs once and pass to both cache invalidation
       // and Pub/Sub notification, avoiding a duplicate followers query.
-      const followerIdsPromise = this.db.query(
-        'SELECT follower_id FROM user_followers WHERE following_id = $1',
-        [userId]
-      ).then(r => r.rows.map((row: any) => row.follower_id as string))
-       .catch((err) => {
-         logger.debug('Warning: follower query failed', { error: err instanceof Error ? err.message : String(err) });
-         return [] as string[];
-       });
+      const followerIdsPromise = this.db
+        .query('SELECT follower_id FROM user_followers WHERE following_id = $1', [userId])
+        .then((r) => r.rows.map((row: any) => row.follower_id as string))
+        .catch((err) => {
+          logger.debug('Warning: follower query failed', {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return [] as string[];
+        });
 
       // Fire-and-forget: invalidate feed caches for followers and event
-      followerIdsPromise.then(followerIds =>
-        this.invalidateFeedCachesForCheckin(userId, eventId, followerIds)
-      ).catch((err) =>
-        logger.debug('Warning: feed cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
+      followerIdsPromise
+        .then((followerIds) => this.invalidateFeedCachesForCheckin(userId, eventId, followerIds))
+        .catch((err) =>
+          logger.debug('Warning: feed cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       // Fire-and-forget: invalidate concert cred stats cache
-      cache.del(`stats:concert-cred:${userId}`).catch((err) =>
-        logger.debug('Warning: stats cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
+      cache
+        .del(`stats:concert-cred:${userId}`)
+        .catch((err) =>
+          logger.debug('Warning: stats cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
-      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
-        logger.debug('Warning: recommendations cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
+      cache
+        .del(CacheKeys.recommendations(userId))
+        .catch((err) =>
+          logger.debug('Warning: recommendations cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
       // and enqueue batched push notifications for followers
-      followerIdsPromise.then(followerIds =>
-        this.publishCheckinAndNotify(
-          checkinId,
-          userId,
-          eventId,
-          event.event_name || '',
-          event.venue_id,
-          result.rows[0].created_at,
-          followerIds
+      followerIdsPromise
+        .then((followerIds) =>
+          this.publishCheckinAndNotify(
+            checkinId,
+            userId,
+            eventId,
+            event.event_name || '',
+            event.venue_id,
+            result.rows[0].created_at,
+            followerIds
+          )
         )
-      ).catch((err) =>
-        logger.debug('Warning: Pub/Sub publish or notification enqueue failed', { error: err instanceof Error ? err.message : String(err) })
-      );
+        .catch((err) =>
+          logger.debug('Warning: Pub/Sub publish or notification enqueue failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       // Return full check-in with details
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
-      logger.error('Create event check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Create event check-in error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -238,14 +255,15 @@ export class CheckinCreatorService {
    */
   async createManualCheckin(data: CreateManualCheckinRequest): Promise<Checkin> {
     try {
-      const { userId, bandId, venueId, rating, locationLat, locationLon, comment, vibeTagIds } = data;
+      const { userId, bandId, venueId, rating, locationLat, locationLon, comment, vibeTagIds } =
+        data;
 
       // Validate band and venue exist
       const [bandResult, venueResult] = await Promise.all([
         this.db.query('SELECT id, name FROM bands WHERE id = $1', [bandId]),
         this.db.query(
           'SELECT id, name, latitude, longitude, venue_type FROM venues WHERE id = $1',
-          [venueId],
+          [venueId]
         ),
       ]);
 
@@ -269,7 +287,7 @@ export class CheckinCreatorService {
         `SELECT id FROM checkins
          WHERE user_id = $1 AND band_id = $2 AND venue_id = $3
            AND created_at::date = CURRENT_DATE`,
-        [userId, bandId, venueId],
+        [userId, bandId, venueId]
       );
       if (dupCheck.rows.length > 0) {
         const dupErr = new Error('You have already checked in to this band at this venue today');
@@ -283,7 +301,7 @@ export class CheckinCreatorService {
         locationLon,
         venue.latitude ? parseFloat(venue.latitude) : null,
         venue.longitude ? parseFloat(venue.longitude) : null,
-        venue.venue_type,
+        venue.venue_type
       );
 
       // INSERT the check-in (no event_id)
@@ -325,7 +343,7 @@ export class CheckinCreatorService {
             {
               delay: 30000,
               jobId: `badge-eval-${userId}-${checkinId}`,
-            },
+            }
           );
         } catch (err) {
           logger.debug('Warning: failed to enqueue badge evaluation', {
@@ -335,53 +353,54 @@ export class CheckinCreatorService {
       }
 
       // Fire-and-forget: follower queries, cache invalidation, notifications
-      const followerIdsPromise = this.db.query(
-        'SELECT follower_id FROM user_followers WHERE following_id = $1',
-        [userId],
-      ).then(r => r.rows.map((row: any) => row.follower_id as string))
-       .catch((err) => {
-         logger.debug('Warning: follower query failed', {
-           error: err instanceof Error ? err.message : String(err),
-         });
-         return [] as string[];
-       });
+      const followerIdsPromise = this.db
+        .query('SELECT follower_id FROM user_followers WHERE following_id = $1', [userId])
+        .then((r) => r.rows.map((row: any) => row.follower_id as string))
+        .catch((err) => {
+          logger.debug('Warning: follower query failed', {
+            error: err instanceof Error ? err.message : String(err),
+          });
+          return [] as string[];
+        });
 
-      followerIdsPromise.then(followerIds =>
-        this.invalidateFeedCachesForCheckin(userId, null, followerIds),
-      ).catch((err) =>
-        logger.debug('Warning: feed cache invalidation failed', {
-          error: err instanceof Error ? err.message : String(err),
-        }),
-      );
+      followerIdsPromise
+        .then((followerIds) => this.invalidateFeedCachesForCheckin(userId, null, followerIds))
+        .catch((err) =>
+          logger.debug('Warning: feed cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       cache.del(`stats:concert-cred:${userId}`).catch((err) =>
         logger.debug('Warning: stats cache invalidation failed', {
           error: err instanceof Error ? err.message : String(err),
-        }),
+        })
       );
 
       cache.del(CacheKeys.recommendations(userId)).catch((err) =>
         logger.debug('Warning: recommendations cache invalidation failed', {
           error: err instanceof Error ? err.message : String(err),
-        }),
+        })
       );
 
       // Pub/Sub + push notifications
-      followerIdsPromise.then(followerIds =>
-        this.publishCheckinAndNotify(
-          checkinId,
-          userId,
-          null,                              // no eventId
-          `${band.name} at ${venue.name}`,   // descriptive label for notifications
-          venueId,
-          result.rows[0].created_at,
-          followerIds,
-        ),
-      ).catch((err) =>
-        logger.debug('Warning: Pub/Sub publish or notification enqueue failed', {
-          error: err instanceof Error ? err.message : String(err),
-        }),
-      );
+      followerIdsPromise
+        .then((followerIds) =>
+          this.publishCheckinAndNotify(
+            checkinId,
+            userId,
+            null, // no eventId
+            `${band.name} at ${venue.name}`, // descriptive label for notifications
+            venueId,
+            result.rows[0].created_at,
+            followerIds
+          )
+        )
+        .catch((err) =>
+          logger.debug('Warning: Pub/Sub publish or notification enqueue failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
@@ -403,10 +422,9 @@ export class CheckinCreatorService {
   async deleteCheckin(userId: string, checkinId: string): Promise<void> {
     try {
       // Verify user owns the check-in and get venue/band info for cache invalidation
-      const checkin = await this.db.query(
-        'SELECT user_id, venue_id FROM checkins WHERE id = $1',
-        [checkinId]
-      );
+      const checkin = await this.db.query('SELECT user_id, venue_id FROM checkins WHERE id = $1', [
+        checkinId,
+      ]);
 
       if (checkin.rows.length === 0) {
         throw new Error('Check-in not found');
@@ -429,30 +447,49 @@ export class CheckinCreatorService {
       await this.db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
 
       // Fire-and-forget: invalidate concert cred stats cache
-      cache.del(`stats:concert-cred:${userId}`).catch((err) =>
-        logger.debug('Warning: stats cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
+      cache
+        .del(`stats:concert-cred:${userId}`)
+        .catch((err) =>
+          logger.debug('Warning: stats cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       // Fire-and-forget: invalidate recommendation cache (deleted check-in changes genre affinity)
-      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
-        logger.debug('Warning: recommendations cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-      );
+      cache
+        .del(CacheKeys.recommendations(userId))
+        .catch((err) =>
+          logger.debug('Warning: recommendations cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
 
       // Fire-and-forget: invalidate band aggregate caches
       for (const bandId of bandIds) {
-        cache.del(CacheKeys.bandAggregate(bandId)).catch((err) =>
-          logger.debug('Warning: band aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-        );
+        cache
+          .del(CacheKeys.bandAggregate(bandId))
+          .catch((err) =>
+            logger.debug('Warning: band aggregate cache invalidation failed', {
+              error: err instanceof Error ? err.message : String(err),
+            })
+          );
       }
 
       // Fire-and-forget: invalidate venue aggregate cache
       if (venueId) {
-        cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
-          logger.debug('Warning: venue aggregate cache invalidation failed', { error: err instanceof Error ? err.message : String(err) })
-        );
+        cache
+          .del(CacheKeys.venueAggregate(venueId))
+          .catch((err) =>
+            logger.debug('Warning: venue aggregate cache invalidation failed', {
+              error: err instanceof Error ? err.message : String(err),
+            })
+          );
       }
     } catch (error) {
-      logger.error('Delete check-in error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete check-in error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -479,7 +516,7 @@ export class CheckinCreatorService {
     if (venueLat == null || venueLon == null) return false;
 
     const radiusKm = venueType
-      ? (VENUE_TYPE_RADIUS_KM[venueType] || DEFAULT_VENUE_RADIUS_KM)
+      ? VENUE_TYPE_RADIUS_KM[venueType] || DEFAULT_VENUE_RADIUS_KM
       : DEFAULT_VENUE_RADIUS_KM;
 
     const distanceKm = this.haversineDistance(userLat, userLon, venueLat, venueLon);
@@ -497,8 +534,7 @@ export class CheckinCreatorService {
     const dLon = toRad(lon2 - lon1);
     const a =
       Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) * Math.sin(dLon / 2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c;
   }
@@ -524,9 +560,10 @@ export class CheckinCreatorService {
       if (!eventDate) return false;
 
       // Normalize event_date to YYYY-MM-DD string
-      const eventDateStr = typeof eventDate === 'string'
-        ? eventDate.substring(0, 10)
-        : new Date(eventDate).toISOString().substring(0, 10);
+      const eventDateStr =
+        typeof eventDate === 'string'
+          ? eventDate.substring(0, 10)
+          : new Date(eventDate).toISOString().substring(0, 10);
 
       const timezone = event.timezone;
 
@@ -595,7 +632,9 @@ export class CheckinCreatorService {
       return nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes;
     } catch (error) {
       // On any error, be permissive -- allow the check-in
-      logger.debug('Time window validation error, allowing check-in', { error: error instanceof Error ? error.message : String(error) });
+      logger.debug('Time window validation error, allowing check-in', {
+        error: error instanceof Error ? error.message : String(error),
+      });
       return true;
     }
   }
@@ -620,7 +659,10 @@ export class CheckinCreatorService {
         params
       );
     } catch (error) {
-      logger.error('Add vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Add vibe tags error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -637,7 +679,6 @@ export class CheckinCreatorService {
     followerIds: string[]
   ): Promise<void> {
     try {
-
       // Invalidate friends feed + happening_now cache for each follower
       const invalidations: Promise<void>[] = [];
       for (const followerId of followerIds) {
@@ -659,7 +700,10 @@ export class CheckinCreatorService {
 
       await Promise.all(invalidations);
     } catch (error) {
-      logger.error('Feed cache invalidation error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Feed cache invalidation error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Non-fatal: do not rethrow
     }
   }
@@ -692,14 +736,8 @@ export class CheckinCreatorService {
       // PERF-013: followerIds are pre-fetched by caller. Only query user
       // and venue info here (these were already parallelized).
       const [userResult, venueResult] = await Promise.all([
-        this.db.query(
-          'SELECT username, profile_image_url FROM users WHERE id = $1',
-          [userId]
-        ),
-        this.db.query(
-          'SELECT name FROM venues WHERE id = $1',
-          [venueId]
-        ),
+        this.db.query('SELECT username, profile_image_url FROM users WHERE id = $1', [userId]),
+        this.db.query('SELECT name FROM venues WHERE id = $1', [venueId]),
       ]);
 
       const username = userResult.rows[0]?.username || '';
@@ -746,18 +784,27 @@ export class CheckinCreatorService {
 
           // Enqueue delayed job with dedup (one per user per batching window)
           if (notificationQueue) {
-            await notificationQueue.add('send-batch', { userId: followerId }, {
-              delay: 120_000, // 2-minute batching window
-              jobId: `notif-batch:${followerId}`, // dedup: one job per user per window
-            });
+            await notificationQueue.add(
+              'send-batch',
+              { userId: followerId },
+              {
+                delay: 120_000, // 2-minute batching window
+                jobId: `notif-batch:${followerId}`, // dedup: one job per user per window
+              }
+            );
           }
         } catch (err) {
           // Non-fatal per follower -- continue with others
-          logger.debug(`Warning: notification enqueue failed for follower ${followerId}`, { error: err instanceof Error ? err.message : String(err) });
+          logger.debug(`Warning: notification enqueue failed for follower ${followerId}`, {
+            error: err instanceof Error ? err.message : String(err),
+          });
         }
       }
     } catch (error) {
-      logger.error('Pub/Sub publish + notification enqueue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Pub/Sub publish + notification enqueue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Non-fatal: do not rethrow
     }
   }

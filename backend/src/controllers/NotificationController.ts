@@ -42,7 +42,10 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get notifications error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get notifications error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -79,7 +82,10 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get unread count error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get unread count error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -127,7 +133,10 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Mark as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Mark as read error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -165,7 +174,10 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Mark all as read error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Mark all as read error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -213,7 +225,10 @@ export class NotificationController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Delete notification error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete notification error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,

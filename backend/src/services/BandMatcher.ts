@@ -49,13 +49,13 @@ export class BandMatcher {
     name: string,
     externalId?: string,
     genre?: string,
-    imageUrl?: string,
+    imageUrl?: string
   ): Promise<BandMatchResult> {
     // Step 1: Match by external_id (most reliable)
     if (externalId) {
       const extMatch = await this.db.query(
         `SELECT id FROM bands WHERE source = 'ticketmaster' AND external_id = $1`,
-        [externalId],
+        [externalId]
       );
       if (extMatch.rows.length > 0) {
         return { bandId: extMatch.rows[0].id, matchType: 'external_id' };
@@ -65,7 +65,7 @@ export class BandMatcher {
     // Step 2: Exact case-insensitive name match
     const exactMatch = await this.db.query(
       `SELECT id FROM bands WHERE LOWER(name) = LOWER($1) AND is_active = true LIMIT 1`,
-      [name],
+      [name]
     );
     if (exactMatch.rows.length > 0) {
       const bandId = exactMatch.rows[0].id;
@@ -73,7 +73,7 @@ export class BandMatcher {
       if (externalId) {
         await this.db.query(
           `UPDATE bands SET external_id = $1, source = 'ticketmaster' WHERE id = $2 AND external_id IS NULL`,
-          [externalId, bandId],
+          [externalId, bandId]
         );
       }
       return { bandId, matchType: 'exact' };
@@ -88,7 +88,7 @@ export class BandMatcher {
          AND is_active = true
        ORDER BY score DESC
        LIMIT 1`,
-      [name],
+      [name]
     );
     if (fuzzyMatch.rows.length > 0) {
       const bandId = fuzzyMatch.rows[0].id;
@@ -96,7 +96,7 @@ export class BandMatcher {
       if (externalId) {
         await this.db.query(
           `UPDATE bands SET external_id = $1, source = 'ticketmaster' WHERE id = $2 AND external_id IS NULL`,
-          [externalId, bandId],
+          [externalId, bandId]
         );
       }
       return {
@@ -111,7 +111,7 @@ export class BandMatcher {
       `INSERT INTO bands (name, genre, image_url, source, external_id)
        VALUES ($1, $2, $3, 'ticketmaster', $4)
        RETURNING id`,
-      [name, genre || null, imageUrl || null, externalId || null],
+      [name, genre || null, imageUrl || null, externalId || null]
     );
     return { bandId: newBand.rows[0].id, matchType: 'created' };
   }
@@ -127,9 +127,7 @@ export class BandMatcher {
    * The upsert updates name, address, lat, lon on conflict to keep data fresh.
    * Uses (xmax = 0) to detect whether the row was inserted or updated.
    */
-  async matchOrCreateVenue(
-    tmVenue: NormalizedEvent['venue'],
-  ): Promise<VenueMatchResult> {
+  async matchOrCreateVenue(tmVenue: NormalizedEvent['venue']): Promise<VenueMatchResult> {
     // Step 1: If we have an external ID, use upsert
     if (tmVenue.externalId) {
       const result = await this.db.query(
@@ -156,7 +154,7 @@ export class BandMatcher {
           tmVenue.lon,
           tmVenue.timezone,
           tmVenue.externalId,
-        ],
+        ]
       );
       return {
         venueId: result.rows[0].id,
@@ -170,7 +168,7 @@ export class BandMatcher {
        WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2)
        AND is_active = true
        LIMIT 1`,
-      [tmVenue.name, tmVenue.city],
+      [tmVenue.name, tmVenue.city]
     );
     if (nameMatch.rows.length > 0) {
       return { venueId: nameMatch.rows[0].id, isNew: false };
@@ -193,7 +191,7 @@ export class BandMatcher {
         tmVenue.lat,
         tmVenue.lon,
         tmVenue.timezone,
-      ],
+      ]
     );
     return { venueId: newVenue.rows[0].id, isNew: true };
   }

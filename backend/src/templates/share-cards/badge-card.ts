@@ -31,7 +31,11 @@ interface SatoriElement {
 // Helpers
 // ============================================
 
-function el(type: string, props: Record<string, any>, ...children: (string | SatoriElement)[]): SatoriElement {
+function el(
+  type: string,
+  props: Record<string, any>,
+  ...children: (string | SatoriElement)[]
+): SatoriElement {
   return {
     type,
     props: {
@@ -44,12 +48,12 @@ function el(type: string, props: Record<string, any>, ...children: (string | Sat
 /** Map badge categories to accent colors */
 function categoryColor(category: string): string {
   const colors: Record<string, string> = {
-    checkin_count: '#FBBF24',   // amber
-    genre_explorer: '#34D399',  // emerald
-    unique_venues: '#60A5FA',   // blue
-    superfan: '#F472B6',        // pink
+    checkin_count: '#FBBF24', // amber
+    genre_explorer: '#34D399', // emerald
+    unique_venues: '#60A5FA', // blue
+    superfan: '#F472B6', // pink
     festival_warrior: '#FB923C', // orange
-    road_warrior: '#A78BFA',    // violet
+    road_warrior: '#A78BFA', // violet
   };
   return colors[category] || '#A855F7';
 }
@@ -74,26 +78,30 @@ function categoryLabel(category: string): string {
 export function badgeCardOG(data: BadgeCardData): SatoriElement {
   const accent = categoryColor(data.badgeCategory);
 
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '48px 56px',
-      fontFamily: 'Inter',
-    },
-  },
-    // Top row: branding
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: '24px',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '48px 56px',
+        fontFamily: 'Inter',
       },
     },
+    // Top row: branding
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '24px',
+        },
+      },
       el('div', {
         style: {
           display: 'flex',
@@ -104,100 +112,134 @@ export function badgeCardOG(data: BadgeCardData): SatoriElement {
           marginRight: '10px',
         },
       }),
-      el('span', {
-        style: {
-          color: '#A855F7',
-          fontSize: '20px',
-          letterSpacing: '0.1em',
+      el(
+        'span',
+        {
+          style: {
+            color: '#A855F7',
+            fontSize: '20px',
+            letterSpacing: '0.1em',
+          },
         },
-      }, 'SOUNDCHECK'),
+        'SOUNDCHECK'
+      )
     ),
 
     // Main content
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        flex: '1',
-        justifyContent: 'center',
-      },
-    },
-      // Category label
-      el('div', {
-        style: {
-          color: accent,
-          fontSize: '18px',
-          letterSpacing: '0.08em',
-          marginBottom: '12px',
-        },
-      }, categoryLabel(data.badgeCategory).toUpperCase()),
-
-      // Badge icon placeholder (colored circle)
-      el('div', {
+    el(
+      'div',
+      {
         style: {
           display: 'flex',
-          width: '64px',
-          height: '64px',
-          borderRadius: '50%',
-          backgroundColor: accent,
-          marginBottom: '20px',
-          alignItems: 'center',
+          flexDirection: 'column',
+          flex: '1',
           justifyContent: 'center',
         },
       },
-        el('span', {
+      // Category label
+      el(
+        'div',
+        {
           style: {
-            fontSize: '32px',
+            color: accent,
+            fontSize: '18px',
+            letterSpacing: '0.08em',
+            marginBottom: '12px',
           },
-        }, '\uD83C\uDFC6'), // trophy emoji
+        },
+        categoryLabel(data.badgeCategory).toUpperCase()
+      ),
+
+      // Badge icon placeholder (colored circle)
+      el(
+        'div',
+        {
+          style: {
+            display: 'flex',
+            width: '64px',
+            height: '64px',
+            borderRadius: '50%',
+            backgroundColor: accent,
+            marginBottom: '20px',
+            alignItems: 'center',
+            justifyContent: 'center',
+          },
+        },
+        el(
+          'span',
+          {
+            style: {
+              fontSize: '32px',
+            },
+          },
+          '\uD83C\uDFC6'
+        ) // trophy emoji
       ),
 
       // Badge name
-      el('div', {
-        style: {
-          color: '#FFFFFF',
-          fontSize: '48px',
-          fontWeight: 700,
-          lineHeight: '1.1',
-          marginBottom: '12px',
-          overflow: 'hidden',
+      el(
+        'div',
+        {
+          style: {
+            color: '#FFFFFF',
+            fontSize: '48px',
+            fontWeight: 700,
+            lineHeight: '1.1',
+            marginBottom: '12px',
+            overflow: 'hidden',
+          },
         },
-      }, data.badgeName),
+        data.badgeName
+      ),
 
       // Description
-      el('div', {
-        style: {
-          color: '#9CA3AF',
-          fontSize: '22px',
-          lineHeight: '1.4',
-          marginBottom: '8px',
-          overflow: 'hidden',
+      el(
+        'div',
+        {
+          style: {
+            color: '#9CA3AF',
+            fontSize: '22px',
+            lineHeight: '1.4',
+            marginBottom: '8px',
+            overflow: 'hidden',
+          },
         },
-      }, data.badgeDescription),
+        data.badgeDescription
+      )
     ),
 
     // Bottom: unlocked by
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        },
       },
-    },
-      el('span', {
-        style: {
-          color: '#6B7280',
-          fontSize: '18px',
+      el(
+        'span',
+        {
+          style: {
+            color: '#6B7280',
+            fontSize: '18px',
+          },
         },
-      }, `Unlocked by @${data.username}`),
-      el('span', {
-        style: {
-          color: '#4B5563',
-          fontSize: '16px',
+        `Unlocked by @${data.username}`
+      ),
+      el(
+        'span',
+        {
+          style: {
+            color: '#4B5563',
+            fontSize: '16px',
+          },
         },
-      }, data.unlockedAt),
-    ),
+        data.unlockedAt
+      )
+    )
   );
 }
 
@@ -208,28 +250,32 @@ export function badgeCardOG(data: BadgeCardData): SatoriElement {
 export function badgeCardStories(data: BadgeCardData): SatoriElement {
   const accent = categoryColor(data.badgeCategory);
 
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '120px 64px',
-      fontFamily: 'Inter',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  },
-    // Branding
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '120px 64px',
+        fontFamily: 'Inter',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: '80px',
       },
     },
+    // Branding
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '80px',
+        },
+      },
       el('div', {
         style: {
           display: 'flex',
@@ -240,89 +286,119 @@ export function badgeCardStories(data: BadgeCardData): SatoriElement {
           marginRight: '12px',
         },
       }),
-      el('span', {
-        style: {
-          color: '#A855F7',
-          fontSize: '24px',
-          letterSpacing: '0.1em',
+      el(
+        'span',
+        {
+          style: {
+            color: '#A855F7',
+            fontSize: '24px',
+            letterSpacing: '0.1em',
+          },
         },
-      }, 'SOUNDCHECK'),
+        'SOUNDCHECK'
+      )
     ),
 
     // Category label
-    el('div', {
-      style: {
-        color: accent,
-        fontSize: '22px',
-        letterSpacing: '0.08em',
-        marginBottom: '32px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: accent,
+          fontSize: '22px',
+          letterSpacing: '0.08em',
+          marginBottom: '32px',
+          display: 'flex',
+        },
       },
-    }, categoryLabel(data.badgeCategory).toUpperCase()),
+      categoryLabel(data.badgeCategory).toUpperCase()
+    ),
 
     // Badge icon placeholder (larger for stories)
-    el('div', {
-      style: {
-        display: 'flex',
-        width: '120px',
-        height: '120px',
-        borderRadius: '50%',
-        backgroundColor: accent,
-        marginBottom: '48px',
-        alignItems: 'center',
-        justifyContent: 'center',
-      },
-    },
-      el('span', {
+    el(
+      'div',
+      {
         style: {
-          fontSize: '56px',
+          display: 'flex',
+          width: '120px',
+          height: '120px',
+          borderRadius: '50%',
+          backgroundColor: accent,
+          marginBottom: '48px',
+          alignItems: 'center',
+          justifyContent: 'center',
         },
-      }, '\uD83C\uDFC6'), // trophy emoji
+      },
+      el(
+        'span',
+        {
+          style: {
+            fontSize: '56px',
+          },
+        },
+        '\uD83C\uDFC6'
+      ) // trophy emoji
     ),
 
     // Badge name
-    el('div', {
-      style: {
-        color: '#FFFFFF',
-        fontSize: '64px',
-        fontWeight: 700,
-        lineHeight: '1.1',
-        textAlign: 'center',
-        marginBottom: '24px',
-        overflow: 'hidden',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#FFFFFF',
+          fontSize: '64px',
+          fontWeight: 700,
+          lineHeight: '1.1',
+          textAlign: 'center',
+          marginBottom: '24px',
+          overflow: 'hidden',
+          display: 'flex',
+        },
       },
-    }, data.badgeName),
+      data.badgeName
+    ),
 
     // Description
-    el('div', {
-      style: {
-        color: '#9CA3AF',
-        fontSize: '28px',
-        lineHeight: '1.4',
-        textAlign: 'center',
-        marginBottom: '64px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#9CA3AF',
+          fontSize: '28px',
+          lineHeight: '1.4',
+          textAlign: 'center',
+          marginBottom: '64px',
+          display: 'flex',
+        },
       },
-    }, data.badgeDescription),
+      data.badgeDescription
+    ),
 
     // Unlocked by
-    el('div', {
-      style: {
-        color: '#6B7280',
-        fontSize: '22px',
-        marginBottom: '12px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#6B7280',
+          fontSize: '22px',
+          marginBottom: '12px',
+          display: 'flex',
+        },
       },
-    }, `Unlocked by @${data.username}`),
+      `Unlocked by @${data.username}`
+    ),
 
     // Date
-    el('div', {
-      style: {
-        color: '#4B5563',
-        fontSize: '18px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#4B5563',
+          fontSize: '18px',
+          display: 'flex',
+        },
       },
-    }, data.unlockedAt),
+      data.unlockedAt
+    )
   );
 }

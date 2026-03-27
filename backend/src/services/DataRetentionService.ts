@@ -66,10 +66,9 @@ export class DataRetentionService {
    */
   async requestAccountDeletion(userId: string): Promise<DeletionRequestResult> {
     // Verify user exists
-    const userCheck = await this.db.query(
-      'SELECT id, is_active FROM users WHERE id = $1',
-      [userId]
-    );
+    const userCheck = await this.db.query('SELECT id, is_active FROM users WHERE id = $1', [
+      userId,
+    ]);
 
     if (userCheck.rows.length === 0) {
       throw new Error('User not found');
@@ -110,10 +109,9 @@ export class DataRetentionService {
     };
 
     // Deactivate the user account immediately
-    await this.db.query(
-      'UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1',
-      [userId]
-    );
+    await this.db.query('UPDATE users SET is_active = false, updated_at = NOW() WHERE id = $1', [
+      userId,
+    ]);
 
     return {
       success: true,
@@ -133,10 +131,7 @@ export class DataRetentionService {
    */
   async executeAccountDeletion(userId: string): Promise<DeletionExecutionResult> {
     // Verify user exists before starting transaction
-    const userCheck = await this.db.query(
-      'SELECT id, email FROM users WHERE id = $1',
-      [userId]
-    );
+    const userCheck = await this.db.query('SELECT id, email FROM users WHERE id = $1', [userId]);
 
     if (userCheck.rows.length === 0) {
       throw new Error('User not found');
@@ -175,17 +170,13 @@ export class DataRetentionService {
       deletedFollows = followsResult.rowCount || 0;
 
       // 3. Delete wishlists
-      const wishlistResult = await client.query(
-        'DELETE FROM user_wishlist WHERE user_id = $1',
-        [userId]
-      );
+      const wishlistResult = await client.query('DELETE FROM user_wishlist WHERE user_id = $1', [
+        userId,
+      ]);
       deletedWishlists = wishlistResult.rowCount || 0;
 
       // 3a. DB-010: Delete user badges (not purged in original implementation)
-      await client.query(
-        'DELETE FROM user_badges WHERE user_id = $1',
-        [userId]
-      );
+      await client.query('DELETE FROM user_badges WHERE user_id = $1', [userId]);
 
       // 3b. DB-010: Delete band ratings from user's check-ins
       await client.query(
@@ -195,28 +186,16 @@ export class DataRetentionService {
       );
 
       // 3c. DB-010: Delete toasts given by this user
-      await client.query(
-        'DELETE FROM toasts WHERE user_id = $1',
-        [userId]
-      );
+      await client.query('DELETE FROM toasts WHERE user_id = $1', [userId]);
 
       // 3d. DB-010: Delete comments made by this user
-      await client.query(
-        'DELETE FROM checkin_comments WHERE user_id = $1',
-        [userId]
-      );
+      await client.query('DELETE FROM checkin_comments WHERE user_id = $1', [userId]);
 
       // 3e. DB-010: Delete user's social account links
-      await client.query(
-        'DELETE FROM user_social_accounts WHERE user_id = $1',
-        [userId]
-      );
+      await client.query('DELETE FROM user_social_accounts WHERE user_id = $1', [userId]);
 
       // 3f. DB-010: Delete user consents
-      await client.query(
-        'DELETE FROM user_consents WHERE user_id = $1',
-        [userId]
-      );
+      await client.query('DELETE FROM user_consents WHERE user_id = $1', [userId]);
 
       // 4. Revoke all refresh tokens
       const tokenResult = await client.query(
@@ -311,10 +290,9 @@ export class DataRetentionService {
     );
 
     // Reactivate the user account
-    await this.db.query(
-      'UPDATE users SET is_active = true, updated_at = NOW() WHERE id = $1',
-      [userId]
-    );
+    await this.db.query('UPDATE users SET is_active = true, updated_at = NOW() WHERE id = $1', [
+      userId,
+    ]);
 
     const row = result.rows[0];
     return {
@@ -373,10 +351,9 @@ export class DataRetentionService {
     for (const deletion of pendingDeletions) {
       try {
         // Mark as processing
-        await this.db.query(
-          `UPDATE deletion_requests SET status = 'processing' WHERE id = $1`,
-          [deletion.id]
-        );
+        await this.db.query(`UPDATE deletion_requests SET status = 'processing' WHERE id = $1`, [
+          deletion.id,
+        ]);
 
         // Execute deletion
         await this.executeAccountDeletion(deletion.userId);
@@ -387,12 +364,14 @@ export class DataRetentionService {
         errors.push({ userId: deletion.userId, error: errorMessage });
 
         // Revert status to pending on failure
-        await this.db.query(
-          `UPDATE deletion_requests SET status = 'pending' WHERE id = $1`,
-          [deletion.id]
-        );
+        await this.db.query(`UPDATE deletion_requests SET status = 'pending' WHERE id = $1`, [
+          deletion.id,
+        ]);
 
-        logger.error(`Failed to process deletion for user ${deletion.userId}`, { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger.error(`Failed to process deletion for user ${deletion.userId}`, {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     }
 

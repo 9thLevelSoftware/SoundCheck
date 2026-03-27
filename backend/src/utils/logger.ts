@@ -51,7 +51,8 @@ if (process.env.NODE_ENV !== 'production') {
       format: winston.format.combine(
         winston.format.colorize({ all: true }),
         winston.format.printf(
-          (info) => `${info.timestamp} ${info.level}: ${info.message}${info.stack ? '\n' + info.stack : ''}`
+          (info) =>
+            `${info.timestamp} ${info.level}: ${info.message}${info.stack ? '\n' + info.stack : ''}`
         )
       ),
     })

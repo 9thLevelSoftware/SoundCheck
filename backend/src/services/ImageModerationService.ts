@@ -53,10 +53,9 @@ export class ImageModerationService {
       this.configured = true;
       logInfo('ImageModerationService: Cloud Vision SafeSearch configured');
     } catch (error: any) {
-      logWarn(
-        'ImageModerationService: Cloud Vision not configured. Image scanning disabled.',
-        { error: error.message }
-      );
+      logWarn('ImageModerationService: Cloud Vision not configured. Image scanning disabled.', {
+        error: error.message,
+      });
       this.configured = false;
     }
   }

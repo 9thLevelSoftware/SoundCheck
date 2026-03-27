@@ -37,7 +37,7 @@ export async function registerSyncJobs(): Promise<void> {
           pattern: '0 */4 * * *', // At minute 0, every 4 hours
         },
         jobId: 'scheduled-event-sync',
-      },
+      }
     );
 
     // Cancellation check: daily at 6 AM UTC
@@ -49,10 +49,12 @@ export async function registerSyncJobs(): Promise<void> {
           pattern: '0 6 * * *', // At 6:00 AM UTC daily
         },
         jobId: 'daily-cancellation-check',
-      },
+      }
     );
 
-    logger.info('Registered sync jobs: scheduled-sync (every 4h), check-cancellations (daily 6AM UTC)');
+    logger.info(
+      'Registered sync jobs: scheduled-sync (every 4h), check-cancellations (daily 6AM UTC)'
+    );
   } catch (err) {
     logger.error('Failed to register sync jobs', {
       error: (err as Error).message,
@@ -80,7 +82,7 @@ export async function triggerManualSync(regionId?: string): Promise<string | nul
       {
         // No repeat -- one-off job
         priority: 1, // Higher priority than scheduled syncs
-      },
+      }
     );
 
     logger.info('Manual sync triggered', { jobId: job.id, regionId });

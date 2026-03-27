@@ -98,14 +98,46 @@ async function seedAccount(
   const baseOffset = accountIndex * 7; // stagger events across accounts
 
   const eventConfigs = [
-    { venueIdx: accountIndex % venues.length, daysAgo: 75 + baseOffset, name: `${config.firstName}'s Rock Night` },
-    { venueIdx: (accountIndex + 1) % venues.length, daysAgo: 60 + baseOffset, name: `${config.firstName}'s Sessions` },
-    { venueIdx: (accountIndex + 2) % venues.length, daysAgo: 45 + baseOffset, name: 'Underground Show' },
-    { venueIdx: (accountIndex + 3) % venues.length, daysAgo: 30 + baseOffset, name: 'Electric Beats Night' },
-    { venueIdx: (accountIndex + 4) % venues.length, daysAgo: 20 + baseOffset, name: 'Jazz & Blues Evening' },
-    { venueIdx: (accountIndex + 5) % venues.length, daysAgo: 10 + baseOffset, name: 'Metal Mayhem' },
-    { venueIdx: (accountIndex + 6) % venues.length, daysAgo: 5 + baseOffset, name: 'Folk Festival' },
-    { venueIdx: (accountIndex + 7) % venues.length, daysAgo: 3 + baseOffset, name: 'Late Night Showcase' },
+    {
+      venueIdx: accountIndex % venues.length,
+      daysAgo: 75 + baseOffset,
+      name: `${config.firstName}'s Rock Night`,
+    },
+    {
+      venueIdx: (accountIndex + 1) % venues.length,
+      daysAgo: 60 + baseOffset,
+      name: `${config.firstName}'s Sessions`,
+    },
+    {
+      venueIdx: (accountIndex + 2) % venues.length,
+      daysAgo: 45 + baseOffset,
+      name: 'Underground Show',
+    },
+    {
+      venueIdx: (accountIndex + 3) % venues.length,
+      daysAgo: 30 + baseOffset,
+      name: 'Electric Beats Night',
+    },
+    {
+      venueIdx: (accountIndex + 4) % venues.length,
+      daysAgo: 20 + baseOffset,
+      name: 'Jazz & Blues Evening',
+    },
+    {
+      venueIdx: (accountIndex + 5) % venues.length,
+      daysAgo: 10 + baseOffset,
+      name: 'Metal Mayhem',
+    },
+    {
+      venueIdx: (accountIndex + 6) % venues.length,
+      daysAgo: 5 + baseOffset,
+      name: 'Folk Festival',
+    },
+    {
+      venueIdx: (accountIndex + 7) % venues.length,
+      daysAgo: 3 + baseOffset,
+      name: 'Late Night Showcase',
+    },
   ];
 
   // Each account gets 5-8 events depending on account index
@@ -160,7 +192,7 @@ async function seedAccount(
     eventDate.setDate(eventDate.getDate() - ev.daysAgo);
 
     const isVerified = i % 3 !== 2; // ~66% verified
-    const venueRating = i % 2 === 0 ? (3.5 + (i % 4) * 0.5) : null;
+    const venueRating = i % 2 === 0 ? 3.5 + (i % 4) * 0.5 : null;
 
     const result = await db.query(
       `INSERT INTO checkins (user_id, event_id, venue_rating, is_verified, event_date, rating)

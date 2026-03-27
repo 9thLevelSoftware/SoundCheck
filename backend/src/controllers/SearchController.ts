@@ -39,7 +39,7 @@ export class SearchController {
       let types: ('band' | 'venue' | 'event' | 'user')[] | undefined;
 
       if (req.query.types) {
-        const rawTypes = (req.query.types as string).split(',').map(t => t.trim().toLowerCase());
+        const rawTypes = (req.query.types as string).split(',').map((t) => t.trim().toLowerCase());
         types = rawTypes.filter((t): t is 'band' | 'venue' | 'event' | 'user' =>
           validTypes.includes(t as any)
         );
@@ -72,7 +72,10 @@ export class SearchController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,

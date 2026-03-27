@@ -17,7 +17,12 @@ router.get('/rarity', generalRateLimit, badgeController.getBadgeRarity);
 // Protected routes (authentication required)
 router.get('/my-badges', authenticateToken, generalRateLimit, badgeController.getMyBadges);
 router.get('/my-progress', authenticateToken, generalRateLimit, badgeController.getMyBadgeProgress);
-router.post('/check-awards', authenticateToken, badgeCheckRateLimit, badgeController.checkAndAwardBadges);
+router.post(
+  '/check-awards',
+  authenticateToken,
+  badgeCheckRateLimit,
+  badgeController.checkAndAwardBadges
+);
 
 // Parameterized routes (must come after named routes)
 router.get('/user/:userId', generalRateLimit, badgeController.getUserBadges);

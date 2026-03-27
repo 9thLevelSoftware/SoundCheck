@@ -8,7 +8,12 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 // Initialize Sentry EARLY, before other imports that might throw errors
-import { initSentry, setupSentryForExpress, closeSentry, captureException as sentryCaptureException } from './utils/sentry';
+import {
+  initSentry,
+  setupSentryForExpress,
+  closeSentry,
+  captureException as sentryCaptureException,
+} from './utils/sentry';
 initSentry();
 
 // Initialize Redis for distributed rate limiting and caching
@@ -87,33 +92,38 @@ app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 
 // Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      imgSrc: ["'self'", "data:", "https:"],
-      scriptSrc: ["'self'"],
+app.use(
+  helmet({
+    contentSecurityPolicy: {
+      directives: {
+        defaultSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'"],
+        imgSrc: ["'self'", 'data:', 'https:'],
+        scriptSrc: ["'self'"],
+      },
     },
-  },
-  crossOriginEmbedderPolicy: true,
-  crossOriginOpenerPolicy: true,
-  crossOriginResourcePolicy: { policy: "same-site" },
-  dnsPrefetchControl: true,
-  frameguard: { action: 'deny' },
-  hidePoweredBy: true,
-  hsts: true,
-  ieNoOpen: true,
-  noSniff: true,
-  originAgentCluster: true,
-  permittedCrossDomainPolicies: false,
-  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
-  xssFilter: true,
-}));
+    crossOriginEmbedderPolicy: true,
+    crossOriginOpenerPolicy: true,
+    crossOriginResourcePolicy: { policy: 'same-site' },
+    dnsPrefetchControl: true,
+    frameguard: { action: 'deny' },
+    hidePoweredBy: true,
+    hsts: true,
+    ieNoOpen: true,
+    noSniff: true,
+    originAgentCluster: true,
+    permittedCrossDomainPolicies: false,
+    referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+    xssFilter: true,
+  })
+);
 
 // CORS configuration - Allow mobile apps and web clients
 const corsOptions = {
-  origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+  origin: function (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) {
     // Allow requests with no origin (mobile apps, Postman, etc.)
     if (!origin) return callback(null, true);
 
@@ -136,7 +146,7 @@ const corsOptions = {
       return callback(null, true);
     }
 
-    const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
+    const allowedOrigins = corsOrigin.split(',').map((o) => o.trim());
     if (allowedOrigins.includes(origin)) {
       return callback(null, true);
     }
@@ -244,9 +254,14 @@ app.get('/', (req, res) => {
 });
 
 // Debug: Sentry test route (admin-only) — throws intentional error for verification
-app.get('/api/debug/sentry-test', authenticateToken, requireAdmin(), (req: express.Request, res: express.Response) => {
-  throw new Error('Sentry test error — this is intentional');
-});
+app.get(
+  '/api/debug/sentry-test',
+  authenticateToken,
+  requireAdmin(),
+  (req: express.Request, res: express.Response) => {
+    throw new Error('Sentry test error — this is intentional');
+  }
+);
 
 // 404 handler
 app.use('*', (req, res) => {
@@ -289,11 +304,12 @@ app.use((error: any, req: express.Request, res: express.Response, next: express.
   // Build response
   const response: ApiResponse = {
     success: false,
-    error: process.env.NODE_ENV === 'development'
-      ? error.message
-      : statusCode >= 500
-        ? 'Internal server error'
-        : error.message || 'Request failed',
+    error:
+      process.env.NODE_ENV === 'development'
+        ? error.message
+        : statusCode >= 500
+          ? 'Internal server error'
+          : error.message || 'Request failed',
   };
 
   // Include stack trace only in development
@@ -334,7 +350,9 @@ const startServer = async () => {
 
     // Warn about CORS configuration in production
     if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
-      logWarn('CORS_ORIGIN not set - browser-origin requests will be REJECTED. Mobile (no-origin) requests still allowed. Set CORS_ORIGIN to enable web clients.');
+      logWarn(
+        'CORS_ORIGIN not set - browser-origin requests will be REJECTED. Mobile (no-origin) requests still allowed. Set CORS_ORIGIN to enable web clients.'
+      );
     }
 
     // Initialize WebSocket server
@@ -356,10 +374,9 @@ const startServer = async () => {
     badgeWorker = startBadgeEvalWorker();
     notifWorker = startNotificationWorker();
     modWorker = startModerationWorker();
-    registerSyncJobs().catch(err =>
-      logError('Failed to register sync jobs', { error: err.message || err }),
+    registerSyncJobs().catch((err) =>
+      logError('Failed to register sync jobs', { error: err.message || err })
     );
-
   } catch (error) {
     logError('Failed to start server', { error });
     process.exit(1);

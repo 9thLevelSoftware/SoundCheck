@@ -40,8 +40,11 @@ export class BandController {
 
       res.status(201).json(response);
     } catch (error) {
-      logger.error('Create band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Create band error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: error instanceof Error ? error.message : 'Failed to create band',
@@ -76,8 +79,11 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get bands error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch bands',
@@ -119,7 +125,10 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get band by ID error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get band by ID error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -149,7 +158,12 @@ export class BandController {
       const isOwner = await this.bandService.isClaimedOwner(id, req.user.id);
 
       if (!isAdmin && !isOwner) {
-        res.status(403).json({ success: false, error: 'Only admins or claimed owners can update this band' } as ApiResponse);
+        res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Only admins or claimed owners can update this band',
+          } as ApiResponse);
         return;
       }
 
@@ -164,7 +178,10 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Update band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Update band error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -194,7 +211,12 @@ export class BandController {
       const isOwner = await this.bandService.isClaimedOwner(id, req.user.id);
 
       if (!isAdmin && !isOwner) {
-        res.status(403).json({ success: false, error: 'Only admins or claimed owners can delete this band' } as ApiResponse);
+        res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Only admins or claimed owners can delete this band',
+          } as ApiResponse);
         return;
       }
 
@@ -207,7 +229,10 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Delete band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete band error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -234,8 +259,11 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get popular bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get popular bands error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch popular bands',
@@ -261,8 +289,11 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get trending bands error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get trending bands error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch trending bands',
@@ -290,8 +321,11 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get bands by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get bands by genre error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch bands by genre',
@@ -316,8 +350,11 @@ export class BandController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get genres error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-      
+      logger.error('Get genres error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
+
       const response: ApiResponse = {
         success: false,
         error: 'Failed to fetch genres',
@@ -350,12 +387,17 @@ export class BandController {
       const response: ApiResponse = {
         success: true,
         data: band,
-        message: band.alreadyExists ? 'Band already exists in database' : 'Band imported successfully',
+        message: band.alreadyExists
+          ? 'Band already exists in database'
+          : 'Band imported successfully',
       };
 
       res.status(band.alreadyExists ? 200 : 201).json(response);
     } catch (error) {
-      logger.error('Import band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Import band error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,

@@ -117,9 +117,7 @@ describe('Token Routes', () => {
     });
 
     it('should return 400 when refresh token is missing', async () => {
-      const response = await request(app)
-        .post('/api/tokens/refresh')
-        .send({});
+      const response = await request(app).post('/api/tokens/refresh').send({});
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -127,9 +125,7 @@ describe('Token Routes', () => {
     });
 
     it('should return 400 when refresh token has invalid format', async () => {
-      const response = await request(app)
-        .post('/api/tokens/refresh')
-        .send({ refreshToken: 12345 }); // Not a string
+      const response = await request(app).post('/api/tokens/refresh').send({ refreshToken: 12345 }); // Not a string
 
       expect(response.status).toBe(400);
       expect(response.body.success).toBe(false);
@@ -283,9 +279,7 @@ describe('Token Routes', () => {
     });
 
     it('should return success when no token provided (idempotent)', async () => {
-      const response = await request(app)
-        .post('/api/tokens/revoke')
-        .send({});
+      const response = await request(app).post('/api/tokens/revoke').send({});
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
@@ -296,9 +290,7 @@ describe('Token Routes', () => {
     });
 
     it('should ignore non-string token values', async () => {
-      const response = await request(app)
-        .post('/api/tokens/revoke')
-        .send({ refreshToken: 12345 }); // Not a string
+      const response = await request(app).post('/api/tokens/revoke').send({ refreshToken: 12345 }); // Not a string
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);

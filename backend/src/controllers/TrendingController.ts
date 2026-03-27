@@ -56,7 +56,10 @@ export class TrendingController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get trending error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get trending error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,

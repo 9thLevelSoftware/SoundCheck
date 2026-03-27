@@ -1,9 +1,5 @@
 import { Request, Response, NextFunction } from 'express';
-import {
-  authenticateToken,
-  optionalAuth,
-  requireAdmin,
-} from '../../middleware/auth';
+import { authenticateToken, optionalAuth, requireAdmin } from '../../middleware/auth';
 import { AuthUtils } from '../../utils/auth';
 import { UserService } from '../../services/UserService';
 import { User } from '../../types';
@@ -75,15 +71,9 @@ describe('Auth Middleware', () => {
       const mockFindById = jest.fn().mockResolvedValue(mockUser);
       MockedUserService.prototype.findById = mockFindById;
 
-      await authenticateToken(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
 
-      expect(MockedAuthUtils.extractTokenFromHeader).toHaveBeenCalledWith(
-        'Bearer valid-token'
-      );
+      expect(MockedAuthUtils.extractTokenFromHeader).toHaveBeenCalledWith('Bearer valid-token');
       expect(MockedAuthUtils.verifyToken).toHaveBeenCalledWith('valid-token');
       expect(mockFindById).toHaveBeenCalledWith('user-123');
       expect(mockRequest.user).toEqual(mockUser);
@@ -96,11 +86,7 @@ describe('Auth Middleware', () => {
 
       MockedAuthUtils.extractTokenFromHeader.mockReturnValue(null);
 
-      await authenticateToken(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(401);
       expect(mockJson).toHaveBeenCalledWith({
@@ -116,11 +102,7 @@ describe('Auth Middleware', () => {
       MockedAuthUtils.extractTokenFromHeader.mockReturnValue('invalid-token');
       MockedAuthUtils.verifyToken.mockReturnValue(null);
 
-      await authenticateToken(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(401);
       expect(mockJson).toHaveBeenCalledWith({
@@ -144,11 +126,7 @@ describe('Auth Middleware', () => {
       const mockFindById = jest.fn().mockResolvedValue(inactiveUser);
       MockedUserService.prototype.findById = mockFindById;
 
-      await authenticateToken(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(401);
       expect(mockJson).toHaveBeenCalledWith({
@@ -171,11 +149,7 @@ describe('Auth Middleware', () => {
       const mockFindById = jest.fn().mockResolvedValue(null);
       MockedUserService.prototype.findById = mockFindById;
 
-      await authenticateToken(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(401);
       expect(mockJson).toHaveBeenCalledWith({
@@ -201,11 +175,7 @@ describe('Auth Middleware', () => {
       // Mock console.error to suppress error output in tests
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await authenticateToken(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockStatus).toHaveBeenCalledWith(500);
       expect(mockJson).toHaveBeenCalledWith({
@@ -232,11 +202,7 @@ describe('Auth Middleware', () => {
       const mockFindById = jest.fn().mockResolvedValue(mockUser);
       MockedUserService.prototype.findById = mockFindById;
 
-      await optionalAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await optionalAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockRequest.user).toEqual(mockUser);
       expect(mockNext).toHaveBeenCalled();
@@ -248,11 +214,7 @@ describe('Auth Middleware', () => {
 
       MockedAuthUtils.extractTokenFromHeader.mockReturnValue(null);
 
-      await optionalAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await optionalAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockRequest.user).toBeUndefined();
       expect(mockNext).toHaveBeenCalled();
@@ -265,11 +227,7 @@ describe('Auth Middleware', () => {
       MockedAuthUtils.extractTokenFromHeader.mockReturnValue('invalid-token');
       MockedAuthUtils.verifyToken.mockReturnValue(null);
 
-      await optionalAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await optionalAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockRequest.user).toBeUndefined();
       expect(mockNext).toHaveBeenCalled();
@@ -290,11 +248,7 @@ describe('Auth Middleware', () => {
       const mockFindById = jest.fn().mockResolvedValue(inactiveUser);
       MockedUserService.prototype.findById = mockFindById;
 
-      await optionalAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await optionalAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockRequest.user).toBeUndefined();
       expect(mockNext).toHaveBeenCalled();
@@ -317,11 +271,7 @@ describe('Auth Middleware', () => {
       // Mock console.error to suppress error output in tests
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation();
 
-      await optionalAuth(
-        mockRequest as Request,
-        mockResponse as Response,
-        mockNext
-      );
+      await optionalAuth(mockRequest as Request, mockResponse as Response, mockNext);
 
       expect(mockRequest.user).toBeUndefined();
       expect(mockNext).toHaveBeenCalled();

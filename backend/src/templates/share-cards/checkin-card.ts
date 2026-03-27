@@ -33,7 +33,11 @@ interface SatoriElement {
 // Helpers
 // ============================================
 
-function el(type: string, props: Record<string, any>, ...children: (string | SatoriElement)[]): SatoriElement {
+function el(
+  type: string,
+  props: Record<string, any>,
+  ...children: (string | SatoriElement)[]
+): SatoriElement {
   return {
     type,
     props: {
@@ -55,26 +59,30 @@ function renderStars(rating: number): string {
 // ============================================
 
 export function checkinCardOG(data: CheckinCardData): SatoriElement {
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '48px 56px',
-      fontFamily: 'Inter',
-    },
-  },
-    // Top row: branding
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: '24px',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '48px 56px',
+        fontFamily: 'Inter',
       },
     },
+    // Top row: branding
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '24px',
+        },
+      },
       el('div', {
         style: {
           display: 'flex',
@@ -85,79 +93,107 @@ export function checkinCardOG(data: CheckinCardData): SatoriElement {
           marginRight: '10px',
         },
       }),
-      el('span', {
-        style: {
-          color: '#A855F7',
-          fontSize: '20px',
-          letterSpacing: '0.1em',
+      el(
+        'span',
+        {
+          style: {
+            color: '#A855F7',
+            fontSize: '20px',
+            letterSpacing: '0.1em',
+          },
         },
-      }, 'SOUNDCHECK'),
+        'SOUNDCHECK'
+      )
     ),
 
     // Main content area
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        flex: '1',
-        justifyContent: 'center',
-      },
-    },
-      // Band name
-      el('div', {
+    el(
+      'div',
+      {
         style: {
-          color: '#FFFFFF',
-          fontSize: '56px',
-          fontWeight: 700,
-          lineHeight: '1.1',
-          marginBottom: '16px',
-          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: '1',
+          justifyContent: 'center',
         },
-      }, data.bandName),
+      },
+      // Band name
+      el(
+        'div',
+        {
+          style: {
+            color: '#FFFFFF',
+            fontSize: '56px',
+            fontWeight: 700,
+            lineHeight: '1.1',
+            marginBottom: '16px',
+            overflow: 'hidden',
+          },
+        },
+        data.bandName
+      ),
 
       // Venue + City
-      el('div', {
-        style: {
-          color: '#9CA3AF',
-          fontSize: '24px',
-          marginBottom: '8px',
+      el(
+        'div',
+        {
+          style: {
+            color: '#9CA3AF',
+            fontSize: '24px',
+            marginBottom: '8px',
+          },
         },
-      }, `${data.venueName} \u2022 ${data.venueCity}`),
+        `${data.venueName} \u2022 ${data.venueCity}`
+      ),
 
       // Date
-      el('div', {
-        style: {
-          color: '#6B7280',
-          fontSize: '20px',
-          marginBottom: '16px',
+      el(
+        'div',
+        {
+          style: {
+            color: '#6B7280',
+            fontSize: '20px',
+            marginBottom: '16px',
+          },
         },
-      }, data.eventDate),
+        data.eventDate
+      ),
 
       // Rating
-      el('div', {
-        style: {
-          color: '#FBBF24',
-          fontSize: '28px',
-          marginBottom: '8px',
+      el(
+        'div',
+        {
+          style: {
+            color: '#FBBF24',
+            fontSize: '28px',
+            marginBottom: '8px',
+          },
         },
-      }, renderStars(data.rating)),
+        renderStars(data.rating)
+      )
     ),
 
     // Bottom: checked in by
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-      },
-    },
-      el('span', {
+    el(
+      'div',
+      {
         style: {
-          color: '#6B7280',
-          fontSize: '18px',
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
         },
-      }, `Checked in by @${data.username}`),
-    ),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#6B7280',
+            fontSize: '18px',
+          },
+        },
+        `Checked in by @${data.username}`
+      )
+    )
   );
 }
 
@@ -166,28 +202,32 @@ export function checkinCardOG(data: CheckinCardData): SatoriElement {
 // ============================================
 
 export function checkinCardStories(data: CheckinCardData): SatoriElement {
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '120px 64px',
-      fontFamily: 'Inter',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  },
-    // Branding
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '120px 64px',
+        fontFamily: 'Inter',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: '80px',
       },
     },
+    // Branding
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '80px',
+        },
+      },
       el('div', {
         style: {
           display: 'flex',
@@ -198,77 +238,105 @@ export function checkinCardStories(data: CheckinCardData): SatoriElement {
           marginRight: '12px',
         },
       }),
-      el('span', {
-        style: {
-          color: '#A855F7',
-          fontSize: '24px',
-          letterSpacing: '0.1em',
+      el(
+        'span',
+        {
+          style: {
+            color: '#A855F7',
+            fontSize: '24px',
+            letterSpacing: '0.1em',
+          },
         },
-      }, 'SOUNDCHECK'),
+        'SOUNDCHECK'
+      )
     ),
 
     // Band name
-    el('div', {
-      style: {
-        color: '#FFFFFF',
-        fontSize: '72px',
-        fontWeight: 700,
-        lineHeight: '1.1',
-        textAlign: 'center',
-        marginBottom: '32px',
-        overflow: 'hidden',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#FFFFFF',
+          fontSize: '72px',
+          fontWeight: 700,
+          lineHeight: '1.1',
+          textAlign: 'center',
+          marginBottom: '32px',
+          overflow: 'hidden',
+          display: 'flex',
+        },
       },
-    }, data.bandName),
+      data.bandName
+    ),
 
     // Rating
-    el('div', {
-      style: {
-        color: '#FBBF24',
-        fontSize: '40px',
-        marginBottom: '48px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#FBBF24',
+          fontSize: '40px',
+          marginBottom: '48px',
+          display: 'flex',
+        },
       },
-    }, renderStars(data.rating)),
+      renderStars(data.rating)
+    ),
 
     // Venue + City
-    el('div', {
-      style: {
-        color: '#9CA3AF',
-        fontSize: '28px',
-        textAlign: 'center',
-        marginBottom: '16px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#9CA3AF',
+          fontSize: '28px',
+          textAlign: 'center',
+          marginBottom: '16px',
+          display: 'flex',
+        },
       },
-    }, `${data.venueName}`),
+      `${data.venueName}`
+    ),
 
-    el('div', {
-      style: {
-        color: '#6B7280',
-        fontSize: '24px',
-        textAlign: 'center',
-        marginBottom: '16px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#6B7280',
+          fontSize: '24px',
+          textAlign: 'center',
+          marginBottom: '16px',
+          display: 'flex',
+        },
       },
-    }, data.venueCity),
+      data.venueCity
+    ),
 
     // Date
-    el('div', {
-      style: {
-        color: '#6B7280',
-        fontSize: '22px',
-        marginBottom: '80px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#6B7280',
+          fontSize: '22px',
+          marginBottom: '80px',
+          display: 'flex',
+        },
       },
-    }, data.eventDate),
+      data.eventDate
+    ),
 
     // Checked in by
-    el('div', {
-      style: {
-        color: '#6B7280',
-        fontSize: '22px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#6B7280',
+          fontSize: '22px',
+          display: 'flex',
+        },
       },
-    }, `Checked in by @${data.username}`),
+      `Checked in by @${data.username}`
+    )
   );
 }

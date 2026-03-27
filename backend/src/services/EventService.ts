@@ -56,11 +56,12 @@ export class EventService {
       const eventIsVerified = eventSource === 'user_created' ? false : undefined;
 
       // Build lineup entries from either bandId or lineup array
-      const lineupEntries = lineup && lineup.length > 0
-        ? lineup
-        : bandId
-          ? [{ bandId, setOrder: 0, isHeadliner: true }]
-          : [];
+      const lineupEntries =
+        lineup && lineup.length > 0
+          ? lineup
+          : bandId
+            ? [{ bandId, setOrder: 0, isHeadliner: true }]
+            : [];
 
       // For backward compat (single band): check existing event by venue+band+date
       if (bandId && (!lineup || lineup.length === 0)) {
@@ -135,7 +136,10 @@ export class EventService {
         client.release();
       }
     } catch (error) {
-      logger.error('Create event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Create event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -190,7 +194,10 @@ export class EventService {
         parseInt(countResult.rows[0].checkin_count || '0')
       );
     } catch (error) {
-      logger.error('Get event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -227,7 +234,10 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      logger.error('Get events by venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get events by venue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -265,7 +275,10 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      logger.error('Get events by band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get events by band error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -292,7 +305,10 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      logger.error('Get upcoming events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get upcoming events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -319,7 +335,10 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      logger.error('Get trending events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get trending events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -331,7 +350,10 @@ export class EventService {
     try {
       await this.db.query('DELETE FROM events WHERE id = $1', [eventId]);
     } catch (error) {
-      logger.error('Delete event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -407,7 +429,10 @@ export class EventService {
         client.release();
       }
     } catch (error) {
-      logger.error('Find or create event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Find or create event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -425,7 +450,7 @@ export class EventService {
    */
   async findUserCreatedEventAtVenueDate(
     venueId: string,
-    eventDate: string,
+    eventDate: string
   ): Promise<string | null> {
     try {
       const result = await this.db.query(
@@ -435,11 +460,14 @@ export class EventService {
            AND source = 'user_created'
            AND external_id IS NULL
          LIMIT 1`,
-        [venueId, eventDate],
+        [venueId, eventDate]
       );
       return result.rows.length > 0 ? result.rows[0].id : null;
     } catch (error) {
-      logger.error('Find user-created event at venue+date error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Find user-created event at venue+date error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -464,11 +492,14 @@ export class EventService {
            AND is_verified = false
            AND (SELECT COUNT(DISTINCT user_id) FROM checkins WHERE event_id = $1) >= 2
          RETURNING id`,
-        [eventId],
+        [eventId]
       );
       return result.rows.length > 0 ? result.rows[0].id : null;
     } catch (error) {
-      logger.error('Promote if verified error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Promote if verified error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -492,7 +523,7 @@ export class EventService {
       priceMin?: number | null;
       priceMax?: number | null;
       status?: string;
-    },
+    }
   ): Promise<void> {
     try {
       await this.db.query(
@@ -515,10 +546,13 @@ export class EventService {
           tmData.priceMin ?? null,
           tmData.priceMax ?? null,
           tmData.status || null,
-        ],
+        ]
       );
     } catch (error) {
-      logger.error('Merge Ticketmaster into user event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Merge Ticketmaster into user event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -575,7 +609,10 @@ export class EventService {
         distanceKm: parseFloat(result.rows[index].distance_km),
       }));
     } catch (error) {
-      logger.error('Get nearby events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get nearby events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -598,9 +635,11 @@ export class EventService {
   ): Promise<(Event & { distanceKm: number })[]> {
     const cacheKey = CacheKeys.nearbyEvents(lat, lon, radiusKm);
 
-    return cache.getOrSet(cacheKey, async () => {
-      try {
-        const query = `
+    return cache.getOrSet(
+      cacheKey,
+      async () => {
+        try {
+          const query = `
           SELECT * FROM (
             SELECT e.*,
                    v.id as v_id, v.name as venue_name, v.city as venue_city,
@@ -625,21 +664,26 @@ export class EventService {
           LIMIT $5
         `;
 
-        const result = await this.db.query(query, [lat, lon, days, radiusKm, limit]);
+          const result = await this.db.query(query, [lat, lon, days, radiusKm, limit]);
 
-        if (result.rows.length === 0) return [];
+          if (result.rows.length === 0) return [];
 
-        const events = await this.mapDbEventsWithHeadliner(result.rows);
+          const events = await this.mapDbEventsWithHeadliner(result.rows);
 
-        return events.map((event, index) => ({
-          ...event,
-          distanceKm: parseFloat(result.rows[index].distance_km),
-        }));
-      } catch (error) {
-        logger.error('Get nearby upcoming events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-        throw error;
-      }
-    }, CacheTTL.MEDIUM);
+          return events.map((event, index) => ({
+            ...event,
+            distanceKm: parseFloat(result.rows[index].distance_km),
+          }));
+        } catch (error) {
+          logger.error('Get nearby upcoming events error', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          throw error;
+        }
+      },
+      CacheTTL.MEDIUM
+    );
   }
 
   /**
@@ -656,9 +700,11 @@ export class EventService {
   ): Promise<(Event & { distanceKm: number })[]> {
     const cacheKey = CacheKeys.trendingEvents(lat, lon);
 
-    return cache.getOrSet(cacheKey, async () => {
-      try {
-        const query = `
+    return cache.getOrSet(
+      cacheKey,
+      async () => {
+        try {
+          const query = `
           SELECT * FROM (
             SELECT e.*,
                    v.id as v_id, v.name as venue_name, v.city as venue_city,
@@ -689,21 +735,26 @@ export class EventService {
           LIMIT $5
         `;
 
-        const result = await this.db.query(query, [lat, lon, days, radiusKm, limit]);
+          const result = await this.db.query(query, [lat, lon, days, radiusKm, limit]);
 
-        if (result.rows.length === 0) return [];
+          if (result.rows.length === 0) return [];
 
-        const events = await this.mapDbEventsWithHeadliner(result.rows);
+          const events = await this.mapDbEventsWithHeadliner(result.rows);
 
-        return events.map((event, index) => ({
-          ...event,
-          distanceKm: parseFloat(result.rows[index].distance_km),
-        }));
-      } catch (error) {
-        logger.error('Get trending nearby events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-        throw error;
-      }
-    }, CacheTTL.MEDIUM);
+          return events.map((event, index) => ({
+            ...event,
+            distanceKm: parseFloat(result.rows[index].distance_km),
+          }));
+        } catch (error) {
+          logger.error('Get trending nearby events error', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          throw error;
+        }
+      },
+      CacheTTL.MEDIUM
+    );
   }
 
   /**
@@ -711,16 +762,14 @@ export class EventService {
    * Joins through event_lineup -> bands to match genre.
    * Cached with 300s TTL.
    */
-  async getByGenre(
-    genre: string,
-    limit: number = 20,
-    offset: number = 0
-  ): Promise<Event[]> {
+  async getByGenre(genre: string, limit: number = 20, offset: number = 0): Promise<Event[]> {
     const cacheKey = CacheKeys.genreEvents(genre);
 
-    return cache.getOrSet(cacheKey, async () => {
-      try {
-        const query = `
+    return cache.getOrSet(
+      cacheKey,
+      async () => {
+        try {
+          const query = `
           SELECT DISTINCT ON (e.id) e.*,
                  v.id as v_id, v.name as venue_name, v.city as venue_city,
                  v.state as venue_state, v.image_url as venue_image,
@@ -736,31 +785,33 @@ export class EventService {
           LIMIT $2 OFFSET $3
         `;
 
-        const result = await this.db.query(query, [genre, limit, offset]);
+          const result = await this.db.query(query, [genre, limit, offset]);
 
-        // Re-sort by event_date since DISTINCT ON requires ORDER BY e.id first
-        result.rows.sort((a: any, b: any) => {
-          const dateA = new Date(a.event_date).getTime();
-          const dateB = new Date(b.event_date).getTime();
-          return dateA - dateB;
-        });
+          // Re-sort by event_date since DISTINCT ON requires ORDER BY e.id first
+          result.rows.sort((a: any, b: any) => {
+            const dateA = new Date(a.event_date).getTime();
+            const dateB = new Date(b.event_date).getTime();
+            return dateA - dateB;
+          });
 
-        return this.mapDbEventsWithHeadliner(result.rows);
-      } catch (error) {
-        logger.error('Get events by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-        throw error;
-      }
-    }, CacheTTL.MEDIUM);
+          return this.mapDbEventsWithHeadliner(result.rows);
+        } catch (error) {
+          logger.error('Get events by genre error', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+          });
+          throw error;
+        }
+      },
+      CacheTTL.MEDIUM
+    );
   }
 
   /**
    * Search events by event name, band name, venue name, or genre.
    * Uses pg_trgm similarity matching for fuzzy search.
    */
-  async searchEvents(
-    query: string,
-    limit: number = 20
-  ): Promise<Event[]> {
+  async searchEvents(query: string, limit: number = 20): Promise<Event[]> {
     try {
       const sql = `
         SELECT * FROM (
@@ -793,7 +844,10 @@ export class EventService {
 
       return this.mapDbEventsWithHeadliner(result.rows);
     } catch (error) {
-      logger.error('Search events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -836,11 +890,7 @@ export class EventService {
 
     return rows.map((row: any) => {
       const eventLineup = lineupByEvent[row.id] || [];
-      return this.mapDbEventToEvent(
-        row,
-        eventLineup,
-        parseInt(row.checkin_count || '0')
-      );
+      return this.mapDbEventToEvent(row, eventLineup, parseInt(row.checkin_count || '0'));
     });
   }
 
@@ -848,11 +898,7 @@ export class EventService {
    * Map database event row + lineup rows to Event type.
    * Includes backward-compat fields: bandId, band, showDate.
    */
-  private mapDbEventToEvent(
-    row: any,
-    lineupRows: any[],
-    checkinCount: number
-  ): Event {
+  private mapDbEventToEvent(row: any, lineupRows: any[], checkinCount: number): Event {
     // Build lineup entries
     const lineup: EventLineupEntry[] = lineupRows.map((lr: any) => ({
       id: lr.id,
@@ -860,16 +906,18 @@ export class EventService {
       setOrder: lr.set_order,
       setTime: lr.set_time,
       isHeadliner: lr.is_headliner || false,
-      band: lr.band_name ? {
-        id: lr.band_id,
-        name: lr.band_name,
-        genre: lr.band_genre,
-        imageUrl: lr.band_image,
-      } : undefined,
+      band: lr.band_name
+        ? {
+            id: lr.band_id,
+            name: lr.band_name,
+            genre: lr.band_genre,
+            imageUrl: lr.band_image,
+          }
+        : undefined,
     }));
 
     // Find headliner (or first band) for backward compat
-    const headliner = lineup.find(l => l.isHeadliner) || lineup[0];
+    const headliner = lineup.find((l) => l.isHeadliner) || lineup[0];
 
     return {
       id: row.id,
@@ -894,13 +942,15 @@ export class EventService {
       totalCheckins: parseInt(row.total_checkins || '0'),
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      venue: row.venue_name ? {
-        id: row.venue_id,
-        name: row.venue_name,
-        city: row.venue_city,
-        state: row.venue_state,
-        imageUrl: row.venue_image,
-      } : undefined,
+      venue: row.venue_name
+        ? {
+            id: row.venue_id,
+            name: row.venue_name,
+            city: row.venue_city,
+            state: row.venue_state,
+            imageUrl: row.venue_image,
+          }
+        : undefined,
       lineup,
       checkinCount,
       // Backward-compat fields for mobile app

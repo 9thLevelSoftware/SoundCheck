@@ -9,6 +9,24 @@
     "build": "npm run build --prefix backend",
     "start": "npm start --prefix backend",
     "dev": "npm run dev --prefix backend",
-    "test": "npm test --prefix backend"
+    "test": "npm test --prefix backend",
+    "prepare": "husky"
+  },
+  "lint-staged": {
+    "backend/**/*.ts": [
+      "prettier --write --config backend/.prettierrc",
+      "eslint --fix --max-warnings 0"
+    ],
+    "mobile/**/*.dart": [
+      "dart format"
+    ]
+  },
+  "devDependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.57.2",
+    "@typescript-eslint/parser": "^8.57.2",
+    "eslint": "^10.1.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.1"
   }
 }

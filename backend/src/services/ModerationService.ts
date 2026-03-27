@@ -67,16 +67,12 @@ export class ModerationService {
       case 'checkin':
       case 'photo':
         // Photos are stored on checkins table
-        await this.db.query(
-          `UPDATE checkins SET is_hidden = true WHERE id = $1`,
-          [contentId]
-        );
+        await this.db.query(`UPDATE checkins SET is_hidden = true WHERE id = $1`, [contentId]);
         break;
       case 'comment':
-        await this.db.query(
-          `UPDATE checkin_comments SET is_hidden = true WHERE id = $1`,
-          [contentId]
-        );
+        await this.db.query(`UPDATE checkin_comments SET is_hidden = true WHERE id = $1`, [
+          contentId,
+        ]);
         break;
       case 'user':
         // User hiding is handled differently (deactivation), not via is_hidden
@@ -91,7 +87,11 @@ export class ModerationService {
 
     // Invalidate feed caches so hidden content disappears immediately
     this.invalidateFeedCachesForContent(contentType, contentId).catch((err) =>
-      logError('Failed to invalidate feed caches after hiding content', { error: err, contentType, contentId })
+      logError('Failed to invalidate feed caches after hiding content', {
+        error: err,
+        contentType,
+        contentId,
+      })
     );
   }
 
@@ -102,16 +102,12 @@ export class ModerationService {
     switch (contentType) {
       case 'checkin':
       case 'photo':
-        await this.db.query(
-          `UPDATE checkins SET is_hidden = false WHERE id = $1`,
-          [contentId]
-        );
+        await this.db.query(`UPDATE checkins SET is_hidden = false WHERE id = $1`, [contentId]);
         break;
       case 'comment':
-        await this.db.query(
-          `UPDATE checkin_comments SET is_hidden = false WHERE id = $1`,
-          [contentId]
-        );
+        await this.db.query(`UPDATE checkin_comments SET is_hidden = false WHERE id = $1`, [
+          contentId,
+        ]);
         break;
       default:
         break;
@@ -121,7 +117,11 @@ export class ModerationService {
 
     // Invalidate feed caches so unhidden content reappears immediately
     this.invalidateFeedCachesForContent(contentType, contentId).catch((err) =>
-      logError('Failed to invalidate feed caches after unhiding content', { error: err, contentType, contentId })
+      logError('Failed to invalidate feed caches after unhiding content', {
+        error: err,
+        contentType,
+        contentId,
+      })
     );
   }
 
@@ -143,9 +143,7 @@ export class ModerationService {
          LIMIT $1 OFFSET $2`,
         [limit, offset]
       ),
-      this.db.query(
-        `SELECT COUNT(*) FROM moderation_items WHERE status = 'pending_review'`
-      ),
+      this.db.query(`SELECT COUNT(*) FROM moderation_items WHERE status = 'pending_review'`),
     ]);
 
     return {
@@ -168,10 +166,7 @@ export class ModerationService {
     // Fetch the item first
     const existing = await this.getItemById(itemId);
     if (!existing) {
-      throw Object.assign(
-        new Error(`Moderation item not found: ${itemId}`),
-        { statusCode: 404 }
-      );
+      throw Object.assign(new Error(`Moderation item not found: ${itemId}`), { statusCode: 404 });
     }
 
     // Update the moderation item
@@ -214,10 +209,7 @@ export class ModerationService {
    * Fetch a single moderation item by ID.
    */
   async getItemById(itemId: string): Promise<ModerationItem | null> {
-    const result = await this.db.query(
-      `SELECT * FROM moderation_items WHERE id = $1`,
-      [itemId]
-    );
+    const result = await this.db.query(`SELECT * FROM moderation_items WHERE id = $1`, [itemId]);
 
     if (result.rows.length === 0) {
       return null;
@@ -245,10 +237,9 @@ export class ModerationService {
 
     if (contentType === 'checkin' || contentType === 'photo') {
       // Content is a checkin -- look up user_id and event_id directly
-      const result = await this.db.query(
-        `SELECT user_id, event_id FROM checkins WHERE id = $1`,
-        [contentId]
-      );
+      const result = await this.db.query(`SELECT user_id, event_id FROM checkins WHERE id = $1`, [
+        contentId,
+      ]);
       if (result.rows.length > 0) {
         checkinUserId = result.rows[0].user_id;
         checkinEventId = result.rows[0].event_id;

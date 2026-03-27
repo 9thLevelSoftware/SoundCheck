@@ -115,7 +115,11 @@ export class CheckinService {
   /**
    * Add ratings to an existing check-in.
    */
-  async addRatings(checkinId: string, userId: string, ratings: AddRatingsRequest): Promise<Checkin> {
+  async addRatings(
+    checkinId: string,
+    userId: string,
+    ratings: AddRatingsRequest
+  ): Promise<Checkin> {
     return this.ratingService.addRatings(checkinId, userId, ratings);
   }
 
@@ -126,7 +130,10 @@ export class CheckinService {
   /**
    * Toast a check-in.
    */
-  async toastCheckin(userId: string, checkinId: string): Promise<{ toastCount: number; ownerId: string }> {
+  async toastCheckin(
+    userId: string,
+    checkinId: string
+  ): Promise<{ toastCount: number; ownerId: string }> {
     return this.toastService.toastCheckin(userId, checkinId);
   }
 
@@ -185,7 +192,10 @@ export class CheckinService {
         params
       );
     } catch (error) {
-      logger.error('Add vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Add vibe tags error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -211,7 +221,10 @@ export class CheckinService {
         category: row.category,
       }));
     } catch (error) {
-      logger.error('Get check-in vibe tags error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get check-in vibe tags error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -260,14 +273,15 @@ export class CheckinService {
 
       // Generate presigned URLs for each content type
       const results = await Promise.all(
-        contentTypes.map((ct) =>
-          r2Service.getPresignedUploadUrl(ct, `checkins/${checkinId}`)
-        )
+        contentTypes.map((ct) => r2Service.getPresignedUploadUrl(ct, `checkins/${checkinId}`))
       );
 
       return results;
     } catch (error) {
-      logger.error('Request photo upload URLs error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Request photo upload URLs error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -275,11 +289,7 @@ export class CheckinService {
   /**
    * Confirm photo uploads and store their public URLs in the check-in.
    */
-  async addPhotos(
-    checkinId: string,
-    userId: string,
-    photoKeys: string[]
-  ): Promise<Checkin> {
+  async addPhotos(checkinId: string, userId: string, photoKeys: string[]): Promise<Checkin> {
     try {
       // Verify checkin belongs to user
       const checkinResult = await this.db.query(
@@ -306,9 +316,7 @@ export class CheckinService {
       const combinedUrls = [...existingUrls, ...newUrls];
 
       if (combinedUrls.length > 4) {
-        const err = new Error(
-          `Maximum 4 photos per check-in. Would have ${combinedUrls.length}.`
-        );
+        const err = new Error(`Maximum 4 photos per check-in. Would have ${combinedUrls.length}.`);
         (err as any).statusCode = 400;
         throw err;
       }
@@ -321,7 +329,10 @@ export class CheckinService {
 
       return this.getCheckinById(checkinId, userId);
     } catch (error) {
-      logger.error('Add photos error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Add photos error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }

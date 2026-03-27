@@ -35,7 +35,10 @@ async function runRetentionJob(): Promise<void> {
     });
     if (deletionResult.errors.length > 0) {
       deletionResult.errors.forEach((err) => {
-        logger.error(`Account deletion error for user ${err.userId}`, { userId: err.userId, error: err.error });
+        logger.error(`Account deletion error for user ${err.userId}`, {
+          userId: err.userId,
+          error: err.error,
+        });
       });
     }
 
@@ -68,7 +71,10 @@ async function runRetentionJob(): Promise<void> {
 
     logger.info('Data retention job completed successfully');
   } catch (error) {
-    logger.error('Data retention job failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    logger.error('Data retention job failed', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     process.exit(1);
   }
 }
@@ -78,7 +84,10 @@ if (require.main === module) {
   runRetentionJob()
     .then(() => process.exit(0))
     .catch((error) => {
-      logger.error('Retention job fatal error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Retention job fatal error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       process.exit(1);
     });
 }

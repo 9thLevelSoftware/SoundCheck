@@ -28,10 +28,10 @@ export class AdminController {
 
       // Get recent activity (last 24 hours)
       const recentUsersResult = await db.query(
-        'SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL \'24 hours\''
+        "SELECT COUNT(*) as count FROM users WHERE created_at > NOW() - INTERVAL '24 hours'"
       );
       const recentCheckinsResult = await db.query(
-        'SELECT COUNT(*) as count FROM checkins WHERE created_at > NOW() - INTERVAL \'24 hours\''
+        "SELECT COUNT(*) as count FROM checkins WHERE created_at > NOW() - INTERVAL '24 hours'"
       );
 
       // Get cache stats
@@ -137,7 +137,10 @@ export class AdminController {
       const db = Database.getInstance();
 
       // Get user info -- SEC-012: Exclude email to prevent PII exposure
-      const usersResult = await db.query('SELECT id, username, created_at FROM users WHERE id = $1', [userId]);
+      const usersResult = await db.query(
+        'SELECT id, username, created_at FROM users WHERE id = $1',
+        [userId]
+      );
 
       if (!usersResult.rows || usersResult.rows.length === 0) {
         const response: ApiResponse = {
@@ -149,9 +152,18 @@ export class AdminController {
       }
 
       // Get user's activity counts
-      const checkinCountResult = await db.query('SELECT COUNT(*) as count FROM checkins WHERE user_id = $1', [userId]);
-      const followerCountResult = await db.query('SELECT COUNT(*) as count FROM user_followers WHERE following_id = $1', [userId]);
-      const followingCountResult = await db.query('SELECT COUNT(*) as count FROM user_followers WHERE follower_id = $1', [userId]);
+      const checkinCountResult = await db.query(
+        'SELECT COUNT(*) as count FROM checkins WHERE user_id = $1',
+        [userId]
+      );
+      const followerCountResult = await db.query(
+        'SELECT COUNT(*) as count FROM user_followers WHERE following_id = $1',
+        [userId]
+      );
+      const followingCountResult = await db.query(
+        'SELECT COUNT(*) as count FROM user_followers WHERE follower_id = $1',
+        [userId]
+      );
 
       // Get recent checkins
       const recentCheckinsResult = await db.query(

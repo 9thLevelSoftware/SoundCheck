@@ -55,7 +55,10 @@ export function initRedis(): Redis | null {
 
     return redis;
   } catch (error) {
-    logger.error('Failed to initialize Redis', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    logger.error('Failed to initialize Redis', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     return null;
   }
 }
@@ -127,7 +130,10 @@ export async function checkRateLimit(
       resetAt: now + windowMs,
     };
   } catch (error) {
-    logger.error('Rate limit check error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+    logger.error('Rate limit check error', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+    });
     // Fail-open: allow requests when rate limit check errors.
     // The in-memory fallback in auth.ts middleware provides basic protection.
     return { allowed: true, remaining: maxRequests, resetAt: now + windowMs };
@@ -144,7 +150,10 @@ export async function closeRedis(): Promise<void> {
       redis = null;
       logger.info('Redis connection closed gracefully');
     } catch (error) {
-      logger.error('Error closing Redis connection', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Error closing Redis connection', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       redis = null;
     }
   }
@@ -189,7 +198,10 @@ export class RedisRateLimiter {
 
         next();
       } catch (error) {
-        logger.error('Rate limiting error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger.error('Rate limiting error', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
         // Fail-open: allow request through when rate limiting itself errors.
         // Blocking all traffic due to a transient Redis issue causes a full outage.
         next();
@@ -221,7 +233,10 @@ export class RedisRateLimiter {
       await redis.zremrangebyscore(key, 0, windowStart);
       return await redis.zcard(key);
     } catch (error) {
-      logger.error('Error getting request count', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Error getting request count', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return 0;
     }
   }
@@ -236,7 +251,10 @@ export class RedisRateLimiter {
       try {
         await redis.del(key);
       } catch (error) {
-        logger.error('Error resetting rate limit', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger.error('Error resetting rate limit', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
       }
     }
   }

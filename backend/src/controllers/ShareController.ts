@@ -48,7 +48,8 @@ try {
   );
 } catch {
   logWarn('ShareController: landing-page.html template not found');
-  landingTemplate = '<html><body><h1>SoundCheck</h1><p>Download the app to view this content.</p></body></html>';
+  landingTemplate =
+    '<html><body><h1>SoundCheck</h1><p>Download the app to view this content.</p></body></html>';
 }
 
 // ============================================
@@ -93,24 +94,21 @@ export class ShareController {
       }
 
       // Generate cards
-      const { ogUrl, storiesUrl } = await this.shareCardService.generateCheckinCard(
-        checkinId,
-        {
-          username: checkin.user?.username || 'unknown',
-          bandName: checkin.band?.name || 'Live Show',
-          venueName: checkin.venue?.name || 'Unknown Venue',
-          venueCity: checkin.venue?.city || '',
-          eventDate: checkin.eventDate
-            ? new Date(checkin.eventDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })
-            : '',
-          rating: checkin.rating || 0,
-          bandImageUrl: checkin.band?.imageUrl,
-        }
-      );
+      const { ogUrl, storiesUrl } = await this.shareCardService.generateCheckinCard(checkinId, {
+        username: checkin.user?.username || 'unknown',
+        bandName: checkin.band?.name || 'Live Show',
+        venueName: checkin.venue?.name || 'Unknown Venue',
+        venueCity: checkin.venue?.city || '',
+        eventDate: checkin.eventDate
+          ? new Date(checkin.eventDate).toLocaleDateString('en-US', {
+              month: 'short',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : '',
+        rating: checkin.rating || 0,
+        bandImageUrl: checkin.band?.imageUrl,
+      });
 
       const response: ApiResponse = {
         success: true,
@@ -127,7 +125,10 @@ export class ShareController {
       }
 
       const statusCode = error.statusCode || 500;
-      const response: ApiResponse = { success: false, error: statusCode === 503 ? error.message : 'Failed to generate share card' };
+      const response: ApiResponse = {
+        success: false,
+        error: statusCode === 503 ? error.message : 'Failed to generate share card',
+      };
       res.status(statusCode).json(response);
     }
   };
@@ -166,20 +167,17 @@ export class ShareController {
         return;
       }
 
-      const { ogUrl, storiesUrl } = await this.shareCardService.generateBadgeCard(
-        badgeAwardId,
-        {
-          username: req.user?.username || 'unknown',
-          badgeName: badge.name,
-          badgeDescription: badge.description || '',
-          badgeCategory: badge.badgeType,
-          unlockedAt: new Date(award.earnedAt).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          }),
-        }
-      );
+      const { ogUrl, storiesUrl } = await this.shareCardService.generateBadgeCard(badgeAwardId, {
+        username: req.user?.username || 'unknown',
+        badgeName: badge.name,
+        badgeDescription: badge.description || '',
+        badgeCategory: badge.badgeType,
+        unlockedAt: new Date(award.earnedAt).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+      });
 
       const response: ApiResponse = {
         success: true,
@@ -190,7 +188,10 @@ export class ShareController {
       logError('ShareController.generateBadgeCard error', { error: error.message });
 
       const statusCode = error.statusCode || 500;
-      const response: ApiResponse = { success: false, error: statusCode === 503 ? error.message : 'Failed to generate share card' };
+      const response: ApiResponse = {
+        success: false,
+        error: statusCode === 503 ? error.message : 'Failed to generate share card',
+      };
       res.status(statusCode).json(response);
     }
   };
@@ -225,24 +226,21 @@ export class ShareController {
       // Generate card if R2 is available (idempotent -- generates fresh each time for simplicity)
       let imageUrl = '';
       try {
-        const cards = await this.shareCardService.generateCheckinCard(
-          checkinId,
-          {
-            username: checkin.user?.username || 'unknown',
-            bandName: checkin.band?.name || 'Live Show',
-            venueName: checkin.venue?.name || 'Unknown Venue',
-            venueCity: checkin.venue?.city || '',
-            eventDate: checkin.eventDate
-              ? new Date(checkin.eventDate).toLocaleDateString('en-US', {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                })
-              : '',
-            rating: checkin.rating || 0,
-            bandImageUrl: checkin.band?.imageUrl,
-          }
-        );
+        const cards = await this.shareCardService.generateCheckinCard(checkinId, {
+          username: checkin.user?.username || 'unknown',
+          bandName: checkin.band?.name || 'Live Show',
+          venueName: checkin.venue?.name || 'Unknown Venue',
+          venueCity: checkin.venue?.city || '',
+          eventDate: checkin.eventDate
+            ? new Date(checkin.eventDate).toLocaleDateString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              })
+            : '',
+          rating: checkin.rating || 0,
+          bandImageUrl: checkin.band?.imageUrl,
+        });
         imageUrl = cards.ogUrl;
       } catch {
         // Card generation failed -- continue without image
@@ -321,20 +319,17 @@ export class ShareController {
       // Generate card
       let imageUrl = '';
       try {
-        const cards = await this.shareCardService.generateBadgeCard(
-          badgeAwardId,
-          {
-            username: award.username,
-            badgeName: award.badge_name,
-            badgeDescription: award.badge_description || '',
-            badgeCategory: award.badge_type,
-            unlockedAt: new Date(award.earned_at).toLocaleDateString('en-US', {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
-            }),
-          }
-        );
+        const cards = await this.shareCardService.generateBadgeCard(badgeAwardId, {
+          username: award.username,
+          badgeName: award.badge_name,
+          badgeDescription: award.badge_description || '',
+          badgeCategory: award.badge_type,
+          unlockedAt: new Date(award.earned_at).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          }),
+        });
         imageUrl = cards.ogUrl;
       } catch {
         // Card generation failed -- continue without image

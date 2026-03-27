@@ -60,7 +60,7 @@ export class BandService {
     `;
 
     const result = await this.db.query(query, [bandId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -96,7 +96,9 @@ export class BandService {
     // genres. The search_vector GIN index (migration 034) makes this O(1)
     // instead of O(n) ILIKE scans with unnest.
     if (q.trim()) {
-      conditions.push(`(search_vector @@ websearch_to_tsquery('english', $${paramCount}) OR name ILIKE $${paramCount + 1})`);
+      conditions.push(
+        `(search_vector @@ websearch_to_tsquery('english', $${paramCount}) OR name ILIKE $${paramCount + 1})`
+      );
       values.push(q.trim(), `%${q.trim()}%`);
       paramCount += 2;
     }
@@ -116,7 +118,15 @@ export class BandService {
     }
 
     // Validate sort column
-    const allowedSortColumns = ['name', 'genre', 'formed_year', 'hometown', 'average_rating', 'total_checkins', 'created_at'];
+    const allowedSortColumns = [
+      'name',
+      'genre',
+      'formed_year',
+      'hometown',
+      'average_rating',
+      'total_checkins',
+      'created_at',
+    ];
     const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
     const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
 
@@ -162,10 +172,18 @@ export class BandService {
    */
   async updateBand(bandId: string, updateData: Partial<CreateBandRequest>): Promise<Band> {
     const allowedFields = [
-      'name', 'description', 'genre', 'formedYear', 'websiteUrl', 'spotifyUrl',
-      'instagramUrl', 'facebookUrl', 'imageUrl', 'hometown'
+      'name',
+      'description',
+      'genre',
+      'formedYear',
+      'websiteUrl',
+      'spotifyUrl',
+      'instagramUrl',
+      'facebookUrl',
+      'imageUrl',
+      'hometown',
     ];
-    
+
     const updates: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -436,6 +454,6 @@ export class BandService {
    * Convert camelCase to snake_case
    */
   private camelToSnakeCase(str: string): string {
-    return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
   }
 }

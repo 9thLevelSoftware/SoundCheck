@@ -73,7 +73,7 @@ export class VenueService {
     `;
 
     const result = await this.db.query(query, [venueId]);
-    
+
     if (result.rows.length === 0) {
       return null;
     }
@@ -108,7 +108,9 @@ export class VenueService {
 
     // Text search
     if (q.trim()) {
-      conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR city ILIKE $${paramCount})`);
+      conditions.push(
+        `(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR city ILIKE $${paramCount})`
+      );
       values.push(`%${q.trim()}%`);
       paramCount++;
     }
@@ -135,7 +137,14 @@ export class VenueService {
     }
 
     // Validate sort column
-    const allowedSortColumns = ['name', 'city', 'average_rating', 'total_checkins', 'capacity', 'created_at'];
+    const allowedSortColumns = [
+      'name',
+      'city',
+      'average_rating',
+      'total_checkins',
+      'capacity',
+      'created_at',
+    ];
     const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
     const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
 
@@ -182,11 +191,23 @@ export class VenueService {
    */
   async updateVenue(venueId: string, updateData: Partial<CreateVenueRequest>): Promise<Venue> {
     const allowedFields = [
-      'name', 'description', 'address', 'city', 'state', 'country', 'postalCode',
-      'latitude', 'longitude', 'websiteUrl', 'phone', 'email', 'capacity', 
-      'venueType', 'imageUrl'
+      'name',
+      'description',
+      'address',
+      'city',
+      'state',
+      'country',
+      'postalCode',
+      'latitude',
+      'longitude',
+      'websiteUrl',
+      'phone',
+      'email',
+      'capacity',
+      'venueType',
+      'imageUrl',
     ];
-    
+
     const updates: string[] = [];
     const values: any[] = [];
     let paramCount = 1;
@@ -454,6 +475,6 @@ export class VenueService {
    * Convert camelCase to snake_case
    */
   private camelToSnakeCase(str: string): string {
-    return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+    return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
   }
 }

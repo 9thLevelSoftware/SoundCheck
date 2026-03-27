@@ -82,7 +82,10 @@ export class SocialAuthService {
         profileImageUrl: payload.picture,
       };
     } catch (error) {
-      logger.error('Google token verification failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Google token verification failed', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return null;
     }
   }
@@ -129,7 +132,10 @@ export class SocialAuthService {
         lastName: fullName?.familyName,
       };
     } catch (error: any) {
-      logger.error('Apple token verification failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Apple token verification failed', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return null;
     }
   }
@@ -362,7 +368,10 @@ export class SocialAuthService {
       return profile.firstName.toLowerCase().replace(/[^a-z0-9]/g, '');
     }
     // Use email prefix as fallback
-    return profile.email.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    return profile.email
+      .split('@')[0]
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, '');
   }
 
   /**
@@ -400,17 +409,19 @@ export class SocialAuthService {
    * Check if a username already exists
    */
   private async usernameExists(username: string): Promise<boolean> {
-    const result = await this.db.query(
-      `SELECT 1 FROM users WHERE username = $1 LIMIT 1`,
-      [username]
-    );
+    const result = await this.db.query(`SELECT 1 FROM users WHERE username = $1 LIMIT 1`, [
+      username,
+    ]);
     return result.rows.length > 0;
   }
 
   /**
    * Generate a unique username using a specific database client (for transactions)
    */
-  private async generateUniqueUsernameWithClient(client: PoolClient, baseUsername: string): Promise<string> {
+  private async generateUniqueUsernameWithClient(
+    client: PoolClient,
+    baseUsername: string
+  ): Promise<string> {
     // Ensure base username is at least 3 characters
     if (baseUsername.length < 3) {
       baseUsername = baseUsername + 'user';
@@ -442,10 +453,9 @@ export class SocialAuthService {
    * Check if a username already exists using a specific database client (for transactions)
    */
   private async usernameExistsWithClient(client: PoolClient, username: string): Promise<boolean> {
-    const result = await client.query(
-      `SELECT 1 FROM users WHERE username = $1 LIMIT 1`,
-      [username]
-    );
+    const result = await client.query(`SELECT 1 FROM users WHERE username = $1 LIMIT 1`, [
+      username,
+    ]);
     return result.rows.length > 0;
   }
 

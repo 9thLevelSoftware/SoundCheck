@@ -35,7 +35,11 @@ interface SatoriElement {
 // Helpers
 // ============================================
 
-function el(type: string, props: Record<string, any>, ...children: (string | SatoriElement)[]): SatoriElement {
+function el(
+  type: string,
+  props: Record<string, any>,
+  ...children: (string | SatoriElement)[]
+): SatoriElement {
   return {
     type,
     props: {
@@ -58,117 +62,155 @@ export function wrappedSummaryCardOG(data: WrappedSummaryData): SatoriElement {
   const topGenre = truncate(data.topGenre, 30);
   const topArtist = truncate(data.topArtist, 30);
 
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '48px 56px',
-      fontFamily: 'Inter',
-    },
-  },
-    // Top row: branding
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginBottom: '24px',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '48px 56px',
+        fontFamily: 'Inter',
       },
     },
-      el('span', {
+    // Top row: branding
+    el(
+      'div',
+      {
         style: {
-          color: '#D2FF00',
-          fontSize: '20px',
-          letterSpacing: '0.1em',
-          fontWeight: 700,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '24px',
         },
-      }, 'SOUNDCHECK WRAPPED'),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#D2FF00',
+            fontSize: '20px',
+            letterSpacing: '0.1em',
+            fontWeight: 700,
+          },
+        },
+        'SOUNDCHECK WRAPPED'
+      )
     ),
 
     // Year
-    el('div', {
-      style: {
-        color: '#D2FF00',
-        fontSize: '72px',
-        fontWeight: 700,
-        lineHeight: '1.1',
-        marginBottom: '24px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#D2FF00',
+          fontSize: '72px',
+          fontWeight: 700,
+          lineHeight: '1.1',
+          marginBottom: '24px',
+          display: 'flex',
+        },
       },
-    }, String(data.year)),
+      String(data.year)
+    ),
 
     // Stats row
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        marginBottom: '24px',
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          marginBottom: '24px',
+        },
       },
-    },
-      el('div', {
-        style: {
-          color: '#FFFFFF',
-          fontSize: '48px',
-          fontWeight: 700,
-          lineHeight: '1.2',
-          marginBottom: '8px',
-          display: 'flex',
+      el(
+        'div',
+        {
+          style: {
+            color: '#FFFFFF',
+            fontSize: '48px',
+            fontWeight: 700,
+            lineHeight: '1.2',
+            marginBottom: '8px',
+            display: 'flex',
+          },
         },
-      }, `${data.totalShows} shows`),
+        `${data.totalShows} shows`
+      ),
 
-      el('div', {
-        style: {
-          color: '#9CA3AF',
-          fontSize: '24px',
-          display: 'flex',
+      el(
+        'div',
+        {
+          style: {
+            color: '#9CA3AF',
+            fontSize: '24px',
+            display: 'flex',
+          },
         },
-      }, `${data.uniqueBands} bands \u2022 ${data.uniqueVenues} venues`),
+        `${data.uniqueBands} bands \u2022 ${data.uniqueVenues} venues`
+      )
     ),
 
     // Top genre and top artist
-    el('div', {
-      style: {
-        display: 'flex',
-        flexDirection: 'column',
-        marginBottom: '16px',
+    el(
+      'div',
+      {
+        style: {
+          display: 'flex',
+          flexDirection: 'column',
+          marginBottom: '16px',
+        },
       },
-    },
-      el('div', {
-        style: {
-          color: '#D2FF00',
-          fontSize: '22px',
-          marginBottom: '8px',
-          display: 'flex',
+      el(
+        'div',
+        {
+          style: {
+            color: '#D2FF00',
+            fontSize: '22px',
+            marginBottom: '8px',
+            display: 'flex',
+          },
         },
-      }, `#1 genre: ${topGenre}`),
+        `#1 genre: ${topGenre}`
+      ),
 
-      el('div', {
-        style: {
-          color: '#FFFFFF',
-          fontSize: '22px',
-          display: 'flex',
+      el(
+        'div',
+        {
+          style: {
+            color: '#FFFFFF',
+            fontSize: '22px',
+            display: 'flex',
+          },
         },
-      }, `#1 artist: ${topArtist}`),
+        `#1 artist: ${topArtist}`
+      )
     ),
 
     // Bottom: username
-    el('div', {
-      style: {
-        display: 'flex',
-        flex: '1',
-        alignItems: 'flex-end',
-      },
-    },
-      el('span', {
+    el(
+      'div',
+      {
         style: {
-          color: '#6B7280',
-          fontSize: '18px',
+          display: 'flex',
+          flex: '1',
+          alignItems: 'flex-end',
         },
-      }, `@${data.username}`),
-    ),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#6B7280',
+            fontSize: '18px',
+          },
+        },
+        `@${data.username}`
+      )
+    )
   );
 }
 
@@ -180,104 +222,136 @@ export function wrappedSummaryCardStories(data: WrappedSummaryData): SatoriEleme
   const topGenre = truncate(data.topGenre, 30);
   const topArtist = truncate(data.topArtist, 30);
 
-  return el('div', {
-    style: {
-      display: 'flex',
-      flexDirection: 'column',
-      width: '100%',
-      height: '100%',
-      backgroundColor: '#0D0D0D',
-      padding: '120px 64px',
-      fontFamily: 'Inter',
-      justifyContent: 'center',
-      alignItems: 'center',
-    },
-  },
-    // Branding
-    el('div', {
+  return el(
+    'div',
+    {
       style: {
         display: 'flex',
-        flexDirection: 'row',
+        flexDirection: 'column',
+        width: '100%',
+        height: '100%',
+        backgroundColor: '#0D0D0D',
+        padding: '120px 64px',
+        fontFamily: 'Inter',
+        justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: '64px',
       },
     },
-      el('span', {
+    // Branding
+    el(
+      'div',
+      {
         style: {
-          color: '#D2FF00',
-          fontSize: '24px',
-          letterSpacing: '0.1em',
-          fontWeight: 700,
+          display: 'flex',
+          flexDirection: 'row',
+          alignItems: 'center',
+          marginBottom: '64px',
         },
-      }, 'SOUNDCHECK WRAPPED'),
+      },
+      el(
+        'span',
+        {
+          style: {
+            color: '#D2FF00',
+            fontSize: '24px',
+            letterSpacing: '0.1em',
+            fontWeight: 700,
+          },
+        },
+        'SOUNDCHECK WRAPPED'
+      )
     ),
 
     // Year
-    el('div', {
-      style: {
-        color: '#D2FF00',
-        fontSize: '96px',
-        fontWeight: 700,
-        lineHeight: '1.1',
-        textAlign: 'center',
-        marginBottom: '64px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#D2FF00',
+          fontSize: '96px',
+          fontWeight: 700,
+          lineHeight: '1.1',
+          textAlign: 'center',
+          marginBottom: '64px',
+          display: 'flex',
+        },
       },
-    }, String(data.year)),
+      String(data.year)
+    ),
 
     // Total shows
-    el('div', {
-      style: {
-        color: '#FFFFFF',
-        fontSize: '64px',
-        fontWeight: 700,
-        textAlign: 'center',
-        lineHeight: '1.2',
-        marginBottom: '16px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#FFFFFF',
+          fontSize: '64px',
+          fontWeight: 700,
+          textAlign: 'center',
+          lineHeight: '1.2',
+          marginBottom: '16px',
+          display: 'flex',
+        },
       },
-    }, `${data.totalShows} shows`),
+      `${data.totalShows} shows`
+    ),
 
     // Bands and venues
-    el('div', {
-      style: {
-        color: '#9CA3AF',
-        fontSize: '28px',
-        textAlign: 'center',
-        marginBottom: '64px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#9CA3AF',
+          fontSize: '28px',
+          textAlign: 'center',
+          marginBottom: '64px',
+          display: 'flex',
+        },
       },
-    }, `${data.uniqueBands} bands \u2022 ${data.uniqueVenues} venues`),
+      `${data.uniqueBands} bands \u2022 ${data.uniqueVenues} venues`
+    ),
 
     // Top genre
-    el('div', {
-      style: {
-        color: '#D2FF00',
-        fontSize: '28px',
-        textAlign: 'center',
-        marginBottom: '16px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#D2FF00',
+          fontSize: '28px',
+          textAlign: 'center',
+          marginBottom: '16px',
+          display: 'flex',
+        },
       },
-    }, `#1 genre: ${topGenre}`),
+      `#1 genre: ${topGenre}`
+    ),
 
     // Top artist
-    el('div', {
-      style: {
-        color: '#FFFFFF',
-        fontSize: '28px',
-        textAlign: 'center',
-        marginBottom: '80px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#FFFFFF',
+          fontSize: '28px',
+          textAlign: 'center',
+          marginBottom: '80px',
+          display: 'flex',
+        },
       },
-    }, `#1 artist: ${topArtist}`),
+      `#1 artist: ${topArtist}`
+    ),
 
     // Username
-    el('div', {
-      style: {
-        color: '#6B7280',
-        fontSize: '22px',
-        display: 'flex',
+    el(
+      'div',
+      {
+        style: {
+          color: '#6B7280',
+          fontSize: '22px',
+          display: 'flex',
+        },
       },
-    }, `@${data.username}`),
+      `@${data.username}`
+    )
   );
 }

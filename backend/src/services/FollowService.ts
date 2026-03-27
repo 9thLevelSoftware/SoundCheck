@@ -52,14 +52,16 @@ export class FollowService {
     if (result.rows.length > 0) {
       try {
         await this.notificationService.createNotification({
-          userId: followingId,        // recipient: the user being followed
+          userId: followingId, // recipient: the user being followed
           type: 'new_follower',
-          fromUserId: followerId,     // actor: who followed
+          fromUserId: followerId, // actor: who followed
           message: 'started following you',
         });
       } catch (err) {
         // Fire-and-forget: notification failure must not block the follow
-        logger.debug('Warning: follow notification failed', { error: err instanceof Error ? err.message : String(err) });
+        logger.debug('Warning: follow notification failed', {
+          error: err instanceof Error ? err.message : String(err),
+        });
       }
     }
 
@@ -190,7 +192,9 @@ export class FollowService {
   /**
    * Get follow counts for a user
    */
-  async getFollowCounts(userId: string): Promise<{ followersCount: number; followingCount: number }> {
+  async getFollowCounts(
+    userId: string
+  ): Promise<{ followersCount: number; followingCount: number }> {
     const query = `
       SELECT
         (SELECT COUNT(*) FROM user_followers WHERE following_id = $1) as followers_count,

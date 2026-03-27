@@ -69,7 +69,15 @@ export interface Venue {
   updatedAt: string;
 }
 
-export type VenueType = 'concert_hall' | 'club' | 'arena' | 'outdoor' | 'bar' | 'theater' | 'stadium' | 'other';
+export type VenueType =
+  | 'concert_hall'
+  | 'club'
+  | 'arena'
+  | 'outdoor'
+  | 'bar'
+  | 'theater'
+  | 'stadium'
+  | 'other';
 
 export interface CreateVenueRequest {
   name: string;
@@ -134,7 +142,13 @@ export interface Badge {
   createdAt: string;
 }
 
-export type BadgeType = 'checkin_count' | 'genre_explorer' | 'unique_venues' | 'superfan' | 'festival_warrior' | 'road_warrior';
+export type BadgeType =
+  | 'checkin_count'
+  | 'genre_explorer'
+  | 'unique_venues'
+  | 'superfan'
+  | 'festival_warrior'
+  | 'road_warrior';
 
 export interface UserBadge {
   id: string;

@@ -40,7 +40,11 @@ export class TrendingService {
 
     // Cache key: round lat/lon to 2 decimals for spatial bucketing
     const cacheKey = `trending:${lat.toFixed(2)}:${lon.toFixed(2)}:${radiusKm}:${days}:${limit}`;
-    return cache.getOrSet(cacheKey, async () => this.fetchTrending(userId, lat, lon, radiusKm, days, limit), 120); // 2 minute TTL
+    return cache.getOrSet(
+      cacheKey,
+      async () => this.fetchTrending(userId, lat, lon, radiusKm, days, limit),
+      120
+    ); // 2 minute TTL
   }
 
   private async fetchTrending(
@@ -119,14 +123,7 @@ export class TrendingService {
       LIMIT $6
     `;
 
-    const result = await this.db.query(query, [
-      userId,
-      lat,
-      lon,
-      days,
-      radiusKm,
-      limit,
-    ]);
+    const result = await this.db.query(query, [userId, lat, lon, days, radiusKm, limit]);
 
     return result.rows.map((row: any) => this.mapRowToTrendingEvent(row));
   }
@@ -139,9 +136,10 @@ export class TrendingService {
     return {
       id: row.id,
       eventName: row.event_name || 'Unnamed Event',
-      eventDate: row.event_date instanceof Date
-        ? row.event_date.toISOString().split('T')[0]
-        : row.event_date,
+      eventDate:
+        row.event_date instanceof Date
+          ? row.event_date.toISOString().split('T')[0]
+          : row.event_date,
       venueName: row.venue_name || 'Unknown Venue',
       venueCity: row.venue_city || '',
       venueState: row.venue_state || '',
@@ -151,9 +149,7 @@ export class TrendingService {
       distanceKm: Math.round(distanceKm * 10) / 10,
       trendingScore: Math.round(trendingScore * 10000) / 10000,
       imageUrl: row.venue_image || undefined,
-      lineupBands: row.lineup_bands && row.lineup_bands.length > 0
-        ? row.lineup_bands
-        : undefined,
+      lineupBands: row.lineup_bands && row.lineup_bands.length > 0 ? row.lineup_bands : undefined,
     };
   }
 }

@@ -97,7 +97,7 @@ describe('UserService', () => {
       (AuthUtils.validateEmail as jest.Mock).mockReturnValue(true);
       (AuthUtils.validateUsername as jest.Mock).mockReturnValue({ isValid: true, errors: [] });
       (AuthUtils.validatePassword as jest.Mock).mockReturnValue({ isValid: true, errors: [] });
-      
+
       // Mock existing user found
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] });
 
@@ -154,7 +154,9 @@ describe('UserService', () => {
 
       mockDb.query.mockResolvedValueOnce({ rows: [] }); // No user found
 
-      await expect(userService.authenticateUser(loginData)).rejects.toThrow('Invalid email or password');
+      await expect(userService.authenticateUser(loginData)).rejects.toThrow(
+        'Invalid email or password'
+      );
     });
 
     it('should throw error for inactive user', async () => {
@@ -172,7 +174,9 @@ describe('UserService', () => {
 
       mockDb.query.mockResolvedValueOnce({ rows: [mockUser] });
 
-      await expect(userService.authenticateUser(loginData)).rejects.toThrow('Account is deactivated');
+      await expect(userService.authenticateUser(loginData)).rejects.toThrow(
+        'Account is deactivated'
+      );
     });
   });
 

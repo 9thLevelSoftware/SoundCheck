@@ -19,15 +19,17 @@ describe('UserService.getUserStats', () => {
 
   test('should return checkin count from checkins table, not reviews', async () => {
     const mockStatsResult = {
-      rows: [{
-        checkin_count: '5',
-        review_count: '2',
-        badge_count: '3',
-        follower_count: '10',
-        following_count: '7',
-        unique_venues: '4',
-        unique_bands: '6',
-      }],
+      rows: [
+        {
+          checkin_count: '5',
+          review_count: '2',
+          badge_count: '3',
+          follower_count: '10',
+          following_count: '7',
+          unique_venues: '4',
+          unique_bands: '6',
+        },
+      ],
     };
 
     mockDb.query.mockResolvedValueOnce(mockStatsResult);
@@ -56,15 +58,17 @@ describe('UserService.getUserStats', () => {
 
   test('should query followers with following_id and following with follower_id', async () => {
     const mockStatsResult = {
-      rows: [{
-        checkin_count: '0',
-        review_count: '0',
-        badge_count: '0',
-        follower_count: '15',
-        following_count: '20',
-        unique_venues: '0',
-        unique_bands: '0',
-      }],
+      rows: [
+        {
+          checkin_count: '0',
+          review_count: '0',
+          badge_count: '0',
+          follower_count: '15',
+          following_count: '20',
+          unique_venues: '0',
+          unique_bands: '0',
+        },
+      ],
     };
 
     mockDb.query.mockResolvedValueOnce(mockStatsResult);
@@ -85,15 +89,17 @@ describe('UserService.getUserStats', () => {
 
   test('should count unique venues and bands from checkins', async () => {
     const mockStatsResult = {
-      rows: [{
-        checkin_count: '10',
-        review_count: '0',
-        badge_count: '0',
-        follower_count: '0',
-        following_count: '0',
-        unique_venues: '5',
-        unique_bands: '8',
-      }],
+      rows: [
+        {
+          checkin_count: '10',
+          review_count: '0',
+          badge_count: '0',
+          follower_count: '0',
+          following_count: '0',
+          unique_venues: '5',
+          unique_bands: '8',
+        },
+      ],
     };
 
     mockDb.query.mockResolvedValueOnce(mockStatsResult);
@@ -129,15 +135,17 @@ describe('UserService.getUserStats', () => {
 
   test('should handle null values gracefully', async () => {
     const mockStatsResult = {
-      rows: [{
-        checkin_count: null,
-        review_count: null,
-        badge_count: null,
-        follower_count: null,
-        following_count: null,
-        unique_venues: null,
-        unique_bands: null,
-      }],
+      rows: [
+        {
+          checkin_count: null,
+          review_count: null,
+          badge_count: null,
+          follower_count: null,
+          following_count: null,
+          unique_venues: null,
+          unique_bands: null,
+        },
+      ],
     };
 
     mockDb.query.mockResolvedValueOnce(mockStatsResult);
@@ -156,31 +164,31 @@ describe('UserService.getUserStats', () => {
 
   test('should pass userId parameter to query', async () => {
     const mockStatsResult = {
-      rows: [{
-        checkin_count: '1',
-        review_count: '1',
-        badge_count: '1',
-        follower_count: '1',
-        following_count: '1',
-        unique_venues: '1',
-        unique_bands: '1',
-      }],
+      rows: [
+        {
+          checkin_count: '1',
+          review_count: '1',
+          badge_count: '1',
+          follower_count: '1',
+          following_count: '1',
+          unique_venues: '1',
+          unique_bands: '1',
+        },
+      ],
     };
 
     mockDb.query.mockResolvedValueOnce(mockStatsResult);
 
     await userService.getUserStats('specific-user-id');
 
-    expect(mockDb.query).toHaveBeenCalledWith(
-      expect.any(String),
-      ['specific-user-id']
-    );
+    expect(mockDb.query).toHaveBeenCalledWith(expect.any(String), ['specific-user-id']);
   });
 
   test('should handle database errors gracefully', async () => {
     mockDb.query.mockRejectedValueOnce(new Error('Connection failed'));
 
-    await expect(userService.getUserStats('user-123'))
-      .rejects.toThrow('Failed to retrieve user statistics');
+    await expect(userService.getUserStats('user-123')).rejects.toThrow(
+      'Failed to retrieve user statistics'
+    );
   });
 });

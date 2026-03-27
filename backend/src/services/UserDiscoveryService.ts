@@ -113,7 +113,10 @@ export class UserDiscoveryService {
         isVerified: row.is_verified === true,
         sharedBands: parseInt(row.shared_bands, 10) || 0,
         sharedVenues: parseInt(row.shared_venues, 10) || 0,
-        reason: this.buildReason(parseInt(row.shared_bands, 10) || 0, parseInt(row.shared_venues, 10) || 0),
+        reason: this.buildReason(
+          parseInt(row.shared_bands, 10) || 0,
+          parseInt(row.shared_venues, 10) || 0
+        ),
       }));
 
       await setCache(cacheKey, suggestions, CacheTTL.MEDIUM); // 5 minutes

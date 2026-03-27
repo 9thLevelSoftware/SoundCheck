@@ -76,10 +76,9 @@ export class ReportService {
     } catch (error: any) {
       // Handle UNIQUE constraint violation (duplicate report)
       if (error.code === '23505' && error.constraint?.includes('reporter_id')) {
-        throw Object.assign(
-          new Error('You have already reported this content'),
-          { statusCode: 409 }
-        );
+        throw Object.assign(new Error('You have already reported this content'), {
+          statusCode: 409,
+        });
       }
       throw error;
     }
@@ -138,19 +137,15 @@ export class ReportService {
         query = `SELECT id AS user_id FROM users WHERE id = $1`;
         break;
       default:
-        throw Object.assign(
-          new Error(`Invalid content type: ${contentType}`),
-          { statusCode: 400 }
-        );
+        throw Object.assign(new Error(`Invalid content type: ${contentType}`), { statusCode: 400 });
     }
 
     const result = await this.db.query(query, [contentId]);
 
     if (result.rows.length === 0) {
-      throw Object.assign(
-        new Error(`Content not found: ${contentType} ${contentId}`),
-        { statusCode: 404 }
-      );
+      throw Object.assign(new Error(`Content not found: ${contentType} ${contentId}`), {
+        statusCode: 404,
+      });
     }
 
     const row = result.rows[0];

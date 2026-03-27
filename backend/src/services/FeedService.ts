@@ -41,7 +41,7 @@ export interface HappeningNowGroup {
 
 interface FeedCursor {
   createdAt: string; // ISO 8601
-  id: string;        // UUID
+  id: string; // UUID
 }
 
 // ============================================
@@ -83,9 +83,7 @@ export class FeedService {
 
     const cursorData = cursor ? decodeCursor(cursor) : null;
 
-    const cursorClause = cursorData
-      ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)'
-      : '';
+    const cursorClause = cursorData ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)' : '';
 
     const query = `
       SELECT
@@ -135,14 +133,16 @@ export class FeedService {
 
     const items: FeedItem[] = rows.map((row: any) => this.mapRowToFeedItem(row));
 
-    const nextCursor = items.length > 0
-      ? encodeCursor({
-          createdAt: rows[rows.length - 1].created_at instanceof Date
-            ? rows[rows.length - 1].created_at.toISOString()
-            : rows[rows.length - 1].created_at,
-          id: rows[rows.length - 1].id,
-        })
-      : null;
+    const nextCursor =
+      items.length > 0
+        ? encodeCursor({
+            createdAt:
+              rows[rows.length - 1].created_at instanceof Date
+                ? rows[rows.length - 1].created_at.toISOString()
+                : rows[rows.length - 1].created_at,
+            id: rows[rows.length - 1].id,
+          })
+        : null;
 
     const feedPage: FeedPage = { items, nextCursor, hasMore };
 
@@ -155,7 +155,12 @@ export class FeedService {
    * Get event feed: all check-ins for a specific event with cursor pagination.
    * Uses cache-aside pattern with Redis (60s TTL).
    */
-  async getEventFeed(eventId: string, userId?: string, cursor?: string, limit: number = 20): Promise<FeedPage> {
+  async getEventFeed(
+    eventId: string,
+    userId?: string,
+    cursor?: string,
+    limit: number = 20
+  ): Promise<FeedPage> {
     const cacheKey = userId
       ? `feed:event:${eventId}:${userId}:${cursor || 'head'}`
       : `feed:event:${eventId}:${cursor || 'head'}`;
@@ -165,13 +170,9 @@ export class FeedService {
 
     const cursorData = cursor ? decodeCursor(cursor) : null;
 
-    const cursorClause = cursorData
-      ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)'
-      : '';
+    const cursorClause = cursorData ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)' : '';
 
-    const blockFilter = userId
-      ? this.blockService.getBlockFilterSQL(userId, 'c.user_id')
-      : '';
+    const blockFilter = userId ? this.blockService.getBlockFilterSQL(userId, 'c.user_id') : '';
 
     const toastSelect = userId
       ? `EXISTS(
@@ -224,14 +225,16 @@ export class FeedService {
 
     const items: FeedItem[] = rows.map((row: any) => this.mapRowToFeedItem(row));
 
-    const nextCursor = items.length > 0
-      ? encodeCursor({
-          createdAt: rows[rows.length - 1].created_at instanceof Date
-            ? rows[rows.length - 1].created_at.toISOString()
-            : rows[rows.length - 1].created_at,
-          id: rows[rows.length - 1].id,
-        })
-      : null;
+    const nextCursor =
+      items.length > 0
+        ? encodeCursor({
+            createdAt:
+              rows[rows.length - 1].created_at instanceof Date
+                ? rows[rows.length - 1].created_at.toISOString()
+                : rows[rows.length - 1].created_at,
+            id: rows[rows.length - 1].id,
+          })
+        : null;
 
     const feedPage: FeedPage = { items, nextCursor, hasMore };
 
@@ -253,9 +256,7 @@ export class FeedService {
 
     const cursorData = cursor ? decodeCursor(cursor) : null;
 
-    const cursorClause = cursorData
-      ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)'
-      : '';
+    const cursorClause = cursorData ? 'AND (c.created_at, c.id) < ($3::timestamptz, $4::uuid)' : '';
 
     const query = `
       SELECT
@@ -303,14 +304,16 @@ export class FeedService {
 
     const items: FeedItem[] = rows.map((row: any) => this.mapRowToFeedItem(row));
 
-    const nextCursor = items.length > 0
-      ? encodeCursor({
-          createdAt: rows[rows.length - 1].created_at instanceof Date
-            ? rows[rows.length - 1].created_at.toISOString()
-            : rows[rows.length - 1].created_at,
-          id: rows[rows.length - 1].id,
-        })
-      : null;
+    const nextCursor =
+      items.length > 0
+        ? encodeCursor({
+            createdAt:
+              rows[rows.length - 1].created_at instanceof Date
+                ? rows[rows.length - 1].created_at.toISOString()
+                : rows[rows.length - 1].created_at,
+            id: rows[rows.length - 1].id,
+          })
+        : null;
 
     const feedPage: FeedPage = { items, nextCursor, hasMore };
 
@@ -370,9 +373,10 @@ export class FeedService {
       venueName: row.venue_name || 'Unknown Venue',
       friends: row.friends || [],
       totalFriendCount: row.total_friend_count,
-      lastCheckinAt: row.last_checkin_at instanceof Date
-        ? row.last_checkin_at.toISOString()
-        : row.last_checkin_at,
+      lastCheckinAt:
+        row.last_checkin_at instanceof Date
+          ? row.last_checkin_at.toISOString()
+          : row.last_checkin_at,
     }));
 
     // 30s TTL for live data
@@ -386,7 +390,9 @@ export class FeedService {
    * Returns { friends, event, happening_now } with count of new items
    * since last_seen_at for each tab.
    */
-  async getUnseenCounts(userId: string): Promise<{ friends: number; event: number; happening_now: number }> {
+  async getUnseenCounts(
+    userId: string
+  ): Promise<{ friends: number; event: number; happening_now: number }> {
     // Get all cursor records for this user
     const cursorResult = await this.db.query(
       `SELECT feed_type, last_seen_at FROM feed_read_cursors WHERE user_id = $1`,
@@ -395,9 +401,8 @@ export class FeedService {
 
     const cursors: Record<string, string> = {};
     for (const row of cursorResult.rows) {
-      cursors[row.feed_type] = row.last_seen_at instanceof Date
-        ? row.last_seen_at.toISOString()
-        : row.last_seen_at;
+      cursors[row.feed_type] =
+        row.last_seen_at instanceof Date ? row.last_seen_at.toISOString() : row.last_seen_at;
     }
 
     // Count unseen friends feed items
@@ -466,7 +471,10 @@ export class FeedService {
       await cache.delPattern(`feed:friends:${userId}:*`);
       await cache.del(`feed:happening:${userId}`);
     } catch (error) {
-      logger.error('Feed cache invalidation error (user)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Feed cache invalidation error (user)', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
 
@@ -478,7 +486,10 @@ export class FeedService {
     try {
       await cache.delPattern(`feed:event:${eventId}:*`);
     } catch (error) {
-      logger.error('Feed cache invalidation error (event)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Feed cache invalidation error (event)', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
 
@@ -490,7 +501,10 @@ export class FeedService {
     try {
       await cache.delPattern('feed:global:*');
     } catch (error) {
-      logger.error('Feed cache invalidation error (global)', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Feed cache invalidation error (global)', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
 
@@ -508,9 +522,7 @@ export class FeedService {
       eventName: row.event_name || 'Unnamed Event',
       venueName: row.venue_name || 'Unknown Venue',
       photoUrl: row.photo_url || null,
-      createdAt: row.created_at instanceof Date
-        ? row.created_at.toISOString()
-        : row.created_at,
+      createdAt: row.created_at instanceof Date ? row.created_at.toISOString() : row.created_at,
       hasBadgeEarned: row.has_badge_earned === true || row.has_badge_earned === 't',
       toastCount: row.toast_count || 0,
       commentCount: row.comment_count || 0,

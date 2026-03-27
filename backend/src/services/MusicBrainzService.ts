@@ -45,7 +45,7 @@ export class MusicBrainzService {
       baseURL: 'https://musicbrainz.org/ws/2',
       headers: {
         'User-Agent': this.userAgent,
-        'Accept': 'application/json',
+        Accept: 'application/json',
       },
     });
   }
@@ -59,7 +59,7 @@ export class MusicBrainzService {
 
     if (timeSinceLastRequest < this.REQUEST_DELAY) {
       const waitTime = this.REQUEST_DELAY - timeSinceLastRequest;
-      await new Promise(resolve => setTimeout(resolve, waitTime));
+      await new Promise((resolve) => setTimeout(resolve, waitTime));
     }
 
     this.lastRequestTime = Date.now();
@@ -68,10 +68,7 @@ export class MusicBrainzService {
   /**
    * Search for artists/bands by name
    */
-  async searchArtists(
-    query: string,
-    limit: number = 20
-  ): Promise<MusicBrainzArtist[]> {
+  async searchArtists(query: string, limit: number = 20): Promise<MusicBrainzArtist[]> {
     try {
       await this.respectRateLimit();
 
@@ -85,7 +82,10 @@ export class MusicBrainzService {
 
       return response.data.artists || [];
     } catch (error) {
-      logger.warn('MusicBrainz search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.warn('MusicBrainz search error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw new Error('Failed to search artists from MusicBrainz');
     }
   }
@@ -106,7 +106,10 @@ export class MusicBrainzService {
 
       return response.data;
     } catch (error) {
-      logger.warn('MusicBrainz details error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.warn('MusicBrainz details error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw new Error('Failed to get artist details from MusicBrainz');
     }
   }
@@ -118,10 +121,9 @@ export class MusicBrainzService {
   async importBand(mbid: string): Promise<any> {
     try {
       // Check if band already exists
-      const existingBand = await this.db.query(
-        'SELECT * FROM bands WHERE musicbrainz_id = $1',
-        [mbid]
-      );
+      const existingBand = await this.db.query('SELECT * FROM bands WHERE musicbrainz_id = $1', [
+        mbid,
+      ]);
 
       if (existingBand.rows.length > 0) {
         return {
@@ -200,7 +202,10 @@ export class MusicBrainzService {
         alreadyExists: false,
       };
     } catch (error) {
-      logger.warn('MusicBrainz import error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.warn('MusicBrainz import error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -208,10 +213,7 @@ export class MusicBrainzService {
   /**
    * Search for artists by genre
    */
-  async searchByGenre(
-    genre: string,
-    limit: number = 20
-  ): Promise<MusicBrainzArtist[]> {
+  async searchByGenre(genre: string, limit: number = 20): Promise<MusicBrainzArtist[]> {
     try {
       await this.respectRateLimit();
 
@@ -225,7 +227,10 @@ export class MusicBrainzService {
 
       return response.data.artists || [];
     } catch (error) {
-      logger.warn('MusicBrainz genre search error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.warn('MusicBrainz genre search error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw new Error('Failed to search artists by genre');
     }
   }

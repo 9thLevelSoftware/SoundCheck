@@ -34,10 +34,14 @@ try {
     isConfigured = true;
     logger.info('[PushNotificationService] Firebase Admin initialized for FCM');
   } else {
-    logger.warn('[PushNotificationService] FIREBASE_SERVICE_ACCOUNT_JSON not set. Push notifications disabled.');
+    logger.warn(
+      '[PushNotificationService] FIREBASE_SERVICE_ACCOUNT_JSON not set. Push notifications disabled.'
+    );
   }
 } catch (err) {
-  logger.error('[PushNotificationService] Failed to initialize Firebase Admin', { error: (err as Error).message });
+  logger.error('[PushNotificationService] Failed to initialize Firebase Admin', {
+    error: (err as Error).message,
+  });
   isConfigured = false;
 }
 
@@ -82,20 +86,22 @@ export class PushNotificationService {
       if (response.failureCount > 0) {
         const tokensToRemove: string[] = [];
         response.responses.forEach((resp: any, idx: number) => {
-          if (
-            !resp.success &&
-            resp.error?.code === 'messaging/registration-token-not-registered'
-          ) {
+          if (!resp.success && resp.error?.code === 'messaging/registration-token-not-registered') {
             tokensToRemove.push(tokens[idx]);
           }
         });
         if (tokensToRemove.length > 0) {
           await this.removeDeviceTokens(userId, tokensToRemove);
-          logger.info(`[PushNotificationService] Removed ${tokensToRemove.length} stale token(s) for user ${userId}`);
+          logger.info(
+            `[PushNotificationService] Removed ${tokensToRemove.length} stale token(s) for user ${userId}`
+          );
         }
       }
     } catch (error) {
-      logger.error('[PushNotificationService] sendToUser error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('[PushNotificationService] sendToUser error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       // Non-fatal: notification failure should not propagate
     }
   }
@@ -105,13 +111,15 @@ export class PushNotificationService {
    */
   async getDeviceTokens(userId: string): Promise<string[]> {
     try {
-      const result = await this.db.query(
-        'SELECT token FROM device_tokens WHERE user_id = $1',
-        [userId]
-      );
+      const result = await this.db.query('SELECT token FROM device_tokens WHERE user_id = $1', [
+        userId,
+      ]);
       return result.rows.map((r: any) => r.token);
     } catch (error) {
-      logger.error('[PushNotificationService] getDeviceTokens error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('[PushNotificationService] getDeviceTokens error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return [];
     }
   }
@@ -123,11 +131,7 @@ export class PushNotificationService {
    * ON CONFLICT updates the platform and updated_at timestamp,
    * ensuring the token stays current even if it already exists.
    */
-  async registerDeviceToken(
-    userId: string,
-    token: string,
-    platform: string
-  ): Promise<void> {
+  async registerDeviceToken(userId: string, token: string, platform: string): Promise<void> {
     try {
       await this.db.query(
         `INSERT INTO device_tokens (user_id, token, platform)
@@ -138,7 +142,10 @@ export class PushNotificationService {
         [userId, token, platform]
       );
     } catch (error) {
-      logger.error('[PushNotificationService] registerDeviceToken error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('[PushNotificationService] registerDeviceToken error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -148,12 +155,15 @@ export class PushNotificationService {
    */
   async removeDeviceTokens(userId: string, tokens: string[]): Promise<void> {
     try {
-      await this.db.query(
-        'DELETE FROM device_tokens WHERE user_id = $1 AND token = ANY($2)',
-        [userId, tokens]
-      );
+      await this.db.query('DELETE FROM device_tokens WHERE user_id = $1 AND token = ANY($2)', [
+        userId,
+        tokens,
+      ]);
     } catch (error) {
-      logger.error('[PushNotificationService] removeDeviceTokens error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('[PushNotificationService] removeDeviceTokens error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
 
@@ -162,12 +172,15 @@ export class PushNotificationService {
    */
   async removeDeviceToken(userId: string, token: string): Promise<void> {
     try {
-      await this.db.query(
-        'DELETE FROM device_tokens WHERE user_id = $1 AND token = $2',
-        [userId, token]
-      );
+      await this.db.query('DELETE FROM device_tokens WHERE user_id = $1 AND token = $2', [
+        userId,
+        token,
+      ]);
     } catch (error) {
-      logger.error('[PushNotificationService] removeDeviceToken error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('[PushNotificationService] removeDeviceToken error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
     }
   }
 }

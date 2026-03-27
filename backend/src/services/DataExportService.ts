@@ -116,16 +116,17 @@ export class DataExportService {
     }
 
     // Collect all data in parallel for efficiency
-    const [checkins, followers, following, wishlist, badges, toasts, comments, notifications] = await Promise.all([
-      this.getCheckins(userId),
-      this.getFollowers(userId),
-      this.getFollowing(userId),
-      this.getWishlist(userId),
-      this.getBadges(userId),
-      this.getToasts(userId),
-      this.getComments(userId),
-      this.getNotifications(userId),
-    ]);
+    const [checkins, followers, following, wishlist, badges, toasts, comments, notifications] =
+      await Promise.all([
+        this.getCheckins(userId),
+        this.getFollowers(userId),
+        this.getFollowing(userId),
+        this.getWishlist(userId),
+        this.getBadges(userId),
+        this.getToasts(userId),
+        this.getComments(userId),
+        this.getNotifications(userId),
+      ]);
 
     return {
       format: 'GDPR_EXPORT_V1',

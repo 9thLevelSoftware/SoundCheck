@@ -60,7 +60,9 @@ class Database {
       }
       // Default (rejectUnauthorized: true) uses sslmode=require with verification
 
-      logger.info(`SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
+      logger.info(
+        `SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`
+      );
 
       this.pool = new Pool({
         connectionString,
@@ -72,7 +74,9 @@ class Database {
     } else {
       // Fall back to individual environment variables
       logger.info('Using individual DB_* environment variables');
-      logger.info(`SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`);
+      logger.info(
+        `SSL mode: ${sslMode} (rejectUnauthorized: ${sslConfig === false ? 'N/A' : sslConfig.rejectUnauthorized})`
+      );
 
       const config: DatabaseConfig = {
         host: process.env.DB_HOST || 'localhost',
@@ -93,7 +97,10 @@ class Database {
 
     // Handle pool errors
     this.pool.on('error', (err) => {
-      logger.error('Unexpected error on idle client', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined });
+      logger.error('Unexpected error on idle client', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      });
       // Do NOT exit -- pool will reconnect automatically.
       // The /health endpoint will detect persistent DB failures.
     });
@@ -115,14 +122,17 @@ class Database {
     try {
       const res = await this.pool.query(text, params);
       const duration = Date.now() - start;
-      
+
       if (process.env.NODE_ENV === 'development') {
         logger.debug('Executed query', { text, duration, rows: res.rowCount });
       }
-      
+
       return res;
     } catch (error) {
-      logger.error('Database query error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Database query error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }
@@ -141,7 +151,10 @@ class Database {
       await this.query('SELECT 1');
       return true;
     } catch (error) {
-      logger.error('Database health check failed', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Database health check failed', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       return false;
     }
   }

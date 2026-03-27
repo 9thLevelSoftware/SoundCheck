@@ -61,7 +61,7 @@ export function startEventSyncWorker(): Worker | null {
       connection: createBullMQConnection(),
       concurrency: 1,
       lockDuration: 300000, // 5 min — long-running sync against Ticketmaster API
-    },
+    }
   );
 
   // Event listeners for monitoring

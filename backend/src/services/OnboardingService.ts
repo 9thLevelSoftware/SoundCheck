@@ -29,16 +29,11 @@ export class OnboardingService {
       await client.query('BEGIN');
 
       // Delete existing preferences
-      await client.query(
-        `DELETE FROM user_genre_preferences WHERE user_id = $1`,
-        [userId]
-      );
+      await client.query(`DELETE FROM user_genre_preferences WHERE user_id = $1`, [userId]);
 
       // Batch insert new preferences
       if (genres.length > 0) {
-        const values = genres
-          .map((_, i) => `($1, $${i + 2})`)
-          .join(', ');
+        const values = genres.map((_, i) => `($1, $${i + 2})`).join(', ');
         const params = [userId, ...genres];
 
         await client.query(
@@ -82,10 +77,9 @@ export class OnboardingService {
    * Check if onboarding is complete for a user.
    */
   async isOnboardingComplete(userId: string): Promise<boolean> {
-    const result = await this.db.query(
-      `SELECT onboarding_completed_at FROM users WHERE id = $1`,
-      [userId]
-    );
+    const result = await this.db.query(`SELECT onboarding_completed_at FROM users WHERE id = $1`, [
+      userId,
+    ]);
     return result.rows.length > 0 && result.rows[0].onboarding_completed_at !== null;
   }
 }

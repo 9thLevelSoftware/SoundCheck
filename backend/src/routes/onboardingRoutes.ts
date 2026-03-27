@@ -10,7 +10,10 @@ const onboardingController = new OnboardingController();
 // Validation schemas
 const saveGenrePreferencesSchema = z.object({
   body: z.object({
-    genres: z.array(z.string().min(1).max(100)).min(3, 'Must select at least 3 genres').max(8, 'Cannot select more than 8 genres'),
+    genres: z
+      .array(z.string().min(1).max(100))
+      .min(3, 'Must select at least 3 genres')
+      .max(8, 'Cannot select more than 8 genres'),
   }),
 });
 
@@ -23,7 +26,12 @@ router.use(authenticateToken);
 
 // Save genre preferences
 // POST /api/onboarding/genres
-router.post('/genres', writeRateLimit, validate(saveGenrePreferencesSchema), onboardingController.saveGenres);
+router.post(
+  '/genres',
+  writeRateLimit,
+  validate(saveGenrePreferencesSchema),
+  onboardingController.saveGenres
+);
 
 // Get genre preferences
 // GET /api/onboarding/genres

@@ -91,7 +91,11 @@ describe('User Stats Routes', () => {
     app.use(express.json());
     app.use('/api/users', userRoutes);
 
-    mockVerify.mockReturnValue({ userId: 'auth-user-123', email: 'auth@example.com', username: 'authuser' });
+    mockVerify.mockReturnValue({
+      userId: 'auth-user-123',
+      email: 'auth@example.com',
+      username: 'authuser',
+    });
   });
 
   describe('GET /api/users/:userId/stats', () => {
@@ -154,8 +158,7 @@ describe('User Stats Routes', () => {
     });
 
     it('should return 401 for unauthenticated request', async () => {
-      const response = await request(app)
-        .get(`/api/users/${TEST_USER_UUID}/stats`);
+      const response = await request(app).get(`/api/users/${TEST_USER_UUID}/stats`);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -213,15 +216,17 @@ describe('User Stats Routes', () => {
 
       // Mock getUserStats - returns empty stats
       mockQuery.mockResolvedValueOnce({
-        rows: [{
-          checkin_count: '0',
-          review_count: '0',
-          badge_count: '0',
-          follower_count: '0',
-          following_count: '0',
-          unique_venues: '0',
-          unique_bands: '0',
-        }],
+        rows: [
+          {
+            checkin_count: '0',
+            review_count: '0',
+            badge_count: '0',
+            follower_count: '0',
+            following_count: '0',
+            unique_venues: '0',
+            unique_bands: '0',
+          },
+        ],
         rowCount: 1,
       });
 

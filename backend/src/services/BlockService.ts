@@ -68,7 +68,10 @@ export class BlockService {
     } catch (error: any) {
       // Re-throw custom errors
       if (error.statusCode) throw error;
-      logger.error('Block user error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Block user error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
       throw error;
     }
   }

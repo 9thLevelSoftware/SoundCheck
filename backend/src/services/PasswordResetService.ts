@@ -14,7 +14,9 @@ import logger, { logInfo, logWarn, logError } from '../utils/logger';
  * - Refresh token revocation after reset
  */
 export class PasswordResetService {
-  private db: typeof Database.prototype extends object ? ReturnType<typeof Database.getInstance> : any;
+  private db: typeof Database.prototype extends object
+    ? ReturnType<typeof Database.getInstance>
+    : any;
   private emailService: EmailService;
 
   constructor(db?: any, emailService?: EmailService) {
@@ -30,7 +32,8 @@ export class PasswordResetService {
    */
   async requestReset(email: string): Promise<{ sent: boolean; message: string }> {
     const normalizedEmail = email.toLowerCase().trim();
-    const genericMessage = 'If an account exists for that email, we\'ve sent a password reset link. Check your inbox.';
+    const genericMessage =
+      "If an account exists for that email, we've sent a password reset link. Check your inbox.";
 
     try {
       // Look up user by email

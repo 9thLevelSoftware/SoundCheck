@@ -27,8 +27,15 @@ export class EventController {
   createEvent = async (req: Request, res: Response): Promise<void> => {
     try {
       const {
-        venueId, bandId, eventDate, eventName, description,
-        doorsTime, startTime, ticketUrl, lineup,
+        venueId,
+        bandId,
+        eventDate,
+        eventName,
+        description,
+        doorsTime,
+        startTime,
+        ticketUrl,
+        lineup,
       } = req.body;
       const userId = req.user?.id; // From auth middleware
 
@@ -39,7 +46,9 @@ export class EventController {
       }
 
       if (!eventDate || isNaN(new Date(eventDate).getTime())) {
-        res.status(400).json({ success: false, error: 'A valid eventDate is required' } as ApiResponse);
+        res
+          .status(400)
+          .json({ success: false, error: 'A valid eventDate is required' } as ApiResponse);
         return;
       }
 
@@ -54,7 +63,9 @@ export class EventController {
       }
 
       // Resolve lineup: convert bandName entries to bandId via BandMatcher
-      let resolvedLineup: { bandId: string; setOrder?: number; isHeadliner?: boolean }[] | undefined;
+      let resolvedLineup:
+        | { bandId: string; setOrder?: number; isHeadliner?: boolean }[]
+        | undefined;
 
       if (hasLineup) {
         resolvedLineup = [];
@@ -104,7 +115,10 @@ export class EventController {
 
       res.status(201).json(response);
     } catch (error) {
-      logger.error('Create event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Create event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       // API-020: Only expose AppError messages to clients; hide raw error details
       const statusCode = error instanceof AppError ? error.statusCode : 500;
@@ -136,10 +150,16 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       // API-017/CFR-030: Distinguish NotFound from server errors
-      if (error instanceof NotFoundError || (error instanceof Error && error.message === 'Event not found')) {
+      if (
+        error instanceof NotFoundError ||
+        (error instanceof Error && error.message === 'Event not found')
+      ) {
         const response: ApiResponse = { success: false, error: 'Event not found' };
         res.status(404).json(response);
         return;
@@ -175,7 +195,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get events by venue error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get events by venue error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -206,7 +229,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get events by band error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get events by band error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -235,7 +261,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get upcoming events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get upcoming events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -292,7 +321,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get trending events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get trending events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -369,7 +401,10 @@ export class EventController {
         data: event,
       } as ApiResponse);
     } catch (error) {
-      logger.error('Lookup event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Lookup event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       res.status(500).json({
         success: false,
@@ -420,7 +455,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get nearby events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get nearby events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -471,7 +509,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get nearby upcoming events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get nearby upcoming events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -513,7 +554,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get events by genre error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get events by genre error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -551,7 +595,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Search events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Search events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -601,7 +648,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Get recommended events error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Get recommended events error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       const response: ApiResponse = {
         success: false,
@@ -640,7 +690,12 @@ export class EventController {
       const isCreator = event.createdByUserId === req.user.id;
 
       if (!isAdmin && !isCreator) {
-        res.status(403).json({ success: false, error: 'Only admins or event creators can delete this event' } as ApiResponse);
+        res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Only admins or event creators can delete this event',
+          } as ApiResponse);
         return;
       }
 
@@ -653,7 +708,10 @@ export class EventController {
 
       res.status(200).json(response);
     } catch (error) {
-      logger.error('Delete event error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+      logger.error('Delete event error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+      });
 
       // API-020: Only expose AppError messages to clients
       const statusCode = error instanceof AppError ? error.statusCode : 500;

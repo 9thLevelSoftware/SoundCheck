@@ -54,7 +54,9 @@ export class EventSyncService {
     this.apiKeyConfigured = !!apiKey;
 
     if (!this.apiKeyConfigured) {
-      logger.info('[EventSyncService] TICKETMASTER_API_KEY not configured. Sync pipeline is disabled.');
+      logger.info(
+        '[EventSyncService] TICKETMASTER_API_KEY not configured. Sync pipeline is disabled.'
+      );
     } else {
       try {
         this.adapter = new TicketmasterAdapter();
@@ -83,7 +85,7 @@ export class EventSyncService {
     const logResult = await this.db.query(
       `INSERT INTO event_sync_log (status, started_at)
        VALUES ('running', CURRENT_TIMESTAMP)
-       RETURNING id`,
+       RETURNING id`
     );
     const syncLogId = logResult.rows[0].id;
 
@@ -102,7 +104,9 @@ export class EventSyncService {
       const regions = await this.loadSyncRegions(regionId);
 
       if (regions.length === 0) {
-        logger.warn('[EventSyncService] No active sync regions found. Configure sync_regions to enable event sync.');
+        logger.warn(
+          '[EventSyncService] No active sync regions found. Configure sync_regions to enable event sync.'
+        );
         await this.completeSyncLog(syncLogId, 'completed', counters);
         return;
       }
@@ -117,7 +121,7 @@ export class EventSyncService {
           // Update region's last_synced_at
           await this.db.query(
             `UPDATE sync_regions SET last_synced_at = CURRENT_TIMESTAMP WHERE id = $1`,
-            [region.id],
+            [region.id]
           );
         } catch (regionErr) {
           logger.error(`[EventSyncService] Failed to sync region: ${region.label}`, {
@@ -180,7 +184,7 @@ export class EventSyncService {
         `SELECT id, label, latitude, longitude, radius_miles
          FROM sync_regions
          WHERE id = $1 AND is_active = true`,
-        [regionId],
+        [regionId]
       );
       return result.rows;
     }
@@ -189,7 +193,7 @@ export class EventSyncService {
       `SELECT id, label, latitude, longitude, radius_miles
        FROM sync_regions
        WHERE is_active = true
-       ORDER BY last_synced_at ASC NULLS FIRST`,
+       ORDER BY last_synced_at ASC NULLS FIRST`
     );
     return result.rows;
   }
@@ -221,7 +225,7 @@ export class EventSyncService {
       latlong,
       region.radius_miles,
       startDate,
-      endDate,
+      endDate
     );
 
     counters.events_fetched += events.length;
@@ -254,7 +258,7 @@ export class EventSyncService {
    */
   private async processEvent(
     event: NormalizedEvent,
-    counters?: SyncCounters,
+    counters?: SyncCounters
   ): Promise<string | null> {
     // Step 1: Resolve venue
     const venueResult = await this.bandMatcher.matchOrCreateVenue(event.venue);
@@ -269,7 +273,7 @@ export class EventSyncService {
         attraction.name,
         attraction.externalId,
         attraction.genre || undefined,
-        attraction.imageUrl || undefined,
+        attraction.imageUrl || undefined
       );
       bandIds.push({
         bandId: bandResult.bandId,
@@ -288,7 +292,7 @@ export class EventSyncService {
     // venue+date, merge Ticketmaster data into it rather than creating a duplicate
     const existingUserEvent = await this.eventService.findUserCreatedEventAtVenueDate(
       venueResult.venueId,
-      event.date,
+      event.date
     );
     if (existingUserEvent) {
       await this.eventService.mergeTicketmasterIntoUserEvent(existingUserEvent, {
@@ -306,7 +310,7 @@ export class EventSyncService {
           `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner)
            VALUES ($1, $2, $3, $4)
            ON CONFLICT (event_id, band_id) DO NOTHING`,
-          [existingUserEvent, bandIds[i].bandId, i, i === 0],
+          [existingUserEvent, bandIds[i].bandId, i, i === 0]
         );
       }
 
@@ -326,7 +330,7 @@ export class EventSyncService {
     // Step 4: Check existing event status before upsert (for status change detection)
     const existingResult = await this.db.query(
       `SELECT id, status FROM events WHERE source = 'ticketmaster' AND external_id = $1`,
-      [event.externalId],
+      [event.externalId]
     );
     const oldStatus = existingResult.rows.length > 0 ? existingResult.rows[0].status : null;
 
@@ -356,7 +360,7 @@ export class EventSyncService {
         event.priceMax,
         event.externalId,
         event.status,
-      ],
+      ]
     );
 
     const eventId = upsertResult.rows[0].id;
@@ -376,7 +380,7 @@ export class EventSyncService {
         `INSERT INTO event_lineup (event_id, band_id, set_order, is_headliner)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT (event_id, band_id) DO NOTHING`,
-        [eventId, bandIds[i].bandId, i, i === 0],
+        [eventId, bandIds[i].bandId, i, i === 0]
       );
     }
 
@@ -397,11 +401,13 @@ export class EventSyncService {
   private async handleStatusChange(
     eventId: string,
     newStatus: string,
-    oldStatus: string,
+    oldStatus: string
   ): Promise<void> {
     if (newStatus === oldStatus) return;
 
-    logger.info(`[EventSyncService] Event status changed: ${oldStatus} -> ${newStatus}`, { eventId });
+    logger.info(`[EventSyncService] Event status changed: ${oldStatus} -> ${newStatus}`, {
+      eventId,
+    });
 
     // Only notify for meaningful status changes
     if (newStatus !== 'cancelled' && newStatus !== 'rescheduled') {
@@ -412,15 +418,18 @@ export class EventSyncService {
       // Find users who checked in to this event
       const checkinUsers = await this.db.query(
         `SELECT DISTINCT user_id FROM checkins WHERE event_id = $1`,
-        [eventId],
+        [eventId]
       );
 
       if (checkinUsers.rows.length === 0) return;
 
-      logger.info(`[EventSyncService] Notifying ${checkinUsers.rows.length} users of status change`, {
-        eventId,
-        newStatus,
-      });
+      logger.info(
+        `[EventSyncService] Notifying ${checkinUsers.rows.length} users of status change`,
+        {
+          eventId,
+          newStatus,
+        }
+      );
 
       // Create notification for each affected user
       for (const row of checkinUsers.rows) {
@@ -435,7 +444,7 @@ export class EventSyncService {
               `Event ${newStatus}`,
               `An event you checked in to has been ${newStatus}.`,
               eventId,
-            ],
+            ]
           );
         } catch (notifErr) {
           logger.error('[EventSyncService] Failed to create notification', {
@@ -460,7 +469,7 @@ export class EventSyncService {
     syncLogId: string,
     status: 'completed' | 'failed',
     counters: SyncCounters,
-    errorMessage?: string,
+    errorMessage?: string
   ): Promise<void> {
     try {
       await this.db.query(
@@ -487,7 +496,7 @@ export class EventSyncService {
           counters.venues_created,
           errorMessage || null,
           syncLogId,
-        ],
+        ]
       );
     } catch (err) {
       logger.error('[EventSyncService] Failed to update sync log', {

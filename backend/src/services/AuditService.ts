@@ -124,80 +124,139 @@ export class AuditService {
    * Convenience method for logging user creation
    */
   logUserCreated(userId: string, req?: Request): void {
-    this.log(userId, 'CREATE', 'users', userId, {}, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(userId, 'CREATE', 'users', userId, {}, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging profile updates
    */
   logProfileUpdated(userId: string, updatedFields: string[], req?: Request): void {
-    this.log(userId, 'UPDATE', 'users', userId, { updatedFields }, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(userId, 'UPDATE', 'users', userId, { updatedFields }, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging user deletion
    */
   logUserDeleted(userId: string, scheduledAt: Date, req?: Request): void {
-    this.log(userId, 'DELETE', 'users', userId, { scheduledAt: scheduledAt.toISOString() }, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(
+      userId,
+      'DELETE',
+      'users',
+      userId,
+      { scheduledAt: scheduledAt.toISOString() },
+      req
+    ).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging data export
    */
   logDataExport(userId: string, req?: Request): void {
-    this.log(userId, 'EXPORT', 'users', userId, {}, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(userId, 'EXPORT', 'users', userId, {}, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging successful login
    */
   logLoginSuccess(userId: string, method: string, req?: Request): void {
-    this.log(userId, 'LOGIN', 'users', userId, { success: true, method }, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(userId, 'LOGIN', 'users', userId, { success: true, method }, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging failed login
    */
   logLoginFailure(email: string, reason: string, req?: Request): void {
-    this.log(null, 'LOGIN', 'users', null, { success: false, email, reason }, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(null, 'LOGIN', 'users', null, { success: false, email, reason }, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging logout
    */
   logLogout(userId: string, req?: Request): void {
-    this.log(userId, 'LOGOUT', 'refresh_tokens', null, {}, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(userId, 'LOGOUT', 'refresh_tokens', null, {}, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging social auth linkage
    */
   logSocialAuthLinked(userId: string, provider: string, req?: Request): void {
-    this.log(userId, 'PERMISSION_CHANGE', 'users', userId, { provider, action: 'linked' }, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(
+      userId,
+      'PERMISSION_CHANGE',
+      'users',
+      userId,
+      { provider, action: 'linked' },
+      req
+    ).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging check-in creation
    */
-  logCheckinCreated(userId: string, checkinId: string, metadata: Record<string, any>, req?: Request): void {
-    this.log(userId, 'CREATE', 'checkins', checkinId, metadata, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+  logCheckinCreated(
+    userId: string,
+    checkinId: string,
+    metadata: Record<string, any>,
+    req?: Request
+  ): void {
+    this.log(userId, 'CREATE', 'checkins', checkinId, metadata, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**
    * Convenience method for logging badge award
    */
   logBadgeAwarded(userId: string, badgeId: string, badgeName: string, req?: Request): void {
-    this.log(userId, 'CREATE', 'user_badges', badgeId, { badgeName }, req)
-      .catch(err => logger.error('[AuditService] Log failed', { error: err instanceof Error ? err.message : String(err), stack: err instanceof Error ? err.stack : undefined }));
+    this.log(userId, 'CREATE', 'user_badges', badgeId, { badgeName }, req).catch((err) =>
+      logger.error('[AuditService] Log failed', {
+        error: err instanceof Error ? err.message : String(err),
+        stack: err instanceof Error ? err.stack : undefined,
+      })
+    );
   }
 
   /**

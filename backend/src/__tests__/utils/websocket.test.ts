@@ -363,7 +363,7 @@ describe('WebSocket Authentication', () => {
       }
     });
 
-    test('should reject joining another user\'s room', () => {
+    test("should reject joining another user's room", () => {
       const clientsMap = (websocket as any).clients as Map<string, any>;
       const clientId = 'test-room-other-user';
 

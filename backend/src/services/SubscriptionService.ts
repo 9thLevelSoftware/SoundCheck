@@ -25,10 +25,9 @@ export class SubscriptionService {
     }
 
     // 2. Resolve user by app_user_id (set via Purchases.logIn(userId) on mobile)
-    const userResult = await this.db.query(
-      'SELECT id FROM users WHERE id = $1',
-      [event.app_user_id]
-    );
+    const userResult = await this.db.query('SELECT id FROM users WHERE id = $1', [
+      event.app_user_id,
+    ]);
     if (userResult.rows.length === 0) {
       logger.warn(`SubscriptionService: User not found for app_user_id=${event.app_user_id}`);
       return { processed: false, reason: 'User not found' };
@@ -71,20 +70,14 @@ export class SubscriptionService {
    * Set a user's premium status.
    */
   async setUserPremium(userId: string, isPremium: boolean): Promise<void> {
-    await this.db.query(
-      'UPDATE users SET is_premium = $2 WHERE id = $1',
-      [userId, isPremium]
-    );
+    await this.db.query('UPDATE users SET is_premium = $2 WHERE id = $1', [userId, isPremium]);
   }
 
   /**
    * Get a user's current subscription status.
    */
   async getSubscriptionStatus(userId: string): Promise<{ isPremium: boolean }> {
-    const result = await this.db.query(
-      'SELECT is_premium FROM users WHERE id = $1',
-      [userId]
-    );
+    const result = await this.db.query('SELECT is_premium FROM users WHERE id = $1', [userId]);
     return { isPremium: result.rows[0]?.is_premium ?? false };
   }
 }

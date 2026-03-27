@@ -60,7 +60,7 @@ export class AuthUtils {
         issuer: 'soundcheck-api',
         audience: 'soundcheck-mobile',
       }) as JWTPayload;
-      
+
       return decoded;
     } catch (error) {
       if (error instanceof jwt.JsonWebTokenError) {
@@ -220,17 +220,13 @@ export async function verifyRefreshToken(
  * @param token - The raw refresh token to revoke
  * @param client - Optional database client for transaction support
  */
-export async function revokeRefreshToken(
-  token: string,
-  client?: QueryExecutor
-): Promise<void> {
+export async function revokeRefreshToken(token: string, client?: QueryExecutor): Promise<void> {
   const executor = client || Database.getInstance();
   const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
 
-  await executor.query(
-    `UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1`,
-    [tokenHash]
-  );
+  await executor.query(`UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1`, [
+    tokenHash,
+  ]);
 }
 
 /**

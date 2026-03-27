@@ -76,8 +76,7 @@ describe('Uploads Route', () => {
     it('should return 401 for unauthenticated access to uploads', async () => {
       mockAuthUtils.extractTokenFromHeader.mockReturnValue(null);
 
-      const response = await request(app)
-        .get(`/api/uploads/profiles/${testFilename}`);
+      const response = await request(app).get(`/api/uploads/profiles/${testFilename}`);
 
       expect(response.status).toBe(401);
       expect(response.body.success).toBe(false);
@@ -101,7 +100,7 @@ describe('Uploads Route', () => {
       mockAuthUtils.verifyToken.mockReturnValue({
         userId: 'user-123',
         email: 'test@example.com',
-        username: 'testuser'
+        username: 'testuser',
       });
 
       // Mock UserService.findById
@@ -123,7 +122,7 @@ describe('Uploads Route', () => {
       mockAuthUtils.verifyToken.mockReturnValue({
         userId: 'user-123',
         email: 'test@example.com',
-        username: 'testuser'
+        username: 'testuser',
       });
 
       const userServiceMock = UserService as jest.MockedClass<typeof UserService>;
@@ -143,7 +142,7 @@ describe('Uploads Route', () => {
       mockAuthUtils.verifyToken.mockReturnValue({
         userId: 'user-123',
         email: 'test@example.com',
-        username: 'testuser'
+        username: 'testuser',
       });
 
       const userServiceMock = UserService as jest.MockedClass<typeof UserService>;
@@ -163,7 +162,7 @@ describe('Uploads Route', () => {
       mockAuthUtils.verifyToken.mockReturnValue({
         userId: 'user-123',
         email: 'test@example.com',
-        username: 'testuser'
+        username: 'testuser',
       });
 
       const userServiceMock = UserService as jest.MockedClass<typeof UserService>;

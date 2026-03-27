@@ -16,7 +16,7 @@ export function mapDbUserToUser(row: any): User {
   if (!row) {
     throw new Error('Cannot map null row to User');
   }
-  
+
   return {
     id: row.id,
     email: row.email,
@@ -103,5 +103,5 @@ export function mapDbRowToUserBlock(row: any): UserBlock {
  * Helper to convert camelCase to snake_case for SQL queries
  */
 export function camelToSnakeCase(str: string): string {
-  return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+  return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
 }

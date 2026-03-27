@@ -14,7 +14,7 @@ async function runMigration() {
 
   // Create database connection
   let pool: Pool;
-  
+
   if (process.env.DATABASE_URL) {
     console.log('🔗 Connecting using DATABASE_URL');
     pool = new Pool({
@@ -63,7 +63,6 @@ async function runMigration() {
     });
 
     console.log('\n🎉 Migration completed successfully!');
-
   } catch (error: any) {
     console.error('❌ Migration failed:', error.message);
     if (error.detail) {

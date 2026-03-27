@@ -112,7 +112,10 @@ router.post('/refresh', tokenRateLimit, async (req: Request, res: Response) => {
   } catch (error) {
     // Structured error logging - don't expose stack traces
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Token refresh failed', { error: errorMessage, timestamp: new Date().toISOString() });
+    logger.error('Token refresh failed', {
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
     const response: ApiResponse = {
       success: false,
       error: 'Token refresh failed',
@@ -157,7 +160,10 @@ router.post('/revoke', tokenRateLimit, async (req: Request, res: Response) => {
   } catch (error) {
     // Structured error logging - don't expose stack traces
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    logger.error('Token revocation failed', { error: errorMessage, timestamp: new Date().toISOString() });
+    logger.error('Token revocation failed', {
+      error: errorMessage,
+      timestamp: new Date().toISOString(),
+    });
     const response: ApiResponse = {
       success: false,
       error: 'Token revocation failed',
