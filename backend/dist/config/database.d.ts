@@ -17,7 +17,15 @@ declare class Database {
     query(text: string, params?: any[]): Promise<any>;
     getClient(): Promise<import("pg").PoolClient>;
     close(): Promise<void>;
-    healthCheck(): Promise<boolean>;
+    getPoolMetrics(): {
+        totalCount: number;
+        idleCount: number;
+        waitingCount: number;
+    };
+    healthCheck(): Promise<{
+        healthy: boolean;
+        error?: string;
+    }>;
 }
 export default Database;
 //# sourceMappingURL=database.d.ts.map

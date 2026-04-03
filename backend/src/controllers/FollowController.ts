@@ -1,7 +1,14 @@
+/**
+ * FollowController - Refactored with asyncHandler pattern
+ * Standardized async error handling by wrapping all methods with asyncHandler
+ * Replaces manual try-catch with automatic error forwarding
+ */
+
 import { Request, Response } from 'express';
 import { FollowService } from '../services/FollowService';
 import { ApiResponse } from '../types';
-import { logError } from '../utils/logger';
+import { asyncHandler } from '../utils/asyncHandler';
+import { UnauthorizedError, NotFoundError, BadRequestError } from '../utils/errors';
 
 // UUID validation regex
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -17,273 +24,152 @@ export class FollowController {
    * Follow a user
    * POST /api/follow/:userId
    */
-  followUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentUserId = req.user?.id;
+  followUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const currentUserId = req.user?.id;
 
-      if (!currentUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const { userId: targetUserId } = req.params;
-
-      // Validate UUID format
-      if (!UUID_REGEX.test(targetUserId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      // Prevent self-follow
-      if (currentUserId === targetUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'You cannot follow yourself',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const result = await this.followService.followUser(currentUserId, targetUserId);
-
-      const response: ApiResponse = {
-        success: true,
-        data: result,
-        message: 'Successfully followed user',
-      };
-
-      // API-028: Return 201 for resource creation
-      res.status(201).json(response);
-    } catch (error) {
-      logError('Follow user error:', { error });
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to follow user';
-
-      if (errorMessage === 'User not found') {
-        const response: ApiResponse = {
-          success: false,
-          error: errorMessage,
-        };
-        res.status(404).json(response);
-        return;
-      }
-
-      const response: ApiResponse = {
-        success: false,
-        error: errorMessage,
-      };
-
-      res.status(500).json(response);
+    if (!currentUserId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const { userId: targetUserId } = req.params;
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(targetUserId)) {
+      throw new BadRequestError('Invalid user ID format');
+    }
+
+    // Prevent self-follow
+    if (currentUserId === targetUserId) {
+      throw new BadRequestError('You cannot follow yourself');
+    }
+
+    const result = await this.followService.followUser(currentUserId, targetUserId);
+
+    const response: ApiResponse = {
+      success: true,
+      data: result,
+      message: 'Successfully followed user',
+    };
+
+    // API-028: Return 201 for resource creation
+    res.status(201).json(response);
+  });
 
   /**
    * Unfollow a user
    * DELETE /api/follow/:userId
    */
-  unfollowUser = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentUserId = req.user?.id;
+  unfollowUser = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const currentUserId = req.user?.id;
 
-      if (!currentUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const { userId: targetUserId } = req.params;
-
-      // Validate UUID format
-      if (!UUID_REGEX.test(targetUserId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const result = await this.followService.unfollowUser(currentUserId, targetUserId);
-
-      const response: ApiResponse = {
-        success: true,
-        data: result,
-        message: 'Successfully unfollowed user',
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Unfollow user error:', { error });
-
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to unfollow user',
-      };
-
-      res.status(500).json(response);
+    if (!currentUserId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const { userId: targetUserId } = req.params;
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(targetUserId)) {
+      throw new BadRequestError('Invalid user ID format');
+    }
+
+    const result = await this.followService.unfollowUser(currentUserId, targetUserId);
+
+    const response: ApiResponse = {
+      success: true,
+      data: result,
+      message: 'Successfully unfollowed user',
+    };
+
+    res.status(200).json(response);
+  });
 
   /**
    * Check if current user is following a specific user
    * GET /api/follow/:userId/status
    */
-  getFollowStatus = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentUserId = req.user?.id;
+  getFollowStatus = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const currentUserId = req.user?.id;
 
-      if (!currentUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const { userId: targetUserId } = req.params;
-
-      // Validate UUID format
-      if (!UUID_REGEX.test(targetUserId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const isFollowing = await this.followService.isFollowing(currentUserId, targetUserId);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          isFollowing,
-          userId: targetUserId,
-        },
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Get follow status error:', { error });
-
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get follow status',
-      };
-
-      res.status(500).json(response);
+    if (!currentUserId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const { userId: targetUserId } = req.params;
+
+    // Validate UUID format
+    if (!UUID_REGEX.test(targetUserId)) {
+      throw new BadRequestError('Invalid user ID format');
+    }
+
+    const isFollowing = await this.followService.isFollowing(currentUserId, targetUserId);
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        isFollowing,
+        userId: targetUserId,
+      },
+    };
+
+    res.status(200).json(response);
+  });
 
   /**
    * Get followers of a user
    * GET /api/users/:userId/followers
    */
-  getFollowers = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { userId } = req.params;
+  getFollowers = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { userId } = req.params;
 
-      // Validate UUID format
-      if (!UUID_REGEX.test(userId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 100));
-
-      const result = await this.followService.getFollowers(userId, { page, limit });
-
-      if (result === null) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not found',
-        };
-        res.status(404).json(response);
-        return;
-      }
-
-      const response: ApiResponse = {
-        success: true,
-        data: result,
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Get followers error:', { error });
-
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get followers',
-      };
-
-      res.status(500).json(response);
+    // Validate UUID format
+    if (!UUID_REGEX.test(userId)) {
+      throw new BadRequestError('Invalid user ID format');
     }
-  };
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 100));
+
+    const result = await this.followService.getFollowers(userId, { page, limit });
+
+    if (result === null) {
+      throw new NotFoundError('User not found');
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: result,
+    };
+
+    res.status(200).json(response);
+  });
 
   /**
    * Get users that a user is following
    * GET /api/users/:userId/following
    */
-  getFollowing = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { userId } = req.params;
+  getFollowing = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { userId } = req.params;
 
-      // Validate UUID format
-      if (!UUID_REGEX.test(userId)) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Invalid user ID format',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const page = Math.max(1, parseInt(req.query.page as string) || 1);
-      const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 100));
-
-      const result = await this.followService.getFollowing(userId, { page, limit });
-
-      if (result === null) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'User not found',
-        };
-        res.status(404).json(response);
-        return;
-      }
-
-      const response: ApiResponse = {
-        success: true,
-        data: result,
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Get following error:', { error });
-
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get following',
-      };
-
-      res.status(500).json(response);
+    // Validate UUID format
+    if (!UUID_REGEX.test(userId)) {
+      throw new BadRequestError('Invalid user ID format');
     }
-  };
+
+    const page = Math.max(1, parseInt(req.query.page as string) || 1);
+    const limit = Math.max(1, Math.min(parseInt(req.query.limit as string) || 20, 100));
+
+    const result = await this.followService.getFollowing(userId, { page, limit });
+
+    if (result === null) {
+      throw new NotFoundError('User not found');
+    }
+
+    const response: ApiResponse = {
+      success: true,
+      data: result,
+    };
+
+    res.status(200).json(response);
+  });
 }

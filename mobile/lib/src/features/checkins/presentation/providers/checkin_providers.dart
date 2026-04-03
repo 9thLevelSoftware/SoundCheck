@@ -51,56 +51,88 @@ Future<List<Band>> searchBandsForCheckin(Ref ref) async {
   }
 
   final bandRepository = ref.watch(bandRepositoryProvider);
-  return bandRepository.getBands(search: query, limit: 10);
+  final result = await bandRepository.getBands(search: query, limit: 10);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (bands) => bands,
+  );
 }
 
 /// Provider for vibe tags
 @riverpod
 Future<List<VibeTag>> vibeTags(Ref ref) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getVibeTags();
+  final result = await repository.getVibeTags();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (tags) => tags,
+  );
 }
 
 /// Provider for band check-ins
 @riverpod
 Future<List<CheckIn>> bandCheckIns(Ref ref, String bandId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckIns(bandId: bandId);
+  final result = await repository.getCheckIns(bandId: bandId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (checkIns) => checkIns,
+  );
 }
 
 /// Provider for venue check-ins
 @riverpod
 Future<List<CheckIn>> venueCheckIns(Ref ref, String venueId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckIns(venueId: venueId);
+  final result = await repository.getCheckIns(venueId: venueId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (checkIns) => checkIns,
+  );
 }
 
 /// Provider for user's check-ins
 @riverpod
 Future<List<CheckIn>> userCheckIns(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckIns(userId: userId);
+  final result = await repository.getCheckIns(userId: userId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (checkIns) => checkIns,
+  );
 }
 
 /// Provider for a single check-in detail
 @riverpod
 Future<CheckIn> checkInDetail(Ref ref, String checkInId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckInById(checkInId);
+  final result = await repository.getCheckInById(checkInId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (checkIn) => checkIn,
+  );
 }
 
 /// Provider for check-in toasts
 @riverpod
 Future<List<Toast>> checkInToasts(Ref ref, String checkInId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckInToasts(checkInId);
+  final result = await repository.getCheckInToasts(checkInId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (toasts) => toasts,
+  );
 }
 
 /// Provider for check-in comments
 @riverpod
 Future<List<CheckInComment>> checkInComments(Ref ref, String checkInId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckInComments(checkInId);
+  final result = await repository.getCheckInComments(checkInId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (comments) => comments,
+  );
 }
 
 /// Notifier for toasting/un-toasting check-ins
@@ -148,7 +180,11 @@ class AddComment extends _$AddComment {
     final repository = ref.read(checkInRepositoryProvider);
 
     try {
-      final newComment = await repository.addComment(checkInId, comment);
+      final result = await repository.addComment(checkInId, comment);
+      final newComment = result.fold(
+        (failure) => throw Exception(failure.message),
+        (comment) => comment,
+      );
 
       // Invalidate comments provider
       ref.invalidate(checkInCommentsProvider(checkInId));
@@ -196,7 +232,11 @@ class DeleteComment extends _$DeleteComment {
 @riverpod
 Future<Map<String, dynamic>> userCheckInStats(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getUserStats(userId);
+  final result = await repository.getUserStats(userId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (stats) => stats,
+  );
 }
 
 /// Provider for bands that recently played at a venue
@@ -204,7 +244,11 @@ Future<Map<String, dynamic>> userCheckInStats(Ref ref, String userId) async {
 @riverpod
 Future<List<CheckInBand>> venueRecentBands(Ref ref, String venueId) async {
   final checkInRepository = ref.watch(checkInRepositoryProvider);
-  final checkIns = await checkInRepository.getCheckIns(venueId: venueId, limit: 20);
+  final result = await checkInRepository.getCheckIns(venueId: venueId, limit: 20);
+  final checkIns = result.fold(
+    (failure) => throw Exception(failure.message),
+    (checkIns) => checkIns,
+  );
 
   // Extract unique bands from check-ins
   final seenBandIds = <String>{};
@@ -232,7 +276,11 @@ Future<List<NearbyEvent>> nearbyEvents(Ref ref) async {
   if (position == null) return [];
 
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getNearbyEvents(position.latitude, position.longitude);
+  final result = await repository.getNearbyEvents(position.latitude, position.longitude);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (events) => events,
+  );
 }
 
 /// Notifier for creating event-first check-ins (single tap)
@@ -251,10 +299,14 @@ class CreateEventCheckIn extends _$CreateEventCheckIn {
     final repository = ref.read(checkInRepositoryProvider);
 
     try {
-      final checkIn = await repository.createEventCheckIn(
+      final result = await repository.createEventCheckIn(
         eventId: eventId,
         locationLat: locationLat,
         locationLon: locationLon,
+      );
+      final checkIn = result.fold(
+        (failure) => throw Exception(failure.message),
+        (checkIn) => checkIn,
       );
 
       // Invalidate feed and nearby events to refresh
@@ -292,7 +344,7 @@ class CreateManualCheckIn extends _$CreateManualCheckIn {
     final repository = ref.read(checkInRepositoryProvider);
 
     try {
-      final checkIn = await repository.createManualCheckIn(
+      final result = await repository.createManualCheckIn(
         bandId: bandId,
         venueId: venueId,
         rating: rating,
@@ -300,6 +352,10 @@ class CreateManualCheckIn extends _$CreateManualCheckIn {
         vibeTagIds: vibeTagIds,
         locationLat: locationLat,
         locationLon: locationLon,
+      );
+      final checkIn = result.fold(
+        (failure) => throw Exception(failure.message),
+        (checkIn) => checkIn,
       );
 
       // Invalidate feed and nearby events to refresh
@@ -332,10 +388,14 @@ class SubmitRatings extends _$SubmitRatings {
     final repository = ref.read(checkInRepositoryProvider);
 
     try {
-      final checkIn = await repository.submitRatings(
+      final result = await repository.submitRatings(
         checkinId,
         bandRatings: bandRatings,
         venueRating: venueRating,
+      );
+      final checkIn = result.fold(
+        (failure) => throw Exception(failure.message),
+        (checkIn) => checkIn,
       );
 
       // Invalidate check-in detail to refresh with new ratings

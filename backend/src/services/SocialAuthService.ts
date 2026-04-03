@@ -8,6 +8,17 @@ import { mapDbUserToUser, sanitizeUserForClient } from '../utils/dbMappers';
 import { PoolClient } from 'pg';
 import crypto from 'crypto';
 import logger from '../utils/logger';
+import { getRedis } from '../utils/redisRateLimiter';
+
+/**
+ * OAuth state validation error
+ */
+export class OAuthStateError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'OAuthStateError';
+  }
+}
 
 /**
  * Profile information extracted from social auth tokens
@@ -45,12 +56,62 @@ export class SocialAuthService {
   }
 
   /**
+   * Generate OAuth state parameter for CSRF protection
+   * Stores state in Redis with 5-minute TTL
+   * @returns The generated state token
+   */
+  async generateOAuthState(): Promise<string> {
+    const redis = getRedis();
+    if (!redis) {
+      logger.warn('Redis unavailable, cannot generate OAuth state (CSRF protection disabled)');
+      throw new OAuthStateError('OAuth state generation requires Redis');
+    }
+
+    const state = crypto.randomBytes(32).toString('hex');
+    // Store in Redis with short TTL (5 minutes)
+    await redis.setex(`oauth:state:${state}`, 300, 'valid');
+    return state;
+  }
+
+  /**
+   * Validate OAuth state parameter to prevent CSRF attacks
+   * One-time use - deletes state from Redis after validation
+   * @param state - The state parameter from OAuth callback
+   * @returns true if state is valid, false otherwise
+   */
+  async validateOAuthState(state: string): Promise<boolean> {
+    const redis = getRedis();
+    if (!redis) {
+      logger.warn('Redis unavailable, cannot validate OAuth state');
+      return false;
+    }
+
+    const key = `oauth:state:${state}`;
+    const valid = await redis.get(key);
+    if (valid) {
+      await redis.del(key); // One-time use
+      return true;
+    }
+    return false;
+  }
+
+  /**
    * Verify a Google ID token and extract user profile
    * @param idToken - The Google ID token from the mobile client
+   * @param state - Optional OAuth state parameter for CSRF protection
    * @returns The verified user profile or null if invalid
    */
-  async verifyGoogleToken(idToken: string): Promise<SocialProfile | null> {
+  async verifyGoogleToken(idToken: string, state?: string): Promise<SocialProfile | null> {
     try {
+      // Validate state parameter if provided (CSRF protection)
+      if (state) {
+        const isValidState = await this.validateOAuthState(state);
+        if (!isValidState) {
+          logger.error('Invalid OAuth state - possible CSRF attack', { provider: 'google' });
+          throw new OAuthStateError('Invalid OAuth state - possible CSRF attack');
+        }
+      }
+
       const googleClientId = process.env.GOOGLE_CLIENT_ID;
       if (!googleClientId) {
         logger.error('GOOGLE_CLIENT_ID not configured');
@@ -86,7 +147,7 @@ export class SocialAuthService {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      return null;
+      throw error;
     }
   }
 
@@ -95,13 +156,24 @@ export class SocialAuthService {
    * Uses apple-signin-auth to properly verify the token signature against Apple's public keys
    * @param identityToken - The Apple identity token from the mobile client
    * @param fullName - Optional full name (only provided on first sign-in)
+   * @param state - Optional OAuth state parameter for CSRF protection
    * @returns The verified user profile or null if invalid
    */
   async verifyAppleToken(
     identityToken: string,
-    fullName?: { givenName?: string; familyName?: string }
+    fullName?: { givenName?: string; familyName?: string },
+    state?: string
   ): Promise<SocialProfile | null> {
     try {
+      // Validate state parameter if provided (CSRF protection)
+      if (state) {
+        const isValidState = await this.validateOAuthState(state);
+        if (!isValidState) {
+          logger.error('Invalid OAuth state - possible CSRF attack', { provider: 'apple' });
+          throw new OAuthStateError('Invalid OAuth state - possible CSRF attack');
+        }
+      }
+
       // Require APPLE_BUNDLE_ID for Apple sign-in
       const appleBundleId = process.env.APPLE_BUNDLE_ID;
       if (!appleBundleId) {
@@ -136,7 +208,7 @@ export class SocialAuthService {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      return null;
+      throw error;
     }
   }
 

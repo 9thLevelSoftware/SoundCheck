@@ -1,11 +1,13 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers/providers.dart';
 import '../../data/report_repository.dart';
 
+part 'report_providers.g.dart';
+
 /// Report repository provider.
-/// Manual Riverpod provider (not @riverpod codegen) per Phase 10 decision [10-05].
-final reportRepositoryProvider = Provider<ReportRepository>((ref) {
+@Riverpod(keepAlive: true)
+ReportRepository reportRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return ReportRepository(dioClient: dioClient);
-});
+}

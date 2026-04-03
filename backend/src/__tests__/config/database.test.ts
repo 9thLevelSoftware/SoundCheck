@@ -31,6 +31,7 @@ describe('Database Configuration', () => {
     process.env.DB_HOST = 'localhost';
     process.env.DB_PASSWORD = 'test';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -41,6 +42,7 @@ describe('Database Configuration', () => {
   test('should allow explicit SSL disable with DB_SSL=false', () => {
     process.env.DB_SSL = 'false';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -50,6 +52,7 @@ describe('Database Configuration', () => {
   test('should allow explicit SSL disable with DB_SSL=no', () => {
     process.env.DB_SSL = 'no';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -59,6 +62,7 @@ describe('Database Configuration', () => {
   test('should allow explicit SSL disable with DB_SSL=off', () => {
     process.env.DB_SSL = 'off';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -68,6 +72,7 @@ describe('Database Configuration', () => {
   test('should allow no-verify mode with warning for development', () => {
     process.env.DB_SSL = 'no-verify';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -80,6 +85,7 @@ describe('Database Configuration', () => {
   test('should enable SSL verification with DB_SSL=true', () => {
     process.env.DB_SSL = 'true';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -89,6 +95,7 @@ describe('Database Configuration', () => {
   test('should handle case-insensitive DB_SSL values', () => {
     process.env.DB_SSL = 'FALSE';
 
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const { getSSLConfig } = require('../../config/database');
     const sslConfig = getSSLConfig();
 
@@ -136,6 +143,7 @@ describe('Database pool error handling', () => {
     const exitSpy = jest.spyOn(process, 'exit').mockImplementation((() => {}) as any);
 
     // Importing the module triggers the singleton constructor
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const Database = require('../../config/database').default;
     Database.getInstance();
 
@@ -151,7 +159,7 @@ describe('Database pool error handling', () => {
 
     // Verify error was logged
     expect(mockLoggerError).toHaveBeenCalledWith(
-      'Unexpected error on idle client',
+      'Unexpected error on idle PostgreSQL client',
       expect.objectContaining({ error: 'connection reset by peer' })
     );
 

@@ -1,5 +1,6 @@
 import Database from '../config/database';
 import { getCache, setCache, cache, CacheTTL } from '../utils/cache';
+import { getRedis } from '../utils/redisRateLimiter';
 import { BlockService } from './BlockService';
 import logger from '../utils/logger';
 
@@ -496,10 +497,46 @@ export class FeedService {
   /**
    * Invalidate global feed cache for all users.
    * Called when a new check-in is created.
+   * Uses Redis pipelining for efficient bulk deletion.
    */
   async invalidateGlobalFeedCache(): Promise<void> {
+    const redis = getRedis();
+    if (!redis) {
+      // Fallback to non-pipelined pattern delete for memory cache
+      try {
+        await cache.delPattern('feed:global:*');
+      } catch (error) {
+        logger.error('Feed cache invalidation error (global)', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+        });
+      }
+      return;
+    }
+
     try {
-      await cache.delPattern('feed:global:*');
+      const stream = redis.scanStream({ match: 'feed:global:*' });
+      const pipeline = redis.pipeline();
+      let keyCount = 0;
+
+      stream.on('data', (keys: string[]) => {
+        if (keys.length) {
+          keys.forEach(key => {
+            pipeline.unlink(key);
+            keyCount++;
+          });
+        }
+      });
+
+      await new Promise((resolve, reject) => {
+        stream.on('end', resolve);
+        stream.on('error', reject);
+      });
+
+      if (keyCount > 0) {
+        await pipeline.exec();
+        logger.debug(`Invalidated ${keyCount} global feed cache keys via pipeline`);
+      }
     } catch (error) {
       logger.error('Feed cache invalidation error (global)', {
         error: error instanceof Error ? error.message : String(error),

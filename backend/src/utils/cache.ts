@@ -26,6 +26,16 @@
 import { getRedis } from './redisRateLimiter';
 import logger from './logger';
 
+// Cache versioning - bump this to invalidate all caches on deploy
+const CACHE_VERSION = process.env.CACHE_VERSION || 'v1';
+
+/**
+ * Prefix cache key with version for global cache invalidation on deploy
+ */
+export function getCacheKey(key: string): string {
+  return `${CACHE_VERSION}:${key}`;
+}
+
 // In-memory fallback cache
 const memoryCache = new Map<string, { value: any; expiresAt: number }>();
 
@@ -117,7 +127,7 @@ interface CacheEntry<T> {
  * Cache service class with extended functionality
  */
 class CacheService {
-  private cleanupInterval?: NodeJS.Timeout;
+  private cleanupInterval?: ReturnType<typeof setInterval>;
 
   constructor() {
     // Start cleanup interval for in-memory cache
@@ -316,8 +326,14 @@ export const CacheKeys = {
   venueReviews: (venueId: string, page: number) => `venue:${venueId}:reviews:${page}`,
   bandReviews: (bandId: string, page: number) => `band:${bandId}:reviews:${page}`,
   userReviews: (userId: string) => `user:${userId}:reviews`,
-  searchVenues: (query: string) => `search:venues:${query}`,
-  searchBands: (query: string) => `search:bands:${query}`,
+  searchVenues: (query: string) => {
+    const normalized = query.toLowerCase().trim().replace(/\s+/g, ' ');
+    return `search:venues:${normalized}`;
+  },
+  searchBands: (query: string) => {
+    const normalized = query.toLowerCase().trim().replace(/\s+/g, ' ');
+    return `search:bands:${normalized}`;
+  },
   concertCred: (userId: string) => `stats:concert-cred:${userId}`,
   bandAggregate: (bandId: string) => `band:aggregate:${bandId}`,
   venueAggregate: (venueId: string) => `venue:aggregate:${venueId}`,

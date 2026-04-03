@@ -35,14 +35,29 @@ class Database {
     const sslConfig = getSSLConfig();
     const sslMode = process.env.DB_SSL?.toLowerCase() || 'verify';
 
-    // Pool size: configurable via DATABASE_POOL_SIZE env var (default: 20)
-    const poolSize = parseInt(process.env.DATABASE_POOL_SIZE || '20', 10);
-    const maxPoolSize = Number.isNaN(poolSize) || poolSize < 1 ? 20 : poolSize;
+    // Pool configuration - CRITICAL: prevent unbounded connections
+    // Railway free tier: ~20-25 max connections, reserve some for admin/monitoring
+    const poolMax = parseInt(process.env.DB_POOL_MAX || '20', 10);
+    const poolMin = parseInt(process.env.DB_POOL_MIN || '2', 10);
+    const idleTimeoutMs = parseInt(process.env.DB_IDLE_TIMEOUT_MS || '30000', 10);
+    const connectionTimeoutMs = parseInt(process.env.DB_CONNECTION_TIMEOUT_MS || '5000', 10);
+
+    // Validate pool configuration
+    const maxPoolSize = Number.isNaN(poolMax) || poolMax < 1 ? 20 : poolMax;
+    const minPoolSize = Number.isNaN(poolMin) || poolMin < 0 ? 2 : Math.min(poolMin, maxPoolSize);
+    const idleTimeoutMillis =
+      Number.isNaN(idleTimeoutMs) || idleTimeoutMs < 1000 ? 30000 : idleTimeoutMs;
+    const connectionTimeoutMillis =
+      Number.isNaN(connectionTimeoutMs) || connectionTimeoutMs < 1000 ? 5000 : connectionTimeoutMs;
+
+    logger.info(
+      `Database pool config: max=${maxPoolSize}, min=${minPoolSize}, idleTimeout=${idleTimeoutMillis}ms, connectTimeout=${connectionTimeoutMillis}ms`
+    );
 
     // Check if DATABASE_URL is provided (Railway, Heroku, etc.)
     if (process.env.DATABASE_URL) {
       logger.info('Using DATABASE_URL for database connection');
-      logger.info('Database config version: 2025-01-06-v3');
+      logger.info('Database config version: 2025-01-06-v4-pool-hardened');
 
       // Modify DATABASE_URL to control SSL mode
       // Railway's URL may have sslmode=require which overrides Pool options
@@ -67,9 +82,14 @@ class Database {
       this.pool = new Pool({
         connectionString,
         ssl: sslConfig,
-        max: maxPoolSize,
-        idleTimeoutMillis: 30000,
-        connectionTimeoutMillis: 2000,
+        // Connection pool limits - CRITICAL FIX for unbounded connections
+        max: maxPoolSize, // Maximum number of clients in the pool
+        min: minPoolSize, // Minimum number of clients to maintain (keep warm connections ready)
+        // Timeouts - prevent hanging connections
+        idleTimeoutMillis, // Close idle clients after 30 seconds (default)
+        connectionTimeoutMillis, // Fail fast if can't connect in 5 seconds (default)
+        // Health check - validate connections before use
+        allowExitOnIdle: false, // Keep pool alive even when idle
       });
     } else {
       // Fall back to individual environment variables
@@ -89,21 +109,45 @@ class Database {
       this.pool = new Pool({
         ...config,
         ssl: sslConfig,
-        max: maxPoolSize, // Configurable via DATABASE_POOL_SIZE env var (default: 20)
-        idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
-        connectionTimeoutMillis: 2000, // Return an error after 2 seconds if connection could not be established
+        // Connection pool limits - CRITICAL FIX for unbounded connections
+        max: maxPoolSize, // Maximum number of clients in the pool
+        min: minPoolSize, // Minimum number of clients to maintain (keep warm connections ready)
+        // Timeouts - prevent hanging connections
+        idleTimeoutMillis, // Close idle clients after 30 seconds (default)
+        connectionTimeoutMillis, // Fail fast if can't connect in 5 seconds (default)
+        // Health check - validate connections before use
+        allowExitOnIdle: false, // Keep pool alive even when idle
       });
     }
 
-    // Handle pool errors
-    this.pool.on('error', (err) => {
-      logger.error('Unexpected error on idle client', {
+    // Pool event listeners for monitoring and debugging
+    this.pool.on('connect', (client) => {
+      logger.debug('New client connected to PostgreSQL pool');
+    });
+
+    this.pool.on('acquire', (client) => {
+      logger.debug('Client acquired from pool', {
+        total: this.pool.totalCount,
+        idle: this.pool.idleCount,
+        waiting: this.pool.waitingCount,
+      });
+    });
+
+    this.pool.on('remove', (client) => {
+      logger.debug('Client removed from pool');
+    });
+
+    // Handle pool errors - critical for preventing crashes on idle client errors
+    this.pool.on('error', (err, client) => {
+      logger.error('Unexpected error on idle PostgreSQL client', {
         error: err instanceof Error ? err.message : String(err),
         stack: err instanceof Error ? err.stack : undefined,
       });
       // Do NOT exit -- pool will reconnect automatically.
       // The /health endpoint will detect persistent DB failures.
     });
+
+    logger.info('PostgreSQL connection pool initialized with hardened configuration');
   }
 
   public static getInstance(): Database {
@@ -145,17 +189,35 @@ class Database {
     await this.pool.end();
   }
 
-  // Health check method
-  public async healthCheck(): Promise<boolean> {
+  // Get pool metrics for health checks and monitoring
+  public getPoolMetrics() {
+    return {
+      totalCount: this.pool.totalCount,
+      idleCount: this.pool.idleCount,
+      waitingCount: this.pool.waitingCount,
+    };
+  }
+
+  // Health check method with detailed diagnostics
+  public async healthCheck(): Promise<{ healthy: boolean; error?: string }> {
     try {
-      await this.query('SELECT 1');
-      return true;
+      // Add 5-second timeout to prevent hanging health checks
+      await Promise.race([
+        this.query('SELECT 1'),
+        new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Database health check timeout')), 5000)
+        ),
+      ]);
+      return { healthy: true };
     } catch (error) {
       logger.error('Database health check failed', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      return false;
+      return {
+        healthy: false,
+        error: error instanceof Error ? error.message : 'Database query failed',
+      };
     }
   }
 }

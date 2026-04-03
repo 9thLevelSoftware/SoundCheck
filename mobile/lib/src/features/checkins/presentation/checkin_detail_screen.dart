@@ -92,7 +92,7 @@ class _CheckInDetailScreenState extends ConsumerState<CheckInDetailScreen> {
   Future<void> _handleToast(CheckIn checkIn) async {
     await ref.read(toastCheckInProvider.notifier).toggle(
       checkIn.id,
-      checkIn.hasToasted,
+      checkIn.hasUserToasted,
     );
   }
 
@@ -932,7 +932,7 @@ class _ActionBar extends StatelessWidget {
           _ActionButton(
             icon: Icons.sports_bar,
             label: '${checkIn.toastCount}',
-            isActive: checkIn.hasToasted,
+            isActive: checkIn.hasUserToasted,
             activeColor: AppTheme.toastGold,
             onTap: onToast,
           ),

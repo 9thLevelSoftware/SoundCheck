@@ -91,9 +91,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       if (mounted && _usernameController.text.trim() == username) {
         setState(() {
           _isCheckingUsername = false;
-          _usernameAvailabilityMessage = available
-              ? null
-              : 'Username is already taken';
+          _usernameAvailabilityMessage = available.fold(
+            (failure) => 'Error checking username',
+            (isAvailable) => isAvailable ? null : 'Username is already taken',
+          );
         });
       }
     });

@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../../core/providers/providers.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../domain/feed_item.dart';
 import '../../domain/happening_now_group.dart';
@@ -13,6 +14,11 @@ import '../../domain/happening_now_group.dart';
 export '../../../../core/providers/providers.dart' show feedRepositoryProvider;
 
 part 'feed_providers.g.dart';
+
+/// Helper to convert Failure to an exception for Riverpod error handling
+Exception _failureToError(Failure failure) {
+  return Exception(failure.message);
+}
 
 /// Global discovery feed with cursor-based pagination
 @riverpod
@@ -31,11 +37,16 @@ class GlobalFeedNotifier extends _$GlobalFeedNotifier {
 
   Future<List<FeedItem>> _fetchPage() async {
     final repo = ref.read(feedRepositoryProvider);
-    final page = await repo.getGlobalFeed(cursor: _nextCursor);
-    _nextCursor = page.nextCursor;
-    _hasMore = page.hasMore;
-    _items = [..._items, ...page.items];
-    return _items;
+    final result = await repo.getGlobalFeed(cursor: _nextCursor);
+    return result.fold(
+      (failure) => throw _failureToError(failure),
+      (page) {
+        _nextCursor = page.nextCursor;
+        _hasMore = page.hasMore;
+        _items = [..._items, ...page.items];
+        return _items;
+      },
+    );
   }
 
   Future<void> loadMore() async {
@@ -61,11 +72,16 @@ class FriendsFeedNotifier extends _$FriendsFeedNotifier {
 
   Future<List<FeedItem>> _fetchPage() async {
     final repo = ref.read(feedRepositoryProvider);
-    final page = await repo.getFriendsFeed(cursor: _nextCursor);
-    _nextCursor = page.nextCursor;
-    _hasMore = page.hasMore;
-    _items = [..._items, ...page.items];
-    return _items;
+    final result = await repo.getFriendsFeed(cursor: _nextCursor);
+    return result.fold(
+      (failure) => throw _failureToError(failure),
+      (page) {
+        _nextCursor = page.nextCursor;
+        _hasMore = page.hasMore;
+        _items = [..._items, ...page.items];
+        return _items;
+      },
+    );
   }
 
   Future<void> loadMore() async {
@@ -96,11 +112,16 @@ class EventFeedNotifier extends _$EventFeedNotifier {
 
   Future<List<FeedItem>> _fetchPage(String eventId) async {
     final repo = ref.read(feedRepositoryProvider);
-    final page = await repo.getEventFeed(eventId, cursor: _nextCursor);
-    _nextCursor = page.nextCursor;
-    _hasMore = page.hasMore;
-    _items = [..._items, ...page.items];
-    return _items;
+    final result = await repo.getEventFeed(eventId, cursor: _nextCursor);
+    return result.fold(
+      (failure) => throw _failureToError(failure),
+      (page) {
+        _nextCursor = page.nextCursor;
+        _hasMore = page.hasMore;
+        _items = [..._items, ...page.items];
+        return _items;
+      },
+    );
   }
 
   Future<void> loadMore() async {
@@ -127,11 +148,16 @@ class EventsFeedNotifier extends _$EventsFeedNotifier {
 
   Future<List<FeedItem>> _fetchPage() async {
     final repo = ref.read(feedRepositoryProvider);
-    final page = await repo.getEventsFeed(cursor: _nextCursor);
-    _nextCursor = page.nextCursor;
-    _hasMore = page.hasMore;
-    _items = [..._items, ...page.items];
-    return _items;
+    final result = await repo.getEventsFeed(cursor: _nextCursor);
+    return result.fold(
+      (failure) => throw _failureToError(failure),
+      (page) {
+        _nextCursor = page.nextCursor;
+        _hasMore = page.hasMore;
+        _items = [..._items, ...page.items];
+        return _items;
+      },
+    );
   }
 
   Future<void> loadMore() async {
@@ -144,14 +170,22 @@ class EventsFeedNotifier extends _$EventsFeedNotifier {
 @riverpod
 Future<List<HappeningNowGroup>> happeningNow(Ref ref) async {
   final repo = ref.watch(feedRepositoryProvider);
-  return repo.getHappeningNow();
+  final result = await repo.getHappeningNow();
+  return result.fold(
+    (failure) => throw _failureToError(failure),
+    (data) => data,
+  );
 }
 
 /// Unseen counts per feed tab
 @riverpod
 Future<UnseenCounts> unseenCounts(Ref ref) async {
   final repo = ref.watch(feedRepositoryProvider);
-  return repo.getUnseenCounts();
+  final result = await repo.getUnseenCounts();
+  return result.fold(
+    (failure) => throw _failureToError(failure),
+    (data) => data,
+  );
 }
 
 /// New checkin count -- tracks WebSocket arrivals since last feed refresh

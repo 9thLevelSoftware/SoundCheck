@@ -1,4 +1,5 @@
 import crypto from 'crypto';
+import bcrypt from 'bcryptjs';
 
 /**
  * Refresh Token System Tests
@@ -51,7 +52,7 @@ describe('Refresh Token System', () => {
       expect(token.length).toBe(64); // 32 bytes hex = 64 chars
     });
 
-    test('should store token hash in database, not raw token', async () => {
+    test('should store bcrypt token hash in database, not raw token', async () => {
       const userId = 'user-123';
 
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
@@ -65,9 +66,8 @@ describe('Refresh Token System', () => {
       expect(query).toContain('INSERT INTO refresh_tokens');
       expect(params[0]).toBe(userId);
 
-      // The stored hash should be SHA256 of the token
-      const expectedHash = crypto.createHash('sha256').update(token).digest('hex');
-      expect(params[1]).toBe(expectedHash);
+      // The stored hash should be a bcrypt hash (starts with $2b$)
+      expect(params[1]).toMatch(/^\$2b\$/);
 
       // Expiration should be set (30 days from now)
       const expiresAt = params[2] as Date;
@@ -92,11 +92,11 @@ describe('Refresh Token System', () => {
     test('should verify a valid refresh token', async () => {
       const userId = 'user-123';
       const token = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const tokenHash = await bcrypt.hash(token, 10);
 
-      // Mock successful query returning user
+      // Mock successful query returning user with bcrypt hash
       mockQuery.mockResolvedValueOnce({
-        rows: [{ user_id: userId }],
+        rows: [{ id: 'token-1', user_id: userId, token_hash: tokenHash }],
         rowCount: 1,
       });
 
@@ -105,12 +105,10 @@ describe('Refresh Token System', () => {
       expect(result.valid).toBe(true);
       expect(result.userId).toBe(userId);
 
-      // Verify the query checks hash, expiration, and revocation
-      const [query, params] = mockQuery.mock.calls[0];
-      expect(query).toContain('token_hash = $1');
+      // Verify the query checks for non-expired, non-revoked tokens
+      const [query] = mockQuery.mock.calls[0];
       expect(query).toContain('expires_at > NOW()');
       expect(query).toContain('revoked_at IS NULL');
-      expect(params[0]).toBe(tokenHash);
     });
 
     test('should reject an expired refresh token', async () => {
@@ -162,28 +160,41 @@ describe('Refresh Token System', () => {
   describe('revokeRefreshToken', () => {
     test('should revoke a refresh token', async () => {
       const token = crypto.randomBytes(32).toString('hex');
-      const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+      const tokenHash = await bcrypt.hash(token, 10);
 
+      // Mock SELECT to find the token by hash
+      mockQuery.mockResolvedValueOnce({
+        rows: [{ id: 'token-1', token_hash: tokenHash }],
+        rowCount: 1,
+      });
+      // Mock UPDATE to revoke
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 1 });
 
       await revokeRefreshToken(token);
 
-      expect(mockQuery).toHaveBeenCalledTimes(1);
-      const [query, params] = mockQuery.mock.calls[0];
-
-      expect(query).toContain('UPDATE refresh_tokens');
-      expect(query).toContain('revoked_at = NOW()');
-      expect(query).toContain('token_hash = $1');
-      expect(params[0]).toBe(tokenHash);
+      expect(mockQuery).toHaveBeenCalledTimes(2);
+      
+      // First call should be SELECT to find the token
+      const [selectQuery] = mockQuery.mock.calls[0];
+      expect(selectQuery).toContain('SELECT id, token_hash');
+      expect(selectQuery).toContain('revoked_at IS NULL');
+      
+      // Second call should be UPDATE to revoke
+      const [updateQuery, updateParams] = mockQuery.mock.calls[1];
+      expect(updateQuery).toContain('UPDATE refresh_tokens');
+      expect(updateQuery).toContain('revoked_at = NOW()');
+      expect(updateParams[0]).toBe('token-1');
     });
 
     test('should not throw if token does not exist', async () => {
       const token = 'non-existent-token';
 
+      // Mock SELECT returning no rows (token not found)
       mockQuery.mockResolvedValueOnce({ rows: [], rowCount: 0 });
 
       // Should not throw
       await expect(revokeRefreshToken(token)).resolves.not.toThrow();
+      expect(mockQuery).toHaveBeenCalledTimes(1);
     });
   });
 
@@ -223,8 +234,9 @@ describe('Refresh Token System', () => {
       const token = await generateRefreshToken(userId);
 
       // 2. Verify token (valid)
+      const tokenHash = await bcrypt.hash(token, 10);
       mockQuery.mockResolvedValueOnce({
-        rows: [{ user_id: userId }],
+        rows: [{ id: 'token-id', user_id: userId, token_hash: tokenHash }],
         rowCount: 1,
       });
       const validResult = await verifyRefreshToken(token);

@@ -146,11 +146,11 @@ export class DataRetentionService {
     const client = await this.db.getClient();
 
     // Start tracking deletions
-    let deletedNotifications = 0;
-    let deletedFollows = 0;
-    let deletedWishlists = 0;
-    let revokedTokens = 0;
-    let anonymizedCheckinPhotos = 0;
+    let deletedNotifications: number;
+    let deletedFollows: number;
+    let deletedWishlists: number;
+    let revokedTokens: number;
+    let anonymizedCheckinPhotos: number;
 
     try {
       await client.query('BEGIN');

@@ -111,7 +111,7 @@ export class FoursquareService {
             }
           : {}),
       });
-      throw new Error('Failed to search venues from Foursquare');
+      throw new Error('Failed to search venues from Foursquare', { cause: error });
     }
   }
 
@@ -145,7 +145,7 @@ export class FoursquareService {
             }
           : {}),
       });
-      throw new Error('Failed to get venue details from Foursquare');
+      throw new Error('Failed to get venue details from Foursquare', { cause: error });
     }
   }
 
@@ -285,7 +285,7 @@ export class FoursquareService {
             }
           : {}),
       });
-      throw new Error('Failed to search nearby venues');
+      throw new Error('Failed to search nearby venues', { cause: error });
     }
   }
 

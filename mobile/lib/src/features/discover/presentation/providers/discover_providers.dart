@@ -73,7 +73,11 @@ Future<List<Band>> discoverBandSearch(Ref ref) async {
   if (ref.watch(discoverSearchQueryProvider) != query) return [];
 
   final repository = ref.watch(bandRepositoryProvider);
-  return repository.getBands(search: query, limit: 10);
+  final result = await repository.getBands(search: query, limit: 10);
+  return result.fold(
+    (failure) => [],
+    (bands) => bands,
+  );
 }
 
 /// Provider for venue search results in discover (debounced)
@@ -86,7 +90,8 @@ Future<List<Venue>> discoverVenueSearch(Ref ref) async {
   if (ref.watch(discoverSearchQueryProvider) != query) return [];
 
   final repository = ref.watch(venueRepositoryProvider);
-  return repository.getVenues(search: query, limit: 10);
+  final paginatedResult = await repository.getVenues(search: query, page: 1, limit: 10);
+  return paginatedResult.venues;
 }
 
 /// User search result model for discover
@@ -178,7 +183,11 @@ Future<List<DiscoverEvent>> discoverEventSearch(Ref ref) async {
   final repository = ref.watch(discoveryRepositoryProvider);
 
   try {
-    return await repository.searchEvents(query: query, limit: 10);
+    final result = await repository.searchEvents(query: query, limit: 10);
+    return result.fold(
+      (failure) => [],
+      (events) => events,
+    );
   } catch (e) {
     return [];
   }
@@ -236,14 +245,22 @@ Future<List<DiscoverEvent>> recommendedEvents(Ref ref) async {
 
   try {
     if (position != null) {
-      return await repository.getRecommendations(
+      final result = await repository.getRecommendations(
         lat: position.latitude,
         lon: position.longitude,
         radiusKm: 50,
         limit: 15,
       );
+      return result.fold(
+        (failure) => [],
+        (events) => events,
+      );
     } else {
-      return await repository.getRecommendations(limit: 15);
+      final result = await repository.getRecommendations(limit: 15);
+      return result.fold(
+        (failure) => [],
+        (events) => events,
+      );
     }
   } catch (e) {
     // Graceful degradation: return empty list on error (section hides itself)
@@ -258,12 +275,16 @@ Future<List<DiscoverEvent>> nearbyUpcomingEvents(Ref ref) async {
   if (position == null) return [];
 
   final repository = ref.watch(discoveryRepositoryProvider);
-  return repository.getNearbyUpcoming(
+  final result = await repository.getNearbyUpcoming(
     lat: position.latitude,
     lon: position.longitude,
     radiusKm: 50,
     days: 30,
     limit: 20,
+  );
+  return result.fold(
+    (failure) => [],
+    (events) => events,
   );
 }
 
@@ -274,11 +295,15 @@ Future<List<DiscoverEvent>> trendingNearbyEvents(Ref ref) async {
   if (position == null) return [];
 
   final repository = ref.watch(discoveryRepositoryProvider);
-  return repository.getTrendingNearby(
+  final result = await repository.getTrendingNearby(
     lat: position.latitude,
     lon: position.longitude,
     radiusKm: 50,
     limit: 20,
+  );
+  return result.fold(
+    (failure) => [],
+    (events) => events,
   );
 }
 
@@ -286,12 +311,20 @@ Future<List<DiscoverEvent>> trendingNearbyEvents(Ref ref) async {
 @riverpod
 Future<List<String>> genreList(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
-  return repository.getGenres();
+  final result = await repository.getGenres();
+  return result.fold(
+    (failure) => [],
+    (genres) => genres,
+  );
 }
 
 /// Events filtered by genre (family provider)
 @riverpod
 Future<List<DiscoverEvent>> genreEvents(Ref ref, String genre) async {
   final repository = ref.watch(discoveryRepositoryProvider);
-  return repository.getEventsByGenre(genre: genre, limit: 20);
+  final result = await repository.getEventsByGenre(genre: genre, limit: 20);
+  return result.fold(
+    (failure) => [],
+    (events) => events,
+  );
 }

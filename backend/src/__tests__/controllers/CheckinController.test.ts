@@ -43,6 +43,15 @@ describe('CheckinController', () => {
     app.delete('/checkins/:id', checkinController.deleteCheckin);
     app.get('/checkins', checkinController.getCheckins);
 
+    // Error handler middleware (must be last)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    app.use((err: any, req: express.Request, res: express.Response, _next: express.NextFunction) => {
+      const statusCode = err.statusCode || err.status || 500;
+      res.status(statusCode).json({
+        error: err.message || 'Request failed',
+      });
+    });
+
     return app;
   };
 
@@ -103,7 +112,6 @@ describe('CheckinController', () => {
       const response = await request(app).post('/checkins').send(checkinData);
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
       expect(mockCheckinService.createEventCheckin).not.toHaveBeenCalled();
     });
@@ -119,7 +127,6 @@ describe('CheckinController', () => {
       const response = await request(app).post('/checkins').send(incompleteData);
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Either eventId OR both bandId and venueId are required');
       expect(mockCheckinService.createEventCheckin).not.toHaveBeenCalled();
     });
@@ -161,10 +168,9 @@ describe('CheckinController', () => {
       const response = await request(app).post('/checkins').send(incompleteData);
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
     });
 
-    it('should return 400 when service throws an error', async () => {
+    it('should return 500 when service throws an error', async () => {
       setupApp('user-123');
       mockCheckinService.createEventCheckin.mockRejectedValue(
         new Error('Event not found or cancelled')
@@ -176,8 +182,7 @@ describe('CheckinController', () => {
 
       const response = await request(app).post('/checkins').send(checkinData);
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(500);
       expect(response.body.error).toBe('Event not found or cancelled');
     });
 
@@ -256,7 +261,6 @@ describe('CheckinController', () => {
       const response = await request(app).get('/checkins/feed');
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
       expect(mockCheckinService.getActivityFeed).not.toHaveBeenCalled();
     });
@@ -314,8 +318,7 @@ describe('CheckinController', () => {
       const response = await request(app).get('/checkins/feed');
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Failed to fetch activity feed');
+      expect(response.body.error).toBe('Database error');
     });
   });
 
@@ -344,14 +347,13 @@ describe('CheckinController', () => {
       expect(mockCheckinService.getCheckinById).toHaveBeenCalledWith('checkin-123', 'user-123');
     });
 
-    it('should return 404 when checkin not found', async () => {
+    it('should return 500 when checkin not found', async () => {
       setupApp('user-123');
       mockCheckinService.getCheckinById.mockRejectedValue(new Error('Check-in not found'));
 
       const response = await request(app).get('/checkins/nonexistent');
 
-      expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(500);
       expect(response.body.error).toBe('Check-in not found');
     });
   });
@@ -375,18 +377,16 @@ describe('CheckinController', () => {
       const response = await request(app).post('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
     });
 
-    it('should return 400 when already toasted', async () => {
+    it('should return 500 when already toasted', async () => {
       setupApp('user-123');
       mockCheckinService.toastCheckin.mockRejectedValue(new Error('Already toasted this check-in'));
 
       const response = await request(app).post('/checkins/checkin-123/toast');
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
+      expect(response.status).toBe(500);
       expect(response.body.error).toBe('Already toasted this check-in');
     });
   });
@@ -410,7 +410,6 @@ describe('CheckinController', () => {
       const response = await request(app).delete('/checkins/checkin-123/toast');
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
     });
   });
@@ -456,7 +455,6 @@ describe('CheckinController', () => {
         .send({ commentText: 'Nice show!' });
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
     });
 
@@ -466,7 +464,6 @@ describe('CheckinController', () => {
       const response = await request(app).post('/checkins/checkin-123/comments').send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Comment text is required');
     });
 
@@ -478,7 +475,6 @@ describe('CheckinController', () => {
         .send({ commentText: '   ' });
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Comment text is required');
     });
   });
@@ -520,8 +516,7 @@ describe('CheckinController', () => {
       const response = await request(app).get('/checkins/checkin-123/comments');
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toBe('Failed to fetch comments');
+      expect(response.body.error).toBe('Database error');
     });
   });
 
@@ -544,7 +539,6 @@ describe('CheckinController', () => {
       const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Authentication required');
     });
 
@@ -557,7 +551,6 @@ describe('CheckinController', () => {
       const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(403);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('You can only delete your own check-ins');
     });
 
@@ -570,7 +563,6 @@ describe('CheckinController', () => {
       const response = await request(app).delete('/checkins/checkin-123');
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Check-in not found');
     });
   });

@@ -37,6 +37,10 @@ try {
       removeOnComplete: { count: 100 },
       removeOnFail: { count: 200 },
     },
+    // Dead letter queue configuration
+    streams: {
+      events: { maxLen: 1000 },
+    },
   });
 
   logger.info('Event sync queue initialized');

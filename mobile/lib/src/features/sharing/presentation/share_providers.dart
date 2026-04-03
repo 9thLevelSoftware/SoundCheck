@@ -17,7 +17,11 @@ ShareRepository shareRepository(Ref ref) {
 @riverpod
 Future<ShareCardUrls> checkinCard(Ref ref, String checkinId) async {
   final repo = ref.watch(shareRepositoryProvider);
-  return repo.generateCheckinCard(checkinId);
+  final result = await repo.generateCheckinCard(checkinId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (urls) => urls,
+  );
 }
 
 /// Generates badge share card images on demand.
@@ -25,5 +29,9 @@ Future<ShareCardUrls> checkinCard(Ref ref, String checkinId) async {
 @riverpod
 Future<ShareCardUrls> badgeCard(Ref ref, String badgeAwardId) async {
   final repo = ref.watch(shareRepositoryProvider);
-  return repo.generateBadgeCard(badgeAwardId);
+  final result = await repo.generateBadgeCard(badgeAwardId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (urls) => urls,
+  );
 }

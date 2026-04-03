@@ -12,7 +12,7 @@ import Database from '../config/database';
 import { Report, CreateReportRequest, ContentType } from '../types';
 import { mapDbRowToReport } from '../utils/dbMappers';
 import { moderationQueue } from '../jobs/moderationQueue';
-import { logInfo, logWarn } from '../utils/logger';
+import { logInfo } from '../utils/logger';
 
 export class ReportService {
   private db: Database;

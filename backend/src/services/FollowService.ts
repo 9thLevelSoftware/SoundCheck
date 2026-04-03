@@ -78,7 +78,7 @@ export class FollowService {
       RETURNING id
     `;
 
-    const result = await this.db.query(query, [followerId, followingId]);
+    await this.db.query(query, [followerId, followingId]);
 
     return {
       success: true,

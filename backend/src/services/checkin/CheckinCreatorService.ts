@@ -10,6 +10,7 @@
  */
 
 import Database from '../../config/database';
+import { PoolClient } from 'pg';
 // VenueService and BandService imports removed — legacy createCheckin() path deleted
 import { EventService } from '../EventService';
 import { FeedService } from '../FeedService';
@@ -56,11 +57,14 @@ export class CheckinCreatorService {
    * Enforces one check-in per user per event via unique constraint.
    */
   async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
+    const { userId, eventId, locationLat, locationLon, comment, vibeTagIds } = data;
+    const client = await this.db.getClient();
+
     try {
-      const { userId, eventId, locationLat, locationLon, comment, vibeTagIds } = data;
+      await client.query('BEGIN');
 
       // Validate event exists and is not cancelled, get venue info
-      const eventResult = await this.db.query(
+      const eventResult = await client.query(
         `SELECT e.*, v.latitude as venue_lat, v.longitude as venue_lon,
                 v.venue_type, v.timezone, v.id as v_id
          FROM events e
@@ -92,7 +96,7 @@ export class CheckinCreatorService {
       );
 
       // Get headliner band_id from event_lineup for backward compat
-      const headlinerResult = await this.db.query(
+      const headlinerResult = await client.query(
         `SELECT band_id FROM event_lineup
          WHERE event_id = $1
          ORDER BY is_headliner DESC, set_order ASC
@@ -115,7 +119,7 @@ export class CheckinCreatorService {
 
       let result;
       try {
-        result = await this.db.query(insertQuery, [
+        result = await client.query(insertQuery, [
           userId,
           eventId,
           event.venue_id,
@@ -142,10 +146,13 @@ export class CheckinCreatorService {
 
       // Add vibe tags if provided
       if (vibeTagIds && vibeTagIds.length > 0) {
-        await this.addVibeTagsToCheckin(checkinId, vibeTagIds);
+        await this.addVibeTagsToCheckin(checkinId, vibeTagIds, client);
       }
 
+      await client.query('COMMIT');
+
       // Promote user-created events if organic verification threshold met
+      // Fire-and-forget: outside transaction
       try {
         await this.eventService.promoteIfVerified(eventId);
       } catch (err) {
@@ -195,22 +202,18 @@ export class CheckinCreatorService {
         );
 
       // Fire-and-forget: invalidate concert cred stats cache
-      cache
-        .del(`stats:concert-cred:${userId}`)
-        .catch((err) =>
-          logger.debug('Warning: stats cache invalidation failed', {
-            error: err instanceof Error ? err.message : String(err),
-          })
-        );
+      cache.del(`stats:concert-cred:${userId}`).catch((err) =>
+        logger.debug('Warning: stats cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
 
       // Fire-and-forget: invalidate recommendation cache (new check-in changes genre affinity + excludes event)
-      cache
-        .del(CacheKeys.recommendations(userId))
-        .catch((err) =>
-          logger.debug('Warning: recommendations cache invalidation failed', {
-            error: err instanceof Error ? err.message : String(err),
-          })
-        );
+      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
+        logger.debug('Warning: recommendations cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
 
       // Fire-and-forget: publish to Redis Pub/Sub for WebSocket fan-out
       // and enqueue batched push notifications for followers
@@ -235,11 +238,14 @@ export class CheckinCreatorService {
       // Return full check-in with details
       return this.getCheckinByIdFn(checkinId, userId);
     } catch (error) {
+      await client.query('ROLLBACK');
       logger.error('Create event check-in error', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
       throw error;
+    } finally {
+      client.release();
     }
   }
 
@@ -447,43 +453,35 @@ export class CheckinCreatorService {
       await this.db.query('DELETE FROM checkins WHERE id = $1', [checkinId]);
 
       // Fire-and-forget: invalidate concert cred stats cache
-      cache
-        .del(`stats:concert-cred:${userId}`)
-        .catch((err) =>
-          logger.debug('Warning: stats cache invalidation failed', {
-            error: err instanceof Error ? err.message : String(err),
-          })
-        );
+      cache.del(`stats:concert-cred:${userId}`).catch((err) =>
+        logger.debug('Warning: stats cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
 
       // Fire-and-forget: invalidate recommendation cache (deleted check-in changes genre affinity)
-      cache
-        .del(CacheKeys.recommendations(userId))
-        .catch((err) =>
-          logger.debug('Warning: recommendations cache invalidation failed', {
-            error: err instanceof Error ? err.message : String(err),
-          })
-        );
+      cache.del(CacheKeys.recommendations(userId)).catch((err) =>
+        logger.debug('Warning: recommendations cache invalidation failed', {
+          error: err instanceof Error ? err.message : String(err),
+        })
+      );
 
       // Fire-and-forget: invalidate band aggregate caches
       for (const bandId of bandIds) {
-        cache
-          .del(CacheKeys.bandAggregate(bandId))
-          .catch((err) =>
-            logger.debug('Warning: band aggregate cache invalidation failed', {
-              error: err instanceof Error ? err.message : String(err),
-            })
-          );
+        cache.del(CacheKeys.bandAggregate(bandId)).catch((err) =>
+          logger.debug('Warning: band aggregate cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
       }
 
       // Fire-and-forget: invalidate venue aggregate cache
       if (venueId) {
-        cache
-          .del(CacheKeys.venueAggregate(venueId))
-          .catch((err) =>
-            logger.debug('Warning: venue aggregate cache invalidation failed', {
-              error: err instanceof Error ? err.message : String(err),
-            })
-          );
+        cache.del(CacheKeys.venueAggregate(venueId)).catch((err) =>
+          logger.debug('Warning: venue aggregate cache invalidation failed', {
+            error: err instanceof Error ? err.message : String(err),
+          })
+        );
       }
     } catch (error) {
       logger.error('Delete check-in error', {
@@ -511,9 +509,9 @@ export class CheckinCreatorService {
     venueType: string | null
   ): boolean {
     // If user didn't share location, can't verify
-    if (userLat == null || userLon == null) return false;
+    if (userLat === null || userLon === null) return false;
     // If venue has no coordinates, can't verify
-    if (venueLat == null || venueLon == null) return false;
+    if (venueLat === null || venueLon === null) return false;
 
     const radiusKm = venueType
       ? VENUE_TYPE_RADIUS_KM[venueType] || DEFAULT_VENUE_RADIUS_KM
@@ -646,14 +644,19 @@ export class CheckinCreatorService {
   /**
    * Add vibe tags to a check-in
    */
-  private async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[]): Promise<void> {
+  private async addVibeTagsToCheckin(
+    checkinId: string,
+    vibeTagIds: string[],
+    client?: PoolClient
+  ): Promise<void> {
     try {
       if (!vibeTagIds || vibeTagIds.length === 0) return;
 
       const values = vibeTagIds.map((_, i) => `($1, $${i + 2})`).join(', ');
       const params = [checkinId, ...vibeTagIds];
 
-      await this.db.query(
+      const db = client || this.db;
+      await db.query(
         `INSERT INTO checkin_vibes (checkin_id, vibe_tag_id) VALUES ${values}
          ON CONFLICT (checkin_id, vibe_tag_id) DO NOTHING`,
         params

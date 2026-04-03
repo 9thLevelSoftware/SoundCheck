@@ -1,4 +1,8 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
+import '../../../core/error/failures.dart';
 
 /// Event data from the trending endpoint (GET /api/trending).
 /// Uses Wilson-scored composite ranking from Plan 11-02.
@@ -69,28 +73,39 @@ class TrendingRepository {
 
   TrendingRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Fetch trending events near a location.
   /// GET /api/trending?lat=X&lon=Y&radius=80&days=30&limit=20
-  Future<List<TrendingEvent>> getTrendingNearby({
+  Future<Either<Failure, List<TrendingEvent>>> getTrendingNearby({
     required double lat,
     required double lon,
     int radius = 80,
     int days = 30,
     int limit = 20,
   }) async {
-    final response = await _dioClient.get(
-      '/trending',
-      queryParameters: {
-        'lat': lat,
-        'lon': lon,
-        'radius': radius,
-        'days': days,
-        'limit': limit,
-      },
-    );
-    final List<dynamic> data = response.data['data'] as List<dynamic>;
-    return data
-        .map((e) => TrendingEvent.fromJson(e as Map<String, dynamic>))
-        .toList();
+    try {
+      final response = await _dioClient.get(
+        '/trending',
+        queryParameters: {
+          'lat': lat,
+          'lon': lon,
+          'radius': radius,
+          'days': days,
+          'limit': limit,
+        },
+      );
+      final List<dynamic> data = response.data['data'] as List<dynamic>;
+      return Right(data
+          .map((e) => TrendingEvent.fromJson(e as Map<String, dynamic>))
+          .toList());
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 }

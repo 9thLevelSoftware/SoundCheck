@@ -8,13 +8,21 @@ part 'badge_providers.g.dart';
 @riverpod
 Future<List<BadgeProgress>> badgeProgress(Ref ref) async {
   final repo = ref.watch(badgeRepositoryProvider);
-  return repo.getMyProgress();
+  final result = await repo.getMyProgress();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }
 
 @riverpod
 Future<List<BadgeRarity>> badgeRarity(Ref ref) async {
   final repo = ref.watch(badgeRepositoryProvider);
-  return repo.getRarity();
+  final result = await repo.getRarity();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }
 
 /// User's earned badges (UserBadge records with award IDs).
@@ -22,7 +30,11 @@ Future<List<BadgeRarity>> badgeRarity(Ref ref) async {
 @riverpod
 Future<List<UserBadge>> myBadges(Ref ref) async {
   final repo = ref.watch(badgeRepositoryProvider);
-  return repo.getMyBadges();
+  final result = await repo.getMyBadges();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }
 
 /// Combined provider that groups badge progress by category

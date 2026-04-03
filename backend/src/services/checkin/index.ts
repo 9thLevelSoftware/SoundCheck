@@ -9,3 +9,4 @@ export { CheckinQueryService } from './CheckinQueryService';
 export { CheckinCreatorService } from './CheckinCreatorService';
 export { CheckinRatingService } from './CheckinRatingService';
 export { CheckinToastService } from './CheckinToastService';
+export { CheckinPhotoService, PhotoUploadUrl, PhotoUploadRequest, PhotoConfirmationRequest } from './CheckinPhotoService';

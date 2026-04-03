@@ -1,4 +1,8 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
+import '../../../core/error/failures.dart';
 
 /// Model representing a verification claim for a venue or band.
 class VerificationClaim {
@@ -47,45 +51,64 @@ class ClaimRepository {
 
   ClaimRepository({required DioClient client}) : _client = client;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Submit a new claim for a venue or band.
   /// POST /claims
-  Future<VerificationClaim> submitClaim({
+  Future<Either<Failure, VerificationClaim>> submitClaim({
     required String entityType,
     required String entityId,
     String? evidenceText,
     String? evidenceUrl,
   }) async {
-    final response = await _client.post('/claims', data: {
-      'entityType': entityType,
-      'entityId': entityId,
-      if (evidenceText != null && evidenceText.isNotEmpty)
-        'evidenceText': evidenceText,
-      if (evidenceUrl != null && evidenceUrl.isNotEmpty)
-        'evidenceUrl': evidenceUrl,
-    },);
-    return VerificationClaim.fromJson(
-      response.data['data'] as Map<String, dynamic>,
-    );
+    try {
+      final response = await _client.post('/claims', data: {
+        'entityType': entityType,
+        'entityId': entityId,
+        if (evidenceText != null && evidenceText.isNotEmpty)
+          'evidenceText': evidenceText,
+        if (evidenceUrl != null && evidenceUrl.isNotEmpty)
+          'evidenceUrl': evidenceUrl,
+      },);
+      return Right(VerificationClaim.fromJson(
+        response.data['data'] as Map<String, dynamic>,
+      ));
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 
   /// Get all claims submitted by the current user.
   /// GET /claims/me
-  Future<List<VerificationClaim>> getMyClaims() async {
-    final response = await _client.get('/claims/me');
-    final data = response.data['data'] as List;
-    return data
-        .map((e) => VerificationClaim.fromJson(e as Map<String, dynamic>))
-        .toList();
+  Future<Either<Failure, List<VerificationClaim>>> getMyClaims() async {
+    try {
+      final response = await _client.get('/claims/me');
+      final data = response.data['data'] as List;
+      return Right(data
+          .map((e) => VerificationClaim.fromJson(e as Map<String, dynamic>))
+          .toList());
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 
   /// Get aggregate stats for a claimed entity.
   /// GET /claims/stats/:entityType/:entityId
-  Future<Map<String, dynamic>> getEntityStats(
+  Future<Either<Failure, Map<String, dynamic>>> getEntityStats(
     String entityType,
     String entityId,
   ) async {
-    final response = await _client.get('/claims/stats/$entityType/$entityId');
-    return response.data['data'] as Map<String, dynamic>;
+    try {
+      final response = await _client.get('/claims/stats/$entityType/$entityId');
+      return Right(response.data['data'] as Map<String, dynamic>);
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 
 }

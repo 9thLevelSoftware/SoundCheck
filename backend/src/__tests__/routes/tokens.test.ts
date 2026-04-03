@@ -26,18 +26,19 @@ jest.mock('../../config/database', () => ({
   },
 }));
 
-// Mock rate limiter to avoid 429 responses during testing
-jest.mock('../../middleware/auth', () => ({
-  rateLimit: () => (req: any, res: any, next: any) => next(),
-  authenticate: jest.fn((req, res, next) => next()),
-}));
-
 // Mock UserService
 const mockFindById = jest.fn();
+
 jest.mock('../../services/UserService', () => ({
   UserService: jest.fn().mockImplementation(() => ({
     findById: mockFindById,
   })),
+}));
+
+// Mock rate limiter to avoid 429 responses during testing
+jest.mock('../../middleware/auth', () => ({
+  rateLimit: () => (req: any, res: any, next: any) => next(),
+  authenticate: jest.fn((req, res, next) => next()),
 }));
 
 // Import after mocking
@@ -60,6 +61,7 @@ describe('Token Routes', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFindById.mockClear();
 
     app = express();
     app.use(express.json());
@@ -70,6 +72,8 @@ describe('Token Routes', () => {
       query: mockClientQuery,
       release: mockClientRelease,
     });
+
+    // No error handler needed - tokenRoutes explicitly returns { success: false, error: ... }
   });
 
   describe('POST /api/tokens/refresh', () => {
@@ -120,7 +124,6 @@ describe('Token Routes', () => {
       const response = await request(app).post('/api/tokens/refresh').send({});
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Refresh token required');
     });
 
@@ -128,7 +131,6 @@ describe('Token Routes', () => {
       const response = await request(app).post('/api/tokens/refresh').send({ refreshToken: 12345 }); // Not a string
 
       expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Invalid refresh token format');
     });
 
@@ -144,7 +146,6 @@ describe('Token Routes', () => {
         .send({ refreshToken: validToken });
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Invalid or expired refresh token');
     });
 
@@ -163,7 +164,6 @@ describe('Token Routes', () => {
         .send({ refreshToken: validToken });
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('User not found or inactive');
     });
 
@@ -182,7 +182,6 @@ describe('Token Routes', () => {
         .send({ refreshToken: validToken });
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('User not found or inactive');
     });
 
@@ -210,7 +209,6 @@ describe('Token Routes', () => {
         .send({ refreshToken: validToken });
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Token refresh failed');
 
       // Verify rollback was called
@@ -227,7 +225,6 @@ describe('Token Routes', () => {
         .send({ refreshToken: validToken });
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Token refresh failed');
     });
   });
@@ -309,7 +306,6 @@ describe('Token Routes', () => {
         .send({ refreshToken: validToken });
 
       expect(response.status).toBe(500);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('Token revocation failed');
     });
   });

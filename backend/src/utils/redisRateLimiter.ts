@@ -260,5 +260,219 @@ export class RedisRateLimiter {
   }
 }
 
-// Export singleton instance
+/**
+ * Enumeration protection rate limiter
+ * SEC-007/CFR-015: Strict rate limiting for username/email enumeration endpoints
+ * - 5 requests per 15 minutes per IP for enumeration endpoints
+ * - Tracks attempts for CAPTCHA escalation
+ * - Uses separate key prefix for isolation
+ */
+export class EnumerationRateLimiter {
+  private windowMs: number;
+  private maxRequests: number;
+  private captchaThreshold: number;
+
+  constructor(
+    windowMs: number = 15 * 60 * 1000, // 15 minutes
+    maxRequests: number = 5, // 5 requests per window
+    captchaThreshold: number = 3 // CAPTCHA after 3 attempts
+  ) {
+    this.windowMs = windowMs;
+    this.maxRequests = maxRequests;
+    this.captchaThreshold = captchaThreshold;
+  }
+
+  /**
+   * Get the rate limit key for an IP
+   */
+  private getKey(ip: string, endpoint: string): string {
+    return `enum-check:${ip}:${endpoint}`;
+  }
+
+  /**
+   * Get the CAPTCHA tracking key for an IP
+   */
+  private getCaptchaKey(ip: string): string {
+    return `enum-captcha:${ip}`;
+  }
+
+  /**
+   * Check rate limit for enumeration endpoints
+   * Returns extended result with CAPTCHA requirement flag
+   */
+  async checkLimit(
+    ip: string,
+    endpoint: string
+  ): Promise<RateLimitResult & { requiresCaptcha: boolean }> {
+    const key = this.getKey(ip, endpoint);
+    const captchaKey = this.getCaptchaKey(ip);
+
+    if (!redis) {
+      // Fallback: use in-memory tracking when Redis unavailable
+      return {
+        allowed: true,
+        remaining: this.maxRequests,
+        resetAt: Date.now() + this.windowMs,
+        requiresCaptcha: false,
+      };
+    }
+
+    const now = Date.now();
+    const windowStart = now - this.windowMs;
+
+    try {
+      // Use pipeline for atomic operations
+      const pipeline = redis.pipeline();
+
+      // Clean expired entries from rate limit window
+      pipeline.zremrangebyscore(key, 0, windowStart);
+      // Get current count
+      pipeline.zcard(key);
+      // Add current request
+      pipeline.zadd(key, now, `${now}-${Math.random()}`);
+      // Set expiry on key
+      pipeline.pexpire(key, this.windowMs);
+      // Get CAPTCHA attempt count
+      pipeline.get(captchaKey);
+      // Increment CAPTCHA counter (set expiry if new)
+      pipeline.incr(captchaKey);
+      pipeline.pexpire(captchaKey, this.windowMs);
+
+      const results = await pipeline.exec();
+      if (!results) {
+        return {
+          allowed: true,
+          remaining: this.maxRequests,
+          resetAt: now + this.windowMs,
+          requiresCaptcha: false,
+        };
+      }
+
+      const currentCount = (results[1][1] as number) || 0;
+      const captchaAttempts = parseInt((results[4][1] as string) || '0', 10);
+
+      // Check if rate limit exceeded
+      if (currentCount >= this.maxRequests) {
+        return {
+          allowed: false,
+          remaining: 0,
+          resetAt: now + this.windowMs,
+          requiresCaptcha: true,
+        };
+      }
+
+      return {
+        allowed: true,
+        remaining: this.maxRequests - currentCount - 1,
+        resetAt: now + this.windowMs,
+        requiresCaptcha: captchaAttempts >= this.captchaThreshold,
+      };
+    } catch (error) {
+      logger.error('Enumeration rate limit check error', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        ip,
+        endpoint,
+      });
+      // Fail-open: allow request through on error
+      return {
+        allowed: true,
+        remaining: this.maxRequests,
+        resetAt: now + this.windowMs,
+        requiresCaptcha: false,
+      };
+    }
+  }
+
+  /**
+   * Reset enumeration limits for an IP
+   */
+  async reset(ip: string, endpoint?: string): Promise<void> {
+    if (!redis) return;
+
+    try {
+      if (endpoint) {
+        await redis.del(this.getKey(ip, endpoint));
+      } else {
+        // Use SCAN instead of KEYS to avoid blocking Redis
+        const pattern = `enum-*:${ip}*`;
+        let cursor = '0';
+        const keysToDelete: string[] = [];
+
+        do {
+          const result = await redis.scan(cursor, 'MATCH', pattern, 'COUNT', 100);
+          cursor = result[0];
+          const keys = result[1];
+          if (keys.length > 0) {
+            keysToDelete.push(...keys);
+          }
+        } while (cursor !== '0');
+
+        // Delete keys in batches to avoid blocking
+        const BATCH_SIZE = 100;
+        for (let i = 0; i < keysToDelete.length; i += BATCH_SIZE) {
+          const batch = keysToDelete.slice(i, i + BATCH_SIZE);
+          await redis.unlink(...batch); // Use UNLINK (non-blocking) instead of DEL
+        }
+      }
+    } catch (error) {
+      logger.error('Error resetting enumeration rate limit', {
+        error: error instanceof Error ? error.message : String(error),
+        stack: error instanceof Error ? error.stack : undefined,
+        ip,
+        endpoint,
+      });
+    }
+  }
+
+  /**
+   * Express middleware for strict enumeration rate limiting
+   */
+  middleware() {
+    return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+      const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+      const endpoint = req.path;
+
+      try {
+        const result = await this.checkLimit(clientIP, endpoint);
+
+        // Set rate limit headers
+        res.setHeader('X-RateLimit-Limit', this.maxRequests);
+        res.setHeader('X-RateLimit-Remaining', Math.max(0, result.remaining));
+        res.setHeader('X-RateLimit-Reset', Math.ceil(result.resetAt / 1000));
+
+        // Add header to indicate CAPTCHA requirement
+        if (result.requiresCaptcha) {
+          res.setHeader('X-Requires-Captcha', 'true');
+        }
+
+        if (!result.allowed) {
+          const response: ApiResponse = {
+            success: false,
+            error: 'Too many requests. Please complete CAPTCHA verification to continue.',
+          };
+          res.status(429).json(response);
+          return;
+        }
+
+        // Store CAPTCHA requirement on request for downstream middleware
+        (req as Request & { requiresCaptcha?: boolean }).requiresCaptcha = result.requiresCaptcha;
+
+        next();
+      } catch (error) {
+        logger.error('Enumeration rate limiting error', {
+          error: error instanceof Error ? error.message : String(error),
+          stack: error instanceof Error ? error.stack : undefined,
+          clientIP,
+          endpoint,
+        });
+        // Fail-open on error
+        next();
+      }
+    };
+  }
+}
+
+// Export singleton instances
 export const rateLimiter = new RedisRateLimiter();
+export const enumerationLimiter = new EnumerationRateLimiter();

@@ -180,7 +180,7 @@ class DioClient {
         options: options,
       );
     } on DioException catch (e) {
-      throw _handleDioError(e);
+      throw handleDioError(e);
     }
   }
 
@@ -199,7 +199,7 @@ class DioClient {
         options: options,
       );
     } on DioException catch (e) {
-      throw _handleDioError(e);
+      throw handleDioError(e);
     }
   }
 
@@ -218,7 +218,7 @@ class DioClient {
         options: options,
       );
     } on DioException catch (e) {
-      throw _handleDioError(e);
+      throw handleDioError(e);
     }
   }
 
@@ -237,7 +237,7 @@ class DioClient {
         options: options,
       );
     } on DioException catch (e) {
-      throw _handleDioError(e);
+      throw handleDioError(e);
     }
   }
 
@@ -256,12 +256,12 @@ class DioClient {
         options: options,
       );
     } on DioException catch (e) {
-      throw _handleDioError(e);
+      throw handleDioError(e);
     }
   }
 
   /// Handle DioException and convert to Domain Failures
-  Failure _handleDioError(DioException error) {
+  static Failure handleDioError(DioException error) {
     LogService.e('API Error: ${error.message}', error, error.stackTrace);
 
     switch (error.type) {
@@ -298,11 +298,13 @@ class DioClient {
         } else if (statusCode == 401) {
           return const AuthFailure('Authentication required. Please log in again.');
         } else if (statusCode == 403) {
-          return AuthFailure('Access denied: $message');
+          return ForbiddenFailure('Access denied: $message');
         } else if (statusCode == 404) {
-          return ServerFailure('Resource not found: $message');
+          return NotFoundFailure('Resource not found: $message');
         } else if (statusCode == 422) {
           return ValidationFailure(message);
+        } else if (statusCode == 429) {
+          return RateLimitFailure('Too many requests: $message');
         } else if (statusCode != null && statusCode >= 500) {
           return const ServerFailure('Server error. Please try again later.');
         }

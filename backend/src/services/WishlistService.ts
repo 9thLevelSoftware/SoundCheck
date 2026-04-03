@@ -79,7 +79,7 @@ export class WishlistService {
       RETURNING id
     `;
 
-    const result = await this.db.query(query, [wishlistId, userId]);
+    await this.db.query(query, [wishlistId, userId]);
 
     return {
       success: true,
@@ -97,7 +97,7 @@ export class WishlistService {
       RETURNING id
     `;
 
-    const result = await this.db.query(query, [userId, bandId]);
+    await this.db.query(query, [userId, bandId]);
 
     return {
       success: true,

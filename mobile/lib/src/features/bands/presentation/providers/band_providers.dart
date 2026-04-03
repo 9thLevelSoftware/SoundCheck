@@ -8,7 +8,11 @@ part 'band_providers.g.dart';
 @riverpod
 Future<List<CheckIn>> bandGlobalCheckins(Ref ref, String bandId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckIns(bandId: bandId, limit: 20);
+  final result = await repository.getCheckIns(bandId: bandId, limit: 20);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }
 
 /// Provider for current user's check-ins for a band
@@ -19,5 +23,9 @@ Future<List<CheckIn>> bandUserCheckins(Ref ref, String bandId) async {
   if (user == null) return [];
 
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getCheckIns(bandId: bandId, userId: user.id, limit: 20);
+  final result = await repository.getCheckIns(bandId: bandId, userId: user.id, limit: 20);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }

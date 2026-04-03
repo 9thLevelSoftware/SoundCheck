@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 
 import 'package:firebase_core/firebase_core.dart';
@@ -22,12 +23,16 @@ class PushNotificationService {
       FlutterLocalNotificationsPlugin();
 
   String? _currentToken;
+  final _notificationTapController = StreamController<String>.broadcast();
 
   /// Whether push notifications have been initialized
   bool get isInitialized => _currentToken != null;
 
   /// Current FCM device token
   String? get currentToken => _currentToken;
+
+  /// Stream of notification IDs when tapped
+  Stream<String> get onNotificationTap => _notificationTapController.stream;
 
   PushNotificationService({FeedRepository? feedRepository})
       : _feedRepository = feedRepository;
@@ -165,8 +170,52 @@ class PushNotificationService {
   /// Handle notification tap to navigate to relevant screen
   void _handleNotificationTap(RemoteMessage message) {
     LogService.d('Notification tapped: ${message.data}');
-    // Navigation will be handled by the app's router based on message data
-    // The app scaffold can listen to a stream of tapped notifications
+    
+    // Parse deep link from notification data
+    final deepLink = _parseDeepLink(message.data);
+    if (deepLink != null) {
+      _notificationTapController.add(deepLink);
+    }
+  }
+
+  /// Parse deep link from notification payload
+  String? _parseDeepLink(Map<String, dynamic> data) {
+    // Check for explicit deep link
+    if (data['deepLink'] != null) {
+      return data['deepLink'] as String;
+    }
+    
+    // Check for notification ID (to show notification detail)
+    if (data['notificationId'] != null) {
+      return '/notifications/${data['notificationId']}';
+    }
+    
+    // Check for check-in ID
+    if (data['checkinId'] != null) {
+      return '/checkins/${data['checkinId']}';
+    }
+    
+    // Check for band ID
+    if (data['bandId'] != null) {
+      return '/bands/${data['bandId']}';
+    }
+    
+    // Check for venue ID
+    if (data['venueId'] != null) {
+      return '/venues/${data['venueId']}';
+    }
+    
+    // Check for user ID (profile)
+    if (data['userId'] != null) {
+      return '/users/${data['userId']}';
+    }
+    
+    // Check for show ID
+    if (data['showId'] != null) {
+      return '/events/${data['showId']}';
+    }
+    
+    return null;
   }
 
   /// Send FCM token to backend for push notification targeting

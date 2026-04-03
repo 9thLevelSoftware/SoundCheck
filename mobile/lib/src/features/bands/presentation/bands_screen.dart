@@ -18,9 +18,11 @@ final filteredBandsProvider =
   final filters = ref.watch(bandFiltersProvider);
 
   // Get bands from repository
-  final bands = await repository.getBands();
+  final result = await repository.getBands();
 
   // Apply client-side filtering and sorting
+  final bands = result.getOrElse(() => []);
+
   final filtered = bands.where((band) {
     // Genre filter
     if (filters.genres.isNotEmpty) {

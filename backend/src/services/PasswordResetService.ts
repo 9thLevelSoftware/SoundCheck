@@ -3,7 +3,7 @@ import Database from '../config/database';
 import { EmailService } from './EmailService';
 import { AuthUtils } from '../utils/auth';
 import { revokeAllUserTokens } from '../utils/auth';
-import logger, { logInfo, logWarn, logError } from '../utils/logger';
+import { logInfo, logError } from '../utils/logger';
 
 /**
  * PasswordResetService handles the full forgot-password lifecycle:

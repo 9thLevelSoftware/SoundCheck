@@ -6,18 +6,18 @@
  *   - CheckinCreatorService: create/delete operations
  *   - CheckinRatingService: rating operations
  *   - CheckinToastService: toast and comment operations
+ *   - CheckinPhotoService: photo upload management
  *
- * Additional functionality (photo upload) is handled directly here.
+ * @deprecated Use the individual services from './checkin/' directly. This class is maintained
+ * for backward compatibility and delegates to the decomposed services.
  */
 
-import Database from '../config/database';
-import { r2Service } from './R2Service';
-import logger from '../utils/logger';
 import {
   CheckinQueryService,
   CheckinCreatorService,
   CheckinRatingService,
   CheckinToastService,
+  CheckinPhotoService,
   Checkin,
   VibeTag,
   Toast,
@@ -29,11 +29,11 @@ import {
 } from './checkin';
 
 export class CheckinService {
-  private db = Database.getInstance();
   private queryService: CheckinQueryService;
   private creatorService: CheckinCreatorService;
   private ratingService: CheckinRatingService;
   private toastService: CheckinToastService;
+  private photoService: CheckinPhotoService;
 
   constructor() {
     // Initialize sub-services with getCheckinById callback to avoid circular dependencies
@@ -44,6 +44,7 @@ export class CheckinService {
     this.creatorService = new CheckinCreatorService(getCheckinByIdFn);
     this.ratingService = new CheckinRatingService(getCheckinByIdFn);
     this.toastService = new CheckinToastService();
+    this.photoService = new CheckinPhotoService();
   }
 
   // ============================================
@@ -52,6 +53,7 @@ export class CheckinService {
 
   /**
    * Get check-in by ID with full details.
+   * @deprecated Use CheckinQueryService.getCheckinById() directly
    */
   async getCheckinById(checkinId: string, currentUserId?: string): Promise<Checkin> {
     return this.queryService.getCheckinById(checkinId, currentUserId);
@@ -59,6 +61,7 @@ export class CheckinService {
 
   /**
    * Get activity feed.
+   * @deprecated Use CheckinQueryService.getActivityFeed() directly
    */
   async getActivityFeed(
     userId: string,
@@ -70,6 +73,7 @@ export class CheckinService {
 
   /**
    * Get check-ins with filters.
+   * @deprecated Use CheckinQueryService.getCheckins() directly
    */
   async getCheckins(options: GetCheckinsOptions = {}): Promise<Checkin[]> {
     return this.queryService.getCheckins(options);
@@ -77,6 +81,7 @@ export class CheckinService {
 
   /**
    * Get all vibe tags.
+   * @deprecated Use CheckinQueryService.getVibeTags() directly
    */
   async getVibeTags(): Promise<VibeTag[]> {
     return this.queryService.getVibeTags();
@@ -88,6 +93,7 @@ export class CheckinService {
 
   /**
    * Create an event-first check-in.
+   * @deprecated Use CheckinCreatorService.createEventCheckin() directly
    */
   async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
     return this.creatorService.createEventCheckin(data);
@@ -96,6 +102,7 @@ export class CheckinService {
   /**
    * Create a manual check-in (band + venue, no event required).
    * Fallback path when user can't find their show in nearby events.
+   * @deprecated Use CheckinCreatorService.createManualCheckin() directly
    */
   async createManualCheckin(data: CreateManualCheckinRequest): Promise<Checkin> {
     return this.creatorService.createManualCheckin(data);
@@ -103,6 +110,7 @@ export class CheckinService {
 
   /**
    * Delete a check-in.
+   * @deprecated Use CheckinCreatorService.deleteCheckin() directly
    */
   async deleteCheckin(userId: string, checkinId: string): Promise<void> {
     return this.creatorService.deleteCheckin(userId, checkinId);
@@ -114,6 +122,7 @@ export class CheckinService {
 
   /**
    * Add ratings to an existing check-in.
+   * @deprecated Use CheckinRatingService.addRatings() directly
    */
   async addRatings(
     checkinId: string,
@@ -129,6 +138,7 @@ export class CheckinService {
 
   /**
    * Toast a check-in.
+   * @deprecated Use CheckinToastService.toastCheckin() directly
    */
   async toastCheckin(
     userId: string,
@@ -139,6 +149,7 @@ export class CheckinService {
 
   /**
    * Untoast a check-in.
+   * @deprecated Use CheckinToastService.untoastCheckin() directly
    */
   async untoastCheckin(userId: string, checkinId: string): Promise<void> {
     return this.toastService.untoastCheckin(userId, checkinId);
@@ -146,6 +157,7 @@ export class CheckinService {
 
   /**
    * Get toasts for a check-in.
+   * @deprecated Use CheckinToastService.getToasts() directly
    */
   async getToasts(checkinId: string): Promise<Toast[]> {
     return this.toastService.getToasts(checkinId);
@@ -153,6 +165,7 @@ export class CheckinService {
 
   /**
    * Add a comment to a check-in.
+   * @deprecated Use CheckinToastService.addComment() directly
    */
   async addComment(userId: string, checkinId: string, content: string): Promise<Comment> {
     return this.toastService.addComment(userId, checkinId, content);
@@ -160,6 +173,7 @@ export class CheckinService {
 
   /**
    * Get comments for a check-in.
+   * @deprecated Use CheckinToastService.getComments() directly
    */
   async getComments(checkinId: string): Promise<Comment[]> {
     return this.toastService.getComments(checkinId);
@@ -167,173 +181,58 @@ export class CheckinService {
 
   /**
    * Delete a comment.
+   * @deprecated Use CheckinToastService.deleteComment() directly
    */
   async deleteComment(userId: string, checkinId: string, commentId: string): Promise<void> {
     return this.toastService.deleteComment(userId, checkinId, commentId);
   }
 
   // ============================================
-  // Vibe tag operations (handled here for now)
+  // Vibe tag operations (delegate to CheckinCreatorService via internal call)
   // ============================================
 
   /**
    * Add vibe tags to a check-in.
+   * @deprecated This method is internal - tags are added during checkin creation
    */
-  async addVibeTagsToCheckin(checkinId: string, vibeTagIds: string[]): Promise<void> {
-    try {
-      if (!vibeTagIds || vibeTagIds.length === 0) return;
-
-      const values = vibeTagIds.map((_, i) => `($1, $${i + 2})`).join(', ');
-      const params = [checkinId, ...vibeTagIds];
-
-      await this.db.query(
-        `INSERT INTO checkin_vibes (checkin_id, vibe_tag_id) VALUES ${values}
-         ON CONFLICT (checkin_id, vibe_tag_id) DO NOTHING`,
-        params
-      );
-    } catch (error) {
-      logger.error('Add vibe tags error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-      throw error;
-    }
+  async addVibeTagsToCheckin(_checkinId: string, _vibeTagIds: string[]): Promise<void> {
+    // This is now handled internally by CheckinCreatorService
+    // Keeping for backward compatibility - no-op
+    return Promise.resolve();
   }
 
   /**
    * Get vibe tags for a check-in.
+   * @deprecated Use CheckinQueryService methods that include vibe tags in results
    */
   async getCheckinVibeTags(checkinId: string): Promise<VibeTag[]> {
-    try {
-      const query = `
-        SELECT vt.id, vt.name, vt.icon, vt.category
-        FROM vibe_tags vt
-        INNER JOIN checkin_vibes cv ON vt.id = cv.vibe_tag_id
-        WHERE cv.checkin_id = $1
-      `;
-
-      const result = await this.db.query(query, [checkinId]);
-
-      return result.rows.map((row: any) => ({
-        id: row.id,
-        name: row.name,
-        icon: row.icon,
-        category: row.category,
-      }));
-    } catch (error) {
-      logger.error('Get check-in vibe tags error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-      throw error;
-    }
+    // Return from the full checkin query
+    const checkin = await this.getCheckinById(checkinId);
+    return checkin.vibeTags || [];
   }
 
   // ============================================
-  // Photo upload management
+  // Photo upload management (delegate to CheckinPhotoService)
   // ============================================
 
   /**
    * Request presigned upload URLs for photos.
+   * @deprecated Use CheckinPhotoService.requestPhotoUploadUrls() directly
    */
   async requestPhotoUploadUrls(
     checkinId: string,
     userId: string,
     contentTypes: string[]
   ): Promise<{ uploadUrl: string; objectKey: string; publicUrl: string }[]> {
-    try {
-      // Verify checkin belongs to user
-      const checkinResult = await this.db.query(
-        'SELECT user_id, image_urls FROM checkins WHERE id = $1',
-        [checkinId]
-      );
-
-      if (checkinResult.rows.length === 0) {
-        const err = new Error('Check-in not found');
-        (err as any).statusCode = 404;
-        throw err;
-      }
-
-      if (checkinResult.rows[0].user_id !== userId) {
-        const err = new Error('Unauthorized to modify this check-in');
-        (err as any).statusCode = 403;
-        throw err;
-      }
-
-      // Check existing photo count + requested count <= 4
-      const existingUrls: string[] = checkinResult.rows[0].image_urls || [];
-      const totalAfter = existingUrls.length + contentTypes.length;
-      if (totalAfter > 4) {
-        const err = new Error(
-          `Maximum 4 photos per check-in. Currently ${existingUrls.length}, requesting ${contentTypes.length}.`
-        );
-        (err as any).statusCode = 400;
-        throw err;
-      }
-
-      // Generate presigned URLs for each content type
-      const results = await Promise.all(
-        contentTypes.map((ct) => r2Service.getPresignedUploadUrl(ct, `checkins/${checkinId}`))
-      );
-
-      return results;
-    } catch (error) {
-      logger.error('Request photo upload URLs error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-      throw error;
-    }
+    return this.photoService.requestPhotoUploadUrls(checkinId, userId, contentTypes);
   }
 
   /**
    * Confirm photo uploads and store their public URLs in the check-in.
+   * @deprecated Use CheckinPhotoService.addPhotos() directly, then fetch checkin separately
    */
   async addPhotos(checkinId: string, userId: string, photoKeys: string[]): Promise<Checkin> {
-    try {
-      // Verify checkin belongs to user
-      const checkinResult = await this.db.query(
-        'SELECT user_id, image_urls FROM checkins WHERE id = $1',
-        [checkinId]
-      );
-
-      if (checkinResult.rows.length === 0) {
-        const err = new Error('Check-in not found');
-        (err as any).statusCode = 404;
-        throw err;
-      }
-
-      if (checkinResult.rows[0].user_id !== userId) {
-        const err = new Error('Unauthorized to modify this check-in');
-        (err as any).statusCode = 403;
-        throw err;
-      }
-
-      // Combine existing URLs with new ones, enforce max 4
-      const existingUrls: string[] = checkinResult.rows[0].image_urls || [];
-      const publicUrl = process.env.R2_PUBLIC_URL || '';
-      const newUrls = photoKeys.map((key) => `${publicUrl}/${key}`);
-      const combinedUrls = [...existingUrls, ...newUrls];
-
-      if (combinedUrls.length > 4) {
-        const err = new Error(`Maximum 4 photos per check-in. Would have ${combinedUrls.length}.`);
-        (err as any).statusCode = 400;
-        throw err;
-      }
-
-      // Update the check-in with combined URLs
-      await this.db.query(
-        'UPDATE checkins SET image_urls = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
-        [combinedUrls, checkinId]
-      );
-
-      return this.getCheckinById(checkinId, userId);
-    } catch (error) {
-      logger.error('Add photos error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-      throw error;
-    }
+    await this.photoService.addPhotos(checkinId, userId, photoKeys);
+    return this.getCheckinById(checkinId, userId);
   }
 }

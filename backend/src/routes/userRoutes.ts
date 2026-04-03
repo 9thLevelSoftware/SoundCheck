@@ -2,9 +2,10 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { UserController } from '../controllers/UserController';
 import { FollowController } from '../controllers/FollowController';
-import { authenticateToken, rateLimit } from '../middleware/auth';
+import { authenticateToken, rateLimit, addJitter } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 import { uploadProfileImage } from '../middleware/upload';
+import { enumerationLimiter } from '../utils/redisRateLimiter';
 import {
   createUserSchema,
   loginUserSchema,
@@ -47,6 +48,9 @@ const auditService = new AuditService();
 // Rate limiting for auth endpoints
 const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
 const generalRateLimit = rateLimit(15 * 60 * 1000, 30); // 30 requests per 15 minutes
+
+// Enumeration protection: 5 requests per 15 minutes + jitter for timing attack prevention
+const strictEnumerationLimiter = enumerationLimiter.middleware();
 
 // Public routes (no authentication required)
 router.post('/register', authRateLimit, validate(createUserSchema), userController.register);
@@ -201,13 +205,21 @@ router.delete(
 );
 
 // Username and email availability check - MUST come before /:username
+// SEC-007/CFR-015: Protected with strict enumeration rate limiting and jitter
 router.get(
   '/check-username/:username',
-  generalRateLimit,
+  strictEnumerationLimiter,
+  addJitter(50, 150),
   validate(checkUsernameSchema),
   userController.checkUsername
 );
-router.get('/check-email', generalRateLimit, validate(checkEmailSchema), userController.checkEmail); // Changed to query param
+router.get(
+  '/check-email',
+  strictEnumerationLimiter,
+  addJitter(50, 150),
+  validate(checkEmailSchema),
+  userController.checkEmail
+); // Changed to query param
 
 // Followers/Following routes - use userId (UUID) for these
 // These are public routes since follower/following lists are typically public info

@@ -1,26 +1,44 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:riverpod_annotation/riverpod_annotation.dart';
 
 import '../../../core/providers/providers.dart';
 import '../../sharing/data/share_repository.dart';
 import '../data/wrapped_repository.dart';
 import '../domain/wrapped_stats.dart';
 
-final wrappedRepositoryProvider = Provider<WrappedRepository>((ref) {
+part 'wrapped_providers.g.dart';
+
+@Riverpod(keepAlive: true)
+WrappedRepository wrappedRepository(Ref ref) {
   final dioClient = ref.watch(dioClientProvider);
   return WrappedRepository(dioClient);
-});
+}
 
-final wrappedStatsProvider =
-    FutureProvider.autoDispose.family<WrappedStats, int>((ref, year) {
-  return ref.read(wrappedRepositoryProvider).getWrappedStats(year);
-});
+@riverpod
+Future<WrappedStats> wrappedStats(Ref ref, int year) async {
+  final repo = ref.watch(wrappedRepositoryProvider);
+  final result = await repo.getWrappedStats(year);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (stats) => stats,
+  );
+}
 
-final wrappedDetailProvider =
-    FutureProvider.autoDispose.family<WrappedStats, int>((ref, year) {
-  return ref.read(wrappedRepositoryProvider).getWrappedDetailStats(year);
-});
+@riverpod
+Future<WrappedStats> wrappedDetail(Ref ref, int year) async {
+  final repo = ref.watch(wrappedRepositoryProvider);
+  final result = await repo.getWrappedDetailStats(year);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (stats) => stats,
+  );
+}
 
-final wrappedSummaryCardProvider =
-    FutureProvider.autoDispose.family<ShareCardUrls, int>((ref, year) {
-  return ref.read(wrappedRepositoryProvider).generateSummaryCard(year);
-});
+@riverpod
+Future<ShareCardUrls> wrappedSummaryCard(Ref ref, int year) async {
+  final repo = ref.watch(wrappedRepositoryProvider);
+  final result = await repo.generateSummaryCard(year);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (urls) => urls,
+  );
+}

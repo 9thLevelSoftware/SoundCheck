@@ -372,10 +372,20 @@ class _PhotoUploadSheetState extends ConsumerState<PhotoUploadSheet> {
 
       if (!mounted) return;
 
-      if (updatedCheckIn != null) {
-        widget.onComplete(updatedCheckIn);
-        Navigator.pop(context);
-      }
+      updatedCheckIn.fold(
+        (failure) {
+          setState(() {
+            _isUploading = false;
+            _errorMessage = failure.message;
+          });
+        },
+        (checkIn) {
+          if (checkIn != null) {
+            widget.onComplete(checkIn);
+          }
+          Navigator.pop(context);
+        },
+      );
     } catch (e) {
       if (!mounted) return;
       setState(() {

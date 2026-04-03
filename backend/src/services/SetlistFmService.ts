@@ -1,7 +1,48 @@
 import axios, { AxiosInstance } from 'axios';
 import Database from '../config/database';
+import { getCache, setCache } from '../utils/cache';
 import { sanitizeForLogging } from '../utils/logSanitizer';
 import logger from '../utils/logger';
+
+// Cache TTL constants (in seconds)
+const CACHE_TTL = {
+  VENUE_SEARCH: 21600, // 6 hours
+  ARTIST_SEARCH: 21600, // 6 hours
+  SETLIST_SEARCH: 21600, // 6 hours (changes more frequently for new concerts)
+  SETLIST_BY_ID: 21600, // 6 hours
+};
+
+// Cache key builders
+const CacheKeys = {
+  setlistFmVenueSearch: (
+    name: string | undefined,
+    city: string | undefined,
+    country: string | undefined,
+    page: number
+  ) =>
+    `sl:venues:${normalizeCacheKey(name || '')}:${normalizeCacheKey(city || '')}:${normalizeCacheKey(country || '')}:${page}`,
+  setlistFmArtistSearch: (name: string, page: number) =>
+    `sl:artists:${normalizeCacheKey(name)}:${page}`,
+  setlistFmSetlistSearch: (options: SetlistSearchOptions) =>
+    `sl:setlists:${normalizeCacheKey(options.artistName || '')}:${normalizeCacheKey(options.artistMbid || '')}:${normalizeCacheKey(options.venueId || '')}:${normalizeCacheKey(options.cityName || '')}:${normalizeCacheKey(options.date || '')}:${options.year || ''}:${options.page || 1}`,
+  setlistFmSetlistById: (id: string) => `sl:setlist:${id}`,
+  setlistFmVenueDetails: (venueId: string) => `sl:venue:${venueId}`,
+};
+
+interface SetlistSearchOptions {
+  artistName?: string;
+  artistMbid?: string;
+  venueId?: string;
+  cityName?: string;
+  date?: string;
+  year?: number;
+  page?: number;
+}
+
+// Normalize strings for consistent cache keys
+function normalizeCacheKey(str: string): string {
+  return str.toLowerCase().trim().replace(/\s+/g, ' ');
+}
 
 interface SetlistFmVenue {
   id: string;
@@ -117,6 +158,23 @@ export class SetlistFmService {
       return [];
     }
 
+    // Try cache first
+    const cacheKey = CacheKeys.setlistFmVenueSearch(venueName, cityName, countryCode, page);
+    try {
+      const cached = await getCache<SetlistFmVenue[]>(cacheKey);
+      if (cached) {
+        logger.debug('Setlist.fm venue search cache hit', {
+          venueName,
+          cityName,
+          countryCode,
+          page,
+        });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for venue search, proceeding with API call', { cacheError });
+    }
+
     try {
       const params: any = {
         p: page,
@@ -138,7 +196,16 @@ export class SetlistFmService {
         params,
       });
 
-      return response.data.venue || [];
+      const results = response.data.venue || [];
+
+      // Cache the results
+      try {
+        await setCache(cacheKey, results, CACHE_TTL.VENUE_SEARCH);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for venue search', { cacheError });
+      }
+
+      return results;
     } catch (error: any) {
       logger.warn('setlist.fm searchVenues error', {
         error: error.message || 'Unknown error',
@@ -153,7 +220,7 @@ export class SetlistFmService {
             }
           : {}),
       });
-      throw new Error('Failed to search venues from setlist.fm');
+      throw new Error('Failed to search venues from setlist.fm', { cause: error });
     }
   }
 
@@ -165,6 +232,18 @@ export class SetlistFmService {
       return [];
     }
 
+    // Try cache first
+    const cacheKey = CacheKeys.setlistFmArtistSearch(artistName, page);
+    try {
+      const cached = await getCache<SetlistFmArtist[]>(cacheKey);
+      if (cached) {
+        logger.debug('Setlist.fm artist search cache hit', { artistName, page });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for artist search, proceeding with API call', { cacheError });
+    }
+
     try {
       const response = await this.client.get<ArtistSearchResponse>('/search/artists', {
         params: {
@@ -173,7 +252,16 @@ export class SetlistFmService {
         },
       });
 
-      return response.data.artist || [];
+      const results = response.data.artist || [];
+
+      // Cache the results
+      try {
+        await setCache(cacheKey, results, CACHE_TTL.ARTIST_SEARCH);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for artist search', { cacheError });
+      }
+
+      return results;
     } catch (error: any) {
       logger.warn('setlist.fm searchArtists error', {
         error: error.message || 'Unknown error',
@@ -188,7 +276,7 @@ export class SetlistFmService {
             }
           : {}),
       });
-      throw new Error('Failed to search artists from setlist.fm');
+      throw new Error('Failed to search artists from setlist.fm', { cause: error });
     }
   }
 
@@ -208,6 +296,18 @@ export class SetlistFmService {
       return [];
     }
 
+    // Try cache first
+    const cacheKey = CacheKeys.setlistFmSetlistSearch(options);
+    try {
+      const cached = await getCache<SetlistFmSetlist[]>(cacheKey);
+      if (cached) {
+        logger.debug('Setlist.fm setlist search cache hit', { options });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for setlist search, proceeding with API call', { cacheError });
+    }
+
     try {
       const params: any = {
         p: options.page || 1,
@@ -224,7 +324,16 @@ export class SetlistFmService {
         params,
       });
 
-      return response.data.setlist || [];
+      const results = response.data.setlist || [];
+
+      // Cache the results
+      try {
+        await setCache(cacheKey, results, CACHE_TTL.SETLIST_SEARCH);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for setlist search', { cacheError });
+      }
+
+      return results;
     } catch (error: any) {
       logger.warn('setlist.fm searchSetlists error', {
         error: error.message || 'Unknown error',
@@ -239,7 +348,7 @@ export class SetlistFmService {
             }
           : {}),
       });
-      throw new Error('Failed to search setlists from setlist.fm');
+      throw new Error('Failed to search setlists from setlist.fm', { cause: error });
     }
   }
 
@@ -251,10 +360,31 @@ export class SetlistFmService {
       throw new Error('setlist.fm integration is disabled');
     }
 
+    // Try cache first
+    const cacheKey = CacheKeys.setlistFmSetlistById(setlistId);
+    try {
+      const cached = await getCache<SetlistFmSetlist>(cacheKey);
+      if (cached) {
+        logger.debug('Setlist.fm setlist by ID cache hit', { setlistId });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for setlist by ID, proceeding with API call', { cacheError });
+    }
+
     try {
       const response = await this.client.get<SetlistFmSetlist>(`/setlist/${setlistId}`);
 
-      return response.data;
+      const result = response.data;
+
+      // Cache the result
+      try {
+        await setCache(cacheKey, result, CACHE_TTL.SETLIST_BY_ID);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for setlist by ID', { cacheError });
+      }
+
+      return result;
     } catch (error: any) {
       logger.warn('setlist.fm getSetlistById error', {
         error: error.message || 'Unknown error',
@@ -269,7 +399,7 @@ export class SetlistFmService {
             }
           : {}),
       });
-      throw new Error('Failed to get setlist from setlist.fm');
+      throw new Error('Failed to get setlist from setlist.fm', { cause: error });
     }
   }
 

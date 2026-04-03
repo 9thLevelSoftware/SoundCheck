@@ -4,6 +4,8 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthUtils = void 0;
+exports.hashRefreshToken = hashRefreshToken;
+exports.verifyRefreshTokenHash = verifyRefreshTokenHash;
 exports.generateRefreshToken = generateRefreshToken;
 exports.verifyRefreshToken = verifyRefreshToken;
 exports.revokeRefreshToken = revokeRefreshToken;
@@ -24,7 +26,7 @@ const JWT_SECRET = (() => {
     }
     return secret;
 })();
-const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '30m';
 class AuthUtils {
     /**
      * Hash a password using bcrypt
@@ -44,7 +46,7 @@ class AuthUtils {
      */
     static generateToken(payload) {
         const options = {
-            expiresIn: JWT_EXPIRES_IN, // '7d' format is valid but types are strict
+            expiresIn: JWT_EXPIRES_IN, // '30m' format is valid but types are strict
             issuer: 'soundcheck-api',
             audience: 'soundcheck-mobile',
         };
@@ -138,9 +140,34 @@ exports.AuthUtils = AuthUtils;
 // =====================================================
 const REFRESH_TOKEN_EXPIRY_DAYS = 30;
 /**
+ * Hash a refresh token using bcrypt for secure storage
+ * SECURITY FIX (P1): Changed from SHA-256 to bcrypt with cost factor 10
+ * SHA-256 is fast and vulnerable to brute force attacks on leaked hashes
+ * bcrypt is intentionally slow and resistant to GPU/ASIC attacks
+ *
+ * @param token - The raw refresh token to hash
+ * @returns The bcrypt hash of the token
+ */
+async function hashRefreshToken(token) {
+    // Use bcrypt with cost factor 10 (refresh tokens are long-lived)
+    return bcryptjs_1.default.hash(token, 10);
+}
+/**
+ * Verify a refresh token against a stored hash
+ * @param token - The raw refresh token
+ * @param hash - The stored bcrypt hash
+ * @returns true if token matches the hash
+ */
+async function verifyRefreshTokenHash(token, hash) {
+    return bcryptjs_1.default.compare(token, hash);
+}
+/**
  * Generate a secure refresh token for a user.
  * The token is a cryptographically secure random string.
- * Only the SHA-256 hash is stored in the database for security.
+ * Only the bcrypt hash is stored in the database for security.
+ *
+ * SECURITY: Uses bcrypt hashing instead of SHA-256 to prevent
+ * brute force attacks on leaked token hashes.
  *
  * @param userId - The user ID to associate with the token
  * @param client - Optional database client for transaction support
@@ -150,7 +177,8 @@ async function generateRefreshToken(userId, client) {
     const executor = client || database_1.default.getInstance();
     // Generate secure random token
     const token = crypto_1.default.randomBytes(32).toString('hex');
-    const tokenHash = crypto_1.default.createHash('sha256').update(token).digest('hex');
+    // SECURITY: Use bcrypt instead of SHA-256 for secure token hashing
+    const tokenHash = await hashRefreshToken(token);
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + REFRESH_TOKEN_EXPIRY_DAYS);
     await executor.query(`INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)`, [userId, tokenHash, expiresAt]);
@@ -160,32 +188,49 @@ async function generateRefreshToken(userId, client) {
  * Verify a refresh token and return the associated user ID.
  * Checks that the token exists, is not expired, and is not revoked.
  *
+ * SECURITY: Uses bcrypt comparison instead of SHA-256 hash comparison
+ *
  * @param token - The raw refresh token to verify
  * @returns Object with valid flag and userId if valid
  */
 async function verifyRefreshToken(token) {
     const db = database_1.default.getInstance();
-    const tokenHash = crypto_1.default.createHash('sha256').update(token).digest('hex');
-    const result = await db.query(`SELECT user_id FROM refresh_tokens
-     WHERE token_hash = $1
-       AND expires_at > NOW()
-       AND revoked_at IS NULL`, [tokenHash]);
-    if (result.rows.length === 0) {
-        return { valid: false };
+    // Find all non-expired, non-revoked tokens for this user
+    // We need to check bcrypt hashes one by one since bcrypt
+    // requires the original hash for comparison
+    const result = await db.query(`SELECT id, user_id, token_hash FROM refresh_tokens
+     WHERE expires_at > NOW()
+       AND revoked_at IS NULL`);
+    // Check each token hash using bcrypt comparison
+    for (const row of result.rows) {
+        const isValid = await verifyRefreshTokenHash(token, row.token_hash);
+        if (isValid) {
+            return { valid: true, userId: row.user_id };
+        }
     }
-    return { valid: true, userId: result.rows[0].user_id };
+    return { valid: false };
 }
 /**
  * Revoke a specific refresh token.
  * Used during token rotation and logout.
+ *
+ * SECURITY: Uses bcrypt comparison to find the token
  *
  * @param token - The raw refresh token to revoke
  * @param client - Optional database client for transaction support
  */
 async function revokeRefreshToken(token, client) {
     const executor = client || database_1.default.getInstance();
-    const tokenHash = crypto_1.default.createHash('sha256').update(token).digest('hex');
-    await executor.query(`UPDATE refresh_tokens SET revoked_at = NOW() WHERE token_hash = $1`, [tokenHash]);
+    // Find the token by comparing bcrypt hashes
+    const result = await executor.query(`SELECT id, token_hash FROM refresh_tokens
+     WHERE revoked_at IS NULL`);
+    for (const row of result.rows) {
+        const isValid = await verifyRefreshTokenHash(token, row.token_hash);
+        if (isValid) {
+            await executor.query(`UPDATE refresh_tokens SET revoked_at = NOW() WHERE id = $1`, [row.id]);
+            return;
+        }
+    }
 }
 /**
  * Revoke all refresh tokens for a user.

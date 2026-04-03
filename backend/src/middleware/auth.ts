@@ -168,6 +168,9 @@ export const requirePremium = () => {
  *
  * Uses Redis when available for distributed rate limiting across instances.
  * Falls back to in-memory when Redis is unavailable.
+ *
+ * SECURITY: Critical endpoints fail CLOSED when Redis is unavailable
+ * to prevent DDoS attacks through degraded infrastructure.
  */
 const inMemoryRateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
@@ -175,6 +178,29 @@ const inMemoryRateLimitStore = new Map<string, { count: number; resetTime: numbe
 // At 10,000 entries (~1KB each), the map uses ~10MB -- acceptable for the
 // fallback case. If this limit is reached, expired entries are purged first.
 const MAX_RATE_LIMIT_ENTRIES = 10_000;
+
+// Critical endpoints that fail closed when Redis is unavailable
+const CRITICAL_ENDPOINTS = [
+  '/auth/login',
+  '/auth/register',
+  '/auth/refresh',
+  '/auth/social/google',
+  '/auth/social/apple',
+  '/upload',
+  '/api/auth/login',
+  '/api/auth/register',
+  '/api/auth/refresh',
+  '/api/auth/social/google',
+  '/api/auth/social/apple',
+  '/api/upload',
+];
+
+/**
+ * Check if endpoint is critical (should fail closed)
+ */
+function isCriticalEndpoint(path: string): boolean {
+  return CRITICAL_ENDPOINTS.some((endpoint) => path.startsWith(endpoint));
+}
 
 /**
  * In-memory rate limit check (fallback when Redis unavailable)
@@ -223,6 +249,7 @@ function checkInMemoryRateLimit(
 export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) => {
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+    const isCritical = isCriticalEndpoint(req.path);
 
     try {
       // Try Redis first
@@ -248,7 +275,23 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
         return;
       }
 
-      // Fallback to in-memory when Redis unavailable
+      // Redis unavailable - handle based on endpoint criticality
+      if (isCritical) {
+        // CRITICAL ENDPOINTS: Fail closed (block requests)
+        logger.error('Rate limiting unavailable for critical endpoint, failing closed', {
+          path: req.path,
+          clientIP,
+        });
+        const response: ApiResponse = {
+          success: false,
+          error: 'Service temporarily unavailable',
+          retryAfter: 60,
+        };
+        res.status(503).setHeader('Retry-After', '60').json(response);
+        return;
+      }
+
+      // Non-critical endpoints: Use in-memory fallback
       const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
 
       if (!result.allowed) {
@@ -266,12 +309,24 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      // Fail-closed: deny request when rate limiting is unavailable
-      const response: ApiResponse = {
-        success: false,
-        error: 'Service temporarily unavailable, please try again later',
-      };
-      res.status(429).json(response);
+
+      // Redis unavailable - handle based on endpoint criticality
+      if (isCritical) {
+        // CRITICAL ENDPOINTS: Fail closed (block requests)
+        const response: ApiResponse = {
+          success: false,
+          error: 'Service temporarily unavailable',
+          retryAfter: 60,
+        };
+        res.status(503).setHeader('Retry-After', '60').json(response);
+        return;
+      }
+
+      // Non-critical endpoints: Allow through (fail-open with warning)
+      logger.warn('Rate limiting failed for non-critical endpoint, allowing request', {
+        path: req.path,
+      });
+      next();
     }
   };
 };
@@ -290,3 +345,50 @@ export const cleanupRateLimit = (): void => {
 
 // Clean up in-memory store every 5 minutes
 setInterval(cleanupRateLimit, 5 * 60 * 1000).unref();
+
+/**
+ * Timing attack prevention middleware
+ * SEC-007/CFR-015: Add random jitter to enumeration endpoint responses
+ * to prevent timing-based username/email enumeration attacks.
+ *
+ * Adds a random delay between 50-150ms to ensure both "available" and
+ * "unavailable" responses take similar time.
+ */
+export const addJitter = (minMs: number = 50, maxMs: number = 150) => {
+  return (req: Request, res: Response, next: NextFunction): void => {
+    const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+
+    // Store original end function
+    const originalEnd = res.end.bind(res);
+
+    // Override end to add delay before sending response
+    res.end = function (_chunk?: any, _encoding?: any, _cb?: any): Response {
+      const args = arguments;
+
+      setTimeout(() => {
+        originalEnd.apply(res, args as any);
+      }, delay);
+
+      return res;
+    } as any;
+
+    // Also wrap json/send for cases where end isn't called directly
+    const originalJson = res.json.bind(res);
+    res.json = function (body: any): Response {
+      setTimeout(() => {
+        originalJson(body);
+      }, delay);
+      return res;
+    };
+
+    const originalSend = res.send.bind(res);
+    res.send = function (body: any): Response {
+      setTimeout(() => {
+        originalSend(body);
+      }, delay);
+      return res;
+    };
+
+    next();
+  };
+};

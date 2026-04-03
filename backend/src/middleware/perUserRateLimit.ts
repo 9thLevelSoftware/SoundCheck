@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { ApiResponse } from '../types';
 import logger from '../utils/logger';
+import { getRedis } from '../utils/redisRateLimiter';
 
 /**
  * Per-user rate limiting middleware
@@ -10,15 +11,14 @@ import logger from '../utils/logger';
  * even if they switch IPs or use multiple devices.
  *
  * FEATURES:
- * - Rate limit by authenticated user ID
+ * - Rate limit by authenticated user ID (using Redis for distributed state)
  * - Different limits for different endpoints
- * - Graceful degradation (falls back to IP if not authenticated)
- * - In-memory storage
+ * - Graceful degradation (falls back to IP if not authenticated or Redis unavailable)
+ * - Redis-based shared state across multiple Railway instances
  *
- * API-061: This limiter uses in-memory storage, which resets on deploy and does not
- * share state across multiple Railway instances. For multi-instance deployments,
- * migrate to the Redis-based rate limiter (redisRateLimiter.ts). Acceptable for
- * single-instance beta.
+ * SECURITY FIX (P1): Migrated from in-memory to Redis-based storage to share
+ * state across all Railway instances, preventing rate limit bypass by switching
+ * to a different server instance.
  *
  * USAGE:
  * import { createPerUserRateLimit } from './middleware/perUserRateLimit';
@@ -38,14 +38,23 @@ interface RateLimitConfig {
   skipFailedRequests?: boolean; // Don't count failed requests
 }
 
+interface RateLimitResult {
+  allowed: boolean;
+  remaining: number;
+  resetAt: number;
+}
+
+/**
+ * In-memory fallback store (used only when Redis unavailable)
+ */
 interface RateLimitEntry {
   count: number;
   resetAt: number;
 }
 
 class PerUserRateLimiter {
-  private requests: Map<string, RateLimitEntry> = new Map();
-  private cleanupInterval?: NodeJS.Timeout;
+  private fallbackStore: Map<string, RateLimitEntry> = new Map();
+  private cleanupInterval?: ReturnType<typeof setInterval>;
 
   constructor() {
     // Cleanup old entries every 5 minutes
@@ -61,18 +70,18 @@ class PerUserRateLimiter {
     const now = Date.now();
     const keysToDelete: string[] = [];
 
-    for (const [key, entry] of this.requests.entries()) {
+    for (const [key, entry] of this.fallbackStore.entries()) {
       if (now > entry.resetAt) {
         keysToDelete.push(key);
       }
     }
 
     for (const key of keysToDelete) {
-      this.requests.delete(key);
+      this.fallbackStore.delete(key);
     }
 
     if (keysToDelete.length > 0) {
-      logger.debug(`Cleaned up ${keysToDelete.length} expired rate limit entries`);
+      logger.debug(`Cleaned up ${keysToDelete.length} expired fallback rate limit entries`);
     }
   }
 
@@ -88,18 +97,48 @@ class PerUserRateLimiter {
     return `ip:${ip}`;
   }
 
-  checkLimit(
-    req: Request,
-    config: RateLimitConfig
-  ): {
-    allowed: boolean;
-    remaining: number;
-    resetAt: number;
-  } {
+  /**
+   * Check rate limit using Redis (primary) or in-memory fallback
+   */
+  async checkLimit(req: Request, config: RateLimitConfig): Promise<RateLimitResult> {
     const key = this.getKey(req);
     const now = Date.now();
+    const redis = getRedis();
 
-    let entry = this.requests.get(key);
+    // Try Redis first for distributed rate limiting
+    if (redis) {
+      try {
+        const windowStart = Math.floor(now / config.windowMs);
+        const redisKey = `ratelimit:user:${key}:${windowStart}`;
+
+        const pipeline = redis.pipeline();
+        pipeline.incr(redisKey);
+        pipeline.pexpire(redisKey, config.windowMs);
+        const results = await pipeline.exec();
+
+        if (!results) {
+          // Fall through to in-memory if Redis fails
+          throw new Error('Redis pipeline returned no results');
+        }
+
+        const currentCount = (results[0][1] as number) || 0;
+
+        return {
+          allowed: currentCount <= config.maxRequests,
+          remaining: Math.max(0, config.maxRequests - currentCount),
+          resetAt: (windowStart + 1) * config.windowMs,
+        };
+      } catch (error) {
+        logger.error('Redis per-user rate limit failed, falling back to in-memory', {
+          error: error instanceof Error ? error.message : String(error),
+          key,
+        });
+        // Fall through to in-memory fallback
+      }
+    }
+
+    // In-memory fallback (when Redis unavailable)
+    let entry = this.fallbackStore.get(key);
 
     // Create new entry if doesn't exist or expired
     if (!entry || now > entry.resetAt) {
@@ -107,36 +146,51 @@ class PerUserRateLimiter {
         count: 0,
         resetAt: now + config.windowMs,
       };
-      this.requests.set(key, entry);
-    }
-
-    // Check if limit exceeded
-    if (entry.count >= config.maxRequests) {
-      return {
-        allowed: false,
-        remaining: 0,
-        resetAt: entry.resetAt,
-      };
+      this.fallbackStore.set(key, entry);
     }
 
     // Increment count
     entry.count++;
 
     return {
-      allowed: true,
-      remaining: config.maxRequests - entry.count,
+      allowed: entry.count <= config.maxRequests,
+      remaining: Math.max(0, config.maxRequests - entry.count),
       resetAt: entry.resetAt,
     };
   }
 
-  reset(userId: string): void {
+  /**
+   * Reset rate limit for a user
+   */
+  async reset(userId: string): Promise<void> {
     const key = `user:${userId}`;
-    this.requests.delete(key);
+    const redis = getRedis();
+
+    if (redis) {
+      try {
+        // Find and delete all Redis keys for this user
+        const pattern = `ratelimit:user:${key}:*`;
+        const keys = await redis.keys(pattern);
+        if (keys.length > 0) {
+          await redis.del(...keys);
+        }
+      } catch (error) {
+        logger.error('Error resetting Redis rate limit', {
+          error: error instanceof Error ? error.message : String(error),
+          userId,
+        });
+      }
+    }
+
+    // Also clear in-memory
+    this.fallbackStore.delete(key);
   }
 
-  getStats(): { totalEntries: number } {
+  getStats(): { totalEntries: number; mode: 'redis' | 'memory' } {
+    const redis = getRedis();
     return {
-      totalEntries: this.requests.size,
+      totalEntries: this.fallbackStore.size,
+      mode: redis ? 'redis' : 'memory',
     };
   }
 
@@ -144,7 +198,7 @@ class PerUserRateLimiter {
     if (this.cleanupInterval) {
       clearInterval(this.cleanupInterval);
     }
-    this.requests.clear();
+    this.fallbackStore.clear();
   }
 }
 
@@ -155,8 +209,8 @@ const rateLimiter = new PerUserRateLimiter();
  * Create rate limiting middleware
  */
 export function createPerUserRateLimit(config: RateLimitConfig) {
-  return (req: Request, res: Response, next: NextFunction): void => {
-    const result = rateLimiter.checkLimit(req, config);
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    const result = await rateLimiter.checkLimit(req, config);
 
     // Set rate limit headers
     res.setHeader('X-RateLimit-Limit', config.maxRequests.toString());
@@ -212,14 +266,14 @@ export const RateLimitPresets = {
 /**
  * Reset rate limit for a user (e.g., after successful password reset)
  */
-export function resetUserRateLimit(userId: string): void {
-  rateLimiter.reset(userId);
+export async function resetUserRateLimit(userId: string): Promise<void> {
+  await rateLimiter.reset(userId);
 }
 
 /**
  * Get rate limiter stats
  */
-export function getRateLimitStats(): { totalEntries: number } {
+export function getRateLimitStats(): { totalEntries: number; mode: 'redis' | 'memory' } {
   return rateLimiter.getStats();
 }
 

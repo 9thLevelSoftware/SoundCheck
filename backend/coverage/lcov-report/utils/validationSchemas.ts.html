@@ -1,0 +1,484 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for utils/validationSchemas.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">utils</a> validationSchemas.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">54.54% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>12/22</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/5</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/3</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">63.15% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>12/19</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <label for="fileSearch" style="display:none">Search</label><input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line medium'></div>
+    <div class="coverage-container"><table class="coverage">
+<tr><td class="line-count quiet"><a id='L1'></a><a href='#L1'>1</a>
+<a id='L2'></a><a href='#L2'>2</a>
+<a id='L3'></a><a href='#L3'>3</a>
+<a id='L4'></a><a href='#L4'>4</a>
+<a id='L5'></a><a href='#L5'>5</a>
+<a id='L6'></a><a href='#L6'>6</a>
+<a id='L7'></a><a href='#L7'>7</a>
+<a id='L8'></a><a href='#L8'>8</a>
+<a id='L9'></a><a href='#L9'>9</a>
+<a id='L10'></a><a href='#L10'>10</a>
+<a id='L11'></a><a href='#L11'>11</a>
+<a id='L12'></a><a href='#L12'>12</a>
+<a id='L13'></a><a href='#L13'>13</a>
+<a id='L14'></a><a href='#L14'>14</a>
+<a id='L15'></a><a href='#L15'>15</a>
+<a id='L16'></a><a href='#L16'>16</a>
+<a id='L17'></a><a href='#L17'>17</a>
+<a id='L18'></a><a href='#L18'>18</a>
+<a id='L19'></a><a href='#L19'>19</a>
+<a id='L20'></a><a href='#L20'>20</a>
+<a id='L21'></a><a href='#L21'>21</a>
+<a id='L22'></a><a href='#L22'>22</a>
+<a id='L23'></a><a href='#L23'>23</a>
+<a id='L24'></a><a href='#L24'>24</a>
+<a id='L25'></a><a href='#L25'>25</a>
+<a id='L26'></a><a href='#L26'>26</a>
+<a id='L27'></a><a href='#L27'>27</a>
+<a id='L28'></a><a href='#L28'>28</a>
+<a id='L29'></a><a href='#L29'>29</a>
+<a id='L30'></a><a href='#L30'>30</a>
+<a id='L31'></a><a href='#L31'>31</a>
+<a id='L32'></a><a href='#L32'>32</a>
+<a id='L33'></a><a href='#L33'>33</a>
+<a id='L34'></a><a href='#L34'>34</a>
+<a id='L35'></a><a href='#L35'>35</a>
+<a id='L36'></a><a href='#L36'>36</a>
+<a id='L37'></a><a href='#L37'>37</a>
+<a id='L38'></a><a href='#L38'>38</a>
+<a id='L39'></a><a href='#L39'>39</a>
+<a id='L40'></a><a href='#L40'>40</a>
+<a id='L41'></a><a href='#L41'>41</a>
+<a id='L42'></a><a href='#L42'>42</a>
+<a id='L43'></a><a href='#L43'>43</a>
+<a id='L44'></a><a href='#L44'>44</a>
+<a id='L45'></a><a href='#L45'>45</a>
+<a id='L46'></a><a href='#L46'>46</a>
+<a id='L47'></a><a href='#L47'>47</a>
+<a id='L48'></a><a href='#L48'>48</a>
+<a id='L49'></a><a href='#L49'>49</a>
+<a id='L50'></a><a href='#L50'>50</a>
+<a id='L51'></a><a href='#L51'>51</a>
+<a id='L52'></a><a href='#L52'>52</a>
+<a id='L53'></a><a href='#L53'>53</a>
+<a id='L54'></a><a href='#L54'>54</a>
+<a id='L55'></a><a href='#L55'>55</a>
+<a id='L56'></a><a href='#L56'>56</a>
+<a id='L57'></a><a href='#L57'>57</a>
+<a id='L58'></a><a href='#L58'>58</a>
+<a id='L59'></a><a href='#L59'>59</a>
+<a id='L60'></a><a href='#L60'>60</a>
+<a id='L61'></a><a href='#L61'>61</a>
+<a id='L62'></a><a href='#L62'>62</a>
+<a id='L63'></a><a href='#L63'>63</a>
+<a id='L64'></a><a href='#L64'>64</a>
+<a id='L65'></a><a href='#L65'>65</a>
+<a id='L66'></a><a href='#L66'>66</a>
+<a id='L67'></a><a href='#L67'>67</a>
+<a id='L68'></a><a href='#L68'>68</a>
+<a id='L69'></a><a href='#L69'>69</a>
+<a id='L70'></a><a href='#L70'>70</a>
+<a id='L71'></a><a href='#L71'>71</a>
+<a id='L72'></a><a href='#L72'>72</a>
+<a id='L73'></a><a href='#L73'>73</a>
+<a id='L74'></a><a href='#L74'>74</a>
+<a id='L75'></a><a href='#L75'>75</a>
+<a id='L76'></a><a href='#L76'>76</a>
+<a id='L77'></a><a href='#L77'>77</a>
+<a id='L78'></a><a href='#L78'>78</a>
+<a id='L79'></a><a href='#L79'>79</a>
+<a id='L80'></a><a href='#L80'>80</a>
+<a id='L81'></a><a href='#L81'>81</a>
+<a id='L82'></a><a href='#L82'>82</a>
+<a id='L83'></a><a href='#L83'>83</a>
+<a id='L84'></a><a href='#L84'>84</a>
+<a id='L85'></a><a href='#L85'>85</a>
+<a id='L86'></a><a href='#L86'>86</a>
+<a id='L87'></a><a href='#L87'>87</a>
+<a id='L88'></a><a href='#L88'>88</a>
+<a id='L89'></a><a href='#L89'>89</a>
+<a id='L90'></a><a href='#L90'>90</a>
+<a id='L91'></a><a href='#L91'>91</a>
+<a id='L92'></a><a href='#L92'>92</a>
+<a id='L93'></a><a href='#L93'>93</a>
+<a id='L94'></a><a href='#L94'>94</a>
+<a id='L95'></a><a href='#L95'>95</a>
+<a id='L96'></a><a href='#L96'>96</a>
+<a id='L97'></a><a href='#L97'>97</a>
+<a id='L98'></a><a href='#L98'>98</a>
+<a id='L99'></a><a href='#L99'>99</a>
+<a id='L100'></a><a href='#L100'>100</a>
+<a id='L101'></a><a href='#L101'>101</a>
+<a id='L102'></a><a href='#L102'>102</a>
+<a id='L103'></a><a href='#L103'>103</a>
+<a id='L104'></a><a href='#L104'>104</a>
+<a id='L105'></a><a href='#L105'>105</a>
+<a id='L106'></a><a href='#L106'>106</a>
+<a id='L107'></a><a href='#L107'>107</a>
+<a id='L108'></a><a href='#L108'>108</a>
+<a id='L109'></a><a href='#L109'>109</a>
+<a id='L110'></a><a href='#L110'>110</a>
+<a id='L111'></a><a href='#L111'>111</a>
+<a id='L112'></a><a href='#L112'>112</a>
+<a id='L113'></a><a href='#L113'>113</a>
+<a id='L114'></a><a href='#L114'>114</a>
+<a id='L115'></a><a href='#L115'>115</a>
+<a id='L116'></a><a href='#L116'>116</a>
+<a id='L117'></a><a href='#L117'>117</a>
+<a id='L118'></a><a href='#L118'>118</a>
+<a id='L119'></a><a href='#L119'>119</a>
+<a id='L120'></a><a href='#L120'>120</a>
+<a id='L121'></a><a href='#L121'>121</a>
+<a id='L122'></a><a href='#L122'>122</a>
+<a id='L123'></a><a href='#L123'>123</a>
+<a id='L124'></a><a href='#L124'>124</a>
+<a id='L125'></a><a href='#L125'>125</a>
+<a id='L126'></a><a href='#L126'>126</a>
+<a id='L127'></a><a href='#L127'>127</a>
+<a id='L128'></a><a href='#L128'>128</a>
+<a id='L129'></a><a href='#L129'>129</a>
+<a id='L130'></a><a href='#L130'>130</a>
+<a id='L131'></a><a href='#L131'>131</a>
+<a id='L132'></a><a href='#L132'>132</a>
+<a id='L133'></a><a href='#L133'>133</a>
+<a id='L134'></a><a href='#L134'>134</a></td><td class="line-coverage quiet"><span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">3x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">import { z } from 'zod';
+&nbsp;
+// ============================================
+// Shared validation utilities (API-030)
+// ============================================
+&nbsp;
+/**
+ * Canonical UUID v1-v5 regex. Shared across all controllers to avoid
+ * duplicated UUID_REGEX constants.
+ */
+export const UUID_REGEX =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+&nbsp;
+/**
+ * Check whether a string is a valid UUID v1-v5.
+ * Returns false for null/undefined/empty strings.
+ */
+export function <span class="fstat-no" title="function not covered" >isValidUUID(</span>value: string | undefined | null): value is string {
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (!value) <span class="cstat-no" title="statement not covered" >return false;</span></span>
+<span class="cstat-no" title="statement not covered" >  return UUID_REGEX.test(value);</span>
+}
+&nbsp;
+/**
+ * Escape user-generated strings for safe HTML template injection.
+ * Prevents XSS by replacing dangerous characters with HTML entities.
+ */
+export function <span class="fstat-no" title="function not covered" >escapeHtml(</span>str: string): string {
+<span class="cstat-no" title="statement not covered" >  return str</span>
+    .replace(/&amp;/g, '&amp;amp;')
+    .replace(/&lt;/g, '&amp;lt;')
+    .replace(/&gt;/g, '&amp;gt;')
+    .replace(/"/g, '&amp;quot;')
+    .replace(/'/g, '&amp;#39;');
+}
+&nbsp;
+/**
+ * Parse an integer from a query string value with NaN handling.
+ * Returns the clamped value within [min, max], or defaultValue if parsing fails.
+ * API-014: Consistent bounded parseInt pattern.
+ */
+export function <span class="fstat-no" title="function not covered" >parseBoundedInt(</span>
+  value: string | undefined,
+  defaultValue: number,
+  min: number,
+  max: number
+): number {
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (value === undefined || value === null) <span class="cstat-no" title="statement not covered" >return defaultValue;</span></span>
+  const parsed = <span class="cstat-no" title="statement not covered" >parseInt(value, 10);</span>
+<span class="cstat-no" title="statement not covered" >  <span class="missing-if-branch" title="if path not taken" >I</span>if (isNaN(parsed)) <span class="cstat-no" title="statement not covered" >return defaultValue;</span></span>
+<span class="cstat-no" title="statement not covered" >  return Math.max(min, Math.min(max, parsed));</span>
+}
+&nbsp;
+// ============================================
+&nbsp;
+/**
+ * User Validation Schemas
+ */
+&nbsp;
+export const createUserSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address'),
+    password: z
+      .string()
+      .min(8, 'Password must be at least 8 characters')
+      .regex(/(?=.*[a-z])/, 'Password must contain at least one lowercase letter')
+      .regex(/(?=.*[A-Z])/, 'Password must contain at least one uppercase letter')
+      .regex(/(?=.*\d)/, 'Password must contain at least one number')
+      .regex(/(?=.*[@$!%*?&amp;])/, 'Password must contain at least one special character (@$!%*?&amp;)'),
+    username: z
+      .string()
+      .min(3, 'Username must be at least 3 characters')
+      .max(30, 'Username must be no more than 30 characters')
+      .regex(
+        /^[a-zA-Z0-9_.-]+$/,
+        'Username can only contain letters, numbers, dots, hyphens, and underscores'
+      ),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+  }),
+});
+&nbsp;
+export const loginUserSchema = z.object({
+  body: z.object({
+    email: z.string().email('Invalid email address'),
+    password: z.string().min(1, 'Password is required'),
+  }),
+});
+&nbsp;
+export const updateProfileSchema = z.object({
+  body: z.object({
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
+    location: z.string().optional(),
+    profileImageUrl: z.string().url('Invalid URL').optional(),
+    dateOfBirth: z.string().datetime().optional(), // Assuming ISO string
+  }),
+});
+&nbsp;
+export const checkEmailSchema = z.object({
+  query: z.object({
+    email: z.string().email('Invalid email address'),
+  }),
+});
+&nbsp;
+export const checkUsernameSchema = z.object({
+  params: z.object({
+    username: z.string().min(3),
+  }),
+});
+&nbsp;
+/**
+ * RSVP Validation Schemas
+ */
+&nbsp;
+export const toggleRsvpSchema = z.object({
+  params: z.object({
+    eventId: z.string().uuid('Event ID must be a valid UUID'),
+  }),
+});
+&nbsp;
+/**
+ * Onboarding Validation Schemas
+ */
+&nbsp;
+export const saveGenrePreferencesSchema = z.object({
+  body: z.object({
+    genres: z
+      .array(z.string().min(1).max(100))
+      .min(3, 'Must select at least 3 genres')
+      .max(8, 'Cannot select more than 8 genres'),
+  }),
+});
+&nbsp;</pre></td></tr></table></div>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-03-28T20:55:40.794Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
+</html>
+    

@@ -1,7 +1,10 @@
 import 'dart:convert';
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
+import '../../../core/error/failures.dart';
 import '../domain/user.dart';
 
 class AuthRepository {
@@ -14,8 +17,15 @@ class AuthRepository {
   })  : _dioClient = dioClient,
         _secureStorage = secureStorage;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Register a new user
-  Future<AuthResponse> register(RegisterRequest request) async {
+  Future<Either<Failure, AuthResponse>> register(RegisterRequest request) async {
     try {
       final response = await _dioClient.post(
         '${ApiConfig.auth}/register',
@@ -36,14 +46,14 @@ class AuthRepository {
         value: jsonEncode(authResponse.user.toJson()),
       );
 
-      return authResponse;
+      return Right(authResponse);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Login user
-  Future<AuthResponse> login(LoginRequest request) async {
+  Future<Either<Failure, AuthResponse>> login(LoginRequest request) async {
     try {
       final response = await _dioClient.post(
         '${ApiConfig.auth}/login',
@@ -64,20 +74,21 @@ class AuthRepository {
         value: jsonEncode(authResponse.user.toJson()),
       );
 
-      return authResponse;
+      return Right(authResponse);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Logout user
-  Future<void> logout() async {
+  Future<Either<Failure, void>> logout() async {
     try {
       await _secureStorage.delete(key: ApiConfig.tokenKey);
       await _secureStorage.delete(key: ApiConfig.userKey);
       await _secureStorage.delete(key: 'refresh_token');
+      return const Right(null);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
@@ -104,19 +115,19 @@ class AuthRepository {
   }
 
   /// Get current user from API
-  Future<User> getMe() async {
+  Future<Either<Failure, User>> getMe() async {
     try {
       final response = await _dioClient.get('${ApiConfig.auth}/me');
       // Extract data from API wrapper: {success, data, message}
       final data = response.data['data'] as Map<String, dynamic>;
-      return User.fromJson(data);
+      return Right(User.fromJson(data));
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Update user profile
-  Future<User> updateProfile(Map<String, dynamic> updates) async {
+  Future<Either<Failure, User>> updateProfile(Map<String, dynamic> updates) async {
     try {
       final response = await _dioClient.put(
         '${ApiConfig.auth}/me',
@@ -133,9 +144,9 @@ class AuthRepository {
         value: jsonEncode(user.toJson()),
       );
 
-      return user;
+      return Right(user);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
@@ -146,15 +157,15 @@ class AuthRepository {
   }
 
   /// Check username availability
-  Future<bool> checkUsernameAvailability(String username) async {
+  Future<Either<Failure, bool>> checkUsernameAvailability(String username) async {
     try {
       final response = await _dioClient.get(
         '${ApiConfig.auth}/check-username/$username',
       );
       final data = response.data['data'] as Map<String, dynamic>;
-      return data['available'] as bool;
+      return Right(data['available'] as bool);
     } catch (e) {
-      return true;
+      return Left(_mapErrorToFailure(e));
     }
   }
 }

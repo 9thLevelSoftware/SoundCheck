@@ -21,7 +21,7 @@ class VenueService {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
       RETURNING id, name, description, address, city, state, country, postal_code,
                 latitude, longitude, website_url, phone, email, capacity, venue_type,
-                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+                image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
                 created_at, updated_at
     `;
         const values = [
@@ -51,7 +51,7 @@ class VenueService {
         const query = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
              created_at, updated_at
       FROM venues
       WHERE id = $1 AND is_active = true
@@ -96,7 +96,14 @@ class VenueService {
             paramCount++;
         }
         // Validate sort column
-        const allowedSortColumns = ['name', 'city', 'average_rating', 'total_reviews', 'capacity', 'created_at'];
+        const allowedSortColumns = [
+            'name',
+            'city',
+            'average_rating',
+            'total_checkins',
+            'capacity',
+            'created_at',
+        ];
         const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
         const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
         // Count query
@@ -109,7 +116,7 @@ class VenueService {
         const mainQuery = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
              created_at, updated_at
       FROM venues
       WHERE ${conditions.join(' AND ')}
@@ -136,9 +143,21 @@ class VenueService {
      */
     async updateVenue(venueId, updateData) {
         const allowedFields = [
-            'name', 'description', 'address', 'city', 'state', 'country', 'postalCode',
-            'latitude', 'longitude', 'websiteUrl', 'phone', 'email', 'capacity',
-            'venueType', 'imageUrl'
+            'name',
+            'description',
+            'address',
+            'city',
+            'state',
+            'country',
+            'postalCode',
+            'latitude',
+            'longitude',
+            'websiteUrl',
+            'phone',
+            'email',
+            'capacity',
+            'venueType',
+            'imageUrl',
         ];
         const updates = [];
         const values = [];
@@ -161,7 +180,7 @@ class VenueService {
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, name, description, address, city, state, country, postal_code,
                 latitude, longitude, website_url, phone, email, capacity, venue_type,
-                image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+                image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
                 created_at, updated_at
     `;
         const result = await this.db.query(query, values);
@@ -171,15 +190,21 @@ class VenueService {
         return this.mapDbVenueToVenue(result.rows[0]);
     }
     /**
-     * Delete venue (soft delete)
+     * Delete venue (soft delete).
+     * Also invalidates pending verification claims and resolves pending reports (CFR-DI-007, CFR-DI-008).
      */
     async deleteVenue(venueId) {
         const query = `
-      UPDATE venues 
+      UPDATE venues
       SET is_active = false, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
         await this.db.query(query, [venueId]);
+        // CFR-DI-007: Deny pending verification claims for this venue (entity deleted)
+        await this.db.query(`UPDATE verification_claims SET status = 'denied', review_notes = 'entity_deleted', updated_at = CURRENT_TIMESTAMP
+       WHERE entity_type = 'venue' AND entity_id = $1 AND status = 'pending'`, [venueId]);
+        // Note: reports table uses content_type_enum ('checkin','comment','photo','user')
+        // and does not include 'venue', so no report cleanup is needed here.
     }
     /**
      * Get popular venues (by average rating and review count)
@@ -188,11 +213,11 @@ class VenueService {
         const query = `
       SELECT id, name, description, address, city, state, country, postal_code,
              latitude, longitude, website_url, phone, email, capacity, venue_type,
-             image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+             image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
              created_at, updated_at
       FROM venues
-      WHERE is_active = true AND total_reviews >= 5
-      ORDER BY (average_rating * 0.7 + LEAST(total_reviews/100.0, 1.0) * 0.3) DESC
+      WHERE is_active = true AND total_checkins >= 5
+      ORDER BY (average_rating * 0.7 + LEAST(total_checkins/100.0, 1.0) * 0.3) DESC
       LIMIT $1
     `;
         const result = await this.db.query(query, [limit]);
@@ -200,29 +225,49 @@ class VenueService {
     }
     /**
      * Get venues near coordinates
+     *
+     * DB-018/CFR-023: Uses bounding-box pre-filter on lat/lon range before
+     * computing the expensive Haversine formula. This allows PostgreSQL to
+     * use the idx_venues_location index to eliminate most rows cheaply
+     * before the trig-heavy distance calculation runs on the remainder.
      */
     async getVenuesNear(latitude, longitude, radiusKm = 50, limit = 20) {
-        // Use subquery to filter by computed distance column
-        // (can't use column alias in WHERE clause directly)
+        // Approximate degrees per km at the given latitude for bounding box.
+        // 1 degree latitude ~= 111 km everywhere.
+        // 1 degree longitude ~= 111 * cos(lat) km (shrinks toward poles).
+        const latDelta = radiusKm / 111.0;
+        const lonDelta = radiusKm / (111.0 * Math.cos((latitude * Math.PI) / 180));
         const query = `
       SELECT * FROM (
         SELECT id, name, description, address, city, state, country, postal_code,
                latitude, longitude, website_url, phone, email, capacity, venue_type,
-               image_url, average_rating, total_reviews, is_active, claimed_by_user_id,
+               image_url, average_rating, total_checkins, is_active, claimed_by_user_id,
                created_at, updated_at,
-               (6371 * acos(cos(radians($1)) * cos(radians(latitude)) *
+               (6371 * acos(LEAST(GREATEST(
+                cos(radians($1)) * cos(radians(latitude)) *
                 cos(radians(longitude) - radians($2)) +
-                sin(radians($1)) * sin(radians(latitude)))) AS distance
+                sin(radians($1)) * sin(radians(latitude)), -1), 1))) AS distance
         FROM venues
         WHERE is_active = true
           AND latitude IS NOT NULL
           AND longitude IS NOT NULL
+          AND latitude BETWEEN $5 AND $6
+          AND longitude BETWEEN $7 AND $8
       ) AS venues_with_distance
       WHERE distance <= $3
       ORDER BY distance
       LIMIT $4
     `;
-        const result = await this.db.query(query, [latitude, longitude, radiusKm, limit]);
+        const result = await this.db.query(query, [
+            latitude,
+            longitude,
+            radiusKm,
+            limit,
+            latitude - latDelta,
+            latitude + latDelta,
+            longitude - lonDelta,
+            longitude + lonDelta,
+        ]);
         return result.rows.map((row) => this.mapDbVenueToVenue(row));
     }
     /**
@@ -230,17 +275,17 @@ class VenueService {
      */
     async updateVenueRating(venueId) {
         const query = `
-      UPDATE venues 
-      SET 
+      UPDATE venues
+      SET
         average_rating = (
-          SELECT COALESCE(AVG(rating::numeric), 0)
-          FROM reviews 
-          WHERE venue_id = $1
+          SELECT COALESCE(AVG(venue_rating::numeric), 0)
+          FROM checkins
+          WHERE venue_id = $1 AND venue_rating IS NOT NULL
         ),
-        total_reviews = (
+        total_checkins = (
           SELECT COUNT(*)
-          FROM reviews
-          WHERE venue_id = $1
+          FROM checkins
+          WHERE venue_id = $1 AND venue_rating IS NOT NULL
         ),
         updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
@@ -265,9 +310,9 @@ class VenueService {
        FROM checkins c
        JOIN events e ON c.event_id = e.id
        WHERE e.venue_id = $1`, [venueId]);
-        // Average rating from reviews
-        const ratingResult = await this.db.query(`SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
-       FROM reviews WHERE venue_id = $1`, [venueId]);
+        // Average rating from checkins
+        const ratingResult = await this.db.query(`SELECT COALESCE(AVG(venue_rating)::numeric(3,2), 0) AS avg_rating
+       FROM checkins WHERE venue_id = $1 AND venue_rating IS NOT NULL`, [venueId]);
         // Upcoming events count
         const upcomingResult = await this.db.query(`SELECT COUNT(*) AS upcoming_events
        FROM events
@@ -316,7 +361,7 @@ class VenueService {
             imageUrl: row.image_url,
             coverImageUrl: row.cover_image_url || null,
             averageRating: parseFloat(row.average_rating || 0),
-            totalReviews: parseInt(row.total_reviews || 0),
+            totalCheckins: parseInt(row.total_checkins || 0),
             isActive: row.is_active,
             claimedByUserId: row.claimed_by_user_id || undefined,
             createdAt: row.created_at,
@@ -327,7 +372,7 @@ class VenueService {
      * Convert camelCase to snake_case
      */
     camelToSnakeCase(str) {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
     }
 }
 exports.VenueService = VenueService;

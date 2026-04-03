@@ -13,12 +13,12 @@ import Database from '../config/database';
 import logger from '../utils/logger';
 
 // Firebase Admin SDK - imported dynamically to allow graceful degradation
-let firebaseAdmin: any = null;
 let messagingInstance: any = null;
 let isConfigured = false;
 
 try {
   if (process.env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const admin = require('firebase-admin');
     const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT_JSON);
 
@@ -29,7 +29,6 @@ try {
       });
     }
 
-    firebaseAdmin = admin;
     messagingInstance = admin.messaging();
     isConfigured = true;
     logger.info('[PushNotificationService] Firebase Admin initialized for FCM');

@@ -130,20 +130,25 @@ class AuthState extends _$AuthState {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final authRepository = ref.read(authRepositoryProvider);
-      final authResponse = await authRepository.login(
+      final result = await authRepository.login(
         LoginRequest(email: email, password: password),
       );
 
-      // Connect WebSocket after successful login
-      _connectWebSocket(authResponse.user.id);
+      return result.fold(
+        (failure) => throw Exception(failure.message),
+        (authResponse) {
+          // Connect WebSocket after successful login
+          _connectWebSocket(authResponse.user.id);
 
-      // Sync RevenueCat identity and premium state
-      await _syncSubscriptionState(authResponse.user.id);
+          // Sync RevenueCat identity and premium state
+          _syncSubscriptionState(authResponse.user.id);
 
-      // Sync onboarding genre preferences to backend if saved locally
-      ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
+          // Sync onboarding genre preferences to backend if saved locally
+          ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
 
-      return authResponse.user;
+          return authResponse.user;
+        },
+      );
     });
   }
 
@@ -157,7 +162,7 @@ class AuthState extends _$AuthState {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final authRepository = ref.read(authRepositoryProvider);
-      final authResponse = await authRepository.register(
+      final result = await authRepository.register(
         RegisterRequest(
           email: email,
           password: password,
@@ -167,16 +172,21 @@ class AuthState extends _$AuthState {
         ),
       );
 
-      // Connect WebSocket after successful registration
-      _connectWebSocket(authResponse.user.id);
+      return result.fold(
+        (failure) => throw Exception(failure.message),
+        (authResponse) {
+          // Connect WebSocket after successful registration
+          _connectWebSocket(authResponse.user.id);
 
-      // Sync RevenueCat identity and premium state
-      await _syncSubscriptionState(authResponse.user.id);
+          // Sync RevenueCat identity and premium state
+          _syncSubscriptionState(authResponse.user.id);
 
-      // Sync onboarding genre preferences to backend if saved locally
-      ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
+          // Sync onboarding genre preferences to backend if saved locally
+          ref.read(genrePersistenceProvider.notifier).syncGenresToBackendIfNeeded();
 
-      return authResponse.user;
+          return authResponse.user;
+        },
+      );
     });
   }
 
@@ -245,7 +255,11 @@ class AuthState extends _$AuthState {
     state = const AsyncValue.loading();
     state = await AsyncValue.guard(() async {
       final authRepository = ref.read(authRepositoryProvider);
-      return authRepository.getMe();
+      final result = await authRepository.getMe();
+      return result.fold(
+        (failure) => throw Exception(failure.message),
+        (user) => user,
+      );
     });
   }
 

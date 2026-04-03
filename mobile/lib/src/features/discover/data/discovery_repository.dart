@@ -1,5 +1,9 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
+import '../../../core/error/failures.dart';
 import '../domain/discovery_models.dart';
 
 class DiscoveryRepository {
@@ -7,9 +11,16 @@ class DiscoveryRepository {
 
   DiscoveryRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Get nearby upcoming events within radius and date range.
   /// GET /api/events/discover?lat=&lon=&radius=&days=&limit=
-  Future<List<DiscoverEvent>> getNearbyUpcoming({
+  Future<Either<Failure, List<DiscoverEvent>>> getNearbyUpcoming({
     required double lat,
     required double lon,
     double radiusKm = 50,
@@ -29,18 +40,18 @@ class DiscoveryRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data
+      return Right(data
           .map((json) =>
               DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
-          .toList();
+          .toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get trending events near user (sorted by recent check-in count).
   /// GET /api/events/trending?lat=&lon=&radius=&limit=
-  Future<List<DiscoverEvent>> getTrendingNearby({
+  Future<Either<Failure, List<DiscoverEvent>>> getTrendingNearby({
     required double lat,
     required double lon,
     double radiusKm = 50,
@@ -58,18 +69,18 @@ class DiscoveryRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data
+      return Right(data
           .map((json) =>
               DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
-          .toList();
+          .toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get events filtered by genre.
   /// GET /api/events/genre/:genre?limit=&offset=
-  Future<List<DiscoverEvent>> getEventsByGenre({
+  Future<Either<Failure, List<DiscoverEvent>>> getEventsByGenre({
     required String genre,
     int limit = 20,
     int offset = 0,
@@ -84,18 +95,18 @@ class DiscoveryRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data
+      return Right(data
           .map((json) =>
               DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
-          .toList();
+          .toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get personalized event recommendations.
   /// GET /api/events/recommended?lat=&lon=&radius=&limit=
-  Future<List<DiscoverEvent>> getRecommendations({
+  Future<Either<Failure, List<DiscoverEvent>>> getRecommendations({
     double? lat,
     double? lon,
     double? radiusKm,
@@ -115,18 +126,18 @@ class DiscoveryRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data
+      return Right(data
           .map((json) =>
               DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
-          .toList();
+          .toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Search events by name, band, venue, or genre.
   /// GET /api/events/search?q=&limit=
-  Future<List<DiscoverEvent>> searchEvents({
+  Future<Either<Failure, List<DiscoverEvent>>> searchEvents({
     required String query,
     int limit = 20,
   }) async {
@@ -140,12 +151,12 @@ class DiscoveryRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data
+      return Right(data
           .map((json) =>
               DiscoverEvent.fromEventJson(json as Map<String, dynamic>),)
-          .toList();
+          .toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 }

@@ -1,10 +1,12 @@
 import 'dart:typed_data';
 
+import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
+import '../../../core/error/failures.dart';
 import '../domain/checkin.dart';
 
 /// Data class for presigned upload URL response from backend
@@ -39,11 +41,18 @@ class UploadRepository {
 
   UploadRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Request presigned upload URLs from the backend.
   ///
   /// [checkinId] - Check-in to attach photos to
   /// [contentTypes] - MIME types for each photo (e.g., ['image/jpeg'])
-  Future<List<PresignedUpload>> requestPresignedUrls(
+  Future<Either<Failure, List<PresignedUpload>>> requestPresignedUrls(
     String checkinId,
     List<String> contentTypes,
   ) async {
@@ -54,11 +63,13 @@ class UploadRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data
-          .map((json) => PresignedUpload.fromJson(json as Map<String, dynamic>))
-          .toList();
+      return Right(
+        data
+            .map((json) => PresignedUpload.fromJson(json as Map<String, dynamic>))
+            .toList(),
+      );
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
@@ -71,7 +82,7 @@ class UploadRepository {
   /// [presignedUrl] - Full presigned PUT URL from R2
   /// [photoBytes] - Compressed photo data
   /// [contentType] - Must match what was used to generate the presigned URL
-  Future<void> uploadPhotoToR2(
+  Future<Either<Failure, void>> uploadPhotoToR2(
     String presignedUrl,
     Uint8List photoBytes,
     String contentType,
@@ -87,8 +98,9 @@ class UploadRepository {
           },
         ),
       );
+      return const Right(null);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
@@ -96,7 +108,7 @@ class UploadRepository {
   ///
   /// [checkinId] - Check-in to update
   /// [photoKeys] - R2 object keys that were successfully uploaded
-  Future<CheckIn> confirmPhotoUploads(
+  Future<Either<Failure, CheckIn>> confirmPhotoUploads(
     String checkinId,
     List<String> photoKeys,
   ) async {
@@ -106,16 +118,16 @@ class UploadRepository {
         data: {'photoKeys': photoKeys},
       );
       final checkinData = response.data['data'] as Map<String, dynamic>;
-      return CheckIn.fromJson(checkinData);
+      return Right(CheckIn.fromJson(checkinData));
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Convenience method: compress, upload, and confirm photos in one call.
   ///
   /// Full flow:
-  /// 1. Determine content types from XFile list
+  /// 1. Determine content types
   /// 2. Request presigned URLs from backend
   /// 3. Compress each photo client-side
   /// 4. PUT each compressed photo directly to R2
@@ -124,12 +136,12 @@ class UploadRepository {
   /// [checkinId] - Check-in to attach photos to
   /// [photos] - XFile list from ImagePicker
   /// [onProgress] - Optional callback for per-photo progress (index, 0.0-1.0)
-  Future<CheckIn?> uploadPhotos(
+  Future<Either<Failure, CheckIn?>> uploadPhotos(
     String checkinId,
     List<XFile> photos, {
     void Function(int index, double progress)? onProgress,
   }) async {
-    if (photos.isEmpty) return null;
+    if (photos.isEmpty) return const Right(null);
 
     try {
       // 1. Determine content types
@@ -143,7 +155,15 @@ class UploadRepository {
       }).toList();
 
       // 2. Request presigned URLs
-      final presignedUrls = await requestPresignedUrls(checkinId, contentTypes);
+      final presignedUrlsResult = await requestPresignedUrls(checkinId, contentTypes);
+      
+      // Early return on error
+      final List<PresignedUpload> presignedUrls;
+      if (presignedUrlsResult.isLeft()) {
+        return Left(presignedUrlsResult.fold((l) => l, (r) => const ServerFailure('Unexpected error')));
+      } else {
+        presignedUrls = presignedUrlsResult.getOrElse(() => []);
+      }
 
       // 3. Compress and upload each photo
       final uploadedKeys = <String>[];
@@ -159,41 +179,43 @@ class UploadRepository {
           minHeight: 1080,
         );
 
+        final Uint8List bytesToUpload;
         if (compressed == null) {
           // Fallback: read original bytes if compression fails
-          final originalBytes = await photos[i].readAsBytes();
-          onProgress?.call(i, 0.3);
-
-          await uploadPhotoToR2(
-            presignedUrls[i].uploadUrl,
-            originalBytes,
-            contentTypes[i],
-          );
+          bytesToUpload = await photos[i].readAsBytes();
         } else {
-          onProgress?.call(i, 0.3);
+          bytesToUpload = Uint8List.fromList(compressed);
+        }
+        
+        onProgress?.call(i, 0.3);
 
-          await uploadPhotoToR2(
-            presignedUrls[i].uploadUrl,
-            Uint8List.fromList(compressed),
-            contentTypes[i],
-          );
+        // 4. Upload directly to R2
+        final uploadResult = await uploadPhotoToR2(
+          presignedUrls[i].uploadUrl,
+          bytesToUpload,
+          contentTypes[i],
+        );
+        
+        // Early return on error
+        if (uploadResult.isLeft()) {
+          return Left(uploadResult.fold((l) => l, (r) => const ServerFailure('Unexpected error')));
         }
 
         onProgress?.call(i, 0.9);
         uploadedKeys.add(presignedUrls[i].objectKey);
       }
 
-      // 4. Confirm all uploads with backend
-      final updatedCheckIn = await confirmPhotoUploads(checkinId, uploadedKeys);
+      // 5. Confirm all uploads with backend
+      final confirmResult = await confirmPhotoUploads(checkinId, uploadedKeys);
 
       // Mark all as complete
       for (int i = 0; i < photos.length; i++) {
         onProgress?.call(i, 1.0);
       }
 
-      return updatedCheckIn;
+      return confirmResult;
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 }

@@ -53,7 +53,7 @@ class WebSocketServer {
   private clients: Map<string, Client> = new Map();
   private userClients: Map<string, Set<string>> = new Map(); // userId -> clientIds index for O(1) sendToUser
   private rooms: Map<string, Set<string>> = new Map();
-  private heartbeatInterval?: NodeJS.Timeout;
+  private heartbeatInterval?: ReturnType<typeof setInterval>;
   private subscriber: IORedis | null = null;
 
   init(server: Server): void {

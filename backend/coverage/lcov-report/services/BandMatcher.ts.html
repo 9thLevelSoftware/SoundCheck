@@ -1,0 +1,679 @@
+
+<!doctype html>
+<html lang="en">
+
+<head>
+    <title>Code coverage report for services/BandMatcher.ts</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="../prettify.css" />
+    <link rel="stylesheet" href="../base.css" />
+    <link rel="shortcut icon" type="image/x-icon" href="../favicon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        .coverage-summary .sorter {
+            background-image: url(../sort-arrow-sprite.png);
+        }
+    </style>
+</head>
+    
+<body>
+<div class='wrapper'>
+    <div class='pad1'>
+        <h1><a href="../index.html">All files</a> / <a href="index.html">services</a> BandMatcher.ts</h1>
+        <div class='clearfix'>
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Statements</span>
+                <span class='fraction'>0/29</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Branches</span>
+                <span class='fraction'>0/14</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Functions</span>
+                <span class='fraction'>0/3</span>
+            </div>
+        
+            
+            <div class='fl pad1y space-right2'>
+                <span class="strong">0% </span>
+                <span class="quiet">Lines</span>
+                <span class='fraction'>0/29</span>
+            </div>
+        
+            
+        </div>
+        <p class="quiet">
+            Press <em>n</em> or <em>j</em> to go to the next uncovered block, <em>b</em>, <em>p</em> or <em>k</em> for the previous block.
+        </p>
+        <template id="filterTemplate">
+            <div class="quiet">
+                Filter:
+                <label for="fileSearch" style="display:none">Search</label><input type="search" id="fileSearch">
+            </div>
+        </template>
+    </div>
+    <div class='status-line low'></div>
+    <div class="coverage-container"><table class="coverage">
+<tr><td class="line-count quiet"><a id='L1'></a><a href='#L1'>1</a>
+<a id='L2'></a><a href='#L2'>2</a>
+<a id='L3'></a><a href='#L3'>3</a>
+<a id='L4'></a><a href='#L4'>4</a>
+<a id='L5'></a><a href='#L5'>5</a>
+<a id='L6'></a><a href='#L6'>6</a>
+<a id='L7'></a><a href='#L7'>7</a>
+<a id='L8'></a><a href='#L8'>8</a>
+<a id='L9'></a><a href='#L9'>9</a>
+<a id='L10'></a><a href='#L10'>10</a>
+<a id='L11'></a><a href='#L11'>11</a>
+<a id='L12'></a><a href='#L12'>12</a>
+<a id='L13'></a><a href='#L13'>13</a>
+<a id='L14'></a><a href='#L14'>14</a>
+<a id='L15'></a><a href='#L15'>15</a>
+<a id='L16'></a><a href='#L16'>16</a>
+<a id='L17'></a><a href='#L17'>17</a>
+<a id='L18'></a><a href='#L18'>18</a>
+<a id='L19'></a><a href='#L19'>19</a>
+<a id='L20'></a><a href='#L20'>20</a>
+<a id='L21'></a><a href='#L21'>21</a>
+<a id='L22'></a><a href='#L22'>22</a>
+<a id='L23'></a><a href='#L23'>23</a>
+<a id='L24'></a><a href='#L24'>24</a>
+<a id='L25'></a><a href='#L25'>25</a>
+<a id='L26'></a><a href='#L26'>26</a>
+<a id='L27'></a><a href='#L27'>27</a>
+<a id='L28'></a><a href='#L28'>28</a>
+<a id='L29'></a><a href='#L29'>29</a>
+<a id='L30'></a><a href='#L30'>30</a>
+<a id='L31'></a><a href='#L31'>31</a>
+<a id='L32'></a><a href='#L32'>32</a>
+<a id='L33'></a><a href='#L33'>33</a>
+<a id='L34'></a><a href='#L34'>34</a>
+<a id='L35'></a><a href='#L35'>35</a>
+<a id='L36'></a><a href='#L36'>36</a>
+<a id='L37'></a><a href='#L37'>37</a>
+<a id='L38'></a><a href='#L38'>38</a>
+<a id='L39'></a><a href='#L39'>39</a>
+<a id='L40'></a><a href='#L40'>40</a>
+<a id='L41'></a><a href='#L41'>41</a>
+<a id='L42'></a><a href='#L42'>42</a>
+<a id='L43'></a><a href='#L43'>43</a>
+<a id='L44'></a><a href='#L44'>44</a>
+<a id='L45'></a><a href='#L45'>45</a>
+<a id='L46'></a><a href='#L46'>46</a>
+<a id='L47'></a><a href='#L47'>47</a>
+<a id='L48'></a><a href='#L48'>48</a>
+<a id='L49'></a><a href='#L49'>49</a>
+<a id='L50'></a><a href='#L50'>50</a>
+<a id='L51'></a><a href='#L51'>51</a>
+<a id='L52'></a><a href='#L52'>52</a>
+<a id='L53'></a><a href='#L53'>53</a>
+<a id='L54'></a><a href='#L54'>54</a>
+<a id='L55'></a><a href='#L55'>55</a>
+<a id='L56'></a><a href='#L56'>56</a>
+<a id='L57'></a><a href='#L57'>57</a>
+<a id='L58'></a><a href='#L58'>58</a>
+<a id='L59'></a><a href='#L59'>59</a>
+<a id='L60'></a><a href='#L60'>60</a>
+<a id='L61'></a><a href='#L61'>61</a>
+<a id='L62'></a><a href='#L62'>62</a>
+<a id='L63'></a><a href='#L63'>63</a>
+<a id='L64'></a><a href='#L64'>64</a>
+<a id='L65'></a><a href='#L65'>65</a>
+<a id='L66'></a><a href='#L66'>66</a>
+<a id='L67'></a><a href='#L67'>67</a>
+<a id='L68'></a><a href='#L68'>68</a>
+<a id='L69'></a><a href='#L69'>69</a>
+<a id='L70'></a><a href='#L70'>70</a>
+<a id='L71'></a><a href='#L71'>71</a>
+<a id='L72'></a><a href='#L72'>72</a>
+<a id='L73'></a><a href='#L73'>73</a>
+<a id='L74'></a><a href='#L74'>74</a>
+<a id='L75'></a><a href='#L75'>75</a>
+<a id='L76'></a><a href='#L76'>76</a>
+<a id='L77'></a><a href='#L77'>77</a>
+<a id='L78'></a><a href='#L78'>78</a>
+<a id='L79'></a><a href='#L79'>79</a>
+<a id='L80'></a><a href='#L80'>80</a>
+<a id='L81'></a><a href='#L81'>81</a>
+<a id='L82'></a><a href='#L82'>82</a>
+<a id='L83'></a><a href='#L83'>83</a>
+<a id='L84'></a><a href='#L84'>84</a>
+<a id='L85'></a><a href='#L85'>85</a>
+<a id='L86'></a><a href='#L86'>86</a>
+<a id='L87'></a><a href='#L87'>87</a>
+<a id='L88'></a><a href='#L88'>88</a>
+<a id='L89'></a><a href='#L89'>89</a>
+<a id='L90'></a><a href='#L90'>90</a>
+<a id='L91'></a><a href='#L91'>91</a>
+<a id='L92'></a><a href='#L92'>92</a>
+<a id='L93'></a><a href='#L93'>93</a>
+<a id='L94'></a><a href='#L94'>94</a>
+<a id='L95'></a><a href='#L95'>95</a>
+<a id='L96'></a><a href='#L96'>96</a>
+<a id='L97'></a><a href='#L97'>97</a>
+<a id='L98'></a><a href='#L98'>98</a>
+<a id='L99'></a><a href='#L99'>99</a>
+<a id='L100'></a><a href='#L100'>100</a>
+<a id='L101'></a><a href='#L101'>101</a>
+<a id='L102'></a><a href='#L102'>102</a>
+<a id='L103'></a><a href='#L103'>103</a>
+<a id='L104'></a><a href='#L104'>104</a>
+<a id='L105'></a><a href='#L105'>105</a>
+<a id='L106'></a><a href='#L106'>106</a>
+<a id='L107'></a><a href='#L107'>107</a>
+<a id='L108'></a><a href='#L108'>108</a>
+<a id='L109'></a><a href='#L109'>109</a>
+<a id='L110'></a><a href='#L110'>110</a>
+<a id='L111'></a><a href='#L111'>111</a>
+<a id='L112'></a><a href='#L112'>112</a>
+<a id='L113'></a><a href='#L113'>113</a>
+<a id='L114'></a><a href='#L114'>114</a>
+<a id='L115'></a><a href='#L115'>115</a>
+<a id='L116'></a><a href='#L116'>116</a>
+<a id='L117'></a><a href='#L117'>117</a>
+<a id='L118'></a><a href='#L118'>118</a>
+<a id='L119'></a><a href='#L119'>119</a>
+<a id='L120'></a><a href='#L120'>120</a>
+<a id='L121'></a><a href='#L121'>121</a>
+<a id='L122'></a><a href='#L122'>122</a>
+<a id='L123'></a><a href='#L123'>123</a>
+<a id='L124'></a><a href='#L124'>124</a>
+<a id='L125'></a><a href='#L125'>125</a>
+<a id='L126'></a><a href='#L126'>126</a>
+<a id='L127'></a><a href='#L127'>127</a>
+<a id='L128'></a><a href='#L128'>128</a>
+<a id='L129'></a><a href='#L129'>129</a>
+<a id='L130'></a><a href='#L130'>130</a>
+<a id='L131'></a><a href='#L131'>131</a>
+<a id='L132'></a><a href='#L132'>132</a>
+<a id='L133'></a><a href='#L133'>133</a>
+<a id='L134'></a><a href='#L134'>134</a>
+<a id='L135'></a><a href='#L135'>135</a>
+<a id='L136'></a><a href='#L136'>136</a>
+<a id='L137'></a><a href='#L137'>137</a>
+<a id='L138'></a><a href='#L138'>138</a>
+<a id='L139'></a><a href='#L139'>139</a>
+<a id='L140'></a><a href='#L140'>140</a>
+<a id='L141'></a><a href='#L141'>141</a>
+<a id='L142'></a><a href='#L142'>142</a>
+<a id='L143'></a><a href='#L143'>143</a>
+<a id='L144'></a><a href='#L144'>144</a>
+<a id='L145'></a><a href='#L145'>145</a>
+<a id='L146'></a><a href='#L146'>146</a>
+<a id='L147'></a><a href='#L147'>147</a>
+<a id='L148'></a><a href='#L148'>148</a>
+<a id='L149'></a><a href='#L149'>149</a>
+<a id='L150'></a><a href='#L150'>150</a>
+<a id='L151'></a><a href='#L151'>151</a>
+<a id='L152'></a><a href='#L152'>152</a>
+<a id='L153'></a><a href='#L153'>153</a>
+<a id='L154'></a><a href='#L154'>154</a>
+<a id='L155'></a><a href='#L155'>155</a>
+<a id='L156'></a><a href='#L156'>156</a>
+<a id='L157'></a><a href='#L157'>157</a>
+<a id='L158'></a><a href='#L158'>158</a>
+<a id='L159'></a><a href='#L159'>159</a>
+<a id='L160'></a><a href='#L160'>160</a>
+<a id='L161'></a><a href='#L161'>161</a>
+<a id='L162'></a><a href='#L162'>162</a>
+<a id='L163'></a><a href='#L163'>163</a>
+<a id='L164'></a><a href='#L164'>164</a>
+<a id='L165'></a><a href='#L165'>165</a>
+<a id='L166'></a><a href='#L166'>166</a>
+<a id='L167'></a><a href='#L167'>167</a>
+<a id='L168'></a><a href='#L168'>168</a>
+<a id='L169'></a><a href='#L169'>169</a>
+<a id='L170'></a><a href='#L170'>170</a>
+<a id='L171'></a><a href='#L171'>171</a>
+<a id='L172'></a><a href='#L172'>172</a>
+<a id='L173'></a><a href='#L173'>173</a>
+<a id='L174'></a><a href='#L174'>174</a>
+<a id='L175'></a><a href='#L175'>175</a>
+<a id='L176'></a><a href='#L176'>176</a>
+<a id='L177'></a><a href='#L177'>177</a>
+<a id='L178'></a><a href='#L178'>178</a>
+<a id='L179'></a><a href='#L179'>179</a>
+<a id='L180'></a><a href='#L180'>180</a>
+<a id='L181'></a><a href='#L181'>181</a>
+<a id='L182'></a><a href='#L182'>182</a>
+<a id='L183'></a><a href='#L183'>183</a>
+<a id='L184'></a><a href='#L184'>184</a>
+<a id='L185'></a><a href='#L185'>185</a>
+<a id='L186'></a><a href='#L186'>186</a>
+<a id='L187'></a><a href='#L187'>187</a>
+<a id='L188'></a><a href='#L188'>188</a>
+<a id='L189'></a><a href='#L189'>189</a>
+<a id='L190'></a><a href='#L190'>190</a>
+<a id='L191'></a><a href='#L191'>191</a>
+<a id='L192'></a><a href='#L192'>192</a>
+<a id='L193'></a><a href='#L193'>193</a>
+<a id='L194'></a><a href='#L194'>194</a>
+<a id='L195'></a><a href='#L195'>195</a>
+<a id='L196'></a><a href='#L196'>196</a>
+<a id='L197'></a><a href='#L197'>197</a>
+<a id='L198'></a><a href='#L198'>198</a>
+<a id='L199'></a><a href='#L199'>199</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
+ * Band and Venue Entity Matcher
+ *
+ * Resolves Ticketmaster attraction names to existing band records using a
+ * 4-step matching cascade:
+ *   1. External ID match (most reliable -- same Ticketmaster attraction)
+ *   2. Exact case-insensitive name match
+ *   3. Fuzzy match via pg_trgm similarity (threshold &gt;= 0.8)
+ *   4. Create new band record
+ *
+ * Also handles venue resolution via external ID upsert or name+city fallback.
+ *
+ * Named BandMatcher (not EntityMatcher) because band matching is the primary
+ * and most complex use case. Venue matching is included for convenience since
+ * both are needed during event ingestion.
+ */
+&nbsp;
+<span class="cstat-no" title="statement not covered" >import Database from '../config/database';</span>
+import { NormalizedEvent } from '../types/ticketmaster';
+&nbsp;
+export interface BandMatchResult {
+  bandId: string;
+  matchType: 'external_id' | 'exact' | 'fuzzy' | 'created';
+  score?: number;
+}
+&nbsp;
+export interface VenueMatchResult {
+  venueId: string;
+  isNew: boolean;
+}
+&nbsp;
+<span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >export class B</span></span>andMatcher {
+  private <span class="cstat-no" title="statement not covered" >db = Database.getInstance();</span>
+&nbsp;
+  /**
+   * Match a Ticketmaster attraction to an existing band, or create a new one.
+   *
+   * Matching cascade:
+   *   1. External ID (Ticketmaster attraction ID)
+   *   2. Exact case-insensitive name match
+   *   3. Fuzzy match with pg_trgm (similarity &gt;= 0.8)
+   *   4. Create new band record
+   *
+   * When a match is found in steps 2-3 and an externalId is provided,
+   * the band's external_id and source are updated (only if currently NULL)
+   * to enable faster matching on future syncs.
+   */
+<span class="fstat-no" title="function not covered" >  async </span>matchOrCreateBand(
+    name: string,
+    externalId?: string,
+    genre?: string,
+    imageUrl?: string
+  ): Promise&lt;BandMatchResult&gt; {
+    // Step 1: Match by external_id (most reliable)
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (externalId) {</span>
+      const extMatch = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+        `SELECT id FROM bands WHERE source = 'ticketmaster' AND external_id = $1`,
+        [externalId]
+      );
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (extMatch.rows.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >        return { bandId: extMatch.rows[0].id, matchType: 'external_id' };</span>
+      }
+    }
+&nbsp;
+    // Step 2: Exact case-insensitive name match
+    const exactMatch = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+      `SELECT id FROM bands WHERE LOWER(name) = LOWER($1) AND is_active = true LIMIT 1`,
+      [name]
+    );
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (exactMatch.rows.length &gt; 0) {</span>
+      const bandId = <span class="cstat-no" title="statement not covered" >exactMatch.rows[0].id;</span>
+      // Backfill external_id if we have one and band doesn't yet
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (externalId) {</span>
+<span class="cstat-no" title="statement not covered" >        await this.db.query(</span>
+          `UPDATE bands SET external_id = $1, source = 'ticketmaster' WHERE id = $2 AND external_id IS NULL`,
+          [externalId, bandId]
+        );
+      }
+<span class="cstat-no" title="statement not covered" >      return { bandId, matchType: 'exact' };</span>
+    }
+&nbsp;
+    // Step 3: Fuzzy match with pg_trgm (conservative threshold)
+    const fuzzyMatch = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+      `SELECT id, name, similarity(LOWER(name), LOWER($1)) AS score
+       FROM bands
+       WHERE LOWER(name) % LOWER($1)
+         AND similarity(LOWER(name), LOWER($1)) &gt;= 0.8
+         AND is_active = true
+       ORDER BY score DESC
+       LIMIT 1`,
+      [name]
+    );
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (fuzzyMatch.rows.length &gt; 0) {</span>
+      const bandId = <span class="cstat-no" title="statement not covered" >fuzzyMatch.rows[0].id;</span>
+      // Backfill external_id if we have one and band doesn't yet
+<span class="cstat-no" title="statement not covered" >      <span class="missing-if-branch" title="if path not taken" >I</span>if (externalId) {</span>
+<span class="cstat-no" title="statement not covered" >        await this.db.query(</span>
+          `UPDATE bands SET external_id = $1, source = 'ticketmaster' WHERE id = $2 AND external_id IS NULL`,
+          [externalId, bandId]
+        );
+      }
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        bandId,
+        matchType: 'fuzzy',
+        score: parseFloat(fuzzyMatch.rows[0].score),
+      };
+    }
+&nbsp;
+    // Step 4: No match -- create new band record
+    const newBand = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+      `INSERT INTO bands (name, genre, image_url, source, external_id)
+       VALUES ($1, $2, $3, 'ticketmaster', $4)
+       RETURNING id`,
+      [name, genre || null, imageUrl || null, externalId || null]
+    );
+<span class="cstat-no" title="statement not covered" >    return { bandId: newBand.rows[0].id, matchType: 'created' };</span>
+  }
+&nbsp;
+  /**
+   * Match a Ticketmaster venue to an existing venue, or create/update one.
+   *
+   * Matching strategy:
+   *   1. If externalId provided: upsert via ON CONFLICT on (source, external_id)
+   *   2. If no externalId: fall back to name+city case-insensitive match
+   *   3. If no match: insert new venue
+   *
+   * The upsert updates name, address, lat, lon on conflict to keep data fresh.
+   * Uses (xmax = 0) to detect whether the row was inserted or updated.
+   */
+<span class="fstat-no" title="function not covered" >  async </span>matchOrCreateVenue(tmVenue: NormalizedEvent['venue']): Promise&lt;VenueMatchResult&gt; {
+    // Step 1: If we have an external ID, use upsert
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (tmVenue.externalId) {</span>
+      const result = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+        `INSERT INTO venues (
+          name, address, city, state, country, postal_code,
+          latitude, longitude, timezone, source, external_id
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'ticketmaster', $10)
+        ON CONFLICT (source, external_id) WHERE external_id IS NOT NULL
+        DO UPDATE SET
+          name = EXCLUDED.name,
+          address = COALESCE(EXCLUDED.address, venues.address),
+          latitude = COALESCE(EXCLUDED.latitude, venues.latitude),
+          longitude = COALESCE(EXCLUDED.longitude, venues.longitude),
+          updated_at = CURRENT_TIMESTAMP
+        RETURNING id, (xmax = 0) AS is_new`,
+        [
+          tmVenue.name,
+          tmVenue.address,
+          tmVenue.city,
+          tmVenue.state,
+          tmVenue.country,
+          tmVenue.postalCode,
+          tmVenue.lat,
+          tmVenue.lon,
+          tmVenue.timezone,
+          tmVenue.externalId,
+        ]
+      );
+<span class="cstat-no" title="statement not covered" >      return {</span>
+        venueId: result.rows[0].id,
+        isNew: result.rows[0].is_new,
+      };
+    }
+&nbsp;
+    // Step 2: No external ID -- try name+city match
+    const nameMatch = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+      `SELECT id FROM venues
+       WHERE LOWER(name) = LOWER($1) AND LOWER(city) = LOWER($2)
+       AND is_active = true
+       LIMIT 1`,
+      [tmVenue.name, tmVenue.city]
+    );
+<span class="cstat-no" title="statement not covered" >    <span class="missing-if-branch" title="if path not taken" >I</span>if (nameMatch.rows.length &gt; 0) {</span>
+<span class="cstat-no" title="statement not covered" >      return { venueId: nameMatch.rows[0].id, isNew: false };</span>
+    }
+&nbsp;
+    // Step 3: No match -- create new venue
+    const newVenue = <span class="cstat-no" title="statement not covered" >await this.db.query(</span>
+      `INSERT INTO venues (
+        name, address, city, state, country, postal_code,
+        latitude, longitude, timezone
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING id`,
+      [
+        tmVenue.name,
+        tmVenue.address,
+        tmVenue.city,
+        tmVenue.state,
+        tmVenue.country,
+        tmVenue.postalCode,
+        tmVenue.lat,
+        tmVenue.lon,
+        tmVenue.timezone,
+      ]
+    );
+<span class="cstat-no" title="statement not covered" >    return { venueId: newVenue.rows[0].id, isNew: true };</span>
+  }
+}
+&nbsp;</pre></td></tr></table></div>
+
+                <div class='push'></div><!-- for sticky footer -->
+            </div><!-- /wrapper -->
+            <div class='footer quiet pad2 space-top1 center small'>
+                Code coverage generated by
+                <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
+                at 2026-03-28T20:55:40.794Z
+            </div>
+        <script src="../prettify.js"></script>
+        <script>
+            window.onload = function () {
+                prettyPrint();
+            };
+        </script>
+        <script src="../sorter.js"></script>
+        <script src="../block-navigation.js"></script>
+    </body>
+</html>
+    

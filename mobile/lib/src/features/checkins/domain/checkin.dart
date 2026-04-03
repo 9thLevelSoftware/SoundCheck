@@ -70,12 +70,6 @@ sealed class CheckIn with _$CheckIn {
 
   /// Get event date from nested event
   String? get eventDate => event?.eventDate;
-
-  /// Alias for backward compatibility
-  bool get hasToasted => hasUserToasted;
-
-  /// Alias for backward compatibility
-  List<VibeTag>? get vibes => vibeTags;
 }
 
 /// Nested event data from backend check-in response

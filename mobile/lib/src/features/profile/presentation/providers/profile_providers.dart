@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+
 import '../../../../core/providers/providers.dart';
 import '../../../badges/domain/badge.dart';
 import '../../../checkins/domain/checkin.dart';
@@ -17,7 +18,11 @@ AccountRepository accountRepository(Ref ref) {
 @riverpod
 Future<List<CheckIn>> userRecentCheckins(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  return repository.getUserRecentCheckIns(userId, limit: 5);
+  final result = await repository.getUserRecentCheckIns(userId, limit: 5);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }
 
 /// Provider for user's genre stats (computed from check-ins)
@@ -25,7 +30,12 @@ Future<List<CheckIn>> userRecentCheckins(Ref ref, String userId) async {
 @riverpod
 Future<List<Map<String, dynamic>>> userGenreStats(Ref ref, String userId) async {
   final repository = ref.watch(checkInRepositoryProvider);
-  final checkins = await repository.getCheckIns(userId: userId, limit: 100);
+  final result = await repository.getCheckIns(userId: userId, limit: 100);
+
+  final checkins = result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 
   // Compute genre counts
   final genreCounts = <String, int>{};
@@ -50,12 +60,20 @@ Future<List<Map<String, dynamic>>> userGenreStats(Ref ref, String userId) async 
 @riverpod
 Future<List<UserBadge>> userBadges(Ref ref, String userId) async {
   final repository = ref.watch(badgeRepositoryProvider);
-  return repository.getUserBadges(userId);
+  final result = await repository.getUserBadges(userId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }
 
 /// Provider for concert cred aggregate stats from server
 @riverpod
 Future<ConcertCred> concertCred(Ref ref, String userId) async {
   final repository = ref.watch(profileRepositoryProvider);
-  return repository.getConcertCred(userId);
+  final result = await repository.getConcertCred(userId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (data) => data,
+  );
 }

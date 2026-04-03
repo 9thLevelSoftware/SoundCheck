@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/log_service.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/providers/providers.dart';
@@ -1029,10 +1030,14 @@ class _TopBandCard extends StatelessWidget {
               child: band.imageUrl != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        band.imageUrl!,
+                      child: CachedNetworkImage(
+                        imageUrl: band.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        placeholder: (_, __) => const Icon(
+                          Icons.album,
+                          color: AppTheme.hotOrange,
+                        ),
+                        errorWidget: (_, __, ___) => const Icon(
                           Icons.album,
                           color: AppTheme.hotOrange,
                         ),
@@ -1208,10 +1213,14 @@ class _TopVenueCard extends StatelessWidget {
               child: venue.imageUrl != null
                   ? ClipRRect(
                       borderRadius: BorderRadius.circular(8),
-                      child: Image.network(
-                        venue.imageUrl!,
+                      child: CachedNetworkImage(
+                        imageUrl: venue.imageUrl!,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => const Icon(
+                        placeholder: (_, __) => const Icon(
+                          Icons.location_on,
+                          color: AppTheme.toastGold,
+                        ),
+                        errorWidget: (_, __, ___) => const Icon(
                           Icons.location_on,
                           color: AppTheme.toastGold,
                         ),
@@ -1422,10 +1431,14 @@ class _CheckinCard extends StatelessWidget {
                     child: bandImageUrl != null
                         ? ClipRRect(
                             borderRadius: BorderRadius.circular(8),
-                            child: Image.network(
-                              bandImageUrl,
+                            child: CachedNetworkImage(
+                              imageUrl: bandImageUrl,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(
+                              placeholder: (_, __) => const Icon(
+                                Icons.album,
+                                color: AppTheme.voltLime,
+                              ),
+                              errorWidget: (_, __, ___) => const Icon(
                                 Icons.album,
                                 color: AppTheme.voltLime,
                               ),
@@ -1705,10 +1718,15 @@ class _BadgesShowcase extends ConsumerWidget {
                       ),
                       child: badge?.iconUrl != null
                           ? ClipOval(
-                              child: Image.network(
-                                badge!.iconUrl!,
+                              child: CachedNetworkImage(
+                                imageUrl: badge!.iconUrl!,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) => Icon(
+                                placeholder: (_, __) => Icon(
+                                  badgeIcon,
+                                  color: badgeColor,
+                                  size: 28,
+                                ),
+                                errorWidget: (_, __, ___) => Icon(
                                   badgeIcon,
                                   color: badgeColor,
                                   size: 28,

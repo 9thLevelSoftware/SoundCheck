@@ -10,6 +10,7 @@ const FollowController_1 = require("../controllers/FollowController");
 const auth_1 = require("../middleware/auth");
 const validate_1 = require("../middleware/validate");
 const upload_1 = require("../middleware/upload");
+const redisRateLimiter_1 = require("../utils/redisRateLimiter");
 const validationSchemas_1 = require("../utils/validationSchemas");
 const PushNotificationService_1 = require("../services/PushNotificationService");
 const DataRetentionService_1 = require("../services/DataRetentionService");
@@ -38,6 +39,8 @@ const auditService = new AuditService_1.AuditService();
 // Rate limiting for auth endpoints
 const authRateLimit = (0, auth_1.rateLimit)(15 * 60 * 1000, 5); // 5 requests per 15 minutes
 const generalRateLimit = (0, auth_1.rateLimit)(15 * 60 * 1000, 30); // 30 requests per 15 minutes
+// Enumeration protection: 5 requests per 15 minutes + jitter for timing attack prevention
+const strictEnumerationLimiter = redisRateLimiter_1.enumerationLimiter.middleware();
 // Public routes (no authentication required)
 router.post('/register', authRateLimit, (0, validate_1.validate)(validationSchemas_1.createUserSchema), userController.register);
 router.post('/login', authRateLimit, (0, validate_1.validate)(validationSchemas_1.loginUserSchema), userController.login);
@@ -117,7 +120,9 @@ router.post('/device-token', auth_1.authenticateToken, async (req, res, next) =>
         }
         const { token, platform } = req.body;
         if (!token || typeof token !== 'string' || token.trim().length === 0) {
-            res.status(400).json({ success: false, error: 'Token is required and must be a non-empty string' });
+            res
+                .status(400)
+                .json({ success: false, error: 'Token is required and must be a non-empty string' });
             return;
         }
         if (!platform || !['android', 'ios'].includes(platform)) {
@@ -140,7 +145,9 @@ router.delete('/device-token', auth_1.authenticateToken, async (req, res, next) 
         }
         const { token } = req.body;
         if (!token || typeof token !== 'string' || token.trim().length === 0) {
-            res.status(400).json({ success: false, error: 'Token is required and must be a non-empty string' });
+            res
+                .status(400)
+                .json({ success: false, error: 'Token is required and must be a non-empty string' });
             return;
         }
         await PushNotificationService_1.pushNotificationService.removeDeviceToken(userId, token.trim());
@@ -151,8 +158,9 @@ router.delete('/device-token', auth_1.authenticateToken, async (req, res, next) 
     }
 });
 // Username and email availability check - MUST come before /:username
-router.get('/check-username/:username', generalRateLimit, (0, validate_1.validate)(validationSchemas_1.checkUsernameSchema), userController.checkUsername);
-router.get('/check-email', generalRateLimit, (0, validate_1.validate)(validationSchemas_1.checkEmailSchema), userController.checkEmail); // Changed to query param
+// SEC-007/CFR-015: Protected with strict enumeration rate limiting and jitter
+router.get('/check-username/:username', strictEnumerationLimiter, (0, auth_1.addJitter)(50, 150), (0, validate_1.validate)(validationSchemas_1.checkUsernameSchema), userController.checkUsername);
+router.get('/check-email', strictEnumerationLimiter, (0, auth_1.addJitter)(50, 150), (0, validate_1.validate)(validationSchemas_1.checkEmailSchema), userController.checkEmail); // Changed to query param
 // Followers/Following routes - use userId (UUID) for these
 // These are public routes since follower/following lists are typically public info
 // GET /api/users/:userId/followers - get followers of a user

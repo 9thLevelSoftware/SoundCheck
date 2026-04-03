@@ -1,7 +1,14 @@
+/**
+ * ConsentController - Refactored with asyncHandler pattern
+ * Standardized async error handling by wrapping all methods with asyncHandler
+ * Replaces manual try-catch with automatic error forwarding
+ */
+
 import { Request, Response } from 'express';
 import { ConsentService, VALID_PURPOSES } from '../services/ConsentService';
 import { ApiResponse } from '../types';
-import { logError } from '../utils/logger';
+import { asyncHandler } from '../utils/asyncHandler';
+import { UnauthorizedError, BadRequestError } from '../utils/errors';
 
 export class ConsentController {
   private consentService: ConsentService;
@@ -14,198 +21,106 @@ export class ConsentController {
    * Get current user's consents
    * GET /api/users/consents
    */
-  getUserConsents = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentUserId = req.user?.id;
+  getUserConsents = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const currentUserId = req.user?.id;
 
-      if (!currentUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const consents = await this.consentService.getUserConsents(currentUserId);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          consents,
-          validPurposes: VALID_PURPOSES,
-        },
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Get user consents error:', { error });
-
-      const response: ApiResponse = {
-        success: false,
-        error: 'Failed to get user consents',
-      };
-
-      res.status(500).json(response);
+    if (!currentUserId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const consents = await this.consentService.getUserConsents(currentUserId);
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        consents,
+        validPurposes: VALID_PURPOSES,
+      },
+    };
+
+    res.status(200).json(response);
+  });
 
   /**
    * Update consent for a specific purpose
    * POST /api/users/consents
    * Body: { purpose: string, granted: boolean }
    */
-  updateConsent = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentUserId = req.user?.id;
+  updateConsent = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const currentUserId = req.user?.id;
 
-      if (!currentUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const { purpose, granted } = req.body;
-
-      // Validate purpose is provided
-      if (!purpose) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'purpose is required',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      // Validate purpose is a string
-      if (typeof purpose !== 'string') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'purpose must be a string',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      // Validate granted is provided and is boolean
-      if (typeof granted !== 'boolean') {
-        const response: ApiResponse = {
-          success: false,
-          error: 'granted must be a boolean',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      // Extract metadata for audit trail
-      const metadata = {
-        ipAddress: this.getClientIP(req),
-        userAgent: req.headers['user-agent'] || undefined,
-      };
-
-      const consentRecord = await this.consentService.recordConsent(
-        currentUserId,
-        purpose,
-        granted,
-        metadata
-      );
-
-      const response: ApiResponse = {
-        success: true,
-        data: consentRecord,
-        message: granted ? 'Consent granted' : 'Consent revoked',
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Update consent error:', { error });
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to update consent';
-
-      // Check if it's a validation error (invalid purpose)
-      if (errorMessage.includes('Invalid consent purpose')) {
-        const response: ApiResponse = {
-          success: false,
-          error: errorMessage,
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const response: ApiResponse = {
-        success: false,
-        error: errorMessage,
-      };
-
-      res.status(500).json(response);
+    if (!currentUserId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const { purpose, granted } = req.body;
+
+    // Validate purpose is provided
+    if (!purpose) {
+      throw new BadRequestError('purpose is required');
+    }
+
+    // Validate purpose is a string
+    if (typeof purpose !== 'string') {
+      throw new BadRequestError('purpose must be a string');
+    }
+
+    // Validate granted is provided and is boolean
+    if (typeof granted !== 'boolean') {
+      throw new BadRequestError('granted must be a boolean');
+    }
+
+    // Extract metadata for audit trail
+    const metadata = {
+      ipAddress: this.getClientIP(req),
+      userAgent: req.headers['user-agent'] || undefined,
+    };
+
+    const consentRecord = await this.consentService.recordConsent(
+      currentUserId,
+      purpose,
+      granted,
+      metadata
+    );
+
+    const response: ApiResponse = {
+      success: true,
+      data: consentRecord,
+      message: granted ? 'Consent granted' : 'Consent revoked',
+    };
+
+    res.status(200).json(response);
+  });
 
   /**
    * Get consent history for a specific purpose
    * GET /api/users/consents/:purpose/history
    */
-  getConsentHistory = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const currentUserId = req.user?.id;
+  getConsentHistory = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const currentUserId = req.user?.id;
 
-      if (!currentUserId) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'Authentication required',
-        };
-        res.status(401).json(response);
-        return;
-      }
-
-      const { purpose } = req.params;
-
-      if (!purpose) {
-        const response: ApiResponse = {
-          success: false,
-          error: 'purpose parameter is required',
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const history = await this.consentService.getConsentHistory(currentUserId, purpose);
-
-      const response: ApiResponse = {
-        success: true,
-        data: {
-          purpose,
-          history,
-        },
-      };
-
-      res.status(200).json(response);
-    } catch (error) {
-      logError('Get consent history error:', { error });
-
-      const errorMessage = error instanceof Error ? error.message : 'Failed to get consent history';
-
-      // Check if it's a validation error (invalid purpose)
-      if (errorMessage.includes('Invalid consent purpose')) {
-        const response: ApiResponse = {
-          success: false,
-          error: errorMessage,
-        };
-        res.status(400).json(response);
-        return;
-      }
-
-      const response: ApiResponse = {
-        success: false,
-        error: errorMessage,
-      };
-
-      res.status(500).json(response);
+    if (!currentUserId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const { purpose } = req.params;
+
+    if (!purpose) {
+      throw new BadRequestError('purpose parameter is required');
+    }
+
+    const history = await this.consentService.getConsentHistory(currentUserId, purpose);
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        purpose,
+        history,
+      },
+    };
+
+    res.status(200).json(response);
+  });
 
   /**
    * Extract client IP address from request

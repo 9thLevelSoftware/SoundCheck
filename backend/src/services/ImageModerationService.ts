@@ -47,7 +47,7 @@ export class ImageModerationService {
   constructor() {
     try {
       // Dynamic import to handle missing @google-cloud/vision gracefully
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const vision = require('@google-cloud/vision');
       this.client = new vision.ImageAnnotatorClient();
       this.configured = true;

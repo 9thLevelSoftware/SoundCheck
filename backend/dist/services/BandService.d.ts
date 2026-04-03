@@ -23,11 +23,12 @@ export declare class BandService {
      */
     updateBand(bandId: string, updateData: Partial<CreateBandRequest>): Promise<Band>;
     /**
-     * Delete band (soft delete)
+     * Delete band (soft delete).
+     * Also denies pending verification claims for this band (CFR-DI-007).
      */
     deleteBand(bandId: string): Promise<void>;
     /**
-     * Get popular bands (by average rating and review count)
+     * Get popular bands (by average rating and rating count from checkin_band_ratings)
      */
     getPopularBands(limit?: number): Promise<Band[]>;
     /**
@@ -43,7 +44,7 @@ export declare class BandService {
      */
     getGenres(): Promise<string[]>;
     /**
-     * Update band rating after review
+     * Update band rating after check-in
      */
     updateBandRating(bandId: string): Promise<void>;
     /**

@@ -18,6 +18,18 @@ class AuthFailure extends Failure {
   const AuthFailure([super.message = 'Authentication failed']);
 }
 
+class ForbiddenFailure extends Failure {
+  const ForbiddenFailure(super.message);
+}
+
+class NotFoundFailure extends Failure {
+  const NotFoundFailure(super.message);
+}
+
+class RateLimitFailure extends Failure {
+  const RateLimitFailure(super.message);
+}
+
 class ValidationFailure extends Failure {
   const ValidationFailure(super.message);
 }

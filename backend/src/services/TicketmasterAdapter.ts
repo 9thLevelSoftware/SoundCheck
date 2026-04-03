@@ -165,23 +165,25 @@ export class TicketmasterAdapter {
     }
 
     // Paginate through remaining pages (max 5 pages total)
+    // Use parallel requests with Promise.all for better performance
     const totalPages = Math.min(firstResult.page.totalPages, MAX_PAGES);
+    const pageNumbers: number[] = [];
     for (let page = 1; page < totalPages; page++) {
-      await this.delay(INTER_REQUEST_DELAY_MS);
+      pageNumbers.push(page);
+    }
 
-      const pageResult = await this.searchMusicEvents({
-        latlong,
-        radius,
-        startDateTime: startDate,
-        endDateTime: endDate,
-        size: 200,
-        page,
-      });
+    if (pageNumbers.length > 0) {
+      const pagePromises = pageNumbers.map(page =>
+        this.fetchPageWithDelay(latlong, radius, startDate, endDate, page)
+      );
+      const pages = await Promise.all(pagePromises);
 
-      for (const tmEvent of pageResult.events) {
-        const normalized = this.normalizeEvent(tmEvent);
-        if (normalized) {
-          allNormalized.push(normalized);
+      for (const pageResult of pages) {
+        for (const tmEvent of pageResult.events) {
+          const normalized = this.normalizeEvent(tmEvent);
+          if (normalized) {
+            allNormalized.push(normalized);
+          }
         }
       }
     }
@@ -421,5 +423,27 @@ export class TicketmasterAdapter {
    */
   private delay(ms: number): Promise<void> {
     return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Fetch a page with built-in rate limiting delay.
+   * Used for parallel page fetching with staggered delays.
+   */
+  private async fetchPageWithDelay(
+    latlong: string,
+    radius: number,
+    startDate: string,
+    endDate: string,
+    page: number
+  ): Promise<{ events: TicketmasterEvent[] }> {
+    await this.delay(page * INTER_REQUEST_DELAY_MS);
+    return this.searchMusicEvents({
+      latlong,
+      radius,
+      startDateTime: startDate,
+      endDateTime: endDate,
+      size: 200,
+      page,
+    });
   }
 }

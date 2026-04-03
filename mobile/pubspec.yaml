@@ -78,6 +78,12 @@ dependencies:
   flutter_local_notifications: ^20.0.0
   purchases_flutter: ^9.12.3
 
+  # Functional Programming
+  dartz: ^0.10.1
+
+  # Hooks
+  flutter_hooks: ^0.20.5
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

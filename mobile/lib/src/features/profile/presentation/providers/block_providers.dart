@@ -15,14 +15,22 @@ final blockRepositoryProvider = Provider<BlockRepository>((ref) {
 /// Auto-dispose so it refetches on re-entry.
 final blockStatusProvider =
     FutureProvider.autoDispose.family<bool, String>((ref, userId) async {
-  return ref.watch(blockRepositoryProvider).isBlocked(userId);
+  final result = await ref.watch(blockRepositoryProvider).isBlocked(userId);
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (blocked) => blocked,
+  );
 });
 
 /// List of all blocked users.
 /// Auto-dispose so it refetches when navigating to the screen.
 final blockedUsersProvider =
     FutureProvider.autoDispose<List<Map<String, dynamic>>>((ref) async {
-  return ref.watch(blockRepositoryProvider).getBlockedUsers();
+  final result = await ref.watch(blockRepositoryProvider).getBlockedUsers();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (users) => users,
+  );
 });
 
 /// Provider to fetch another user's public profile.

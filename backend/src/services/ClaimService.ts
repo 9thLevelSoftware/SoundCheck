@@ -1,11 +1,5 @@
 import Database from '../config/database';
-import {
-  VerificationClaim,
-  CreateClaimRequest,
-  ReviewClaimRequest,
-  ClaimStatus,
-  ClaimEntityType,
-} from '../types';
+import { VerificationClaim, CreateClaimRequest, ReviewClaimRequest, ClaimStatus } from '../types';
 import { NotFoundError, ConflictError, BadRequestError } from '../utils/errors';
 
 export class ClaimService {

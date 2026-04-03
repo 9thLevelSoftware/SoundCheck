@@ -23,7 +23,11 @@ part 'discover_screen.g.dart';
 @riverpod
 Future<List<Band>> trendingBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
-  return repository.getTrendingBands(limit: 10);
+  final result = await repository.getTrendingBands(limit: 10);
+  return result.fold(
+    (failure) => [],
+    (bands) => bands,
+  );
 }
 
 /// Provider for top rated venues
@@ -37,7 +41,11 @@ Future<List<Venue>> topRatedVenues(Ref ref) async {
 @riverpod
 Future<List<Band>> popularBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
-  return repository.getPopularBands(limit: 10);
+  final result = await repository.getPopularBands(limit: 10);
+  return result.fold(
+    (failure) => [],
+    (bands) => bands,
+  );
 }
 
 /// Provider for nearby venues based on user location

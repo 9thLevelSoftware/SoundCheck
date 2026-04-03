@@ -14,7 +14,7 @@
  */
 
 import Database from '../config/database';
-import { Badge, UserBadge, BadgeType } from '../types';
+import { Badge, UserBadge } from '../types';
 import { evaluatorRegistry, EvalResult } from './BadgeEvaluators';
 import { NotificationService } from './NotificationService';
 import { AuditService } from './AuditService';

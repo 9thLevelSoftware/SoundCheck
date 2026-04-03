@@ -1,7 +1,14 @@
+/**
+ * UserDiscoveryController - Refactored with asyncHandler pattern
+ * Standardized async error handling by wrapping all methods with asyncHandler
+ * Replaces manual try-catch with automatic error forwarding
+ */
+
 import { Request, Response } from 'express';
 import { UserDiscoveryService } from '../services/UserDiscoveryService';
 import { ApiResponse } from '../types';
-import logger from '../utils/logger';
+import { asyncHandler } from '../utils/asyncHandler';
+import { UnauthorizedError } from '../utils/errors';
 
 /**
  * UserDiscoveryController: HTTP handler for user discovery/suggestion endpoints.
@@ -20,34 +27,19 @@ export class UserDiscoveryController {
    * Query params:
    *   limit - (optional) Max results (default 10, max 50)
    */
-  getSuggestions = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const userId = req.user?.id;
+  getSuggestions = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user?.id;
 
-      if (!userId) {
-        const response: ApiResponse = { success: false, error: 'Authentication required' };
-        res.status(401).json(response);
-        return;
-      }
-
-      const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
-      const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 10 : rawLimit));
-
-      const suggestions = await this.userDiscoveryService.getSuggestions(userId, limit);
-
-      const response: ApiResponse = { success: true, data: suggestions };
-      res.status(200).json(response);
-    } catch (error) {
-      logger.error('Get user suggestions error', {
-        error: error instanceof Error ? error.message : String(error),
-        stack: error instanceof Error ? error.stack : undefined,
-      });
-
-      const response: ApiResponse = {
-        success: false,
-        error: error instanceof Error ? error.message : 'Failed to fetch user suggestions',
-      };
-      res.status(500).json(response);
+    if (!userId) {
+      throw new UnauthorizedError('Authentication required');
     }
-  };
+
+    const rawLimit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
+    const limit = Math.max(1, Math.min(50, isNaN(rawLimit) ? 10 : rawLimit));
+
+    const suggestions = await this.userDiscoveryService.getSuggestions(userId, limit);
+
+    const response: ApiResponse = { success: true, data: suggestions };
+    res.status(200).json(response);
+  });
 }

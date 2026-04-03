@@ -23,7 +23,8 @@ export declare class VenueService {
      */
     updateVenue(venueId: string, updateData: Partial<CreateVenueRequest>): Promise<Venue>;
     /**
-     * Delete venue (soft delete)
+     * Delete venue (soft delete).
+     * Also invalidates pending verification claims and resolves pending reports (CFR-DI-007, CFR-DI-008).
      */
     deleteVenue(venueId: string): Promise<void>;
     /**
@@ -32,6 +33,11 @@ export declare class VenueService {
     getPopularVenues(limit?: number): Promise<Venue[]>;
     /**
      * Get venues near coordinates
+     *
+     * DB-018/CFR-023: Uses bounding-box pre-filter on lat/lon range before
+     * computing the expensive Haversine formula. This allows PostgreSQL to
+     * use the idx_venues_location index to eliminate most rows cheaply
+     * before the trig-heavy distance calculation runs on the remainder.
      */
     getVenuesNear(latitude: number, longitude: number, radiusKm?: number, limit?: number): Promise<Venue[]>;
     /**

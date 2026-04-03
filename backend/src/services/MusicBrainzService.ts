@@ -1,6 +1,26 @@
 import axios, { AxiosInstance } from 'axios';
 import Database from '../config/database';
+import { getCache, setCache } from '../utils/cache';
 import logger from '../utils/logger';
+
+// Cache TTL constants (in seconds)
+const CACHE_TTL = {
+  ARTIST_SEARCH: 86400, // 24 hours
+  ARTIST_DETAILS: 86400, // 24 hours
+  GENRE_SEARCH: 21600, // 6 hours
+};
+
+// Cache key builders
+const CacheKeys = {
+  musicBrainzArtistSearch: (name: string) => `mb:artist:search:${normalizeCacheKey(name)}`,
+  musicBrainzArtistDetails: (mbid: string) => `mb:artist:${mbid}`,
+  musicBrainzGenreSearch: (genre: string) => `mb:genre:${normalizeCacheKey(genre)}`,
+};
+
+// Normalize strings for consistent cache keys
+function normalizeCacheKey(str: string): string {
+  return str.toLowerCase().trim().replace(/\s+/g, ' ');
+}
 
 interface MusicBrainzArtist {
   id: string; // MusicBrainz ID (MBID)
@@ -69,6 +89,18 @@ export class MusicBrainzService {
    * Search for artists/bands by name
    */
   async searchArtists(query: string, limit: number = 20): Promise<MusicBrainzArtist[]> {
+    // Try cache first
+    const cacheKey = CacheKeys.musicBrainzArtistSearch(query);
+    try {
+      const cached = await getCache<MusicBrainzArtist[]>(cacheKey);
+      if (cached) {
+        logger.debug('MusicBrainz artist search cache hit', { query });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for artist search, proceeding with API call', { cacheError });
+    }
+
     try {
       await this.respectRateLimit();
 
@@ -80,13 +112,22 @@ export class MusicBrainzService {
         },
       });
 
-      return response.data.artists || [];
+      const results = response.data.artists || [];
+
+      // Cache the results
+      try {
+        await setCache(cacheKey, results, CACHE_TTL.ARTIST_SEARCH);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for artist search', { cacheError });
+      }
+
+      return results;
     } catch (error) {
       logger.warn('MusicBrainz search error', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      throw new Error('Failed to search artists from MusicBrainz');
+      throw new Error('Failed to search artists from MusicBrainz', { cause: error });
     }
   }
 
@@ -94,6 +135,18 @@ export class MusicBrainzService {
    * Get detailed artist information by MusicBrainz ID
    */
   async getArtistDetails(mbid: string): Promise<MusicBrainzArtist> {
+    // Try cache first
+    const cacheKey = CacheKeys.musicBrainzArtistDetails(mbid);
+    try {
+      const cached = await getCache<MusicBrainzArtist>(cacheKey);
+      if (cached) {
+        logger.debug('MusicBrainz artist details cache hit', { mbid });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for artist details, proceeding with API call', { cacheError });
+    }
+
     try {
       await this.respectRateLimit();
 
@@ -104,13 +157,22 @@ export class MusicBrainzService {
         },
       });
 
-      return response.data;
+      const result = response.data;
+
+      // Cache the result
+      try {
+        await setCache(cacheKey, result, CACHE_TTL.ARTIST_DETAILS);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for artist details', { cacheError });
+      }
+
+      return result;
     } catch (error) {
       logger.warn('MusicBrainz details error', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      throw new Error('Failed to get artist details from MusicBrainz');
+      throw new Error('Failed to get artist details from MusicBrainz', { cause: error });
     }
   }
 
@@ -214,6 +276,18 @@ export class MusicBrainzService {
    * Search for artists by genre
    */
   async searchByGenre(genre: string, limit: number = 20): Promise<MusicBrainzArtist[]> {
+    // Try cache first
+    const cacheKey = CacheKeys.musicBrainzGenreSearch(genre);
+    try {
+      const cached = await getCache<MusicBrainzArtist[]>(cacheKey);
+      if (cached) {
+        logger.debug('MusicBrainz genre search cache hit', { genre });
+        return cached;
+      }
+    } catch (cacheError) {
+      logger.warn('Cache read failed for genre search, proceeding with API call', { cacheError });
+    }
+
     try {
       await this.respectRateLimit();
 
@@ -225,13 +299,22 @@ export class MusicBrainzService {
         },
       });
 
-      return response.data.artists || [];
+      const results = response.data.artists || [];
+
+      // Cache the results
+      try {
+        await setCache(cacheKey, results, CACHE_TTL.GENRE_SEARCH);
+      } catch (cacheError) {
+        logger.warn('Cache write failed for genre search', { cacheError });
+      }
+
+      return results;
     } catch (error) {
       logger.warn('MusicBrainz genre search error', {
         error: error instanceof Error ? error.message : String(error),
         stack: error instanceof Error ? error.stack : undefined,
       });
-      throw new Error('Failed to search artists by genre');
+      throw new Error('Failed to search artists by genre', { cause: error });
     }
   }
 

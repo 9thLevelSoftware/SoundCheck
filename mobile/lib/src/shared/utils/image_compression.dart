@@ -22,14 +22,13 @@ class ImageCompression {
     int maxHeight = 1920,
     int quality = 85,
   }) async {
-    try {
-      // Get temp directory
-      final tempDir = await getTemporaryDirectory();
-      final targetPath = path.join(
-        tempDir.path,
-        '${DateTime.now().millisecondsSinceEpoch}_compressed.jpg',
-      );
+    final tempDir = await getTemporaryDirectory();
+    final targetPath = path.join(
+      tempDir.path,
+      '${DateTime.now().millisecondsSinceEpoch}_compressed.jpg',
+    );
 
+    try {
       // Compress the image
       final compressedFile = await FlutterImageCompress.compressAndGetFile(
         file.absolute.path,
@@ -48,6 +47,11 @@ class ImageCompression {
     } catch (e) {
       LogService.e('Error compressing image', e);
       return null;
+    } finally {
+      // Cleanup original if it was a temp file
+      if (file.path.contains(tempDir.path)) {
+        await file.delete();
+      }
     }
   }
 

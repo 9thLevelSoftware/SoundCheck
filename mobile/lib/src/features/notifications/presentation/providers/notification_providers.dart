@@ -17,14 +17,22 @@ NotificationRepository notificationRepository(Ref ref) {
 @riverpod
 Future<NotificationFeed> notificationFeed(Ref ref) async {
   final repository = ref.watch(notificationRepositoryProvider);
-  return repository.getNotifications();
+  final result = await repository.getNotifications();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (feed) => feed,
+  );
 }
 
 /// Provider for unread notification count
 @riverpod
 Future<int> unreadNotificationCount(Ref ref) async {
   final repository = ref.watch(notificationRepositoryProvider);
-  return repository.getUnreadCount();
+  final result = await repository.getUnreadCount();
+  return result.fold(
+    (failure) => throw Exception(failure.message),
+    (count) => count,
+  );
 }
 
 /// Notifier for marking notification as read
@@ -66,7 +74,11 @@ class MarkAllNotificationsAsRead extends _$MarkAllNotificationsAsRead {
     final repository = ref.read(notificationRepositoryProvider);
 
     try {
-      final count = await repository.markAllAsRead();
+      final result = await repository.markAllAsRead();
+      final count = result.fold(
+        (failure) => throw Exception(failure.message),
+        (c) => c,
+      );
 
       // Invalidate related providers
       ref.invalidate(notificationFeedProvider);

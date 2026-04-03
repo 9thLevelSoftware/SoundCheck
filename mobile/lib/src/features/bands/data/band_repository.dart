@@ -1,5 +1,9 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
+import '../../../core/error/failures.dart';
 import '../domain/band.dart';
 
 class BandRepository {
@@ -7,8 +11,15 @@ class BandRepository {
 
   BandRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Get all bands with optional filters
-  Future<List<Band>> getBands({
+  Future<Either<Failure, List<Band>>> getBands({
     String? search,
     String? genre,
     String? hometown,
@@ -37,25 +48,25 @@ class BandRepository {
       // Backend returns paginated object: { bands: [...], total, page, totalPages }
       final responseData = response.data['data'] as Map<String, dynamic>;
       final List<dynamic> bands = responseData['bands'] as List<dynamic>;
-      return bands.map((json) => Band.fromJson(json)).toList();
+      return Right(bands.map((json) => Band.fromJson(json)).toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get band by ID
-  Future<Band> getBandById(String id) async {
+  Future<Either<Failure, Band>> getBandById(String id) async {
     try {
       final response = await _dioClient.get('${ApiConfig.bands}/$id');
       final bandData = response.data['data'] as Map<String, dynamic>;
-      return Band.fromJson(bandData);
+      return Right(Band.fromJson(bandData));
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get popular bands
-  Future<List<Band>> getPopularBands({int limit = 10}) async {
+  Future<Either<Failure, List<Band>>> getPopularBands({int limit = 10}) async {
     try {
       final response = await _dioClient.get(
         '${ApiConfig.bands}/popular',
@@ -63,14 +74,14 @@ class BandRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data.map((json) => Band.fromJson(json)).toList();
+      return Right(data.map((json) => Band.fromJson(json)).toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get trending bands
-  Future<List<Band>> getTrendingBands({int limit = 10}) async {
+  Future<Either<Failure, List<Band>>> getTrendingBands({int limit = 10}) async {
     try {
       final response = await _dioClient.get(
         '${ApiConfig.bands}/trending',
@@ -78,57 +89,58 @@ class BandRepository {
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data.map((json) => Band.fromJson(json)).toList();
+      return Right(data.map((json) => Band.fromJson(json)).toList());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get all genres
-  Future<List<String>> getGenres() async {
+  Future<Either<Failure, List<String>>> getGenres() async {
     try {
       final response = await _dioClient.get('${ApiConfig.bands}/genres');
       final List<dynamic> data = response.data['data'] as List<dynamic>;
-      return data.cast<String>();
+      return Right(data.cast<String>());
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Create a new band (admin only)
-  Future<Band> createBand(CreateBandRequest request) async {
+  Future<Either<Failure, Band>> createBand(CreateBandRequest request) async {
     try {
       final response = await _dioClient.post(
         ApiConfig.bands,
         data: request.toJson(),
       );
       final bandData = response.data['data'] as Map<String, dynamic>;
-      return Band.fromJson(bandData);
+      return Right(Band.fromJson(bandData));
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Update band (admin only)
-  Future<Band> updateBand(String id, Map<String, dynamic> updates) async {
+  Future<Either<Failure, Band>> updateBand(String id, Map<String, dynamic> updates) async {
     try {
       final response = await _dioClient.put(
         '${ApiConfig.bands}/$id',
         data: updates,
       );
       final bandData = response.data['data'] as Map<String, dynamic>;
-      return Band.fromJson(bandData);
+      return Right(Band.fromJson(bandData));
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Delete band (admin only)
-  Future<void> deleteBand(String id) async {
+  Future<Either<Failure, void>> deleteBand(String id) async {
     try {
       await _dioClient.delete('${ApiConfig.bands}/$id');
+      return const Right(null);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 }

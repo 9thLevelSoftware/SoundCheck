@@ -17,7 +17,7 @@ import {
 initSentry();
 
 // Initialize Redis for distributed rate limiting and caching
-import { initRedis, closeRedis } from './utils/redisRateLimiter';
+import { initRedis, closeRedis, getRedis } from './utils/redisRateLimiter';
 initRedis();
 
 import express from 'express';
@@ -61,6 +61,10 @@ import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
 import { startNotificationWorker, stopNotificationWorker } from './jobs/notificationWorker';
 import { startModerationWorker, stopModerationWorker } from './jobs/moderationWorker';
 import { registerSyncJobs } from './jobs/syncScheduler';
+import { badgeEvalQueue } from './jobs/badgeQueue';
+import { notificationQueue } from './jobs/notificationQueue';
+import { moderationQueue } from './jobs/moderationQueue';
+import { eventSyncQueue } from './jobs/queue';
 import { Worker } from 'bullmq';
 import { readFileSync } from 'fs';
 import { join } from 'path';
@@ -179,16 +183,60 @@ app.use((req, res, next) => {
 app.get('/health', async (req, res) => {
   try {
     const db = Database.getInstance();
-    const isDbHealthy = await db.healthCheck();
+    const dbHealth = await db.healthCheck();
+    const poolMetrics = db.getPoolMetrics();
     const wsStats = getWebSocketStats();
 
+    // Check Redis connectivity with 5-second timeout
+    let redisHealth: { healthy: boolean; error?: string } = { healthy: false };
+    try {
+      const redis = getRedis();
+      if (redis) {
+        await Promise.race([
+          redis.ping(),
+          new Promise((_, reject) =>
+            setTimeout(() => reject(new Error('Redis ping timeout')), 5000)
+          ),
+        ]);
+        redisHealth = { healthy: true };
+      } else {
+        redisHealth = { healthy: false, error: 'Redis client not initialized' };
+      }
+    } catch (error) {
+      redisHealth = {
+        healthy: false,
+        error: error instanceof Error ? error.message : 'Redis connection failed',
+      };
+    }
+
+    // Check push notification service
+    const pushNotificationHealth = {
+      enabled: process.env.FIREBASE_SERVICE_ACCOUNT_JSON ? true : false,
+      firebaseConfigured: !!process.env.FIREBASE_SERVICE_ACCOUNT_JSON,
+    };
+
+    // Determine overall health (degraded if any critical service is unhealthy)
+    const isPoolExhausted = poolMetrics.waitingCount > 10;
+    const isDegraded = !dbHealth.healthy || !redisHealth.healthy || isPoolExhausted;
+    const status = isDegraded ? (!dbHealth.healthy ? 'unhealthy' : 'degraded') : 'healthy';
+    const statusCode = dbHealth.healthy && redisHealth.healthy ? (isDegraded ? 503 : 200) : 503;
+
     const response: ApiResponse = {
-      success: true,
+      success: dbHealth.healthy && redisHealth.healthy,
       data: {
-        status: 'healthy',
+        status,
         timestamp: new Date().toISOString(),
         version: APP_VERSION,
-        database: isDbHealthy ? 'connected' : 'disconnected',
+        database: {
+          status: dbHealth.healthy ? 'connected' : 'disconnected',
+          error: dbHealth.error,
+          pool: poolMetrics,
+        },
+        redis: {
+          status: redisHealth.healthy ? 'connected' : 'disconnected',
+          error: redisHealth.error,
+        },
+        pushNotifications: pushNotificationHealth,
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,
@@ -196,11 +244,47 @@ app.get('/health', async (req, res) => {
       },
     };
 
-    res.status(200).json(response);
+    res.status(statusCode).json(response);
   } catch (error) {
     const response: ApiResponse = {
       success: false,
       error: 'Health check failed',
+    };
+    res.status(503).json(response);
+  }
+});
+
+// Queue health/monitoring endpoint
+app.get('/health/queues', async (req, res) => {
+  try {
+    const queueMetrics = await Promise.all([
+      badgeEvalQueue?.getJobCounts().then((counts: any) => ({ queue: 'badge-eval', ...counts })) ??
+        Promise.resolve({ queue: 'badge-eval', status: 'disabled' }),
+      notificationQueue
+        ?.getJobCounts()
+        .then((counts: any) => ({ queue: 'notification-batch', ...counts })) ??
+        Promise.resolve({ queue: 'notification-batch', status: 'disabled' }),
+      moderationQueue
+        ?.getJobCounts()
+        .then((counts: any) => ({ queue: 'image-moderation', ...counts })) ??
+        Promise.resolve({ queue: 'image-moderation', status: 'disabled' }),
+      eventSyncQueue?.getJobCounts().then((counts: any) => ({ queue: 'event-sync', ...counts })) ??
+        Promise.resolve({ queue: 'event-sync', status: 'disabled' }),
+    ]);
+
+    const response: ApiResponse = {
+      success: true,
+      data: {
+        timestamp: new Date().toISOString(),
+        queues: queueMetrics,
+      },
+    };
+
+    res.status(200).json(response);
+  } catch (error) {
+    const response: ApiResponse = {
+      success: false,
+      error: 'Queue health check failed',
     };
     res.status(503).json(response);
   }
@@ -386,6 +470,16 @@ const startServer = async () => {
 // Handle graceful shutdown
 process.on('SIGTERM', async () => {
   logInfo('SIGTERM received, shutting down gracefully');
+
+  // 1. Stop accepting new connections FIRST
+  await new Promise<void>((resolve) => {
+    server.close(() => {
+      logInfo('HTTP server closed');
+      resolve();
+    });
+  });
+
+  // 2. Then stop workers and close other resources
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
@@ -400,6 +494,16 @@ process.on('SIGTERM', async () => {
 
 process.on('SIGINT', async () => {
   logInfo('SIGINT received, shutting down gracefully');
+
+  // 1. Stop accepting new connections FIRST
+  await new Promise<void>((resolve) => {
+    server.close(() => {
+      logInfo('HTTP server closed');
+      resolve();
+    });
+  });
+
+  // 2. Then stop workers and close other resources
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);

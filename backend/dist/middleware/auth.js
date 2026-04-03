@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.cleanupRateLimit = exports.rateLimit = exports.requirePremium = exports.requireAdmin = exports.requireOwnership = exports.optionalAuth = exports.authenticateToken = void 0;
+exports.addJitter = exports.cleanupRateLimit = exports.rateLimit = exports.requirePremium = exports.requireAdmin = exports.optionalAuth = exports.authenticateToken = void 0;
 const auth_1 = require("../utils/auth");
 const UserService_1 = require("../services/UserService");
 const redisRateLimiter_1 = require("../utils/redisRateLimiter");
@@ -47,11 +47,14 @@ const authenticateToken = async (req, res, next) => {
         // Attach user info to request
         req.user = user;
         // Enrich Sentry error context with authenticated user
-        (0, sentry_1.setUser)({ id: user.id, email: user.email, username: user.username });
+        (0, sentry_1.setUser)({ id: user.id, username: user.username });
         next();
     }
     catch (error) {
-        logger_1.default.error('Authentication middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger_1.default.error('Authentication middleware error', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
         const response = {
             success: false,
             error: 'Authentication failed',
@@ -74,46 +77,22 @@ const optionalAuth = async (req, res, next) => {
                 const user = await userService.findById(payload.userId);
                 if (user && user.isActive) {
                     req.user = user;
-                    (0, sentry_1.setUser)({ id: user.id, email: user.email, username: user.username });
+                    (0, sentry_1.setUser)({ id: user.id, username: user.username });
                 }
             }
         }
         next();
     }
     catch (error) {
-        logger_1.default.error('Optional auth middleware error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
+        logger_1.default.error('Optional auth middleware error', {
+            error: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+        });
         // Continue without authentication
         next();
     }
 };
 exports.optionalAuth = optionalAuth;
-/**
- * Middleware to check if user owns a resource
- */
-const requireOwnership = (resourceUserIdField = 'userId') => {
-    return (req, res, next) => {
-        const user = req.user;
-        const resourceUserId = req.params[resourceUserIdField] || req.body[resourceUserIdField];
-        if (!user) {
-            const response = {
-                success: false,
-                error: 'Authentication required',
-            };
-            res.status(401).json(response);
-            return;
-        }
-        if (user.id !== resourceUserId) {
-            const response = {
-                success: false,
-                error: 'Access denied: You can only access your own resources',
-            };
-            res.status(403).json(response);
-            return;
-        }
-        next();
-    };
-};
-exports.requireOwnership = requireOwnership;
 /**
  * Middleware to require admin privileges
  */
@@ -167,8 +146,36 @@ exports.requirePremium = requirePremium;
  *
  * Uses Redis when available for distributed rate limiting across instances.
  * Falls back to in-memory when Redis is unavailable.
+ *
+ * SECURITY: Critical endpoints fail CLOSED when Redis is unavailable
+ * to prevent DDoS attacks through degraded infrastructure.
  */
 const inMemoryRateLimitStore = new Map();
+// INF-018: Cap in-memory rate limit map to prevent unbounded memory growth.
+// At 10,000 entries (~1KB each), the map uses ~10MB -- acceptable for the
+// fallback case. If this limit is reached, expired entries are purged first.
+const MAX_RATE_LIMIT_ENTRIES = 10000;
+// Critical endpoints that fail closed when Redis is unavailable
+const CRITICAL_ENDPOINTS = [
+    '/auth/login',
+    '/auth/register',
+    '/auth/refresh',
+    '/auth/social/google',
+    '/auth/social/apple',
+    '/upload',
+    '/api/auth/login',
+    '/api/auth/register',
+    '/api/auth/refresh',
+    '/api/auth/social/google',
+    '/api/auth/social/apple',
+    '/api/upload',
+];
+/**
+ * Check if endpoint is critical (should fail closed)
+ */
+function isCriticalEndpoint(path) {
+    return CRITICAL_ENDPOINTS.some(endpoint => path.startsWith(endpoint));
+}
 /**
  * In-memory rate limit check (fallback when Redis unavailable)
  */
@@ -176,6 +183,21 @@ function checkInMemoryRateLimit(clientIP, windowMs, maxRequests) {
     const now = Date.now();
     const clientData = inMemoryRateLimitStore.get(clientIP);
     if (!clientData || now > clientData.resetTime) {
+        // Enforce max size before adding new entries
+        if (inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES &&
+            !inMemoryRateLimitStore.has(clientIP)) {
+            // Purge expired entries first
+            for (const [key, data] of inMemoryRateLimitStore.entries()) {
+                if (now > data.resetTime) {
+                    inMemoryRateLimitStore.delete(key);
+                }
+            }
+            // If still at capacity after purge, allow request without tracking
+            // (fail-open for memory safety)
+            if (inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES) {
+                return { allowed: true, remaining: maxRequests - 1 };
+            }
+        }
         inMemoryRateLimitStore.set(clientIP, {
             count: 1,
             resetTime: now + windowMs,
@@ -191,6 +213,7 @@ function checkInMemoryRateLimit(clientIP, windowMs, maxRequests) {
 const rateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
     return async (req, res, next) => {
         const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+        const isCritical = isCriticalEndpoint(req.path);
         try {
             // Try Redis first
             if ((0, redisRateLimiter_1.getRedis)()) {
@@ -211,7 +234,22 @@ const rateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
                 next();
                 return;
             }
-            // Fallback to in-memory when Redis unavailable
+            // Redis unavailable - handle based on endpoint criticality
+            if (isCritical) {
+                // CRITICAL ENDPOINTS: Fail closed (block requests)
+                logger_1.default.error('Rate limiting unavailable for critical endpoint, failing closed', {
+                    path: req.path,
+                    clientIP
+                });
+                const response = {
+                    success: false,
+                    error: 'Service temporarily unavailable',
+                    retryAfter: 60,
+                };
+                res.status(503).setHeader('Retry-After', '60').json(response);
+                return;
+            }
+            // Non-critical endpoints: Use in-memory fallback
             const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
             if (!result.allowed) {
                 const response = {
@@ -224,13 +262,26 @@ const rateLimit = (windowMs = 15 * 60 * 1000, maxRequests = 100) => {
             next();
         }
         catch (error) {
-            logger_1.default.error('Rate limit error', { error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
-            // Fail-closed: deny request when rate limiting is unavailable
-            const response = {
-                success: false,
-                error: 'Service temporarily unavailable, please try again later',
-            };
-            res.status(429).json(response);
+            logger_1.default.error('Rate limit error', {
+                error: error instanceof Error ? error.message : String(error),
+                stack: error instanceof Error ? error.stack : undefined,
+            });
+            // Redis unavailable - handle based on endpoint criticality
+            if (isCritical) {
+                // CRITICAL ENDPOINTS: Fail closed (block requests)
+                const response = {
+                    success: false,
+                    error: 'Service temporarily unavailable',
+                    retryAfter: 60,
+                };
+                res.status(503).setHeader('Retry-After', '60').json(response);
+                return;
+            }
+            // Non-critical endpoints: Allow through (fail-open with warning)
+            logger_1.default.warn('Rate limiting failed for non-critical endpoint, allowing request', {
+                path: req.path,
+            });
+            next();
         }
     };
 };
@@ -249,4 +300,44 @@ const cleanupRateLimit = () => {
 exports.cleanupRateLimit = cleanupRateLimit;
 // Clean up in-memory store every 5 minutes
 setInterval(exports.cleanupRateLimit, 5 * 60 * 1000).unref();
+/**
+ * Timing attack prevention middleware
+ * SEC-007/CFR-015: Add random jitter to enumeration endpoint responses
+ * to prevent timing-based username/email enumeration attacks.
+ *
+ * Adds a random delay between 50-150ms to ensure both "available" and
+ * "unavailable" responses take similar time.
+ */
+const addJitter = (minMs = 50, maxMs = 150) => {
+    return (req, res, next) => {
+        const delay = Math.floor(Math.random() * (maxMs - minMs + 1)) + minMs;
+        // Store original end function
+        const originalEnd = res.end.bind(res);
+        // Override end to add delay before sending response
+        res.end = function (chunk, encoding, cb) {
+            const args = arguments;
+            setTimeout(() => {
+                originalEnd.apply(res, args);
+            }, delay);
+            return res;
+        };
+        // Also wrap json/send for cases where end isn't called directly
+        const originalJson = res.json.bind(res);
+        res.json = function (body) {
+            setTimeout(() => {
+                originalJson(body);
+            }, delay);
+            return res;
+        };
+        const originalSend = res.send.bind(res);
+        res.send = function (body) {
+            setTimeout(() => {
+                originalSend(body);
+            }, delay);
+            return res;
+        };
+        next();
+    };
+};
+exports.addJitter = addJitter;
 //# sourceMappingURL=auth.js.map

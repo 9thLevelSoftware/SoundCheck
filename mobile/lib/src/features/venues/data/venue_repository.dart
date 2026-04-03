@@ -1,5 +1,8 @@
+import 'dart:developer';
+
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
+import '../domain/paginated_venues.dart';
 import '../domain/venue.dart';
 
 class VenueRepository {
@@ -7,8 +10,9 @@ class VenueRepository {
 
   VenueRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
-  /// Get all venues with optional filters
-  Future<List<Venue>> getVenues({
+  /// Get all venues with optional filters and server-side pagination
+  /// Returns paginated response with venues, total, page, and totalPages
+  Future<PaginatedVenues> getVenues({
     String? search,
     String? city,
     String? venueType,
@@ -16,8 +20,8 @@ class VenueRepository {
     int? minCapacity,
     int? maxCapacity,
     String? sortBy,
-    int page = 1,
-    int limit = 20,
+    required int page,
+    required int limit,
   }) async {
     try {
       final queryParams = <String, dynamic>{
@@ -25,13 +29,13 @@ class VenueRepository {
         'limit': limit,
       };
 
-      if (search != null) queryParams['q'] = search;
-      if (city != null) queryParams['city'] = city;
-      if (venueType != null) queryParams['venueType'] = venueType;
+      if (search != null && search.isNotEmpty) queryParams['q'] = search;
+      if (city != null && city.isNotEmpty) queryParams['city'] = city;
+      if (venueType != null && venueType.isNotEmpty) queryParams['venueType'] = venueType;
       if (minRating != null) queryParams['rating'] = minRating;
       if (minCapacity != null) queryParams['minCapacity'] = minCapacity;
       if (maxCapacity != null) queryParams['maxCapacity'] = maxCapacity;
-      if (sortBy != null) queryParams['sort'] = sortBy;
+      if (sortBy != null && sortBy.isNotEmpty) queryParams['sort'] = sortBy;
 
       final response = await _dioClient.get(
         ApiConfig.venues,
@@ -40,11 +44,37 @@ class VenueRepository {
 
       // API returns: { success: true, data: { venues: [...], total, page, totalPages } }
       final responseData = response.data['data'] as Map<String, dynamic>;
-      final List<dynamic> venues = responseData['venues'] as List<dynamic>;
-      return venues.map((json) => Venue.fromJson(json)).toList();
+      return PaginatedVenues.fromJson(responseData);
     } catch (e) {
+      log('Error fetching venues: $e');
       rethrow;
     }
+  }
+
+  /// Search venues with server-side pagination and filtering
+  /// This is an alias for getVenues to provide a clearer API
+  Future<PaginatedVenues> searchVenues({
+    String? query,
+    String? city,
+    String? venueType,
+    double? minRating,
+    int? minCapacity,
+    int? maxCapacity,
+    String? sortBy,
+    required int page,
+    required int limit,
+  }) async {
+    return getVenues(
+      search: query,
+      city: city,
+      venueType: venueType,
+      minRating: minRating,
+      minCapacity: minCapacity,
+      maxCapacity: maxCapacity,
+      sortBy: sortBy,
+      page: page,
+      limit: limit,
+    );
   }
 
   /// Get venue by ID
@@ -55,6 +85,7 @@ class VenueRepository {
       final venueData = response.data['data'] as Map<String, dynamic>;
       return Venue.fromJson(venueData);
     } catch (e) {
+      log('Error fetching venue by ID: $e');
       rethrow;
     }
   }
@@ -69,8 +100,9 @@ class VenueRepository {
 
       // API returns: { success: true, data: [...venues...] }
       final List<dynamic> venues = response.data['data'] as List<dynamic>;
-      return venues.map((json) => Venue.fromJson(json)).toList();
+      return venues.map((json) => Venue.fromJson(json as Map<String, dynamic>)).toList();
     } catch (e) {
+      log('Error fetching popular venues: $e');
       rethrow;
     }
   }
@@ -95,8 +127,9 @@ class VenueRepository {
 
       // API returns: { success: true, data: [...venues...] }
       final List<dynamic> venues = response.data['data'] as List<dynamic>;
-      return venues.map((json) => Venue.fromJson(json)).toList();
+      return venues.map((json) => Venue.fromJson(json as Map<String, dynamic>)).toList();
     } catch (e) {
+      log('Error fetching nearby venues: $e');
       rethrow;
     }
   }
@@ -112,6 +145,7 @@ class VenueRepository {
       final venueData = response.data['data'] as Map<String, dynamic>;
       return Venue.fromJson(venueData);
     } catch (e) {
+      log('Error creating venue: $e');
       rethrow;
     }
   }
@@ -127,6 +161,7 @@ class VenueRepository {
       final venueData = response.data['data'] as Map<String, dynamic>;
       return Venue.fromJson(venueData);
     } catch (e) {
+      log('Error updating venue: $e');
       rethrow;
     }
   }
@@ -136,6 +171,7 @@ class VenueRepository {
     try {
       await _dioClient.delete('${ApiConfig.venues}/$id');
     } catch (e) {
+      log('Error deleting venue: $e');
       rethrow;
     }
   }

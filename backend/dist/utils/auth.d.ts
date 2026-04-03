@@ -43,9 +43,29 @@ export declare class AuthUtils {
     };
 }
 /**
+ * Hash a refresh token using bcrypt for secure storage
+ * SECURITY FIX (P1): Changed from SHA-256 to bcrypt with cost factor 10
+ * SHA-256 is fast and vulnerable to brute force attacks on leaked hashes
+ * bcrypt is intentionally slow and resistant to GPU/ASIC attacks
+ *
+ * @param token - The raw refresh token to hash
+ * @returns The bcrypt hash of the token
+ */
+export declare function hashRefreshToken(token: string): Promise<string>;
+/**
+ * Verify a refresh token against a stored hash
+ * @param token - The raw refresh token
+ * @param hash - The stored bcrypt hash
+ * @returns true if token matches the hash
+ */
+export declare function verifyRefreshTokenHash(token: string, hash: string): Promise<boolean>;
+/**
  * Generate a secure refresh token for a user.
  * The token is a cryptographically secure random string.
- * Only the SHA-256 hash is stored in the database for security.
+ * Only the bcrypt hash is stored in the database for security.
+ *
+ * SECURITY: Uses bcrypt hashing instead of SHA-256 to prevent
+ * brute force attacks on leaked token hashes.
  *
  * @param userId - The user ID to associate with the token
  * @param client - Optional database client for transaction support
@@ -55,6 +75,8 @@ export declare function generateRefreshToken(userId: string, client?: QueryExecu
 /**
  * Verify a refresh token and return the associated user ID.
  * Checks that the token exists, is not expired, and is not revoked.
+ *
+ * SECURITY: Uses bcrypt comparison instead of SHA-256 hash comparison
  *
  * @param token - The raw refresh token to verify
  * @returns Object with valid flag and userId if valid
@@ -66,6 +88,8 @@ export declare function verifyRefreshToken(token: string): Promise<{
 /**
  * Revoke a specific refresh token.
  * Used during token rotation and logout.
+ *
+ * SECURITY: Uses bcrypt comparison to find the token
  *
  * @param token - The raw refresh token to revoke
  * @param client - Optional database client for transaction support

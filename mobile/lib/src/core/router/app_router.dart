@@ -17,6 +17,7 @@ import '../../features/profile/presentation/settings_screen.dart';
 import '../../features/profile/presentation/user_profile_screen.dart';
 import '../../features/profile/presentation/blocked_users_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
+import '../../features/notifications/presentation/notification_detail_screen.dart';
 import '../../features/venues/presentation/venue_detail_screen.dart';
 import '../../features/bands/presentation/band_detail_screen.dart';
 import '../../features/checkins/presentation/checkin_detail_screen.dart';
@@ -597,6 +598,16 @@ GoRouter goRouter(Ref ref) {
               );
             },
           );
+        },
+      ),
+
+      // Notification Detail Route (Deep Link from notification)
+      GoRoute(
+        path: '/notifications/:id',
+        name: 'notification-detail',
+        builder: (context, state) {
+          final notificationId = state.pathParameters['id'];
+          return NotificationDetailScreen(notificationId: notificationId);
         },
       ),
 

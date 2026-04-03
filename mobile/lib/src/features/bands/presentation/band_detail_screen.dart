@@ -12,7 +12,11 @@ import 'providers/band_providers.dart';
 
 final bandDetailProvider = FutureProvider.autoDispose.family<Band, String>((ref, id) async {
   final repository = ref.watch(bandRepositoryProvider);
-  return repository.getBandById(id);
+  final result = await repository.getBandById(id);
+  return result.fold(
+    (failure) => throw failure,
+    (band) => band,
+  );
 });
 
 /// Band Detail Screen - The "Beer Page" Model

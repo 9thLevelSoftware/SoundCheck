@@ -1,4 +1,8 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
+import '../../../core/error/failures.dart';
 
 /// Repository for onboarding-related API calls.
 ///
@@ -9,48 +13,57 @@ class OnboardingRepository {
 
   OnboardingRepository({required DioClient dioClient}) : _dioClient = dioClient;
 
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
+  }
+
   /// Save user's genre preferences (3-8 genres).
   /// POST /api/onboarding/genres
-  Future<void> saveGenrePreferences(List<String> genres) async {
+  Future<Either<Failure, void>> saveGenrePreferences(List<String> genres) async {
     try {
       await _dioClient.post(
         '/onboarding/genres',
         data: {'genres': genres},
       );
+      return const Right(null);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Get user's saved genre preferences.
   /// GET /api/onboarding/genres
-  Future<List<String>> getGenrePreferences() async {
+  Future<Either<Failure, List<String>>> getGenrePreferences() async {
     try {
       final response = await _dioClient.get('/onboarding/genres');
-      return List<String>.from(response.data['data']['genres'] ?? []);
+      return Right(List<String>.from(response.data['data']['genres'] ?? []));
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Mark onboarding as complete on the backend.
   /// POST /api/onboarding/complete
-  Future<void> completeOnboarding() async {
+  Future<Either<Failure, void>> completeOnboarding() async {
     try {
       await _dioClient.post('/onboarding/complete');
+      return const Right(null);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 
   /// Check if onboarding is complete on the backend.
   /// GET /api/onboarding/status
-  Future<bool> isOnboardingComplete() async {
+  Future<Either<Failure, bool>> isOnboardingComplete() async {
     try {
       final response = await _dioClient.get('/onboarding/status');
-      return response.data['data']['completed'] ?? false;
+      return Right(response.data['data']['completed'] ?? false);
     } catch (e) {
-      rethrow;
+      return Left(_mapErrorToFailure(e));
     }
   }
 }

@@ -1,5 +1,6 @@
 /**
- * ShareController -- HTTP handlers for share card generation and landing pages.
+ * ShareController -- Refactored with asyncHandler pattern
+ * HTTP handlers for share card generation and landing pages.
  *
  * Endpoints:
  *   POST /api/share/checkin/:checkinId  -- Generate card images (authenticated)
@@ -17,7 +18,9 @@ import { ShareCardService } from '../services/ShareCardService';
 import { CheckinService } from '../services/CheckinService';
 import { BadgeService } from '../services/BadgeService';
 import { ApiResponse } from '../types';
-import { logError, logWarn } from '../utils/logger';
+import { asyncHandler } from '../utils/asyncHandler';
+import { UnauthorizedError, NotFoundError } from '../utils/errors';
+import { logWarn } from '../utils/logger';
 
 // ============================================
 // HTML sanitization
@@ -73,28 +76,121 @@ export class ShareController {
    *
    * Requires authentication. Returns OG and Stories image URLs.
    */
-  generateCheckinCard = async (req: Request, res: Response): Promise<void> => {
+  generateCheckinCard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedError('Authentication required');
+    }
+
+    const { checkinId } = req.params;
+
+    // Fetch full checkin data
+    const checkin = await this.checkinService.getCheckinById(checkinId, userId);
+
+    if (!checkin) {
+      throw new NotFoundError('Check-in not found');
+    }
+
+    // Generate cards
+    const { ogUrl, storiesUrl } = await this.shareCardService.generateCheckinCard(checkinId, {
+      username: checkin.user?.username || 'unknown',
+      bandName: checkin.band?.name || 'Live Show',
+      venueName: checkin.venue?.name || 'Unknown Venue',
+      venueCity: checkin.venue?.city || '',
+      eventDate: checkin.eventDate
+        ? new Date(checkin.eventDate).toLocaleDateString('en-US', {
+            month: 'short',
+            day: 'numeric',
+            year: 'numeric',
+          })
+        : '',
+      rating: checkin.rating || 0,
+      bandImageUrl: checkin.band?.imageUrl,
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: { ogUrl, storiesUrl },
+    };
+    res.status(200).json(response);
+  });
+
+  /**
+   * Generate share card images for a badge unlock.
+   * POST /api/share/badge/:badgeAwardId
+   *
+   * Requires authentication. Returns OG and Stories image URLs.
+   */
+  generateBadgeCard = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const userId = req.user?.id;
+    if (!userId) {
+      throw new UnauthorizedError('Authentication required');
+    }
+
+    const { badgeAwardId } = req.params;
+
+    // Look up the badge award in user_badges
+    const userBadges = await this.badgeService.getUserBadges(userId);
+    const award = userBadges.find((ub) => ub.id === badgeAwardId);
+
+    if (!award) {
+      throw new NotFoundError('Badge award not found');
+    }
+
+    const badge = award.badge;
+    if (!badge) {
+      throw new NotFoundError('Badge data not found');
+    }
+
+    const { ogUrl, storiesUrl } = await this.shareCardService.generateBadgeCard(badgeAwardId, {
+      username: req.user?.username || 'unknown',
+      badgeName: badge.name,
+      badgeDescription: badge.description || '',
+      badgeCategory: badge.badgeType,
+      unlockedAt: new Date(award.earnedAt).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+      }),
+    });
+
+    const response: ApiResponse = {
+      success: true,
+      data: { ogUrl, storiesUrl },
+    };
+    res.status(200).json(response);
+  });
+
+  /**
+   * Render the public landing page for a shared check-in link.
+   * GET /share/c/:checkinId
+   *
+   * No authentication required. Serves HTML with OG meta tags
+   * for social platform crawlers, plus store CTAs for human visitors.
+   */
+  renderCheckinLanding = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { checkinId } = req.params;
+
+    // Fetch checkin data (no user context for public page)
+    const checkin = await this.checkinService.getCheckinById(checkinId);
+
+    if (!checkin) {
+      res.status(404).send('<html><body><h1>Check-in not found</h1></body></html>');
+      return;
+    }
+
+    const bandName = escapeHtml(checkin.band?.name || 'Live Show');
+    const venueName = escapeHtml(checkin.venue?.name || 'Unknown Venue');
+    const venueCity = escapeHtml(checkin.venue?.city || '');
+    const username = escapeHtml(checkin.user?.username || 'someone');
+
+    const title = `${bandName} at ${venueName}`;
+    const description = `@${username} checked in to see ${bandName} at ${venueName}${venueCity ? `, ${venueCity}` : ''}`;
+
+    // Generate card if R2 is available (idempotent -- generates fresh each time for simplicity)
+    let imageUrl = '';
     try {
-      const userId = req.user?.id;
-      if (!userId) {
-        const response: ApiResponse = { success: false, error: 'Authentication required' };
-        res.status(401).json(response);
-        return;
-      }
-
-      const { checkinId } = req.params;
-
-      // Fetch full checkin data
-      const checkin = await this.checkinService.getCheckinById(checkinId, userId);
-
-      if (!checkin) {
-        const response: ApiResponse = { success: false, error: 'Check-in not found' };
-        res.status(404).json(response);
-        return;
-      }
-
-      // Generate cards
-      const { ogUrl, storiesUrl } = await this.shareCardService.generateCheckinCard(checkinId, {
+      const cards = await this.shareCardService.generateCheckinCard(checkinId, {
         username: checkin.user?.username || 'unknown',
         bandName: checkin.band?.name || 'Live Show',
         venueName: checkin.venue?.name || 'Unknown Venue',
@@ -109,170 +205,28 @@ export class ShareController {
         rating: checkin.rating || 0,
         bandImageUrl: checkin.band?.imageUrl,
       });
-
-      const response: ApiResponse = {
-        success: true,
-        data: { ogUrl, storiesUrl },
-      };
-      res.status(200).json(response);
-    } catch (error: any) {
-      logError('ShareController.generateCheckinCard error', { error: error.message });
-
-      if (error.message === 'Check-in not found') {
-        const response: ApiResponse = { success: false, error: 'Check-in not found' };
-        res.status(404).json(response);
-        return;
-      }
-
-      const statusCode = error.statusCode || 500;
-      const response: ApiResponse = {
-        success: false,
-        error: statusCode === 503 ? error.message : 'Failed to generate share card',
-      };
-      res.status(statusCode).json(response);
+      imageUrl = cards.ogUrl;
+    } catch {
+      // Card generation failed -- continue without image
     }
-  };
 
-  /**
-   * Generate share card images for a badge unlock.
-   * POST /api/share/badge/:badgeAwardId
-   *
-   * Requires authentication. Returns OG and Stories image URLs.
-   */
-  generateBadgeCard = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const userId = req.user?.id;
-      if (!userId) {
-        const response: ApiResponse = { success: false, error: 'Authentication required' };
-        res.status(401).json(response);
-        return;
-      }
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const pageUrl = `${baseUrl}/share/c/${checkinId}`;
+    const appStoreUrl = process.env.APP_STORE_URL || '#';
+    const playStoreUrl = process.env.PLAY_STORE_URL || '#';
 
-      const { badgeAwardId } = req.params;
+    const html = landingTemplate
+      .replace(/\{\{TITLE\}\}/g, title)
+      .replace(/\{\{DESCRIPTION\}\}/g, description)
+      .replace(/\{\{IMAGE_URL\}\}/g, escapeHtml(imageUrl))
+      .replace(/\{\{PAGE_URL\}\}/g, escapeHtml(pageUrl))
+      .replace(/\{\{APP_STORE_URL\}\}/g, escapeHtml(appStoreUrl))
+      .replace(/\{\{PLAY_STORE_URL\}\}/g, escapeHtml(playStoreUrl))
+      .replace(/\{\{CARD_TYPE\}\}/g, 'checkin');
 
-      // Look up the badge award in user_badges
-      const userBadges = await this.badgeService.getUserBadges(userId);
-      const award = userBadges.find((ub) => ub.id === badgeAwardId);
-
-      if (!award) {
-        const response: ApiResponse = { success: false, error: 'Badge award not found' };
-        res.status(404).json(response);
-        return;
-      }
-
-      const badge = award.badge;
-      if (!badge) {
-        const response: ApiResponse = { success: false, error: 'Badge data not found' };
-        res.status(404).json(response);
-        return;
-      }
-
-      const { ogUrl, storiesUrl } = await this.shareCardService.generateBadgeCard(badgeAwardId, {
-        username: req.user?.username || 'unknown',
-        badgeName: badge.name,
-        badgeDescription: badge.description || '',
-        badgeCategory: badge.badgeType,
-        unlockedAt: new Date(award.earnedAt).toLocaleDateString('en-US', {
-          month: 'short',
-          day: 'numeric',
-          year: 'numeric',
-        }),
-      });
-
-      const response: ApiResponse = {
-        success: true,
-        data: { ogUrl, storiesUrl },
-      };
-      res.status(200).json(response);
-    } catch (error: any) {
-      logError('ShareController.generateBadgeCard error', { error: error.message });
-
-      const statusCode = error.statusCode || 500;
-      const response: ApiResponse = {
-        success: false,
-        error: statusCode === 503 ? error.message : 'Failed to generate share card',
-      };
-      res.status(statusCode).json(response);
-    }
-  };
-
-  /**
-   * Render the public landing page for a shared check-in link.
-   * GET /share/c/:checkinId
-   *
-   * No authentication required. Serves HTML with OG meta tags
-   * for social platform crawlers, plus store CTAs for human visitors.
-   */
-  renderCheckinLanding = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { checkinId } = req.params;
-
-      // Fetch checkin data (no user context for public page)
-      const checkin = await this.checkinService.getCheckinById(checkinId);
-
-      if (!checkin) {
-        res.status(404).send('<html><body><h1>Check-in not found</h1></body></html>');
-        return;
-      }
-
-      const bandName = escapeHtml(checkin.band?.name || 'Live Show');
-      const venueName = escapeHtml(checkin.venue?.name || 'Unknown Venue');
-      const venueCity = escapeHtml(checkin.venue?.city || '');
-      const username = escapeHtml(checkin.user?.username || 'someone');
-
-      const title = `${bandName} at ${venueName}`;
-      const description = `@${username} checked in to see ${bandName} at ${venueName}${venueCity ? `, ${venueCity}` : ''}`;
-
-      // Generate card if R2 is available (idempotent -- generates fresh each time for simplicity)
-      let imageUrl = '';
-      try {
-        const cards = await this.shareCardService.generateCheckinCard(checkinId, {
-          username: checkin.user?.username || 'unknown',
-          bandName: checkin.band?.name || 'Live Show',
-          venueName: checkin.venue?.name || 'Unknown Venue',
-          venueCity: checkin.venue?.city || '',
-          eventDate: checkin.eventDate
-            ? new Date(checkin.eventDate).toLocaleDateString('en-US', {
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })
-            : '',
-          rating: checkin.rating || 0,
-          bandImageUrl: checkin.band?.imageUrl,
-        });
-        imageUrl = cards.ogUrl;
-      } catch {
-        // Card generation failed -- continue without image
-      }
-
-      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-      const pageUrl = `${baseUrl}/share/c/${checkinId}`;
-      const appStoreUrl = process.env.APP_STORE_URL || '#';
-      const playStoreUrl = process.env.PLAY_STORE_URL || '#';
-
-      const html = landingTemplate
-        .replace(/\{\{TITLE\}\}/g, title)
-        .replace(/\{\{DESCRIPTION\}\}/g, description)
-        .replace(/\{\{IMAGE_URL\}\}/g, escapeHtml(imageUrl))
-        .replace(/\{\{PAGE_URL\}\}/g, escapeHtml(pageUrl))
-        .replace(/\{\{APP_STORE_URL\}\}/g, escapeHtml(appStoreUrl))
-        .replace(/\{\{PLAY_STORE_URL\}\}/g, escapeHtml(playStoreUrl))
-        .replace(/\{\{CARD_TYPE\}\}/g, 'checkin');
-
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.status(200).send(html);
-    } catch (error: any) {
-      logError('ShareController.renderCheckinLanding error', { error: error.message });
-
-      if (error.message === 'Check-in not found') {
-        res.status(404).send('<html><body><h1>Check-in not found</h1></body></html>');
-        return;
-      }
-
-      res.status(500).send('<html><body><h1>Something went wrong</h1></body></html>');
-    }
-  };
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(200).send(html);
+  });
 
   /**
    * Render the public landing page for a shared badge link.
@@ -280,80 +234,74 @@ export class ShareController {
    *
    * No authentication required. Serves HTML with OG meta tags.
    */
-  renderBadgeLanding = async (req: Request, res: Response): Promise<void> => {
-    try {
-      const { badgeAwardId } = req.params;
+  renderBadgeLanding = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+    const { badgeAwardId } = req.params;
 
-      // Look up badge award by ID (need a direct query since BadgeService
-      // requires userId for getUserBadges)
-      // Use a lightweight direct query via the badge service
-      const Database = (await import('../config/database')).default;
-      const db = Database.getInstance();
+    // Look up badge award by ID (need a direct query since BadgeService
+    // requires userId for getUserBadges)
+    // Use a lightweight direct query via the badge service
+    const Database = (await import('../config/database')).default;
+    const db = Database.getInstance();
 
-      const awardResult = await db.query(
-        `SELECT ub.id, ub.user_id, ub.badge_id, ub.earned_at,
-                u.username,
-                b.name as badge_name, b.description as badge_description,
-                b.badge_type, b.color
-         FROM user_badges ub
-         JOIN users u ON ub.user_id = u.id
-         JOIN badges b ON ub.badge_id = b.id
-         WHERE ub.id = $1`,
-        [badgeAwardId]
-      );
+    const awardResult = await db.query(
+      `SELECT ub.id, ub.user_id, ub.badge_id, ub.earned_at,
+              u.username,
+              b.name as badge_name, b.description as badge_description,
+              b.badge_type, b.color
+       FROM user_badges ub
+       JOIN users u ON ub.user_id = u.id
+       JOIN badges b ON ub.badge_id = b.id
+       WHERE ub.id = $1`,
+      [badgeAwardId]
+    );
 
-      if (awardResult.rows.length === 0) {
-        res.status(404).send('<html><body><h1>Badge not found</h1></body></html>');
-        return;
-      }
-
-      const award = awardResult.rows[0];
-
-      const badgeName = escapeHtml(award.badge_name);
-      const badgeDescription = escapeHtml(award.badge_description || '');
-      const username = escapeHtml(award.username);
-
-      const title = `${badgeName} Badge Unlocked`;
-      const description = `@${username} unlocked the ${badgeName} badge on SoundCheck`;
-
-      // Generate card
-      let imageUrl = '';
-      try {
-        const cards = await this.shareCardService.generateBadgeCard(badgeAwardId, {
-          username: award.username,
-          badgeName: award.badge_name,
-          badgeDescription: award.badge_description || '',
-          badgeCategory: award.badge_type,
-          unlockedAt: new Date(award.earned_at).toLocaleDateString('en-US', {
-            month: 'short',
-            day: 'numeric',
-            year: 'numeric',
-          }),
-        });
-        imageUrl = cards.ogUrl;
-      } catch {
-        // Card generation failed -- continue without image
-      }
-
-      const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
-      const pageUrl = `${baseUrl}/share/b/${badgeAwardId}`;
-      const appStoreUrl = process.env.APP_STORE_URL || '#';
-      const playStoreUrl = process.env.PLAY_STORE_URL || '#';
-
-      const html = landingTemplate
-        .replace(/\{\{TITLE\}\}/g, title)
-        .replace(/\{\{DESCRIPTION\}\}/g, description)
-        .replace(/\{\{IMAGE_URL\}\}/g, escapeHtml(imageUrl))
-        .replace(/\{\{PAGE_URL\}\}/g, escapeHtml(pageUrl))
-        .replace(/\{\{APP_STORE_URL\}\}/g, escapeHtml(appStoreUrl))
-        .replace(/\{\{PLAY_STORE_URL\}\}/g, escapeHtml(playStoreUrl))
-        .replace(/\{\{CARD_TYPE\}\}/g, 'badge');
-
-      res.setHeader('Content-Type', 'text/html; charset=utf-8');
-      res.status(200).send(html);
-    } catch (error: any) {
-      logError('ShareController.renderBadgeLanding error', { error: error.message });
-      res.status(500).send('<html><body><h1>Something went wrong</h1></body></html>');
+    if (awardResult.rows.length === 0) {
+      res.status(404).send('<html><body><h1>Badge not found</h1></body></html>');
+      return;
     }
-  };
+
+    const award = awardResult.rows[0];
+
+    const badgeName = escapeHtml(award.badge_name);
+    const username = escapeHtml(award.username);
+
+    const title = `${badgeName} Badge Unlocked`;
+    const description = `@${username} unlocked the ${badgeName} badge on SoundCheck`;
+
+    // Generate card
+    let imageUrl = '';
+    try {
+      const cards = await this.shareCardService.generateBadgeCard(badgeAwardId, {
+        username: award.username,
+        badgeName: award.badge_name,
+        badgeDescription: award.badge_description || '',
+        badgeCategory: award.badge_type,
+        unlockedAt: new Date(award.earned_at).toLocaleDateString('en-US', {
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+        }),
+      });
+      imageUrl = cards.ogUrl;
+    } catch {
+      // Card generation failed -- continue without image
+    }
+
+    const baseUrl = process.env.BASE_URL || `${req.protocol}://${req.get('host')}`;
+    const pageUrl = `${baseUrl}/share/b/${badgeAwardId}`;
+    const appStoreUrl = process.env.APP_STORE_URL || '#';
+    const playStoreUrl = process.env.PLAY_STORE_URL || '#';
+
+    const html = landingTemplate
+      .replace(/\{\{TITLE\}\}/g, title)
+      .replace(/\{\{DESCRIPTION\}\}/g, description)
+      .replace(/\{\{IMAGE_URL\}\}/g, escapeHtml(imageUrl))
+      .replace(/\{\{PAGE_URL\}\}/g, escapeHtml(pageUrl))
+      .replace(/\{\{APP_STORE_URL\}\}/g, escapeHtml(appStoreUrl))
+      .replace(/\{\{PLAY_STORE_URL\}\}/g, escapeHtml(playStoreUrl))
+      .replace(/\{\{CARD_TYPE\}\}/g, 'badge');
+
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.status(200).send(html);
+  });
 }

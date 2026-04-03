@@ -20,7 +20,7 @@ class BandService {
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING id, name, description, genre, formed_year, website_url, spotify_url,
                 instagram_url, facebook_url, image_url, hometown, average_rating,
-                total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+                total_checkins, is_active, claimed_by_user_id, created_at, updated_at
     `;
         const values = [
             name,
@@ -44,7 +44,7 @@ class BandService {
         const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+             total_checkins, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE id = $1 AND is_active = true
     `;
@@ -63,11 +63,13 @@ class BandService {
         const conditions = ['is_active = true'];
         const values = [];
         let paramCount = 1;
-        // Text search
+        // PERF-016: Use tsvector full-text search instead of ILIKE on unnested
+        // genres. The search_vector GIN index (migration 034) makes this O(1)
+        // instead of O(n) ILIKE scans with unnest.
         if (q.trim()) {
-            conditions.push(`(name ILIKE $${paramCount} OR description ILIKE $${paramCount} OR EXISTS (SELECT 1 FROM unnest(genres) g WHERE g ILIKE $${paramCount}) OR hometown ILIKE $${paramCount})`);
-            values.push(`%${q.trim()}%`);
-            paramCount++;
+            conditions.push(`(search_vector @@ websearch_to_tsquery('english', $${paramCount}) OR name ILIKE $${paramCount + 1})`);
+            values.push(q.trim(), `%${q.trim()}%`);
+            paramCount += 2;
         }
         // Genre filter (uses genres TEXT[] column)
         if (genre) {
@@ -82,7 +84,15 @@ class BandService {
             paramCount++;
         }
         // Validate sort column
-        const allowedSortColumns = ['name', 'genre', 'formed_year', 'hometown', 'average_rating', 'total_reviews', 'created_at'];
+        const allowedSortColumns = [
+            'name',
+            'genre',
+            'formed_year',
+            'hometown',
+            'average_rating',
+            'total_checkins',
+            'created_at',
+        ];
         const sortColumn = allowedSortColumns.includes(sort) ? sort : 'name';
         const sortOrder = order === 'desc' ? 'DESC' : 'ASC';
         // Count query
@@ -95,7 +105,7 @@ class BandService {
         const mainQuery = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+             total_checkins, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE ${conditions.join(' AND ')}
       ORDER BY ${sortColumn} ${sortOrder}
@@ -121,8 +131,16 @@ class BandService {
      */
     async updateBand(bandId, updateData) {
         const allowedFields = [
-            'name', 'description', 'genre', 'formedYear', 'websiteUrl', 'spotifyUrl',
-            'instagramUrl', 'facebookUrl', 'imageUrl', 'hometown'
+            'name',
+            'description',
+            'genre',
+            'formedYear',
+            'websiteUrl',
+            'spotifyUrl',
+            'instagramUrl',
+            'facebookUrl',
+            'imageUrl',
+            'hometown',
         ];
         const updates = [];
         const values = [];
@@ -145,7 +163,7 @@ class BandService {
       WHERE id = $${paramCount} AND is_active = true
       RETURNING id, name, description, genre, formed_year, website_url, spotify_url,
                 instagram_url, facebook_url, image_url, hometown, average_rating,
-                total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+                total_checkins, is_active, claimed_by_user_id, created_at, updated_at
     `;
         const result = await this.db.query(query, values);
         if (result.rows.length === 0) {
@@ -154,27 +172,37 @@ class BandService {
         return this.mapDbBandToBand(result.rows[0]);
     }
     /**
-     * Delete band (soft delete)
+     * Delete band (soft delete).
+     * Also denies pending verification claims for this band (CFR-DI-007).
      */
     async deleteBand(bandId) {
         const query = `
-      UPDATE bands 
+      UPDATE bands
       SET is_active = false, updated_at = CURRENT_TIMESTAMP
       WHERE id = $1
     `;
         await this.db.query(query, [bandId]);
+        // CFR-DI-007: Deny pending verification claims for this band (entity deleted)
+        await this.db.query(`UPDATE verification_claims SET status = 'denied', review_notes = 'entity_deleted', updated_at = CURRENT_TIMESTAMP
+       WHERE entity_type = 'band' AND entity_id = $1 AND status = 'pending'`, [bandId]);
     }
     /**
-     * Get popular bands (by average rating and review count)
+     * Get popular bands (by average rating and rating count from checkin_band_ratings)
      */
     async getPopularBands(limit = 10) {
         const query = `
-      SELECT id, name, description, genre, formed_year, website_url, spotify_url,
-             instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
-      FROM bands
-      WHERE is_active = true AND total_reviews >= 3
-      ORDER BY (average_rating * 0.7 + LEAST(total_reviews/50.0, 1.0) * 0.3) DESC
+      SELECT b.id, b.name, b.description, b.genre, b.formed_year, b.website_url, b.spotify_url,
+             b.instagram_url, b.facebook_url, b.image_url, b.hometown, b.average_rating,
+             COALESCE(rc.rating_count, 0) AS total_checkins,
+             b.is_active, b.claimed_by_user_id, b.created_at, b.updated_at
+      FROM bands b
+      LEFT JOIN (
+        SELECT band_id, COUNT(*)::int AS rating_count
+        FROM checkin_band_ratings
+        GROUP BY band_id
+      ) rc ON rc.band_id = b.id
+      WHERE b.is_active = true AND COALESCE(rc.rating_count, 0) >= 3
+      ORDER BY (b.average_rating * 0.7 + LEAST(COALESCE(rc.rating_count, 0)/50.0, 1.0) * 0.3) DESC
       LIMIT $1
     `;
         const result = await this.db.query(query, [limit]);
@@ -187,10 +215,10 @@ class BandService {
         const query = `
       SELECT id, name, description, genre, formed_year, website_url, spotify_url,
              instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
+             total_checkins, is_active, claimed_by_user_id, created_at, updated_at
       FROM bands
       WHERE is_active = true AND $1 = ANY(genres)
-      ORDER BY average_rating DESC, total_reviews DESC
+      ORDER BY average_rating DESC, total_checkins DESC
       LIMIT $2
     `;
         const result = await this.db.query(query, [genre, limit]);
@@ -201,14 +229,20 @@ class BandService {
      */
     async getTrendingBands(limit = 10) {
         const query = `
-      SELECT id, name, description, genre, formed_year, website_url, spotify_url,
-             instagram_url, facebook_url, image_url, hometown, average_rating,
-             total_reviews, is_active, claimed_by_user_id, created_at, updated_at
-      FROM bands
-      WHERE is_active = true
-        AND created_at >= CURRENT_DATE - INTERVAL '30 days'
-        AND (total_reviews = 0 OR average_rating >= 3.5)
-      ORDER BY created_at DESC, average_rating DESC
+      SELECT b.id, b.name, b.description, b.genre, b.formed_year, b.website_url, b.spotify_url,
+             b.instagram_url, b.facebook_url, b.image_url, b.hometown, b.average_rating,
+             COALESCE(rc.rating_count, 0) AS total_checkins,
+             b.is_active, b.claimed_by_user_id, b.created_at, b.updated_at
+      FROM bands b
+      LEFT JOIN (
+        SELECT band_id, COUNT(*)::int AS rating_count
+        FROM checkin_band_ratings
+        GROUP BY band_id
+      ) rc ON rc.band_id = b.id
+      WHERE b.is_active = true
+        AND b.created_at >= CURRENT_DATE - INTERVAL '30 days'
+        AND (COALESCE(rc.rating_count, 0) = 0 OR b.average_rating >= 3.5)
+      ORDER BY b.created_at DESC, b.average_rating DESC
       LIMIT $1
     `;
         const result = await this.db.query(query, [limit]);
@@ -228,20 +262,20 @@ class BandService {
         return result.rows.map((row) => row.genre);
     }
     /**
-     * Update band rating after review
+     * Update band rating after check-in
      */
     async updateBandRating(bandId) {
         const query = `
-      UPDATE bands 
-      SET 
+      UPDATE bands
+      SET
         average_rating = (
           SELECT COALESCE(AVG(rating::numeric), 0)
-          FROM reviews 
+          FROM checkin_band_ratings
           WHERE band_id = $1
         ),
-        total_reviews = (
+        total_checkins = (
           SELECT COUNT(*)
-          FROM reviews
+          FROM checkin_band_ratings
           WHERE band_id = $1
         ),
         updated_at = CURRENT_TIMESTAMP
@@ -268,9 +302,9 @@ class BandService {
        JOIN events e ON c.event_id = e.id
        JOIN event_lineup el ON el.event_id = e.id
        WHERE el.band_id = $1`, [bandId]);
-        // Average rating from reviews
+        // Average rating from checkin band ratings
         const ratingResult = await this.db.query(`SELECT COALESCE(AVG(rating)::numeric(3,2), 0) AS avg_rating
-       FROM reviews WHERE band_id = $1`, [bandId]);
+       FROM checkin_band_ratings WHERE band_id = $1`, [bandId]);
         // Recent events count (last 90 days)
         const recentEventsResult = await this.db.query(`SELECT COUNT(DISTINCT e.id) AS recent_events
        FROM events e
@@ -316,7 +350,7 @@ class BandService {
             imageUrl: row.image_url,
             hometown: row.hometown,
             averageRating: parseFloat(row.average_rating || 0),
-            totalReviews: parseInt(row.total_reviews || 0),
+            totalCheckins: parseInt(row.total_checkins || 0),
             isActive: row.is_active,
             claimedByUserId: row.claimed_by_user_id || undefined,
             createdAt: row.created_at,
@@ -327,7 +361,7 @@ class BandService {
      * Convert camelCase to snake_case
      */
     camelToSnakeCase(str) {
-        return str.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+        return str.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
     }
 }
 exports.BandService = BandService;

@@ -2,93 +2,77 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/providers.dart';
 import '../domain/venue.dart';
 import '../../../shared/widgets/venue_card.dart';
 import '../../../shared/widgets/venue_card_skeleton.dart';
 import '../../../shared/widgets/empty_state_widget.dart';
-import '../../../shared/widgets/error_state_widget.dart';
+import 'providers/venue_providers.dart';
 import 'venue_filters_notifier.dart';
 import 'venue_filters_state.dart';
 import 'widgets/venue_filters_sheet.dart';
 
-final filteredVenuesProvider = FutureProvider.autoDispose<List<Venue>>((ref) async {
-  final repository = ref.watch(venueRepositoryProvider);
-  final filters = ref.watch(venueFiltersProvider);
-
-  // Get venues with filter parameters
-  final venues = await repository.getVenues();
-
-  // Apply client-side filtering and sorting
-  final filtered = venues.where((venue) {
-    // Venue type filter
-    if (filters.venueTypes.isNotEmpty) {
-      if (venue.venueType == null || !filters.venueTypes.contains(venue.venueType)) {
-        return false;
-      }
-    }
-
-    // City filter
-    if (filters.cities.isNotEmpty && venue.city != null) {
-      if (!filters.cities.contains(venue.city)) {
-        return false;
-      }
-    }
-
-    // Capacity filter
-    if (filters.minCapacity != null && venue.capacity != null) {
-      if (venue.capacity! < filters.minCapacity!) {
-        return false;
-      }
-    }
-    if (filters.maxCapacity != null && venue.capacity != null) {
-      if (venue.capacity! > filters.maxCapacity!) {
-        return false;
-      }
-    }
-
-    // Rating filter
-    if (filters.minRating != null) {
-      if (venue.averageRating < filters.minRating!) {
-        return false;
-      }
-    }
-
-    return true;
-  }).toList();
-
-  // Apply sorting
-  switch (filters.sortBy) {
-    case VenueSortBy.nameAsc:
-      filtered.sort((a, b) => a.name.compareTo(b.name));
-      break;
-    case VenueSortBy.nameDesc:
-      filtered.sort((a, b) => b.name.compareTo(a.name));
-      break;
-    case VenueSortBy.ratingDesc:
-      filtered.sort((a, b) => b.averageRating.compareTo(a.averageRating));
-      break;
-    case VenueSortBy.ratingAsc:
-      filtered.sort((a, b) => a.averageRating.compareTo(b.averageRating));
-      break;
-    case VenueSortBy.checkinCountDesc:
-      filtered.sort((a, b) => b.totalCheckins.compareTo(a.totalCheckins));
-      break;
-    case VenueSortBy.newestFirst:
-      filtered.sort((a, b) => b.createdAt.compareTo(a.createdAt));
-      break;
-  }
-
-  return filtered;
-});
-
-class VenuesScreen extends ConsumerWidget {
+class VenuesScreen extends ConsumerStatefulWidget {
   const VenuesScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final venuesAsync = ref.watch(filteredVenuesProvider);
+  ConsumerState<VenuesScreen> createState() => _VenuesScreenState();
+}
+
+class _VenuesScreenState extends ConsumerState<VenuesScreen> {
+  late final ScrollController _scrollController;
+  bool _isLoadingMore = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _scrollController = ScrollController();
+    _scrollController.addListener(_onScroll);
+  }
+
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll);
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (!_scrollController.hasClients) return;
+
+    final maxScroll = _scrollController.position.maxScrollExtent;
+    final currentScroll = _scrollController.position.pixels;
+    const scrollThreshold = 200.0;
+
+    final venuesState = ref.read(paginatedVenuesProvider);
+
+    if (currentScroll >= maxScroll - scrollThreshold &&
+        !venuesState.isLoading &&
+        venuesState.hasMore &&
+        !_isLoadingMore) {
+      setState(() {
+        _isLoadingMore = true;
+      });
+      ref.read(paginatedVenuesProvider.notifier).loadMore().then((_) {
+        if (mounted) {
+          setState(() {
+            _isLoadingMore = false;
+          });
+        }
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final venuesState = ref.watch(paginatedVenuesProvider);
     final filters = ref.watch(venueFiltersProvider);
+
+    // Listen for filter changes and update paginated provider
+    ref.listen(venueFiltersProvider, (previous, next) {
+      if (previous != next) {
+        ref.read(paginatedVenuesProvider.notifier).updateFilters(next);
+      }
+    });
 
     return Scaffold(
       appBar: AppBar(
@@ -192,50 +176,106 @@ class VenuesScreen extends ConsumerWidget {
                 ),
               ),
             ),
-          Expanded(
-            child: venuesAsync.when(
-              data: (venues) => RefreshIndicator(
-                onRefresh: () async {
-                  ref.invalidate(filteredVenuesProvider);
-                },
-                child: venues.isEmpty
-                    ? filters.hasActiveFilters
-                        ? EmptyStateWidget(
-                            type: EmptyStateType.noSearchResults,
-                            customTitle: 'No Venues Found',
-                            customMessage: 'No venues match your current filters. Try adjusting your filter criteria.',
-                            actionLabel: 'Clear Filters',
-                            onAction: () => ref.read(venueFiltersProvider.notifier).clearAll(),
-                          )
-                        : EmptyStateWidget(
-                            type: EmptyStateType.noVenues,
-                            onAction: () => ref.invalidate(filteredVenuesProvider),
-                          )
-                    : ListView.builder(
-                        padding: const EdgeInsets.all(AppTheme.spacing16),
-                        itemCount: venues.length,
-                        itemBuilder: (context, index) {
-                          return VenueCard(
-                            venue: venues[index],
-                            onTap: () => context.push('/venues/${venues[index].id}'),
-                          );
-                        },
+          // Error banner
+          if (venuesState.error != null)
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacing16, vertical: AppTheme.spacing8),
+              padding: const EdgeInsets.all(AppTheme.spacing12),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.errorContainer,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    color: Theme.of(context).colorScheme.error,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      venuesState.error!.message,
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 14,
                       ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(paginatedVenuesProvider.notifier).loadMore();
+                    },
+                    child: const Text('Retry'),
+                  ),
+                ],
               ),
-              loading: () => ListView.builder(
-                padding: const EdgeInsets.all(AppTheme.spacing16),
-                itemCount: 5,
-                itemBuilder: (context, index) => const VenueCardSkeleton(),
-              ),
-              error: (error, stackTrace) => ErrorStateWidget(
-                error: error,
-                stackTrace: stackTrace,
-                onRetry: () => ref.invalidate(filteredVenuesProvider),
-              ),
+            ),
+          Expanded(
+            child: RefreshIndicator(
+              onRefresh: () async {
+                await ref.read(paginatedVenuesProvider.notifier).refresh();
+              },
+              child: _buildVenuesList(context, ref, venuesState, filters),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildVenuesList(
+    BuildContext context,
+    WidgetRef ref,
+    VenuePaginationState venuesState,
+    VenueFiltersState filters,
+  ) {
+    // Show loading skeleton on initial load
+    if (venuesState.isLoading && venuesState.venues.isEmpty) {
+      return ListView.builder(
+        padding: const EdgeInsets.all(AppTheme.spacing16),
+        itemCount: 5,
+        itemBuilder: (context, index) => const VenueCardSkeleton(),
+      );
+    }
+
+    // Show empty state
+    if (venuesState.venues.isEmpty && !venuesState.isLoading) {
+      return filters.hasActiveFilters
+          ? EmptyStateWidget(
+              type: EmptyStateType.noSearchResults,
+              customTitle: 'No Venues Found',
+              customMessage: 'No venues match your current filters. Try adjusting your filter criteria.',
+              actionLabel: 'Clear Filters',
+              onAction: () => ref.read(venueFiltersProvider.notifier).clearAll(),
+            )
+          : EmptyStateWidget(
+              type: EmptyStateType.noVenues,
+              onAction: () => ref.read(paginatedVenuesProvider.notifier).refresh(),
+            );
+    }
+
+    // Show venues list with infinite scroll
+    return ListView.builder(
+      controller: _scrollController,
+      padding: const EdgeInsets.all(AppTheme.spacing16),
+      itemCount: venuesState.venues.length + (venuesState.hasMore ? 1 : 0),
+      itemBuilder: (context, index) {
+        // Loading indicator at the end
+        if (index >= venuesState.venues.length) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+
+        return VenueCard(
+          venue: venuesState.venues[index],
+          onTap: () => context.push('/venues/${venuesState.venues[index].id}'),
+        );
+      },
     );
   }
 

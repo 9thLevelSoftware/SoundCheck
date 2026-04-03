@@ -1,5 +1,5 @@
 import { Resend } from 'resend';
-import logger, { logInfo, logWarn, logError } from '../utils/logger';
+import { logInfo, logWarn, logError } from '../utils/logger';
 
 /**
  * EmailService - Resend wrapper for transactional email with graceful degradation.

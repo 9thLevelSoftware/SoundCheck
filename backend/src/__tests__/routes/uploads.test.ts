@@ -79,7 +79,6 @@ describe('Uploads Route', () => {
       const response = await request(app).get(`/api/uploads/profiles/${testFilename}`);
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBeDefined();
     });
 
@@ -92,7 +91,7 @@ describe('Uploads Route', () => {
         .set('Authorization', 'Bearer invalid-token');
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
     });
 
     it('should return file for authenticated users', async () => {
@@ -133,7 +132,6 @@ describe('Uploads Route', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(404);
-      expect(response.body.success).toBe(false);
       expect(response.body.error).toBe('File not found');
     });
 
@@ -176,7 +174,7 @@ describe('Uploads Route', () => {
         .set('Authorization', 'Bearer valid-token');
 
       expect(response.status).toBe(401);
-      expect(response.body.success).toBe(false);
+      expect(response.body.error).toBeDefined();
     });
   });
 });

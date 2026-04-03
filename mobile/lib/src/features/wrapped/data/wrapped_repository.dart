@@ -1,4 +1,8 @@
+import 'package:dartz/dartz.dart';
+import 'package:dio/dio.dart';
+
 import '../../../core/api/dio_client.dart';
+import '../../../core/error/failures.dart';
 import '../../sharing/data/share_repository.dart';
 import '../domain/wrapped_stats.dart';
 
@@ -6,31 +10,54 @@ class WrappedRepository {
   final DioClient _dioClient;
   WrappedRepository(this._dioClient);
 
-  Future<WrappedStats> getWrappedStats(int year) async {
-    final response = await _dioClient.get('/wrapped/$year');
-    return WrappedStats.fromJson(response.data['data'] as Map<String, dynamic>);
+  /// Helper method to map errors to Failures
+  Failure _mapErrorToFailure(Object e) {
+    if (e is Failure) return e;
+    if (e is DioException) return DioClient.handleDioError(e);
+    return ServerFailure('Unexpected error: $e');
   }
 
-  Future<WrappedStats> getWrappedDetailStats(int year) async {
-    final response = await _dioClient.get('/wrapped/$year/detail');
-    return WrappedStats.fromJson(response.data['data'] as Map<String, dynamic>);
+  Future<Either<Failure, WrappedStats>> getWrappedStats(int year) async {
+    try {
+      final response = await _dioClient.get('/wrapped/$year');
+      return Right(WrappedStats.fromJson(response.data['data'] as Map<String, dynamic>));
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 
-  Future<ShareCardUrls> generateSummaryCard(int year) async {
-    final response = await _dioClient.post('/wrapped/$year/card/summary');
-    final data = response.data['data'] as Map<String, dynamic>;
-    return ShareCardUrls(
-      ogUrl: data['ogUrl'] as String,
-      storiesUrl: data['storiesUrl'] as String,
-    );
+  Future<Either<Failure, WrappedStats>> getWrappedDetailStats(int year) async {
+    try {
+      final response = await _dioClient.get('/wrapped/$year/detail');
+      return Right(WrappedStats.fromJson(response.data['data'] as Map<String, dynamic>));
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 
-  Future<ShareCardUrls> generateStatCard(int year, String statType) async {
-    final response = await _dioClient.post('/wrapped/$year/card/$statType');
-    final data = response.data['data'] as Map<String, dynamic>;
-    return ShareCardUrls(
-      ogUrl: data['ogUrl'] as String,
-      storiesUrl: data['storiesUrl'] as String,
-    );
+  Future<Either<Failure, ShareCardUrls>> generateSummaryCard(int year) async {
+    try {
+      final response = await _dioClient.post('/wrapped/$year/card/summary');
+      final data = response.data['data'] as Map<String, dynamic>;
+      return Right(ShareCardUrls(
+        ogUrl: data['ogUrl'] as String,
+        storiesUrl: data['storiesUrl'] as String,
+      ));
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
+  }
+
+  Future<Either<Failure, ShareCardUrls>> generateStatCard(int year, String statType) async {
+    try {
+      final response = await _dioClient.post('/wrapped/$year/card/$statType');
+      final data = response.data['data'] as Map<String, dynamic>;
+      return Right(ShareCardUrls(
+        ogUrl: data['ogUrl'] as String,
+        storiesUrl: data['storiesUrl'] as String,
+      ));
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
   }
 }

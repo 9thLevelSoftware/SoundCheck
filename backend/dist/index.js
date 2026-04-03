@@ -23,7 +23,6 @@ const helmet_1 = __importDefault(require("helmet"));
 const userRoutes_1 = __importDefault(require("./routes/userRoutes"));
 const venueRoutes_1 = __importDefault(require("./routes/venueRoutes"));
 const bandRoutes_1 = __importDefault(require("./routes/bandRoutes"));
-const reviewRoutes_1 = __importDefault(require("./routes/reviewRoutes"));
 const badgeRoutes_1 = __importDefault(require("./routes/badgeRoutes"));
 const discoveryRoutes_1 = __importDefault(require("./routes/discoveryRoutes"));
 const eventRoutes_1 = __importDefault(require("./routes/eventRoutes"));
@@ -57,6 +56,10 @@ const badgeWorker_1 = require("./jobs/badgeWorker");
 const notificationWorker_1 = require("./jobs/notificationWorker");
 const moderationWorker_1 = require("./jobs/moderationWorker");
 const syncScheduler_1 = require("./jobs/syncScheduler");
+const badgeQueue_1 = require("./jobs/badgeQueue");
+const notificationQueue_1 = require("./jobs/notificationQueue");
+const moderationQueue_1 = require("./jobs/moderationQueue");
+const queue_1 = require("./jobs/queue");
 const fs_1 = require("fs");
 const path_1 = require("path");
 const auth_1 = require("./middleware/auth");
@@ -87,13 +90,13 @@ app.use((0, helmet_1.default)({
         directives: {
             defaultSrc: ["'self'"],
             styleSrc: ["'self'", "'unsafe-inline'"],
-            imgSrc: ["'self'", "data:", "https:"],
+            imgSrc: ["'self'", 'data:', 'https:'],
             scriptSrc: ["'self'"],
         },
     },
     crossOriginEmbedderPolicy: true,
     crossOriginOpenerPolicy: true,
-    crossOriginResourcePolicy: { policy: "same-site" },
+    crossOriginResourcePolicy: { policy: 'same-site' },
     dnsPrefetchControl: true,
     frameguard: { action: 'deny' },
     hidePoweredBy: true,
@@ -128,7 +131,7 @@ const corsOptions = {
             }
             return callback(null, true);
         }
-        const allowedOrigins = corsOrigin.split(',').map(o => o.trim());
+        const allowedOrigins = corsOrigin.split(',').map((o) => o.trim());
         if (allowedOrigins.includes(origin)) {
             return callback(null, true);
         }
@@ -156,22 +159,33 @@ app.use((req, res, next) => {
 app.get('/health', async (req, res) => {
     try {
         const db = database_1.default.getInstance();
-        const isDbHealthy = await db.healthCheck();
+        const dbHealth = await db.healthCheck();
+        const poolMetrics = db.getPoolMetrics();
         const wsStats = (0, websocket_1.getWebSocketStats)();
+        // Determine overall health status
+        // Degraded if: DB unhealthy OR too many waiting clients (indicates pool exhaustion)
+        const isPoolExhausted = poolMetrics.waitingCount > 10;
+        const isDegraded = !dbHealth.healthy || isPoolExhausted;
+        const status = isDegraded ? (dbHealth.healthy ? 'degraded' : 'unhealthy') : 'healthy';
+        const statusCode = dbHealth.healthy ? (isDegraded ? 503 : 200) : 503;
         const response = {
-            success: true,
+            success: dbHealth.healthy,
             data: {
-                status: 'healthy',
+                status,
                 timestamp: new Date().toISOString(),
                 version: APP_VERSION,
-                database: isDbHealthy ? 'connected' : 'disconnected',
+                database: {
+                    status: dbHealth.healthy ? 'connected' : 'disconnected',
+                    error: dbHealth.error,
+                    pool: poolMetrics,
+                },
                 websocket: {
                     enabled: process.env.ENABLE_WEBSOCKET === 'true',
                     ...wsStats,
                 },
             },
         };
-        res.status(200).json(response);
+        res.status(statusCode).json(response);
     }
     catch (error) {
         const response = {
@@ -181,11 +195,40 @@ app.get('/health', async (req, res) => {
         res.status(503).json(response);
     }
 });
+// Queue health/monitoring endpoint
+app.get('/health/queues', async (req, res) => {
+    try {
+        const queueMetrics = await Promise.all([
+            badgeQueue_1.badgeEvalQueue?.getJobCounts().then((counts) => ({ queue: 'badge-eval', ...counts })) ??
+                Promise.resolve({ queue: 'badge-eval', status: 'disabled' }),
+            notificationQueue_1.notificationQueue?.getJobCounts().then((counts) => ({ queue: 'notification-batch', ...counts })) ??
+                Promise.resolve({ queue: 'notification-batch', status: 'disabled' }),
+            moderationQueue_1.moderationQueue?.getJobCounts().then((counts) => ({ queue: 'image-moderation', ...counts })) ??
+                Promise.resolve({ queue: 'image-moderation', status: 'disabled' }),
+            queue_1.eventSyncQueue?.getJobCounts().then((counts) => ({ queue: 'event-sync', ...counts })) ??
+                Promise.resolve({ queue: 'event-sync', status: 'disabled' }),
+        ]);
+        const response = {
+            success: true,
+            data: {
+                timestamp: new Date().toISOString(),
+                queues: queueMetrics,
+            },
+        };
+        res.status(200).json(response);
+    }
+    catch (error) {
+        const response = {
+            success: false,
+            error: 'Queue health check failed',
+        };
+        res.status(503).json(response);
+    }
+});
 // API routes
 app.use('/api/users', userRoutes_1.default);
 app.use('/api/venues', venueRoutes_1.default);
 app.use('/api/bands', bandRoutes_1.default);
-app.use('/api/reviews', reviewRoutes_1.default);
 app.use('/api/badges', badgeRoutes_1.default);
 app.use('/api/discover', discoveryRoutes_1.default);
 app.use('/api/events', eventRoutes_1.default);
@@ -302,7 +345,7 @@ const startServer = async () => {
         (0, logger_1.logInfo)('Database connection established');
         // Warn about CORS configuration in production
         if (process.env.NODE_ENV === 'production' && !process.env.CORS_ORIGIN) {
-            (0, logger_1.logWarn)('CORS_ORIGIN not set - CORS will allow all origins. Set CORS_ORIGIN for web clients.');
+            (0, logger_1.logWarn)('CORS_ORIGIN not set - browser-origin requests will be REJECTED. Mobile (no-origin) requests still allowed. Set CORS_ORIGIN to enable web clients.');
         }
         // Initialize WebSocket server
         (0, websocket_1.initWebSocket)(server);
@@ -320,7 +363,7 @@ const startServer = async () => {
         badgeWorker = (0, badgeWorker_1.startBadgeEvalWorker)();
         notifWorker = (0, notificationWorker_1.startNotificationWorker)();
         modWorker = (0, moderationWorker_1.startModerationWorker)();
-        (0, syncScheduler_1.registerSyncJobs)().catch(err => (0, logger_1.logError)('Failed to register sync jobs', { error: err.message || err }));
+        (0, syncScheduler_1.registerSyncJobs)().catch((err) => (0, logger_1.logError)('Failed to register sync jobs', { error: err.message || err }));
     }
     catch (error) {
         (0, logger_1.logError)('Failed to start server', { error });
@@ -369,11 +412,14 @@ process.on('uncaughtException', (error) => {
     process.exit(1);
 });
 process.on('unhandledRejection', (reason, promise) => {
+    // INF-012: Log and report but do NOT exit the process.
+    // Unhandled rejections are often transient (e.g., a failed fire-and-forget
+    // cache invalidation). Exiting burns through restartPolicyMaxRetries and
+    // can take the service down permanently.
     (0, logger_1.logError)('Unhandled Rejection', { reason, promise });
     if (reason instanceof Error) {
         (0, sentry_1.captureException)(reason, { type: 'unhandledRejection' });
     }
-    process.exit(1);
 });
 startServer();
 //# sourceMappingURL=index.js.map
