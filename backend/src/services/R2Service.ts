@@ -100,7 +100,7 @@ export class R2Service {
     }
 
     if (
-      contentLength == null ||
+      contentLength === undefined ||
       !Number.isInteger(contentLength) ||
       contentLength <= 0 ||
       contentLength > MAX_UPLOAD_FILE_SIZE_BYTES

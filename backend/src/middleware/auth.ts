@@ -23,7 +23,11 @@ export function accessTokenPredatesCredentialChange(
     return false;
   }
   const changedMs = new Date(credentialsChangedAt).getTime();
-  if (issuedAtSeconds == null || !Number.isFinite(issuedAtSeconds) || Number.isNaN(changedMs)) {
+  if (
+    issuedAtSeconds === undefined ||
+    !Number.isFinite(issuedAtSeconds) ||
+    Number.isNaN(changedMs)
+  ) {
     return true;
   }
   return issuedAtSeconds < Math.floor(changedMs / 1000);

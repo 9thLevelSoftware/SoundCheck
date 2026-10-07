@@ -9,7 +9,9 @@ export interface WebhookAuthHealth {
  * RevenueCat will not update premium state when the webhook secret is missing.
  * Surface that to operators without turning a config gap into a process crash.
  */
-export function revenueCatWebhookHealth(env: NodeJS.ProcessEnv = process.env): WebhookAuthHealth {
+export function revenueCatWebhookHealth(
+  env: { REVENUECAT_WEBHOOK_AUTH?: string } = process.env
+): WebhookAuthHealth {
   const secret = env.REVENUECAT_WEBHOOK_AUTH;
   const configured = typeof secret === 'string' && secret.trim().length > 0;
   return {
