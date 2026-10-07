@@ -7,6 +7,7 @@ import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
 import { sanitizeUserForClient } from '../utils/dbMappers';
 import { asyncHandler } from '../utils/asyncHandler';
 import { UnauthorizedError, NotFoundError, BadRequestError } from '../utils/errors';
+import { isValidUUID } from '../utils/validationSchemas';
 
 // UUID validation regex (supports UUID v1-5)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -123,13 +124,15 @@ export class UserController {
   });
 
   /**
-   * Get user by username
+   * Get a public profile by username, or by user id when the param is a UUID.
    * GET /api/users/:username
    */
   getUserByUsername = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { username } = routeParams(req);
 
-    const user = await this.userService.findByUsername(username);
+    const user = isValidUUID(username)
+      ? await this.userService.findById(username)
+      : await this.userService.findByUsername(username);
 
     if (!user) {
       throw new NotFoundError('User not found');

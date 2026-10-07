@@ -349,6 +349,10 @@ app.get('/health/queues', async (req, res) => {
 });
 
 // API routes
+// Export and consent paths must be registered before userRoutes. That router
+// ends with GET /:username, which would otherwise treat "export" and "consents" as usernames.
+app.use('/api/users', dataExportRoutes);
+app.use('/api/users/consents', consentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/bands', bandRoutes);
@@ -361,8 +365,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/tokens', tokenRoutes);
-app.use('/api/users', dataExportRoutes);
-app.use('/api/users/consents', consentRoutes);
 app.use('/api/auth/social', socialAuthRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/reports', reportRoutes);

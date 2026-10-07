@@ -279,16 +279,23 @@ function sendRateLimitExceeded(res: Response): void {
   res.status(429).json(response);
 }
 
+let nextRateLimitBucket = 0;
+
 export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) => {
+  // Each middleware instance keeps its own counter. A shared IP key let
+  // high-volume catalog reads exhaust the login limiter.
+  const bucket = `b${nextRateLimitBucket++}`;
+
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+    const subject = `${bucket}:${clientIP}`;
     const requestPath = requestPathForRateLimit(req);
     const isCritical = isCriticalEndpoint(requestPath) || isCriticalEndpoint(req.path);
 
     try {
       // Try Redis first
       if (getRedis()) {
-        const key = `rate_limit:${clientIP}`;
+        const key = `rate_limit:${subject}`;
         const result = await checkRateLimit(key, maxRequests, windowMs);
 
         setRateLimitHeaders(res, maxRequests, result.remaining, result.resetAt);
@@ -309,7 +316,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
         });
       }
 
-      const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
+      const result = checkInMemoryRateLimit(subject, windowMs, maxRequests);
       setRateLimitHeaders(res, maxRequests, result.remaining, result.resetAt);
 
       if (!result.allowed) {
@@ -331,7 +338,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
         });
       }
 
-      const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
+      const result = checkInMemoryRateLimit(subject, windowMs, maxRequests);
       setRateLimitHeaders(res, maxRequests, result.remaining, result.resetAt);
       if (!result.allowed) {
         sendRateLimitExceeded(res);

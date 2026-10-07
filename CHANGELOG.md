@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
   - Base URL: `https://api.setlist.fm/rest/1.0`
   - Authentication: `x-api-key` header (no Bearer prefix needed)
   - Rate Limits: 2 requests/second, 1440 requests/day
-  - API Key: `Oshv7jIuK1HJQFaYApwqmVNGvA52MiSyh-K-` (free for non-commercial use)
+  - API Key: set via `SETLISTFM_API_KEY` (not stored in the repo; free tier is non-commercial)
 
 - **Key Features**:
   - Venue search with coordinates for mapping
