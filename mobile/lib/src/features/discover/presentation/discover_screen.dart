@@ -116,7 +116,7 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
               floating: true,
               pinned: true,
               backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-              expandedHeight: 140,
+              expandedHeight: 188,
               flexibleSpace: FlexibleSpaceBar(
                 background: Container(
                   padding: const EdgeInsets.fromLTRB(16, 60, 16, 16),

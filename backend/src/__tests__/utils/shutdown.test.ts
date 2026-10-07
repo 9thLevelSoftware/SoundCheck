@@ -12,7 +12,7 @@ describe('shutdownWithBudget', () => {
       closeServer,
       closeResources,
       exit,
-      setTimer: () => ({}) as NodeJS.Timeout,
+      setTimer: () => ({}) as ReturnType<typeof setTimeout>,
       clearTimer,
       log: jest.fn(),
     });
@@ -36,7 +36,7 @@ describe('shutdownWithBudget', () => {
         exit,
         setTimer: (fn: () => void) => {
           fire = fn;
-          return {} as NodeJS.Timeout;
+          return {} as ReturnType<typeof setTimeout>;
         },
         clearTimer: jest.fn(),
         log: jest.fn(),
@@ -64,7 +64,7 @@ describe('closeHttpServer', () => {
 
     await closeHttpServer(server, 5, ((fn: () => void) => {
       fn();
-      return {} as NodeJS.Timeout;
+      return {} as ReturnType<typeof setTimeout>;
     }) as typeof setTimeout);
 
     expect(closeAllConnections).toHaveBeenCalledTimes(1);

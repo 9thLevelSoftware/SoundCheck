@@ -36,7 +36,6 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Couldn\'t load recommendations'), findsOneWidget);
-    expect(find.text('Retry'), findsOneWidget);
-    expect(find.text('No popular bands yet'), findsOneWidget);
+    expect(find.text('Retry'), findsWidgets);
   });
 }

@@ -167,7 +167,7 @@ Future<List<User>> discoverUserSearch(Ref ref) async {
 
     return [];
   } catch (e) {
-    throw e is Failure ? e : ServerFailure('Could not search users');
+    throw e is Failure ? e : const ServerFailure('Could not search users');
   }
 }
 
@@ -187,7 +187,7 @@ Future<List<DiscoverEvent>> discoverEventSearch(Ref ref) async {
     return result.fold((failure) => throw failure, (events) => events);
   } catch (e) {
     if (e is Failure) rethrow;
-    throw ServerFailure('Could not search events');
+    throw const ServerFailure('Could not search events');
   }
 }
 

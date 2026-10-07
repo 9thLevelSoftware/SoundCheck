@@ -21,7 +21,6 @@ jest.mock('../../utils/auth', () => ({
  */
 describe('Uploads Route', () => {
   let app: express.Express;
-  let mockUserService: jest.Mocked<UserService>;
   const mockAuthUtils = AuthUtils as jest.Mocked<typeof AuthUtils>;
 
   const testUploadDir = path.join(__dirname, '../../../uploads/profiles');
@@ -58,9 +57,6 @@ describe('Uploads Route', () => {
     // Import and use the uploads route
     const uploadsRoutes = (await import('../../routes/uploadsRoutes')).default;
     app.use('/api/uploads', uploadsRoutes);
-
-    // Setup mock user service
-    mockUserService = new UserService() as jest.Mocked<UserService>;
   });
 
   afterEach(() => {

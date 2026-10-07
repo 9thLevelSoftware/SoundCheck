@@ -5,8 +5,8 @@ export interface ShutdownHooks {
   closeServer: () => Promise<void>;
   closeResources: () => Promise<void>;
   exit: (code: number) => void;
-  setTimer: (fn: () => void, ms: number) => NodeJS.Timeout;
-  clearTimer: (timer: NodeJS.Timeout) => void;
+  setTimer: (fn: () => void, ms: number) => ReturnType<typeof setTimeout>;
+  clearTimer: (timer: ReturnType<typeof setTimeout>) => void;
   log: (message: string) => void;
 }
 
