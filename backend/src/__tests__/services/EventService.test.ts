@@ -129,7 +129,10 @@ describe('EventService', () => {
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [{ checkin_count: '0' }] });
 
-      await expect(eventService.getEventById('non-existent')).rejects.toThrow('Event not found');
+      await expect(eventService.getEventById('non-existent')).rejects.toMatchObject({
+        message: 'Event not found',
+        statusCode: 404,
+      });
     });
 
     it('should handle event with empty lineup', async () => {

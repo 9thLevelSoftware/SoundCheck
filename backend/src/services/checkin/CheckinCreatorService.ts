@@ -75,7 +75,7 @@ export class CheckinCreatorService {
    * Enforces one check-in per user per event via unique constraint.
    */
   async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
-    const { userId, eventId, locationLat, locationLon, comment, vibeTagIds } = data;
+    const { userId, eventId, locationLat, locationLon, comment, rating, vibeTagIds } = data;
     const client = await this.db.getClient();
 
     try {
@@ -147,7 +147,7 @@ export class CheckinCreatorService {
           locationLat || null,
           locationLon || null,
           event.event_date,
-          0, // rating starts at 0, set via PATCH /ratings
+          rating ?? 0,
           comment || null,
         ]);
       } catch (error: any) {
@@ -335,7 +335,7 @@ export class CheckinCreatorService {
           isVerified,
           comment || null,
           comment || null,
-          rating || 0,
+          rating ?? 0,
           locationLat || null,
           locationLon || null,
         ]);

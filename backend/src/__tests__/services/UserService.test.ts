@@ -167,9 +167,35 @@ describe('UserService', () => {
 
       mockDb.query.mockResolvedValueOnce({ rows: [] }); // No user found
 
-      await expect(userService.authenticateUser(loginData)).rejects.toThrow(
-        'Invalid email or password'
-      );
+      await expect(userService.authenticateUser(loginData)).rejects.toMatchObject({
+        statusCode: 401,
+        message: 'Invalid email or password',
+      });
+    });
+
+    it('returns 401 when the password does not match', async () => {
+      mockDb.query.mockResolvedValueOnce({
+        rows: [
+          {
+            id: 'user-123',
+            email: 'test@example.com',
+            password_hash: 'hashedPassword',
+            username: 'testuser',
+            is_active: true,
+          },
+        ],
+      });
+      (AuthUtils.comparePassword as jest.Mock).mockResolvedValue(false);
+
+      await expect(
+        userService.authenticateUser({
+          email: 'test@example.com',
+          password: 'WrongPassword',
+        })
+      ).rejects.toMatchObject({
+        statusCode: 401,
+        message: 'Invalid email or password',
+      });
     });
 
     it('should throw error for inactive user', async () => {
@@ -190,6 +216,16 @@ describe('UserService', () => {
       await expect(userService.authenticateUser(loginData)).rejects.toThrow(
         'Account is deactivated'
       );
+    });
+  });
+
+  describe('updateProfile', () => {
+    it('returns 400 when no writable profile fields are provided', async () => {
+      await expect(userService.updateProfile('user-123', {})).rejects.toMatchObject({
+        statusCode: 400,
+        message: 'No valid fields to update',
+      });
+      expect(mockDb.query).not.toHaveBeenCalled();
     });
   });
 

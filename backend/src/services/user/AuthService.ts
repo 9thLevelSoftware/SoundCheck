@@ -13,6 +13,7 @@ import Database from '../../config/database';
 import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../../types';
 import { AuthUtils, generateRefreshToken } from '../../utils/auth';
 import { mapDbUserToUser, sanitizeUserForClient } from '../../utils/dbMappers';
+import { UnauthorizedError } from '../../utils/errors';
 
 export class AuthService {
   private db = Database.getInstance();
@@ -79,7 +80,7 @@ export class AuthService {
     // Find user by email
     const user = await this.findByEmailWithPassword(email);
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedError('Invalid email or password');
     }
 
     if (!user.isActive) {
@@ -89,7 +90,7 @@ export class AuthService {
     // Verify password
     const isValidPassword = await AuthUtils.comparePassword(password, user.passwordHash);
     if (!isValidPassword) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedError('Invalid email or password');
     }
 
     // Generate JWT token

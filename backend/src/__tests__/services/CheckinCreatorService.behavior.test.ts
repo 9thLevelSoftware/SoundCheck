@@ -178,6 +178,53 @@ describe('CheckinCreatorService critical behavior', () => {
     expect(mockClientRelease).toHaveBeenCalled();
   });
 
+  it('persists a rating sent with check-in creation instead of storing 0', async () => {
+    const today = new Date().toISOString().substring(0, 10);
+    mockClientQuery.mockImplementation(async (sql: string) => {
+      if (sql === 'BEGIN' || sql === 'COMMIT') return { rows: [], rowCount: 0 };
+      if (sql.includes('FROM events e')) {
+        return {
+          rows: [
+            {
+              id: eventId,
+              venue_id: venueId,
+              event_date: today,
+              venue_lat: '42.3601',
+              venue_lon: '-71.0589',
+              venue_type: 'club',
+            },
+          ],
+        };
+      }
+      if (sql.includes('FROM event_lineup')) return { rows: [{ band_id: bandId }] };
+      if (sql.includes('INSERT INTO checkins')) {
+        return { rows: [{ id: checkinId }], rowCount: 1 };
+      }
+      throw new Error(`Unexpected SQL: ${sql}`);
+    });
+
+    await new CheckinCreatorService(jest.fn().mockResolvedValue(fullCheckin)).createEventCheckin({
+      userId,
+      eventId,
+      rating: 4.5,
+      comment: 'Great set',
+    });
+
+    expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO checkins'), [
+      userId,
+      eventId,
+      venueId,
+      bandId,
+      false,
+      'Great set',
+      null,
+      null,
+      today,
+      4.5,
+      'Great set',
+    ]);
+  });
+
   it('rolls back a duplicate event check-in and returns a conflict without side effects', async () => {
     const today = new Date().toISOString().substring(0, 10);
     mockClientQuery.mockImplementation(async (sql: string) => {

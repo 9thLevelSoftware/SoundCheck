@@ -104,6 +104,26 @@ describe('CheckinController', () => {
       );
     });
 
+    it('passes a manual-style rating through event check-in creation', async () => {
+      setupApp('user-123');
+      mockCheckinService.createEventCheckin.mockResolvedValue({ ...mockCheckin, rating: 4.5 });
+
+      const response = await request(app)
+        .post('/checkins')
+        .send({ eventId: 'event-123', rating: 4.5, comment: 'Great set' });
+
+      expect(response.status).toBe(201);
+      expect(mockCheckinService.createEventCheckin).toHaveBeenCalledWith(
+        expect.objectContaining({
+          userId: 'user-123',
+          eventId: 'event-123',
+          rating: 4.5,
+          comment: 'Great set',
+        })
+      );
+      expect(mockCheckinService.createManualCheckin).not.toHaveBeenCalled();
+    });
+
     it('should return 401 when not authenticated', async () => {
       setupApp(null); // No authenticated user
 

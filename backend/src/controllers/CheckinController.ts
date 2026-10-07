@@ -50,6 +50,7 @@ export class CheckinController {
         locationLat: locationLat ?? checkinLatitude,
         locationLon: locationLon ?? checkinLongitude,
         comment,
+        rating,
         vibeTagIds,
       });
     } else if (bandId && venueId) {

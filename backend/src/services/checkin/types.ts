@@ -107,6 +107,7 @@ export interface CreateEventCheckinRequest {
   locationLat?: number;
   locationLon?: number;
   comment?: string;
+  rating?: number;
   vibeTagIds?: string[];
 }
 

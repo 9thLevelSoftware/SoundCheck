@@ -161,9 +161,10 @@ describe('CheckinQueryService', () => {
     it('should throw error when checkin not found', async () => {
       mockDb.query.mockResolvedValueOnce({ rows: [] });
 
-      await expect(checkinQueryService.getCheckinById(mockCheckinId)).rejects.toThrow(
-        'Check-in not found'
-      );
+      await expect(checkinQueryService.getCheckinById(mockCheckinId)).rejects.toMatchObject({
+        message: 'Check-in not found',
+        statusCode: 404,
+      });
     });
 
     it('should handle database errors', async () => {
