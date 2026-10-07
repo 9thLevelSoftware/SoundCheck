@@ -254,6 +254,85 @@ describe('CheckinCreatorService critical behavior', () => {
     expect(mockBadgeQueueAdd).not.toHaveBeenCalled();
   });
 
+  it('accepts a 01:00 local check-in for a show that started the previous evening', async () => {
+    jest.useFakeTimers({ now: new Date('2026-10-08T01:00:00.000Z') });
+    try {
+      mockClientQuery.mockImplementation(async (sql: string) => {
+        if (sql === 'BEGIN' || sql === 'COMMIT') return { rows: [], rowCount: 0 };
+        if (sql.includes('FROM events e')) {
+          return {
+            rows: [
+              {
+                id: eventId,
+                venue_id: venueId,
+                event_name: 'Late Set',
+                event_date: '2026-10-07',
+                start_time: '21:00:00',
+                timezone: 'UTC',
+                venue_lat: '42.3601',
+                venue_lon: '-71.0589',
+                venue_type: 'club',
+              },
+            ],
+          };
+        }
+        if (sql.includes('FROM event_lineup')) return { rows: [{ band_id: bandId }] };
+        if (sql.includes('INSERT INTO checkins')) {
+          return {
+            rows: [{ id: checkinId, created_at: '2026-10-08T01:00:00.000Z' }],
+            rowCount: 1,
+          };
+        }
+        throw new Error(`Unexpected SQL: ${sql}`);
+      });
+
+      const result = await new CheckinCreatorService(
+        jest.fn().mockResolvedValue(fullCheckin)
+      ).createEventCheckin({
+        userId,
+        eventId,
+      });
+
+      expect(result).toBe(fullCheckin);
+      expect(mockClientQuery).toHaveBeenCalledWith(
+        expect.stringContaining('INSERT INTO checkins'),
+        expect.any(Array)
+      );
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('rejects a check-in after the post-midnight window has closed', async () => {
+    jest.useFakeTimers({ now: new Date('2026-10-08T04:00:00.000Z') });
+    try {
+      mockClientQuery.mockImplementation(async (sql: string) => {
+        if (sql === 'BEGIN' || sql === 'ROLLBACK') return { rows: [] };
+        if (sql.includes('FROM events e')) {
+          return {
+            rows: [
+              {
+                id: eventId,
+                venue_id: venueId,
+                event_date: '2026-10-07',
+                start_time: '21:00:00',
+                timezone: 'UTC',
+              },
+            ],
+          };
+        }
+        throw new Error(`Unexpected SQL: ${sql}`);
+      });
+
+      await expect(
+        new CheckinCreatorService(jest.fn()).createEventCheckin({ userId, eventId })
+      ).rejects.toThrow('Check-in is not within the event time window');
+      expect(mockClientQuery).toHaveBeenCalledWith('ROLLBACK');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
   it('rolls back when the event is absent or cancelled', async () => {
     mockClientQuery.mockImplementation(async (sql: string) => {
       if (sql === 'BEGIN' || sql === 'ROLLBACK') return { rows: [] };

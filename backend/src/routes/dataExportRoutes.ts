@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { DataExportService } from '../services/DataExportService';
 import { AuditService } from '../services/AuditService';
-import { authenticateToken, rateLimit } from '../middleware/auth';
+import { authenticateToken, scopedRateLimit } from '../middleware/auth';
 import { ApiResponse } from '../types';
 
 const router = Router();
@@ -9,7 +9,7 @@ const dataExportService = new DataExportService();
 const auditService = new AuditService();
 
 // Rate limit for export endpoint (1 request per 5 minutes)
-const exportRateLimit = rateLimit(5 * 60 * 1000, 1);
+const exportRateLimit = scopedRateLimit('users-export', 5 * 60 * 1000, 1);
 
 /**
  * GET /api/users/export

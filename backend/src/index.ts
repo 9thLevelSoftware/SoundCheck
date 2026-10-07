@@ -22,6 +22,7 @@ initRedis();
 
 import express from 'express';
 import { createServer } from 'http';
+import { closeHttpServer, shutdownWithBudget } from './utils/shutdown';
 import cors from 'cors';
 import helmet from 'helmet';
 import { corsOptions } from './config/cors';
@@ -541,54 +542,37 @@ const startServer = async () => {
   }
 };
 
-// Handle graceful shutdown
-process.on('SIGTERM', async () => {
-  logInfo('SIGTERM received, shutting down gracefully');
-
-  // 1. Stop accepting new connections FIRST
-  await new Promise<void>((resolve) => {
-    server.close(() => {
-      logInfo('HTTP server closed');
-      resolve();
-    });
-  });
-
-  // 2. Then stop workers and close other resources
+async function closeRuntimeResources(): Promise<void> {
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
   if (modWorker) await stopModerationWorker(modWorker);
-  await closeSentry(2000); // Wait up to 2s for pending Sentry events
+  await closeSentry(2000);
   await closeRedis();
   websocket.close();
   const db = Database.getInstance();
   await db.close();
-  process.exit(0);
-});
+}
 
-process.on('SIGINT', async () => {
-  logInfo('SIGINT received, shutting down gracefully');
-
-  // 1. Stop accepting new connections FIRST
-  await new Promise<void>((resolve) => {
-    server.close(() => {
+function beginShutdown(signal: 'SIGTERM' | 'SIGINT'): void {
+  logInfo(`${signal} received, shutting down gracefully`);
+  void shutdownWithBudget(signal, {
+    closeServer: async () => {
+      await closeHttpServer(server);
       logInfo('HTTP server closed');
-      resolve();
-    });
+    },
+    closeResources: closeRuntimeResources,
+    exit: (code) => process.exit(code),
+    setTimer: (fn, ms) => setTimeout(fn, ms),
+    clearTimer: (timer) => {
+      clearTimeout(timer);
+    },
+    log: (message) => logInfo(message),
   });
+}
 
-  // 2. Then stop workers and close other resources
-  if (syncWorker) await stopEventSyncWorker(syncWorker);
-  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
-  if (notifWorker) await stopNotificationWorker(notifWorker);
-  if (modWorker) await stopModerationWorker(modWorker);
-  await closeSentry(2000); // Wait up to 2s for pending Sentry events
-  await closeRedis();
-  websocket.close();
-  const db = Database.getInstance();
-  await db.close();
-  process.exit(0);
-});
+process.on('SIGTERM', () => beginShutdown('SIGTERM'));
+process.on('SIGINT', () => beginShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {

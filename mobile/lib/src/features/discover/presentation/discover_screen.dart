@@ -25,7 +25,7 @@ part 'discover_screen.g.dart';
 Future<List<Band>> trendingBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   final result = await repository.getTrendingBands(limit: 10);
-  return result.fold((failure) => [], (bands) => bands);
+  return result.fold((failure) => throw failure, (bands) => bands);
 }
 
 /// Provider for top rated venues
@@ -40,7 +40,7 @@ Future<List<Venue>> topRatedVenues(Ref ref) async {
 Future<List<Band>> popularBands(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   final result = await repository.getPopularBands(limit: 10);
-  return result.fold((failure) => [], (bands) => bands);
+  return result.fold((failure) => throw failure, (bands) => bands);
 }
 
 /// Provider for nearby venues based on user location
@@ -279,22 +279,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
 
     // Error state
     if (searchResults.error != null) {
-      return const SliverPadding(
-        padding: EdgeInsets.all(16),
+      return SliverPadding(
+        padding: const EdgeInsets.all(16),
         sliver: SliverToBoxAdapter(
           child: Center(
             child: Padding(
-              padding: EdgeInsets.symmetric(vertical: 40),
+              padding: const EdgeInsets.symmetric(vertical: 40),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
+                  const Icon(
                     Icons.error_outline,
                     size: 48,
                     color: AppTheme.hotOrange,
                   ),
-                  SizedBox(height: 16),
-                  Text(
+                  const SizedBox(height: 16),
+                  const Text(
                     'Could not load search results',
                     style: TextStyle(
                       color: AppTheme.textPrimary,
@@ -302,13 +302,22 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                       fontWeight: FontWeight.w600,
                     ),
                   ),
-                  SizedBox(height: 8),
-                  Text(
+                  const SizedBox(height: 8),
+                  const Text(
                     'Please check your connection and try again',
                     style: TextStyle(
                       color: AppTheme.textTertiary,
                       fontSize: 14,
                     ),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ref.invalidate(discoverBandSearchProvider);
+                      ref.invalidate(discoverVenueSearchProvider);
+                      ref.invalidate(discoverUserSearchProvider);
+                      ref.invalidate(discoverEventSearchProvider);
+                    },
+                    child: const Text('Retry'),
                   ),
                 ],
               ),
@@ -911,14 +920,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 child: CircularProgressIndicator(color: AppTheme.voltLime),
               ),
             ),
-            error: (err, stack) => const Padding(
-              padding: EdgeInsets.all(16),
-              child: Center(
-                child: Text(
-                  'Error loading popular bands',
-                  style: TextStyle(color: AppTheme.textTertiary),
-                ),
-              ),
+            error: (err, stack) => _DiscoverSectionError(
+              message: 'Couldn\'t load popular bands',
+              onRetry: () => ref.invalidate(popularBandsProvider),
             ),
           ),
         ]),
@@ -985,7 +989,23 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
           SizedBox(height: 24),
         ],
       ),
-      error: (_, _) => const SizedBox.shrink(), // Hide on error
+      error: (_, _) => Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader(
+            title: 'For You',
+            subtitle: 'Based on your concert taste',
+          ),
+          SizedBox(
+            height: 120,
+            child: _DiscoverSectionError(
+              message: 'Couldn\'t load recommendations',
+              onRetry: () => ref.invalidate(recommendedEventsProvider),
+            ),
+          ),
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
@@ -1058,22 +1078,18 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: AppTheme.voltLime),
                 ),
-                error: (err, stack) => const Center(
-                  child: Text(
-                    'Error loading nearby shows',
-                    style: TextStyle(color: AppTheme.textTertiary),
-                  ),
+                error: (err, stack) => _DiscoverSectionError(
+                  message: 'Couldn\'t load nearby shows',
+                  onRetry: () => ref.invalidate(nearbyUpcomingEventsProvider),
                 ),
               );
             },
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppTheme.voltLime),
             ),
-            error: (err, stack) => const Center(
-              child: Text(
-                'Error checking location',
-                style: TextStyle(color: AppTheme.textTertiary),
-              ),
+            error: (err, stack) => _DiscoverSectionError(
+              message: 'Couldn\'t check location',
+              onRetry: () => ref.invalidate(locationStatusProvider),
             ),
           ),
         ),
@@ -1134,11 +1150,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 ),
               ),
             ),
-            error: (err, stack) => const Center(
-              child: Text(
-                'Error loading genres',
-                style: TextStyle(color: AppTheme.textTertiary, fontSize: 13),
-              ),
+            error: (err, stack) => _DiscoverSectionError(
+              message: 'Couldn\'t load genres',
+              onRetry: () => ref.invalidate(genreListProvider),
             ),
           ),
         ),
@@ -1222,14 +1236,9 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                         ),
                       ),
                     ),
-                    error: (err, stack) => const Center(
-                      child: Padding(
-                        padding: EdgeInsets.all(32),
-                        child: Text(
-                          'Error loading events',
-                          style: TextStyle(color: AppTheme.textTertiary),
-                        ),
-                      ),
+                    error: (err, stack) => _DiscoverSectionError(
+                      message: 'Couldn\'t load events',
+                      onRetry: () => ref.invalidate(genreEventsProvider(genre)),
                     ),
                   ),
                 ),
@@ -1293,22 +1302,18 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
                 loading: () => const Center(
                   child: CircularProgressIndicator(color: AppTheme.hotOrange),
                 ),
-                error: (err, stack) => const Center(
-                  child: Text(
-                    'Error loading trending shows',
-                    style: TextStyle(color: AppTheme.textTertiary),
-                  ),
+                error: (err, stack) => _DiscoverSectionError(
+                  message: 'Couldn\'t load trending shows',
+                  onRetry: () => ref.invalidate(trendingNearbyEventsProvider),
                 ),
               );
             },
             loading: () => const Center(
               child: CircularProgressIndicator(color: AppTheme.hotOrange),
             ),
-            error: (err, stack) => const Center(
-              child: Text(
-                'Error checking location',
-                style: TextStyle(color: AppTheme.textTertiary),
-              ),
+            error: (err, stack) => _DiscoverSectionError(
+              message: 'Couldn\'t check location',
+              onRetry: () => ref.invalidate(locationStatusProvider),
             ),
           ),
         ),
@@ -1318,6 +1323,37 @@ class _DiscoverScreenState extends ConsumerState<DiscoverScreen> {
 }
 
 /// Prompt widget for location permission
+class _DiscoverSectionError extends StatelessWidget {
+  const _DiscoverSectionError({required this.message, required this.onRetry});
+
+  final String message;
+  final VoidCallback onRetry;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: AppTheme.textTertiary,
+                fontSize: 13,
+              ),
+            ),
+            TextButton(onPressed: onRetry, child: const Text('Retry')),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _LocationPermissionPrompt extends StatelessWidget {
   const _LocationPermissionPrompt({
     required this.message,

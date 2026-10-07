@@ -18,7 +18,6 @@ void main() {
             _response({'data': _feedPageJson('global')}),
             _response({'data': _feedPageJson('friends')}),
             _response({'data': _feedPageJson('event')}),
-            _response({'data': _feedPageJson('events')}),
             _response({
               'data': [
                 {
@@ -57,10 +56,6 @@ void main() {
           cursor: 'e1',
           limit: 12,
         );
-        final events = await repository.getEventsFeed(
-          cursor: 'overview-1',
-          limit: 13,
-        );
         final happening = await repository.getHappeningNow();
         final unseen = await repository.getUnseenCounts();
         final marked = await repository.markFeedRead(
@@ -80,7 +75,6 @@ void main() {
           global,
           friends,
           event,
-          events,
           happening,
           unseen,
           marked,
@@ -118,11 +112,6 @@ void main() {
             'GET',
             '/feed/events/event-1',
             query: {'limit': 12, 'cursor': 'e1'},
-          ),
-          _call(
-            'GET',
-            '/feed/global',
-            query: {'limit': 13, 'cursor': 'overview-1'},
           ),
           _call('GET', '/feed/happening-now'),
           _call('GET', '/feed/unseen'),

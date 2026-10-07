@@ -34,6 +34,20 @@ const VENUE_TYPE_RADIUS_KM: Record<string, number> = {
 };
 
 const DEFAULT_VENUE_RADIUS_KM = 1.0;
+
+function utcCalendarDay(ymd: string): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+  if (!match) return null;
+  return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+/** Whole days from the event date to the local calendar date. */
+function calendarDayOffset(eventDateStr: string, todayStr: string): number {
+  const eventDay = utcCalendarDay(eventDateStr);
+  const today = utcCalendarDay(todayStr);
+  if (eventDay === null || today === null) return Number.NaN;
+  return Math.round((today - eventDay) / 86_400_000);
+}
 const FEED_INVALIDATION_CONCURRENCY = 10;
 
 async function runWithConcurrency<T>(
@@ -574,10 +588,9 @@ export class CheckinCreatorService {
    *
    * Window logic:
    *   start: doors_time or (start_time - 2h) or 16:00 (default)
-   *   end: (end_time + 1h buffer) or (start_time + 6h) or 23:59
+   *   end: (end_time + 1h buffer) or (start_time + 6h), which may fall after midnight
    *
-   * If no timezone: allow all day on event_date (generous fallback).
-   * If no times at all: allow all day on event_date.
+   * If no times at all: allow all day on event_date only.
    */
   private isWithinTimeWindow(event: any): boolean {
     try {
@@ -613,28 +626,27 @@ export class CheckinCreatorService {
         todayStr = nowLocal.toISOString().substring(0, 10);
       }
 
-      // If today's date doesn't match event date, disallow
-      if (todayStr !== eventDateStr) return false;
-
-      // If no time information at all, allow all-day window
       const doorsTime = event.doors_time;
       const startTime = event.start_time;
       const endTime = event.end_time;
 
+      // No clock times: the event's calendar date is the whole window.
       if (!doorsTime && !startTime && !endTime) {
-        return true; // All-day window
+        return todayStr === eventDateStr;
       }
+
+      const dayOffset = calendarDayOffset(eventDateStr, todayStr);
+      if (dayOffset !== 0 && dayOffset !== 1) return false;
 
       // Parse time helper: converts "HH:MM:SS" or "HH:MM" to minutes since midnight
       const parseTimeToMinutes = (timeStr: string): number => {
         const parts = timeStr.split(':');
-        return parseInt(parts[0]) * 60 + parseInt(parts[1] || '0');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
       };
 
-      // Current time in minutes since midnight (in venue timezone)
-      const nowMinutes = nowLocal.getHours() * 60 + nowLocal.getMinutes();
+      // Minutes since the event-date midnight, so 01:00 the next morning is 1500.
+      const nowMinutes = nowLocal.getHours() * 60 + nowLocal.getMinutes() + dayOffset * 24 * 60;
 
-      // Calculate window start
       let windowStartMinutes: number;
       if (doorsTime) {
         windowStartMinutes = parseTimeToMinutes(doorsTime);
@@ -644,14 +656,18 @@ export class CheckinCreatorService {
         windowStartMinutes = 16 * 60; // 4:00 PM default
       }
 
-      // Calculate window end
       let windowEndMinutes: number;
       if (endTime) {
-        windowEndMinutes = Math.min(24 * 60 - 1, parseTimeToMinutes(endTime) + 60); // 1 hour after
+        windowEndMinutes = parseTimeToMinutes(endTime) + 60; // 1 hour after
       } else if (startTime) {
-        windowEndMinutes = Math.min(24 * 60 - 1, parseTimeToMinutes(startTime) + 360); // 6 hours after
+        windowEndMinutes = parseTimeToMinutes(startTime) + 360; // 6 hours after
       } else {
-        windowEndMinutes = 23 * 60 + 59; // 11:59 PM
+        windowEndMinutes = 23 * 60 + 59;
+      }
+
+      // An end clock at or before the start belongs to the next morning.
+      if (windowEndMinutes <= windowStartMinutes) {
+        windowEndMinutes += 24 * 60;
       }
 
       return nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes;

@@ -9,7 +9,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { ReportController } from '../controllers/ReportController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, scopedRateLimit } from '../middleware/auth';
 import { validate } from '../middleware/validate';
 
 const router = Router();
@@ -32,6 +32,11 @@ const createReportSchema = z.object({
 router.use(authenticateToken);
 
 // POST /api/reports - Submit a content report
-router.post('/', validate(createReportSchema), reportController.createReport);
+router.post(
+  '/',
+  scopedRateLimit('reports', 15 * 60 * 1000, 20),
+  validate(createReportSchema),
+  reportController.createReport
+);
 
 export default router;

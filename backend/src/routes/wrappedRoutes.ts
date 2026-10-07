@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { WrappedController } from '../controllers/WrappedController';
-import { authenticateToken, requirePremium } from '../middleware/auth';
+import { authenticateToken, requirePremium, scopedRateLimit } from '../middleware/auth';
 import { createPerUserRateLimit, RateLimitPresets } from '../middleware/perUserRateLimit';
 
 const wrappedController = new WrappedController();
@@ -41,6 +41,10 @@ apiRouter.post(
 const publicRouter = Router();
 
 // GET /wrapped/:userId/:year — Public Wrapped landing page
-publicRouter.get('/:userId/:year', wrappedController.renderWrappedLanding);
+publicRouter.get(
+  '/:userId/:year',
+  scopedRateLimit('wrapped-public', 15 * 60 * 1000, 60),
+  wrappedController.renderWrappedLanding
+);
 
 export default { api: apiRouter, public: publicRouter };

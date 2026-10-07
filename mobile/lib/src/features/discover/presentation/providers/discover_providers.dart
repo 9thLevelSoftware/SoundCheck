@@ -1,4 +1,5 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
+import '../../../../core/error/failures.dart';
 import '../../../../core/providers/providers.dart';
 import '../../../bands/domain/band.dart';
 import '../../../venues/domain/venue.dart';
@@ -72,7 +73,7 @@ Future<List<Band>> discoverBandSearch(Ref ref) async {
 
   final repository = ref.watch(bandRepositoryProvider);
   final result = await repository.getBands(search: query, limit: 10);
-  return result.fold((failure) => [], (bands) => bands);
+  return result.fold((failure) => throw failure, (bands) => bands);
 }
 
 /// Provider for venue search results in discover (debounced)
@@ -166,8 +167,7 @@ Future<List<User>> discoverUserSearch(Ref ref) async {
 
     return [];
   } catch (e) {
-    // Return empty list on error - error will be shown via combined results
-    return [];
+    throw e is Failure ? e : ServerFailure('Could not search users');
   }
 }
 
@@ -184,9 +184,10 @@ Future<List<DiscoverEvent>> discoverEventSearch(Ref ref) async {
 
   try {
     final result = await repository.searchEvents(query: query, limit: 10);
-    return result.fold((failure) => [], (events) => events);
+    return result.fold((failure) => throw failure, (events) => events);
   } catch (e) {
-    return [];
+    if (e is Failure) rethrow;
+    throw ServerFailure('Could not search events');
   }
 }
 
@@ -250,23 +251,15 @@ Future<List<DiscoverEvent>> recommendedEvents(Ref ref) async {
   final position = await ref.watch(currentLocationProvider.future);
   final repository = ref.watch(discoveryRepositoryProvider);
 
-  try {
-    if (position != null) {
-      final result = await repository.getRecommendations(
-        lat: position.latitude,
-        lon: position.longitude,
-        radiusKm: 50,
-        limit: 15,
-      );
-      return result.fold((failure) => [], (events) => events);
-    } else {
-      final result = await repository.getRecommendations(limit: 15);
-      return result.fold((failure) => [], (events) => events);
-    }
-  } catch (e) {
-    // Graceful degradation: return empty list on error (section hides itself)
-    return [];
-  }
+  final result = position != null
+      ? await repository.getRecommendations(
+          lat: position.latitude,
+          lon: position.longitude,
+          radiusKm: 50,
+          limit: 15,
+        )
+      : await repository.getRecommendations(limit: 15);
+  return result.fold((failure) => throw failure, (events) => events);
 }
 
 /// Nearby upcoming events based on user GPS location
@@ -283,7 +276,7 @@ Future<List<DiscoverEvent>> nearbyUpcomingEvents(Ref ref) async {
     days: 30,
     limit: 20,
   );
-  return result.fold((failure) => [], (events) => events);
+  return result.fold((failure) => throw failure, (events) => events);
 }
 
 /// Trending events near user (sorted by recent check-in count)
@@ -299,7 +292,7 @@ Future<List<DiscoverEvent>> trendingNearbyEvents(Ref ref) async {
     radiusKm: 50,
     limit: 20,
   );
-  return result.fold((failure) => [], (events) => events);
+  return result.fold((failure) => throw failure, (events) => events);
 }
 
 /// Available genres list (from bands endpoint)
@@ -307,7 +300,7 @@ Future<List<DiscoverEvent>> trendingNearbyEvents(Ref ref) async {
 Future<List<String>> genreList(Ref ref) async {
   final repository = ref.watch(bandRepositoryProvider);
   final result = await repository.getGenres();
-  return result.fold((failure) => [], (genres) => genres);
+  return result.fold((failure) => throw failure, (genres) => genres);
 }
 
 /// Events filtered by genre (family provider)
@@ -315,5 +308,5 @@ Future<List<String>> genreList(Ref ref) async {
 Future<List<DiscoverEvent>> genreEvents(Ref ref, String genre) async {
   final repository = ref.watch(discoveryRepositoryProvider);
   final result = await repository.getEventsByGenre(genre: genre, limit: 20);
-  return result.fold((failure) => [], (events) => events);
+  return result.fold((failure) => throw failure, (events) => events);
 }

@@ -45,7 +45,6 @@ void main() {
         globalFeedProvider,
         friendsFeedProvider,
         eventFeedProvider,
-        eventsFeedProvider,
         happeningNowProvider,
         unseenCountsProvider,
         newCheckinCountProvider,

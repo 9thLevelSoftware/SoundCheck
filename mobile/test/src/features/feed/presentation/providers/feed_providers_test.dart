@@ -112,50 +112,29 @@ void main() {
       },
     );
 
-    test(
-      'event and events notifiers pass ids/cursors and append pages',
-      () async {
-        final repository = _FeedRepository()
-          ..event.addAll([
-            Right(_page(['event-1'], cursor: 'event-next', hasMore: true)),
-            Right(_page(['event-2'])),
-          ])
-          ..events.addAll([
-            Right(
-              _page(['overview-1'], cursor: 'overview-next', hasMore: true),
-            ),
-            Right(_page(['overview-2'])),
-          ]);
-        final container = _container(repository);
-        addTearDown(container.dispose);
-        final eventSub = container.listen(
-          eventFeedProvider('show-1'),
-          (_, _) {},
-        );
-        final eventsSub = container.listen(eventsFeedProvider, (_, _) {});
-        addTearDown(eventSub.close);
-        addTearDown(eventsSub.close);
+    test('event notifier passes ids and cursors and appends pages', () async {
+      final repository = _FeedRepository()
+        ..event.addAll([
+          Right(_page(['event-1'], cursor: 'event-next', hasMore: true)),
+          Right(_page(['event-2'])),
+        ]);
+      final container = _container(repository);
+      addTearDown(container.dispose);
+      final eventSub = container.listen(eventFeedProvider('show-1'), (_, _) {});
+      addTearDown(eventSub.close);
 
-        await container.read(eventFeedProvider('show-1').future);
-        await container.read(eventFeedProvider('show-1').notifier).loadMore();
-        await container.read(eventsFeedProvider.future);
-        await container.read(eventsFeedProvider.notifier).loadMore();
+      await container.read(eventFeedProvider('show-1').future);
+      await container.read(eventFeedProvider('show-1').notifier).loadMore();
 
-        expect(repository.eventCalls, [
-          ('show-1', null),
-          ('show-1', 'event-next'),
-        ]);
-        expect(repository.eventsCursors, [null, 'overview-next']);
-        expect(container.read(eventFeedProvider('show-1')).requireValue.ids, [
-          'event-1',
-          'event-2',
-        ]);
-        expect(container.read(eventsFeedProvider).requireValue.ids, [
-          'overview-1',
-          'overview-2',
-        ]);
-      },
-    );
+      expect(repository.eventCalls, [
+        ('show-1', null),
+        ('show-1', 'event-next'),
+      ]);
+      expect(container.read(eventFeedProvider('show-1')).requireValue.ids, [
+        'event-1',
+        'event-2',
+      ]);
+    });
   });
 
   group('feed scalar and lifecycle providers', () {
@@ -311,11 +290,9 @@ class _FeedRepository extends FeedRepository {
   final global = <_PageOutcome>[];
   final friends = <_PageOutcome>[];
   final event = <_PageOutcome>[];
-  final events = <_PageOutcome>[];
   final globalCursors = <String?>[];
   final friendsCursors = <String?>[];
   final eventCalls = <(String, String?)>[];
-  final eventsCursors = <String?>[];
   Either<Failure, List<HappeningNowGroup>> happening = const Right([]);
   Either<Failure, UnseenCounts> unseen = const Right(UnseenCounts());
 
@@ -345,11 +322,6 @@ class _FeedRepository extends FeedRepository {
   }
 
   @override
-  Future<_PageResult> getEventsFeed({String? cursor, int limit = 20}) {
-    eventsCursors.add(cursor);
-    return _next(events);
-  }
-
   @override
   Future<Either<Failure, List<HappeningNowGroup>>> getHappeningNow() async =>
       happening;

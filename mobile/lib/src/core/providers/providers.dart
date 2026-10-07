@@ -125,7 +125,13 @@ FeedRepository feedRepository(Ref ref) {
 @Riverpod(keepAlive: true)
 PushNotificationService pushNotificationService(Ref ref) {
   final feed = ref.watch(feedRepositoryProvider);
-  final service = PushNotificationService(feedRepository: feed);
+  final service = PushNotificationService(
+    feedRepository: feed,
+    isPushEnabled: () async {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool('settings_push_notifications') ?? true;
+    },
+  );
   ref.onDispose(() => unawaited(service.dispose()));
   return service;
 }
@@ -515,7 +521,6 @@ class AuthenticatedSessionCacheInvalidator {
     globalFeedProvider,
     friendsFeedProvider,
     eventFeedProvider,
-    eventsFeedProvider,
     happeningNowProvider,
     unseenCountsProvider,
     newCheckinCountProvider,

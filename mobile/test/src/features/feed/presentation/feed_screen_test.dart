@@ -37,7 +37,6 @@ void main() {
           webSocket: webSocket,
           global: [_item('global')],
           friends: [_item('friend')],
-          events: [_item('event')],
           happening: [_group()],
           unseen: const UnseenCounts(friends: 2, event: 3, happeningNow: 4),
         ),
@@ -48,7 +47,7 @@ void main() {
       expect(find.text('Friends'), findsOneWidget);
       expect(find.text('Events'), findsWidgets);
       expect(find.text('2'), findsWidgets);
-      expect(find.text('7'), findsOneWidget);
+      expect(find.text('4'), findsOneWidget);
       expect(find.byTooltip('Search'), findsOneWidget);
 
       webSocket.emitNewCheckin({'checkinId': 'checkin-new'});
@@ -68,19 +67,7 @@ void main() {
 
       await tester.tap(_tab('Events'));
       await tester.pumpAndSettle();
-      expect(repository.markedTypes, ['friends', 'event']);
-      expect(
-        find.byWidgetPredicate(
-          (widget) =>
-              widget is RichText &&
-              widget.text.toPlainText().contains('Event event'),
-        ),
-        findsOneWidget,
-      );
-
-      await tester.tap(find.text('Happening Now'));
-      await tester.pumpAndSettle();
-      expect(repository.markedTypes, ['friends', 'event', 'happening_now']);
+      expect(repository.markedTypes, ['friends', 'happening_now']);
       expect(repository.markedAt['happening_now'], _group().lastCheckinAt);
       expect(find.text('Summer Fest'), findsOneWidget);
       expect(find.text('Alex at this show'), findsOneWidget);
@@ -121,7 +108,6 @@ void main() {
             return [];
           }),
           friendsFeedProvider.overrideWithBuild((_, _) async => []),
-          eventsFeedProvider.overrideWithBuild((_, _) async => []),
           happeningNowProvider.overrideWith((_) async => []),
           unseenCountsProvider.overrideWith((_) async => const UnseenCounts()),
         ],
@@ -148,11 +134,6 @@ void main() {
 
     await tester.tap(_tab('Events'));
     await tester.pumpAndSettle();
-    expect(find.text('No event activity yet'), findsOneWidget);
-    expect(find.text('Discover Events'), findsOneWidget);
-
-    await tester.tap(find.text('Happening Now'));
-    await tester.pumpAndSettle();
     expect(find.text('No one\'s checked in right now'), findsOneWidget);
     expect(find.text('Explore Events'), findsOneWidget);
   });
@@ -164,7 +145,6 @@ Widget _app({
   required WebSocketService webSocket,
   required List<FeedItem> global,
   required List<FeedItem> friends,
-  required List<FeedItem> events,
   required List<HappeningNowGroup> happening,
   required UnseenCounts unseen,
 }) {
@@ -176,7 +156,6 @@ Widget _app({
       authStateProvider.overrideWithBuild((_, _) async => _currentUser),
       globalFeedProvider.overrideWithBuild((_, _) async => global),
       friendsFeedProvider.overrideWithBuild((_, _) async => friends),
-      eventsFeedProvider.overrideWithBuild((_, _) async => events),
       happeningNowProvider.overrideWith((_) async => happening),
       unseenCountsProvider.overrideWith((_) async => unseen),
     ],
