@@ -113,6 +113,27 @@ export class ServiceUnavailableError extends AppError {
   }
 }
 
+export function clientStatusError(statusCode: number, message: string): AppError {
+  switch (statusCode) {
+    case 401:
+      return new UnauthorizedError(message);
+    case 403:
+      return new ForbiddenError(message);
+    case 404:
+      return new NotFoundError(message);
+    case 409:
+      return new ConflictError(message);
+    case 422:
+      return new ValidationError(message);
+    case 429:
+      return new RateLimitError(message);
+    case 503:
+      return new ServiceUnavailableError(message);
+    default:
+      return new BadRequestError(message);
+  }
+}
+
 /**
  * Helper function to determine if an error is operational
  */

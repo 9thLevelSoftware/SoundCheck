@@ -21,6 +21,7 @@ import { getRedis } from '../../utils/redisRateLimiter';
 import { notificationBatchService } from '../NotificationBatchService';
 import { Checkin, CreateEventCheckinRequest, CreateManualCheckinRequest } from './types';
 import logger from '../../utils/logger';
+import { clientStatusError } from '../../utils/errors';
 
 // Venue type radius mapping for location verification
 const VENUE_TYPE_RADIUS_KM: Record<string, number> = {
@@ -106,9 +107,7 @@ export class CheckinCreatorService {
       );
 
       if (eventResult.rows.length === 0) {
-        const err = new Error('Event not found or cancelled');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Event not found or cancelled');
       }
 
       const event = eventResult.rows[0];
@@ -143,9 +142,9 @@ export class CheckinCreatorService {
         INSERT INTO checkins (
           user_id, event_id, venue_id, band_id,
           is_verified, review_text, checkin_latitude, checkin_longitude,
-          event_date, rating, comment
+          event_date, rating
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `;
 
@@ -162,14 +161,11 @@ export class CheckinCreatorService {
           locationLon || null,
           event.event_date,
           rating ?? 0,
-          comment || null,
         ]);
       } catch (error: any) {
         // Catch unique constraint violation for user+event
         if (error.code === '23505' && error.constraint && error.constraint.includes('user_event')) {
-          const dupErr = new Error('You have already checked in to this event');
-          (dupErr as any).statusCode = 409;
-          throw dupErr;
+          throw clientStatusError(409, 'You have already checked in to this event');
         }
         throw error;
       }
@@ -306,15 +302,11 @@ export class CheckinCreatorService {
       ]);
 
       if (bandResult.rows.length === 0) {
-        const err = new Error('Band not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Band not found');
       }
 
       if (venueResult.rows.length === 0) {
-        const err = new Error('Venue not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Venue not found');
       }
 
       const venue = venueResult.rows[0];
@@ -333,10 +325,10 @@ export class CheckinCreatorService {
       const insertQuery = `
         INSERT INTO checkins (
           user_id, venue_id, band_id,
-          is_verified, review_text, comment, rating,
+          is_verified, review_text, rating,
           checkin_latitude, checkin_longitude
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
 
@@ -348,16 +340,16 @@ export class CheckinCreatorService {
           bandId,
           isVerified,
           comment || null,
-          comment || null,
           rating ?? 0,
           locationLat || null,
           locationLon || null,
         ]);
       } catch (error: any) {
         if (error.code === '23505') {
-          const dupErr = new Error('You have already checked in to this band at this venue today');
-          (dupErr as any).statusCode = 409;
-          throw dupErr;
+          throw clientStatusError(
+            409,
+            'You have already checked in to this band at this venue today'
+          );
         }
         throw error;
       }
@@ -478,13 +470,9 @@ export class CheckinCreatorService {
         ]);
         await client.query('ROLLBACK');
         if (exists.rows.length === 0) {
-          const err = new Error('Check-in not found');
-          (err as any).statusCode = 404;
-          throw err;
+          throw clientStatusError(404, 'Check-in not found');
         }
-        const err = new Error('Unauthorized to delete this check-in');
-        (err as any).statusCode = 403;
-        throw err;
+        throw clientStatusError(403, 'Unauthorized to delete this check-in');
       }
 
       venueId = del.rows[0].venue_id ?? null;

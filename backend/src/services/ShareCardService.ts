@@ -37,6 +37,7 @@ import {
   WrappedStatData,
 } from '../templates/share-cards/wrapped-stat-card';
 import logger from '../utils/logger';
+import { clientStatusError } from '../utils/errors';
 import { runtimeAssetPaths } from '../runtimeAssets';
 
 // ============================================
@@ -82,9 +83,7 @@ export class ShareCardService {
       return { ogUrl: '', storiesUrl: '' };
     }
     if (!this.storage.configured) {
-      const err = new Error('Share card generation unavailable: storage not configured');
-      (err as any).statusCode = 503;
-      throw err;
+      throw clientStatusError(503, 'Share card generation unavailable: storage not configured');
     }
 
     const ogKey = `cards/checkin/${checkinId}-og.png`;
@@ -114,9 +113,7 @@ export class ShareCardService {
       return { ogUrl: '', storiesUrl: '' };
     }
     if (!this.storage.configured) {
-      const err = new Error('Share card generation unavailable: storage not configured');
-      (err as any).statusCode = 503;
-      throw err;
+      throw clientStatusError(503, 'Share card generation unavailable: storage not configured');
     }
 
     const ogKey = `cards/badge/${badgeAwardId}-og.png`;
@@ -143,9 +140,7 @@ export class ShareCardService {
       return { ogUrl: '', storiesUrl: '' };
     }
     if (!this.storage.configured) {
-      const err = new Error('Share card generation unavailable: storage not configured');
-      (err as any).statusCode = 503;
-      throw err;
+      throw clientStatusError(503, 'Share card generation unavailable: storage not configured');
     }
     const ogKey = `cards/wrapped/${userId}-${year}-summary-og.png`;
     const storiesKey = `cards/wrapped/${userId}-${year}-summary-stories.png`;
@@ -169,9 +164,7 @@ export class ShareCardService {
       return { ogUrl: '', storiesUrl: '' };
     }
     if (!this.storage.configured) {
-      const err = new Error('Share card generation unavailable: storage not configured');
-      (err as any).statusCode = 503;
-      throw err;
+      throw clientStatusError(503, 'Share card generation unavailable: storage not configured');
     }
     const ogKey = `cards/wrapped/${userId}-${year}-${data.statType}-og.png`;
     const storiesKey = `cards/wrapped/${userId}-${year}-${data.statType}-stories.png`;

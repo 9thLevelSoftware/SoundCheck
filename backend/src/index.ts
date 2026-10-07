@@ -74,6 +74,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { authenticateToken, requireAdmin } from './middleware/auth';
 import { buildErrorResponseForStatus } from './middleware/validate';
+import { clientErrorMessage, clientErrorStack } from './utils/clientError';
 import { startRuntime } from './startup';
 
 // Read package version for health endpoint
@@ -313,7 +314,6 @@ app.get('/health', async (req, res) => {
           error: redisHealth.error,
         },
         redisBackedFeatures: redisFeatureHealth,
-        queues: queueMetrics,
         pushNotifications: pushNotificationHealth,
         subscriptions: {
           webhookAuth,
@@ -335,8 +335,8 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Queue health/monitoring endpoint
-app.get('/health/queues', async (req, res) => {
+// Queue counts are admin-only. Liveness stays on unauthenticated GET /health.
+app.get('/health/queues', authenticateToken, requireAdmin(), async (req, res) => {
   const queueMetrics = await Promise.all([
     getQueueHealth(badgeEvalQueue, 'badge-eval'),
     getQueueHealth(notificationQueue, 'notification-batch'),
@@ -452,18 +452,13 @@ app.use((error: any, req: express.Request, res: express.Response, _next: express
     });
   }
 
-  // Build response
-  const message =
-    process.env.NODE_ENV === 'development'
-      ? error.message
-      : statusCode >= 500
-        ? 'Internal server error'
-        : error.message || 'Request failed';
+  // Build response. Only AppError text is client-visible. Stacks need
+  // EXPOSE_STACK_TRACES=true and are not tied to NODE_ENV.
+  const message = clientErrorMessage(error, statusCode);
   const response: ApiResponse = buildErrorResponseForStatus(statusCode, message, error.details);
-
-  // Include stack trace only in development
-  if (process.env.NODE_ENV === 'development' && error.stack) {
-    (response as any).stack = error.stack;
+  const stack = clientErrorStack(error);
+  if (stack) {
+    (response as { stack?: string }).stack = stack;
   }
 
   res.status(statusCode).json(response);

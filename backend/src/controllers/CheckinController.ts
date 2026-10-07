@@ -4,6 +4,7 @@ import { CheckinService } from '../services/CheckinService';
 import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
 import { UnauthorizedError, BadRequestError } from '../utils/errors';
+import { isHalfStarRating } from '../utils/halfStarRating';
 import { asyncHandler } from '../utils/asyncHandler';
 import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
 import { realtimePublisher } from '../services/RealtimePublisher';
@@ -580,7 +581,7 @@ export class CheckinController {
             'Each band rating must have bandId (string) and rating (number)'
           );
         }
-        if (br.rating < 0.5 || br.rating > 5.0 || br.rating % 0.5 !== 0) {
+        if (!isHalfStarRating(br.rating)) {
           throw new BadRequestError('Band ratings must be 0.5-5.0 in 0.5 increments');
         }
       }
@@ -588,12 +589,7 @@ export class CheckinController {
 
     // Validate venueRating format
     if (venueRating !== undefined) {
-      if (
-        typeof venueRating !== 'number' ||
-        venueRating < 0.5 ||
-        venueRating > 5.0 ||
-        venueRating % 0.5 !== 0
-      ) {
+      if (typeof venueRating !== 'number' || !isHalfStarRating(venueRating)) {
         throw new BadRequestError('Venue rating must be 0.5-5.0 in 0.5 increments');
       }
     }

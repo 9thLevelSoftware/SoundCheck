@@ -16,6 +16,7 @@ import {
   r2Service,
 } from '../R2Service';
 import logger from '../../utils/logger';
+import { clientStatusError } from '../../utils/errors';
 
 export interface PhotoUploadUrl {
   uploadUrl: string;
@@ -34,10 +35,6 @@ export interface PhotoConfirmationRequest {
   userId: string;
   photoKeys: string[];
 }
-
-type ServiceError = Error & {
-  statusCode?: number;
-};
 
 function normalizeContentType(contentType?: string): string {
   return (contentType || '').split(';')[0].trim().toLowerCase();
@@ -93,23 +90,15 @@ export class CheckinPhotoService {
       );
 
       if (checkinResult.rows.length === 0) {
-        const err = new Error('Check-in not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Check-in not found');
       }
 
       if (checkinResult.rows[0].user_id !== userId) {
-        const err = new Error('Unauthorized to modify this check-in');
-        (err as any).statusCode = 403;
-        throw err;
+        throw clientStatusError(403, 'Unauthorized to modify this check-in');
       }
 
       if (contentLengths.length !== contentTypes.length) {
-        const err = new Error(
-          'contentLengths must have one entry per content type'
-        ) as ServiceError;
-        err.statusCode = 400;
-        throw err;
+        throw clientStatusError(400, 'contentLengths must have one entry per content type');
       }
 
       for (const contentLength of contentLengths) {
@@ -118,11 +107,10 @@ export class CheckinPhotoService {
           contentLength <= 0 ||
           contentLength > MAX_UPLOAD_FILE_SIZE_BYTES
         ) {
-          const err = new Error(
+          throw clientStatusError(
+            400,
             `Each photo must be between 1 byte and ${MAX_UPLOAD_FILE_SIZE_BYTES} bytes (10MB)`
-          ) as ServiceError;
-          err.statusCode = 400;
-          throw err;
+          );
         }
       }
 
@@ -146,11 +134,10 @@ export class CheckinPhotoService {
       const pendingCount = Number(pendingResult.rows[0]?.count || 0);
       const totalAfter = existingUrls.length + pendingCount + contentTypes.length;
       if (totalAfter > this.MAX_PHOTOS_PER_CHECKIN) {
-        const err = new Error(
+        throw clientStatusError(
+          400,
           `Maximum ${this.MAX_PHOTOS_PER_CHECKIN} photos per check-in. Currently ${existingUrls.length} attached and ${pendingCount} pending, requesting ${contentTypes.length}.`
         );
-        (err as any).statusCode = 400;
-        throw err;
       }
 
       // Generate presigned URLs for each content type, bound to the declared size
@@ -201,15 +188,11 @@ export class CheckinPhotoService {
       );
 
       if (checkinResult.rows.length === 0) {
-        const err = new Error('Check-in not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Check-in not found');
       }
 
       if (checkinResult.rows[0].user_id !== userId) {
-        const err = new Error('Unauthorized to modify this check-in');
-        (err as any).statusCode = 403;
-        throw err;
+        throw clientStatusError(403, 'Unauthorized to modify this check-in');
       }
 
       const pendingResult = await this.db.query(
@@ -218,11 +201,10 @@ export class CheckinPhotoService {
         [checkinId, userId, photoKeys]
       );
       if (pendingResult.rows.length !== photoKeys.length) {
-        const err = new Error(
+        throw clientStatusError(
+          400,
           'One or more photo keys are invalid or were not issued for this check-in'
         );
-        (err as any).statusCode = 400;
-        throw err;
       }
 
       const headResults = await Promise.all(photoKeys.map((key) => r2Service.headObject(key)));
@@ -235,11 +217,10 @@ export class CheckinPhotoService {
           missingCount: missingPhotoKeys.length,
         });
 
-        const err: ServiceError = new Error(
+        throw clientStatusError(
+          409,
           'One or more photos have not finished uploading. Please retry confirmation after upload completes.'
         );
-        err.statusCode = 409;
-        throw err;
       }
 
       const invalidPhotoKeys = photoKeys.filter(
@@ -253,11 +234,7 @@ export class CheckinPhotoService {
           invalidCount: invalidPhotoKeys.length,
         });
 
-        const err: ServiceError = new Error(
-          'One or more uploaded photos have an invalid type or size'
-        );
-        err.statusCode = 400;
-        throw err;
+        throw clientStatusError(400, 'One or more uploaded photos have an invalid type or size');
       }
 
       // Combine existing URLs with new ones, enforce max
@@ -267,11 +244,10 @@ export class CheckinPhotoService {
       const combinedUrls = [...existingUrls, ...newUrls];
 
       if (combinedUrls.length > this.MAX_PHOTOS_PER_CHECKIN) {
-        const err = new Error(
+        throw clientStatusError(
+          400,
           `Maximum ${this.MAX_PHOTOS_PER_CHECKIN} photos per check-in. Would have ${combinedUrls.length}.`
         );
-        (err as any).statusCode = 400;
-        throw err;
       }
 
       // Update the check-in with combined URLs
@@ -334,15 +310,11 @@ export class CheckinPhotoService {
       );
 
       if (checkinResult.rows.length === 0) {
-        const err = new Error('Check-in not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Check-in not found');
       }
 
       if (checkinResult.rows[0].user_id !== userId) {
-        const err = new Error('Unauthorized to modify this check-in');
-        (err as any).statusCode = 403;
-        throw err;
+        throw clientStatusError(403, 'Unauthorized to modify this check-in');
       }
 
       const existingUrls: string[] = checkinResult.rows[0].image_urls || [];

@@ -4,6 +4,7 @@ import { EmailService } from './EmailService';
 import { AuthUtils } from '../utils/auth';
 import { revokeAllUserTokens } from '../utils/auth';
 import { logInfo, logError } from '../utils/logger';
+import { clientStatusError } from '../utils/errors';
 
 /**
  * PasswordResetService handles the full forgot-password lifecycle:
@@ -105,9 +106,7 @@ export class PasswordResetService {
     // Validate password meets requirements
     const validation = AuthUtils.validatePassword(newPassword);
     if (!validation.isValid) {
-      const error = new Error(validation.errors.join('. '));
-      (error as any).statusCode = 400;
-      throw error;
+      throw clientStatusError(400, validation.errors.join('. '));
     }
 
     // Hash the submitted token with SHA-256
@@ -123,9 +122,7 @@ export class PasswordResetService {
     );
 
     if (tokenResult.rows.length === 0) {
-      const error = new Error('Invalid or expired reset token');
-      (error as any).statusCode = 400;
-      throw error;
+      throw clientStatusError(400, 'Invalid or expired reset token');
     }
 
     const { id: tokenId, user_id: userId } = tokenResult.rows[0];

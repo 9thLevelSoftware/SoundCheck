@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+Store release notes stay unversioned until the owner chooses a store version. The current product is event check-ins: a show has a venue, a date, and a lineup. The November 2025 notes below are an integration log, not the store changelog. The setlist.fm key is not stored in this file.
+
+### Store readiness
+
+- Release audit and the fix waves are in GitHub PRs #51 through #55.
+- Privacy-policy copy, bundle IDs, `assetlinks.json`, store screenshots, the version number, and the Railway Redis eviction policy are still owner decisions.
+
 ### Added - 2025-11-14
 - **External API Integration - COMPLETE**: Untappd-style discovery system for venues and bands
   - Database migration complete: Events-based check-in model with dual ratings

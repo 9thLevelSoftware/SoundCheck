@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -221,7 +222,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         backgroundImage: _selectedImage != null
                             ? FileImage(_selectedImage!)
                             : (user?.profileImageUrl != null
-                                      ? NetworkImage(user!.profileImageUrl!)
+                                      ? CachedNetworkImageProvider(
+                                          user!.profileImageUrl!,
+                                        )
                                       : null)
                                   as ImageProvider?,
                         child:
