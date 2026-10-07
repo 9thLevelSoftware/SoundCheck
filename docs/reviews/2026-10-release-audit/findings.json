@@ -1,0 +1,1599 @@
+{
+  "auditDate": "2026-10-07",
+  "verdict": "NO-GO",
+  "counts": {
+    "P0": 4,
+    "P1": 11,
+    "P2": 11,
+    "P3": 6
+  },
+  "harnessChanges": "none",
+  "findings": [
+    {
+      "id": "RA-001",
+      "severity": "P0",
+      "area": "backend",
+      "feature": "rate limiting",
+      "evidence": "Shared Redis key rate_limit:<ip> makes login 429 after catalog GETs. auth.ts:291, redisRateLimiter.ts:99-141. Smoke: 6x GET /api/venues then login = 429.",
+      "acceptance": "Login succeeds after 20 catalog reads from the same IP. Auth routes keep their own 5/15m ceiling.",
+      "wave": "wave-1",
+      "historicalIds": [
+        "API-061"
+      ]
+    },
+    {
+      "id": "RA-002",
+      "severity": "P0",
+      "area": "mobile+api",
+      "feature": "profiles",
+      "evidence": "GET /users/:uuid 404s because the route is username lookup. block_providers.dart:38-45, UserController.ts:129-153. User.fromJson also requires email/isActive/updatedAt which the public payload omits.",
+      "acceptance": "GET /api/users/<uuid> returns a public profile the mobile User model parses. Widget test covers another user profile.",
+      "wave": "wave-1",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-003",
+      "severity": "P0",
+      "area": "backend",
+      "feature": "privacy export and consent",
+      "evidence": "userRoutes catch-all /:username is mounted before export and consents. index.ts:352 then 364-365, userRoutes.ts:277. Smoke token GETs returned 404 User not found.",
+      "acceptance": "Authenticated /api/users/export and /api/users/consents return 200 and a supertest asserts they are not username lookups.",
+      "wave": "wave-1",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-004",
+      "severity": "P0",
+      "area": "security",
+      "feature": "secrets",
+      "evidence": "CHANGELOG.md:23 commits a setlist.fm API key.",
+      "acceptance": "Key removed from tree and history, rotated at the provider, docs use a placeholder.",
+      "wave": "wave-1",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-005",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "login",
+      "evidence": "Bad password throws plain Error (AuthService.ts:82-92) and becomes HTTP 500 (index.ts:421-450). Smoke production login returned 500.",
+      "acceptance": "Wrong password returns 401 canonical envelope. Controller test covers it.",
+      "wave": "wave-2",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-006",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "check-in and events",
+      "evidence": "Missing check-in and event throw plain Error (CheckinQueryService.ts:143-144, EventService.ts:212-213). Smoke both returned 500. Historical API-016 and API-017.",
+      "acceptance": "Unknown ids return 404. Tests assert status.",
+      "wave": "wave-2",
+      "historicalIds": [
+        "CFR-012",
+        "CFR-030",
+        "API-016",
+        "API-017"
+      ]
+    },
+    {
+      "id": "RA-007",
+      "severity": "P1",
+      "area": "mobile+api",
+      "feature": "manual check-in rating",
+      "evidence": "Manual flow sends rating (checkin_screen.dart:814-825) but INSERT hardcodes 0 (CheckinCreatorService.ts:150). Smoke rating 4.5 stored as 0. Notes did persist as noteText.",
+      "acceptance": "Manual rating is stored, or the client patches /ratings before leaving the flow. Test fails if rating stays 0.",
+      "wave": "wave-2",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-008",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "account deletion",
+      "evidence": "Deletion nulls photo_url and anonymizes the user but leaves comment/review_text (DataRetentionService.ts:227-249).",
+      "acceptance": "Retention test asserts note columns are null after deletion.",
+      "wave": "wave-3",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-009",
+      "severity": "P1",
+      "area": "privacy",
+      "feature": "policy vs SDKs",
+      "evidence": "Policy promises likes, reviews, in-app privacy controls, and export. App ships Sentry, Firebase Analytics/Messaging, RevenueCat, toasts, and local-only settings toggles. Export UI is absent and the route is RA-003. Address is a placeholder.",
+      "acceptance": "Policy names shipped processors and matches product behavior, including a working export or no export promise.",
+      "wave": "wave-3",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-010",
+      "severity": "P1",
+      "area": "store",
+      "feature": "listing and permissions",
+      "evidence": "No POST_NOTIFICATIONS. Privacy manifest omits purchases. Fastlane inventory pending-signed-release-capture with missing curated screenshots. assetlinks.json withheld. iOS bundle com.9thlevelsoftware.soundcheck vs Android com.soundcheck.app. Version 0.1.0+1.",
+      "acceptance": "Store binaries, privacy labels, screenshots, and association files match a chosen bundle id.",
+      "wave": "wave-3",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-011",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "dependencies",
+      "evidence": "npm audit --omit=dev failed: 9 advisories, 1 critical proxy-addr GHSA-jqcg-44mw-7w3h, 5 high multer, 3 moderate.",
+      "acceptance": "Audit gate exits 0 or each remaining advisory is explicitly waived.",
+      "wave": "wave-3",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-012",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "sessions",
+      "evidence": "Default JWT TTL is 30m (auth.ts:23) but .env.example sets 7d. Password reset revokes refresh tokens only. Historical CFR-032.",
+      "acceptance": "Docs and deployment use a short access TTL. Old access tokens die on password change. Test covers rejection.",
+      "wave": "wave-3",
+      "historicalIds": [
+        "CFR-032"
+      ]
+    },
+    {
+      "id": "RA-013",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "edit profile",
+      "evidence": "Empty PUT /api/users/me throws Error No valid fields to update (ProfileService.ts:99-100). Smoke returned 500. Bio update returned 200.",
+      "acceptance": "Empty update returns 400. Test covers it.",
+      "wave": "wave-2",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-014",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "photo upload",
+      "evidence": "Presigned PUT has no ContentLength condition (R2Service.ts:114-121). Historical API-059.",
+      "acceptance": "Presign enforces a max size and a test rejects oversize uploads.",
+      "wave": "wave-3",
+      "historicalIds": [
+        "API-059"
+      ]
+    },
+    {
+      "id": "RA-015",
+      "severity": "P1",
+      "area": "backend",
+      "feature": "subscriptions",
+      "evidence": "Webhook returns HTTP 200 when auth is missing or wrong (SubscriptionController.ts:33-49). Smoke bad secret returned 200 Unauthorized.",
+      "acceptance": "Health shows webhook configuration. Bad or missing auth is alertable and covered by a contract test.",
+      "wave": "wave-3",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-016",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "health",
+      "evidence": "Unauthenticated /health and /health/queues return BullMQ job counts. Smoke 200.",
+      "acceptance": "Queue details require admin, or they are removed from the public body. Liveness stays public.",
+      "wave": "wave-4",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-017",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "events and reports",
+      "evidence": "Several /api/events reads, POST /api/reports, and public wrapped landing have no rate limit.",
+      "acceptance": "Those routes have a ceiling and a test that it trips.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "CFR-014"
+      ]
+    },
+    {
+      "id": "RA-018",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "profile photos",
+      "evidence": "Authenticated profile image GET does not check ownership (uploadsRoutes.ts).",
+      "acceptance": "Other users cannot fetch a private image, or images are intentionally public. Route test covers it.",
+      "wave": "wave-4",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-019",
+      "severity": "P2",
+      "area": "mobile",
+      "feature": "discover",
+      "evidence": "Discover turns failures into empty widgets (discover_screen.dart).",
+      "acceptance": "Failed discover shows an error and retry in a widget test.",
+      "wave": "wave-4",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-020",
+      "severity": "P2",
+      "area": "mobile",
+      "feature": "settings",
+      "evidence": "Theme is hardcoded Dark. Push/email toggles are SharedPreferences only (settings_provider.dart).",
+      "acceptance": "Push toggle unregisters the device token, or the control is not presented as an account setting.",
+      "wave": "wave-4",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-021",
+      "severity": "P2",
+      "area": "mobile",
+      "feature": "feed and browse",
+      "evidence": "Events feed aliases global feed. BandsScreen and VenuesScreen are unrouted. Venue shows control is a TODO (venue_detail_screen.dart:562, CFR-MOB-005).",
+      "acceptance": "Events tab is real or removed. Dead screens are deleted or routed. Shows control is implemented or removed.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "CFR-MOB-005",
+        "CFR-034"
+      ]
+    },
+    {
+      "id": "RA-022",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "check-in window",
+      "evidence": "Same-day minute window only (CheckinCreatorService). Historical BE-011.",
+      "acceptance": "A post-midnight check-in for a late show is accepted and tested.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "BE-011"
+      ]
+    },
+    {
+      "id": "RA-023",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "shutdown and redis",
+      "evidence": "No hard shutdown timeout. No Redis eviction policy in repo. Integration Jest needed --forceExit after a green rerun.",
+      "acceptance": "Shutdown exits within a budget. Eviction is documented. Integration suite exits without --forceExit.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "INF-013",
+        "PERF-018"
+      ]
+    },
+    {
+      "id": "RA-024",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "account enumeration",
+      "evidence": "check-email and check-username return availability (SEC-007, API-062), with rate limit and jitter.",
+      "acceptance": "Responses are generic, or the oracle is an explicit accepted product decision.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "CFR-015",
+        "SEC-007",
+        "API-062"
+      ]
+    },
+    {
+      "id": "RA-025",
+      "severity": "P2",
+      "area": "backend",
+      "feature": "error envelope",
+      "evidence": "4xx responses pass through error.message (index.ts:445-450, API-020). Dev adds stacks without a separate flag (API-034).",
+      "acceptance": "Canonical envelope only. Stacks require an explicit flag.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "API-020",
+        "API-034"
+      ]
+    },
+    {
+      "id": "RA-026",
+      "severity": "P2",
+      "area": "database",
+      "feature": "migration 039",
+      "evidence": "Migration 039 generates a bcrypt hash at runtime (DI-014).",
+      "acceptance": "Sentinel hash is constant across two fresh migrates.",
+      "wave": "wave-4",
+      "historicalIds": [
+        "DI-014"
+      ]
+    },
+    {
+      "id": "RA-027",
+      "severity": "P3",
+      "area": "backend",
+      "feature": "admin",
+      "evidence": "Admin moderate API is live behind requireAdmin. Smoke non-admin got 403. CFR-008 drifted from dead code to a gated API.",
+      "acceptance": "Every admin route keeps authenticateToken and requireAdmin with a test, or the surface is removed.",
+      "wave": "wave-5",
+      "historicalIds": [
+        "CFR-008"
+      ]
+    },
+    {
+      "id": "RA-028",
+      "severity": "P3",
+      "area": "backend",
+      "feature": "schema leftovers",
+      "evidence": "Dual note columns (BE-018), float modulo rating check (BE-019), unused monthly_checkins (DI-005).",
+      "acceptance": "One note column, integer half-star check, unused column removed or maintained.",
+      "wave": "wave-5",
+      "historicalIds": [
+        "BE-018",
+        "BE-019",
+        "DI-005"
+      ]
+    },
+    {
+      "id": "RA-029",
+      "severity": "P3",
+      "area": "mobile",
+      "feature": "ui polish",
+      "evidence": "NetworkImage leftovers (MOB-084), bio maxLength only (MOB-079), uneven pull-to-refresh (MOB-082), partial semantics (MOB-071).",
+      "acceptance": "Check-in and profile match feed image/error patterns. Device a11y spot pass recorded.",
+      "wave": "wave-5",
+      "historicalIds": [
+        "MOB-071",
+        "MOB-079",
+        "MOB-082",
+        "MOB-084"
+      ]
+    },
+    {
+      "id": "RA-030",
+      "severity": "P3",
+      "area": "docs",
+      "feature": "stale release docs",
+      "evidence": "CHANGELOG stops in 2025 and holds RA-004. database-schema.sql is absent. Bug_Report.md and the March beta GO report describe an older tree.",
+      "acceptance": "Stale secret text is gone. Bug report points at this audit.",
+      "wave": "wave-5",
+      "historicalIds": []
+    },
+    {
+      "id": "RA-031",
+      "severity": "P3",
+      "area": "backend",
+      "feature": "seed",
+      "evidence": "seed.ts ON CONFLICT target is weak (DI-015). PERF-012 key growth should be rechecked after RA-001.",
+      "acceptance": "Seed is idempotent on the real unique key.",
+      "wave": "wave-5",
+      "historicalIds": [
+        "PERF-012",
+        "DI-015"
+      ]
+    },
+    {
+      "id": "RA-032",
+      "severity": "P3",
+      "area": "backend",
+      "feature": "badges",
+      "evidence": "Badge group evaluation still uses the first badge criteria and warns (BE-010).",
+      "acceptance": "Each badge uses its own criteria in a test.",
+      "wave": "wave-5",
+      "historicalIds": [
+        "CFR-036",
+        "BE-010"
+      ]
+    }
+  ],
+  "historicalRevalidation": {
+    "method": "Source inspection on 2026-10-07 against docs/reviews/consolidated-findings.md and Bug_Report.md. Blockers and Bug_Report IDs were checked directly. Medium and low IDs were checked at the current file:line cited in findings.md or the parent audit notes. The March 2026 beta GO report was not treated as evidence.",
+    "summary": {
+      "fixed": 186,
+      "open": 23,
+      "drifted": 23,
+      "not_applicable": 3
+    },
+    "foldedIntoNewFindings": {
+      "CFR-012": "RA-006",
+      "CFR-030": "RA-006",
+      "CFR-032": "RA-012",
+      "CFR-015": "RA-024",
+      "CFR-MOB-005": "RA-021",
+      "CFR-036": "RA-032",
+      "SEC-007": "RA-024",
+      "API-016": "RA-006",
+      "API-017": "RA-006",
+      "API-020": "RA-025",
+      "API-034": "RA-025",
+      "API-059": "RA-014",
+      "API-061": "RA-001",
+      "API-062": "RA-024",
+      "BE-010": "RA-032",
+      "BE-011": "RA-022",
+      "BE-018": "RA-028",
+      "BE-019": "RA-028",
+      "MOB-071": "RA-029",
+      "MOB-079": "RA-029",
+      "MOB-082": "RA-029",
+      "MOB-084": "RA-029",
+      "INF-013": "RA-023",
+      "PERF-012": "RA-031",
+      "PERF-018": "RA-023",
+      "DI-005": "RA-028",
+      "DI-014": "RA-026",
+      "DI-015": "RA-031",
+      "CFR-008": "RA-027",
+      "CFR-034": "RA-021",
+      "CFR-014": "RA-017"
+    },
+    "items": [
+      {
+        "id": "BUG-001",
+        "status": "not_applicable",
+        "foldedInto": null
+      },
+      {
+        "id": "BUG-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BUG-003",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BUG-004",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BUG-005",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-001",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-003",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-004",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-005",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-006",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-007",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-008",
+        "status": "drifted",
+        "foldedInto": "RA-027"
+      },
+      {
+        "id": "CFR-009",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-010",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-011",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-012",
+        "status": "open",
+        "foldedInto": "RA-006"
+      },
+      {
+        "id": "CFR-013",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-014",
+        "status": "drifted",
+        "foldedInto": "RA-017"
+      },
+      {
+        "id": "CFR-015",
+        "status": "open",
+        "foldedInto": "RA-024"
+      },
+      {
+        "id": "CFR-016",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-017",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-018",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-019",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-020",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-021",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-022",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-023",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-024",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-025",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-026",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-027",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-028",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-029",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-030",
+        "status": "open",
+        "foldedInto": "RA-006"
+      },
+      {
+        "id": "CFR-031",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-032",
+        "status": "open",
+        "foldedInto": "RA-012"
+      },
+      {
+        "id": "CFR-033",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-034",
+        "status": "drifted",
+        "foldedInto": "RA-021"
+      },
+      {
+        "id": "CFR-035",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-036",
+        "status": "drifted",
+        "foldedInto": "RA-032"
+      },
+      {
+        "id": "CFR-037",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-038",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-039",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-040",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-041",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-042",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-043",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-INF-001",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-INF-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-001",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-005",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-054",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-057",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-071",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-SEC-003",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-SEC-018",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-002-004",
+        "status": "not_applicable",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-006",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-007-009",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-013",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-MOB-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-MOB-005",
+        "status": "open",
+        "foldedInto": "RA-021"
+      },
+      {
+        "id": "CFR-SEC-051",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-SEC-053",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-SEC-054",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-SEC-055",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-BE-001",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-BE-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-BE-006",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-BE-007",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-BE-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-DB-007",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-DB-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-INF-003",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-INF-004",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-INF-005",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-052",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-053",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-API-054",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-MOB-050-055",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-MOB-056",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-MOB-064",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-016",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-055",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-E2E-066",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-DI-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-DI-006",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-DI-007",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-DI-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-003",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-004",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-005",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-006",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "CFR-PERF-007",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-006",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-007",
+        "status": "open",
+        "foldedInto": "RA-024"
+      },
+      {
+        "id": "SEC-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-009",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-056",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-057",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-058",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-060",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "SEC-061",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-010",
+        "status": "drifted",
+        "foldedInto": "RA-032"
+      },
+      {
+        "id": "BE-011",
+        "status": "open",
+        "foldedInto": "RA-022"
+      },
+      {
+        "id": "BE-012",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-013",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-014",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-015",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-016",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-017",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-018",
+        "status": "open",
+        "foldedInto": "RA-028"
+      },
+      {
+        "id": "BE-019",
+        "status": "open",
+        "foldedInto": "RA-028"
+      },
+      {
+        "id": "BE-020",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-021",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "BE-022",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-009",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-010",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-011",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-012",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-013",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-014",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-015",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-016",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-017",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-020",
+        "status": "not_applicable",
+        "foldedInto": null
+      },
+      {
+        "id": "DB-022",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-014",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "API-015",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-016",
+        "status": "open",
+        "foldedInto": "RA-006"
+      },
+      {
+        "id": "API-017",
+        "status": "open",
+        "foldedInto": "RA-006"
+      },
+      {
+        "id": "API-018",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-019",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-020",
+        "status": "open",
+        "foldedInto": "RA-025"
+      },
+      {
+        "id": "API-021",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-022",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-023",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-024",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-025",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-026",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-027",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-028",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-029",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-030",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "API-031",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-032",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-033",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-034",
+        "status": "open",
+        "foldedInto": "RA-025"
+      },
+      {
+        "id": "API-057",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-058",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-059",
+        "status": "open",
+        "foldedInto": "RA-014"
+      },
+      {
+        "id": "API-060",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-061",
+        "status": "drifted",
+        "foldedInto": "RA-001"
+      },
+      {
+        "id": "API-062",
+        "status": "open",
+        "foldedInto": "RA-024"
+      },
+      {
+        "id": "API-063",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "API-064",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-007",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-009",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-010",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-011",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-012",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-013",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-014",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-015",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-016",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-057",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-058",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-059",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-060",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-061",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-062",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-063",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-065",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-066",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-067",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-068",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-069",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-070",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-071",
+        "status": "drifted",
+        "foldedInto": "RA-029"
+      },
+      {
+        "id": "MOB-072",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-073",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-076",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-077",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-078",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-079",
+        "status": "drifted",
+        "foldedInto": "RA-029"
+      },
+      {
+        "id": "MOB-080",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-081",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-082",
+        "status": "open",
+        "foldedInto": "RA-029"
+      },
+      {
+        "id": "MOB-083",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "MOB-084",
+        "status": "open",
+        "foldedInto": "RA-029"
+      },
+      {
+        "id": "MOB-085",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-009",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-010",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-011",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-012",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-013",
+        "status": "open",
+        "foldedInto": "RA-023"
+      },
+      {
+        "id": "INF-015",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-016",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-017",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "INF-018",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-002",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-003",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-050",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-052",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-053",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-056",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-058",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-059",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-061",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-063",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-064",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-067",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "E2E-070",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-008",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-009",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-010",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-011",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-012",
+        "status": "open",
+        "foldedInto": "RA-031"
+      },
+      {
+        "id": "PERF-013",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-015",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-016",
+        "status": "drifted",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-018",
+        "status": "open",
+        "foldedInto": "RA-023"
+      },
+      {
+        "id": "PERF-019",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-021",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "PERF-022",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DI-004",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DI-005",
+        "status": "open",
+        "foldedInto": "RA-028"
+      },
+      {
+        "id": "DI-014",
+        "status": "open",
+        "foldedInto": "RA-026"
+      },
+      {
+        "id": "DI-015",
+        "status": "open",
+        "foldedInto": "RA-031"
+      },
+      {
+        "id": "DI-017",
+        "status": "fixed",
+        "foldedInto": null
+      },
+      {
+        "id": "DI-018",
+        "status": "fixed",
+        "foldedInto": null
+      }
+    ]
+  }
+}
