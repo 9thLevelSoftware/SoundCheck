@@ -11,6 +11,25 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
+ * Access tokens stay valid through the second a password changes, so a
+ * same-second re-login is not rejected. Anything issued earlier is stale.
+ * A missing issued-at on a token is rejected once a change timestamp exists.
+ */
+export function accessTokenPredatesCredentialChange(
+  issuedAtSeconds: number | undefined,
+  credentialsChangedAt?: string
+): boolean {
+  if (!credentialsChangedAt) {
+    return false;
+  }
+  const changedMs = new Date(credentialsChangedAt).getTime();
+  if (issuedAtSeconds == null || !Number.isFinite(issuedAtSeconds) || Number.isNaN(changedMs)) {
+    return true;
+  }
+  return issuedAtSeconds < Math.floor(changedMs / 1000);
+}
+
+/**
  * Middleware to authenticate JWT tokens
  */
 export const authenticateToken = async (
@@ -54,6 +73,15 @@ export const authenticateToken = async (
       return;
     }
 
+    if (accessTokenPredatesCredentialChange(payload.iat, user.credentialsChangedAt)) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Invalid or expired token',
+      };
+      res.status(401).json(response);
+      return;
+    }
+
     // Attach user info to request
     req.user = user;
     // Enrich Sentry error context with authenticated user
@@ -91,7 +119,11 @@ export const optionalAuth = async (
         const userService = new UserService();
         const user = await userService.findById(payload.userId);
 
-        if (user && user.isActive) {
+        if (
+          user &&
+          user.isActive &&
+          !accessTokenPredatesCredentialChange(payload.iat, user.credentialsChangedAt)
+        ) {
           req.user = user;
           sentrySetUser({ id: user.id, username: user.username });
         }

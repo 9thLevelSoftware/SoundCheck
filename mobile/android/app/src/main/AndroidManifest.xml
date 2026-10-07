@@ -18,6 +18,9 @@
     <!-- Vibration permission for haptic feedback -->
     <uses-permission android:name="android.permission.VIBRATE" />
 
+    <!-- Android 13+ runtime permission so FCM can show notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <!-- RevenueCat / Google Play Billing -->
     <uses-permission android:name="com.android.vending.BILLING" />
 

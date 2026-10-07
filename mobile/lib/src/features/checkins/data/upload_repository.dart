@@ -9,6 +9,9 @@ import '../../../core/api/api_config.dart';
 import '../../../core/error/failures.dart';
 import '../domain/checkin.dart';
 
+/// Matches the API presign cap in `MAX_UPLOAD_FILE_SIZE_BYTES`.
+const int maxUploadBytes = 10 * 1024 * 1024;
+
 /// Data class for presigned upload URL response from backend
 class PresignedUpload {
   final String uploadUrl;
@@ -52,14 +55,17 @@ class UploadRepository {
   ///
   /// [checkinId] - Check-in to attach photos to
   /// [contentTypes] - MIME types for each photo (e.g., ['image/jpeg'])
+  /// [contentLengths] - Byte length of each photo. The API signs this length
+  /// into the upload URL, so it must match the bytes that will be PUT.
   Future<Either<Failure, List<PresignedUpload>>> requestPresignedUrls(
     String checkinId,
-    List<String> contentTypes,
-  ) async {
+    List<String> contentTypes, {
+    required List<int> contentLengths,
+  }) async {
     try {
       final response = await _dioClient.post(
         '${ApiConfig.checkins}/$checkinId/photos',
-        data: {'contentTypes': contentTypes},
+        data: {'contentTypes': contentTypes, 'contentLengths': contentLengths},
       );
 
       final List<dynamic> data = response.data['data'] as List<dynamic>;
@@ -129,11 +135,10 @@ class UploadRepository {
   /// Convenience method: compress, upload, and confirm photos in one call.
   ///
   /// Full flow:
-  /// 1. Determine content types
-  /// 2. Request presigned URLs from backend
-  /// 3. Compress each photo client-side
-  /// 4. PUT each compressed photo directly to R2
-  /// 5. PATCH backend to confirm and store URLs
+  /// 1. Compress each photo client-side
+  /// 2. Request presigned URLs bound to those byte lengths
+  /// 3. PUT each compressed photo directly to R2
+  /// 4. PATCH backend to confirm and store URLs
   ///
   /// [checkinId] - Check-in to attach photos to
   /// [photos] - XFile list from ImagePicker
@@ -146,20 +151,45 @@ class UploadRepository {
     if (photos.isEmpty) return const Right(null);
 
     try {
-      // 1. Determine content types
-      final contentTypes = photos.map((photo) {
-        final mimeType = photo.mimeType;
-        if (mimeType != null && mimeType.startsWith('image/')) {
-          return mimeType;
+      // Compress before requesting URLs so the signed Content-Length matches
+      // the bytes that will be uploaded. flutter_image_compress emits JPEG.
+      final prepared = <({Uint8List bytes, String contentType})>[];
+      for (var i = 0; i < photos.length; i++) {
+        onProgress?.call(i, 0.1);
+        final compressed = await FlutterImageCompress.compressWithFile(
+          photos[i].path,
+          quality: 85,
+          minWidth: 1920,
+          minHeight: 1080,
+        );
+        if (compressed != null) {
+          prepared.add((
+            bytes: Uint8List.fromList(compressed),
+            contentType: 'image/jpeg',
+          ));
+        } else {
+          final mimeType = photos[i].mimeType;
+          prepared.add((
+            bytes: await photos[i].readAsBytes(),
+            contentType: mimeType != null && mimeType.startsWith('image/')
+                ? mimeType
+                : 'image/jpeg',
+          ));
         }
-        // Default to JPEG if mimeType is unavailable
-        return 'image/jpeg';
-      }).toList();
+      }
 
-      // 2. Request presigned URLs
+      for (final photo in prepared) {
+        if (photo.bytes.isEmpty || photo.bytes.length > maxUploadBytes) {
+          return const Left(
+            ValidationFailure('Each photo must be 10MB or smaller'),
+          );
+        }
+      }
+
       final presignedUrlsResult = await requestPresignedUrls(
         checkinId,
-        contentTypes,
+        prepared.map((photo) => photo.contentType).toList(),
+        contentLengths: prepared.map((photo) => photo.bytes.length).toList(),
       );
 
       // Early return on error
@@ -175,35 +205,15 @@ class UploadRepository {
         presignedUrls = presignedUrlsResult.getOrElse(() => []);
       }
 
-      // 3. Compress and upload each photo
       final uploadedKeys = <String>[];
 
-      for (int i = 0; i < photos.length; i++) {
-        onProgress?.call(i, 0.1);
-
-        // Compress the photo client-side
-        final compressed = await FlutterImageCompress.compressWithFile(
-          photos[i].path,
-          quality: 85,
-          minWidth: 1920,
-          minHeight: 1080,
-        );
-
-        final Uint8List bytesToUpload;
-        if (compressed == null) {
-          // Fallback: read original bytes if compression fails
-          bytesToUpload = await photos[i].readAsBytes();
-        } else {
-          bytesToUpload = Uint8List.fromList(compressed);
-        }
-
+      for (int i = 0; i < prepared.length; i++) {
         onProgress?.call(i, 0.3);
 
-        // 4. Upload directly to R2
         final uploadResult = await uploadPhotoToR2(
           presignedUrls[i].uploadUrl,
-          bytesToUpload,
-          contentTypes[i],
+          prepared[i].bytes,
+          prepared[i].contentType,
         );
 
         // Early return on error

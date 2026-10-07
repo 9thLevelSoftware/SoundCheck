@@ -221,6 +221,7 @@ describe('PasswordResetService', () => {
       // Verify password was updated
       const [passwordQuery, passwordParams] = mockDb.query.mock.calls[1];
       expect(passwordQuery).toContain('UPDATE users SET password_hash');
+      expect(passwordQuery).toContain('credentials_changed_at = CURRENT_TIMESTAMP');
       expect(passwordParams[0]).toBe('new_hashed_password');
 
       // Verify token was marked as used

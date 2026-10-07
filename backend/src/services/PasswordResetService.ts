@@ -98,6 +98,7 @@ export class PasswordResetService {
    * Reset a user's password using a valid reset token.
    *
    * Validates the token, updates the password, marks the token as used,
+   * records credentials_changed_at so existing access tokens stop working,
    * and revokes all refresh tokens to force re-login on all devices.
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
@@ -134,7 +135,7 @@ export class PasswordResetService {
 
     // Update user password
     await this.db.query(
-      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE users SET password_hash = $1, credentials_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       [passwordHash, userId]
     );
 

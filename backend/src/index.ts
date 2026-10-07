@@ -57,6 +57,7 @@ import adminRoutes from './routes/adminRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import { logHttp, logInfo, logError, logWarn } from './utils/logger';
+import { resolveOverallHealth, revenueCatWebhookHealth } from './utils/healthStatus';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
 import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
@@ -282,14 +283,18 @@ app.get('/health', async (req, res) => {
       (feature) => feature.status === 'healthy' || feature.status === 'disabled'
     );
 
-    // B-INF-4: 503 only when Postgres is down; Redis down → 200 with degraded status
+    // B-INF-4: 503 only when Postgres is down; Redis down or webhook auth
+    // missing → 200 with degraded status so the process is not restart-looped.
     const isPoolExhausted = poolMetrics.waitingCount > 10;
-    const status = !dbHealth.healthy
-      ? 'unhealthy'
-      : !redisFeaturesHealthy || isPoolExhausted
-        ? 'degraded'
-        : 'healthy';
-    const statusCode = dbHealth.healthy ? 200 : 503;
+    const webhookAuth = revenueCatWebhookHealth();
+    const overallHealth = resolveOverallHealth({
+      databaseHealthy: dbHealth.healthy,
+      redisFeaturesHealthy,
+      poolExhausted: isPoolExhausted,
+      webhookConfigured: webhookAuth.configured,
+    });
+    const status = overallHealth.status;
+    const statusCode = overallHealth.httpStatus;
 
     const response: ApiResponse = {
       success: dbHealth.healthy,
@@ -309,6 +314,9 @@ app.get('/health', async (req, res) => {
         redisBackedFeatures: redisFeatureHealth,
         queues: queueMetrics,
         pushNotifications: pushNotificationHealth,
+        subscriptions: {
+          webhookAuth,
+        },
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,

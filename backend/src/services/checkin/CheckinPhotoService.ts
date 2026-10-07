@@ -82,7 +82,8 @@ export class CheckinPhotoService {
   async requestPhotoUploadUrls(
     checkinId: string,
     userId: string,
-    contentTypes: string[]
+    contentTypes: string[],
+    contentLengths: number[]
   ): Promise<PhotoUploadUrl[]> {
     try {
       // Verify checkin belongs to user
@@ -101,6 +102,28 @@ export class CheckinPhotoService {
         const err = new Error('Unauthorized to modify this check-in');
         (err as any).statusCode = 403;
         throw err;
+      }
+
+      if (contentLengths.length !== contentTypes.length) {
+        const err = new Error(
+          'contentLengths must have one entry per content type'
+        ) as ServiceError;
+        err.statusCode = 400;
+        throw err;
+      }
+
+      for (const contentLength of contentLengths) {
+        if (
+          !Number.isInteger(contentLength) ||
+          contentLength <= 0 ||
+          contentLength > MAX_UPLOAD_FILE_SIZE_BYTES
+        ) {
+          const err = new Error(
+            `Each photo must be between 1 byte and ${MAX_UPLOAD_FILE_SIZE_BYTES} bytes (10MB)`
+          ) as ServiceError;
+          err.statusCode = 400;
+          throw err;
+        }
       }
 
       // Check existing photo count + requested count <= max
@@ -130,9 +153,11 @@ export class CheckinPhotoService {
         throw err;
       }
 
-      // Generate presigned URLs for each content type
+      // Generate presigned URLs for each content type, bound to the declared size
       const results = await Promise.all(
-        contentTypes.map((ct) => r2Service.getPresignedUploadUrl(ct, `checkins/${checkinId}`))
+        contentTypes.map((ct, index) =>
+          r2Service.getPresignedUploadUrl(ct, `checkins/${checkinId}`, contentLengths[index])
+        )
       );
 
       // Track each issued object key in `pending_photo_uploads` so

@@ -136,7 +136,7 @@ export class AuthService {
     const query = `
       SELECT id, email, username, first_name, last_name, bio, profile_image_url,
              location, date_of_birth, is_verified, is_active, is_admin, is_premium,
-             created_at, updated_at
+             created_at, updated_at, credentials_changed_at
       FROM users
       WHERE id = $1 AND is_active = true
     `;

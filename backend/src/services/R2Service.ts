@@ -92,10 +92,22 @@ export class R2Service {
    */
   async getPresignedUploadUrl(
     contentType: string,
-    prefix: string = 'checkins'
+    prefix: string = 'checkins',
+    contentLength?: number
   ): Promise<PresignedUploadResult> {
     if (!this.isConfigured || !this.s3) {
       throw new Error('Photo uploads not configured');
+    }
+
+    if (
+      contentLength == null ||
+      !Number.isInteger(contentLength) ||
+      contentLength <= 0 ||
+      contentLength > MAX_UPLOAD_FILE_SIZE_BYTES
+    ) {
+      throw new Error(
+        `Content length must be an integer between 1 and ${MAX_UPLOAD_FILE_SIZE_BYTES} bytes (10MB)`
+      );
     }
 
     // Validate content type
@@ -117,6 +129,7 @@ export class R2Service {
         Bucket: this.bucket,
         Key: objectKey,
         ContentType: contentType,
+        ContentLength: contentLength,
       }),
       { expiresIn: 600 }
     );

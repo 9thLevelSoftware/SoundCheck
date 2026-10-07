@@ -4,8 +4,15 @@ import { User, PublicUser, Report, ModerationItem, UserBlock } from '../types';
  * Strip server-only fields before sending user data to clients.
  * isAdmin and isPremium must NEVER be exposed in API responses.
  */
-export function sanitizeUserForClient(user: User): Omit<User, 'isAdmin' | 'isPremium'> {
-  const { isAdmin: _isAdmin, isPremium: _isPremium, ...clientUser } = user;
+export function sanitizeUserForClient(
+  user: User
+): Omit<User, 'isAdmin' | 'isPremium' | 'credentialsChangedAt'> {
+  const {
+    isAdmin: _isAdmin,
+    isPremium: _isPremium,
+    credentialsChangedAt: _credentialsChangedAt,
+    ...clientUser
+  } = user;
   return clientUser;
 }
 
@@ -33,6 +40,9 @@ export function mapDbUserToUser(row: any): User {
     isPremium: row.is_premium ?? false,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
+    ...(row.credentials_changed_at
+      ? { credentialsChangedAt: new Date(row.credentials_changed_at).toISOString() }
+      : {}),
   };
 }
 
@@ -46,6 +56,7 @@ export function mapDbUserToPublicUser(row: any): PublicUser {
     dateOfBirth: _dateOfBirth,
     isAdmin: _isAdmin,
     isPremium: _isPremium,
+    credentialsChangedAt: _credentialsChangedAt,
     ...publicUser
   } = mapDbUserToUser(row);
   return publicUser;

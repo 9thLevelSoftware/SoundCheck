@@ -222,9 +222,15 @@ export class CheckinService {
   async requestPhotoUploadUrls(
     checkinId: string,
     userId: string,
-    contentTypes: string[]
+    contentTypes: string[],
+    contentLengths: number[]
   ): Promise<{ uploadUrl: string; objectKey: string; publicUrl: string }[]> {
-    return this.photoService.requestPhotoUploadUrls(checkinId, userId, contentTypes);
+    return this.photoService.requestPhotoUploadUrls(
+      checkinId,
+      userId,
+      contentTypes,
+      contentLengths
+    );
   }
 
   /**

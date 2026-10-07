@@ -7,6 +7,7 @@ import { UnauthorizedError, BadRequestError } from '../utils/errors';
 import { asyncHandler } from '../utils/asyncHandler';
 import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
 import { realtimePublisher } from '../services/RealtimePublisher';
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../services/R2Service';
 
 export class CheckinController {
   private checkinService = new CheckinService();
@@ -445,7 +446,7 @@ export class CheckinController {
   /**
    * Request presigned upload URLs for photos
    * POST /api/checkins/:id/photos
-   * Body: { contentTypes: ['image/jpeg', 'image/png', ...] }
+   * Body: { contentTypes: ['image/jpeg'], contentLengths: [12345] }
    *
    * Returns presigned URLs for client to PUT directly to R2.
    * Photos never touch the Railway server filesystem.
@@ -458,7 +459,7 @@ export class CheckinController {
     }
 
     const { id } = routeParams(req);
-    const { contentTypes } = req.body;
+    const { contentTypes, contentLengths } = req.body;
 
     // Validate contentTypes
     if (!contentTypes || !Array.isArray(contentTypes) || contentTypes.length === 0) {
@@ -477,10 +478,26 @@ export class CheckinController {
       }
     }
 
+    if (
+      !Array.isArray(contentLengths) ||
+      contentLengths.length !== contentTypes.length ||
+      contentLengths.some(
+        (length: unknown) =>
+          !Number.isInteger(length) ||
+          (length as number) <= 0 ||
+          (length as number) > MAX_UPLOAD_FILE_SIZE_BYTES
+      )
+    ) {
+      throw new BadRequestError(
+        `contentLengths must match contentTypes and each photo must be between 1 byte and ${MAX_UPLOAD_FILE_SIZE_BYTES} bytes`
+      );
+    }
+
     const presignedUrls = await this.checkinService.requestPhotoUploadUrls(
       id,
       userId,
-      contentTypes
+      contentTypes,
+      contentLengths
     );
 
     const response: ApiResponse = {

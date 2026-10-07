@@ -16,6 +16,11 @@ export interface User {
   isPremium?: boolean;
   createdAt: string;
   updatedAt: string;
+  /**
+   * Server-only instant of the last password change or account deletion.
+   * Access tokens issued before this second are rejected. Never send to clients.
+   */
+  credentialsChangedAt?: string;
   // Statistics (populated on profile requests)
   totalCheckins?: number;
   uniqueBands?: number;
@@ -54,13 +59,18 @@ export interface SearchUserResult {
   isVerified: boolean;
 }
 
-export type PublicUser = Omit<User, 'email' | 'dateOfBirth' | 'isAdmin' | 'isPremium'>;
+export type PublicUser = Omit<
+  User,
+  'email' | 'dateOfBirth' | 'isAdmin' | 'isPremium' | 'credentialsChangedAt'
+>;
 
 // JWT Payload
 export interface JWTPayload {
   userId: string;
   email: string;
   username: string;
+  /** Issued-at, in seconds, added by jsonwebtoken. */
+  iat?: number;
 }
 
 // User following

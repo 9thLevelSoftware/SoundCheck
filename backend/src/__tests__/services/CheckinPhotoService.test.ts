@@ -65,10 +65,12 @@ describe('CheckinPhotoService', () => {
         publicUrl: `https://cdn.example.com/${photoKeys[1]}`,
       });
 
-    const result = await service.requestPhotoUploadUrls(checkinId, userId, [
-      'image/jpeg',
-      'image/jpeg',
-    ]);
+    const result = await service.requestPhotoUploadUrls(
+      checkinId,
+      userId,
+      ['image/jpeg', 'image/jpeg'],
+      [100, 100]
+    );
 
     expect(result.map((item) => item.objectKey)).toEqual(photoKeys);
     expect(mockDb.query).toHaveBeenNthCalledWith(
@@ -83,6 +85,39 @@ describe('CheckinPhotoService', () => {
     );
   });
 
+  it('rejects an oversize content length before signing an upload URL', async () => {
+    mockDb.query.mockResolvedValueOnce({
+      rows: [{ user_id: userId, image_urls: [] }],
+    });
+
+    await expect(
+      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg'], [10 * 1024 * 1024 + 1])
+    ).rejects.toMatchObject({ statusCode: 400 });
+
+    expect(mockR2Service.getPresignedUploadUrl).not.toHaveBeenCalled();
+  });
+
+  it('passes each declared content length through to the presigner', async () => {
+    mockDb.query
+      .mockResolvedValueOnce({ rows: [{ user_id: userId, image_urls: [] }] })
+      .mockResolvedValueOnce({ rowCount: 0 })
+      .mockResolvedValueOnce({ rows: [{ count: 0 }] })
+      .mockResolvedValueOnce({ rowCount: 1 });
+    mockR2Service.getPresignedUploadUrl.mockResolvedValueOnce({
+      uploadUrl: 'https://upload.example.com/one',
+      objectKey: photoKeys[0],
+      publicUrl: `https://cdn.example.com/${photoKeys[0]}`,
+    });
+
+    await service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg'], [2048]);
+
+    expect(mockR2Service.getPresignedUploadUrl).toHaveBeenCalledWith(
+      'image/jpeg',
+      `checkins/${checkinId}`,
+      2048
+    );
+  });
+
   it('rejects new signed URLs when attached plus pending plus requested photos exceed the cap', async () => {
     mockDb.query
       .mockResolvedValueOnce({
@@ -92,7 +127,7 @@ describe('CheckinPhotoService', () => {
       .mockResolvedValueOnce({ rows: [{ count: 2 }] });
 
     await expect(
-      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg', 'image/png'])
+      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg', 'image/png'], [100, 100])
     ).rejects.toMatchObject({ statusCode: 400 });
 
     expect(mockR2Service.getPresignedUploadUrl).not.toHaveBeenCalled();
@@ -102,7 +137,7 @@ describe('CheckinPhotoService', () => {
     mockDb.query.mockResolvedValueOnce({ rows: [] });
 
     await expect(
-      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg'])
+      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg'], [100])
     ).rejects.toMatchObject({
       message: 'Check-in not found',
       statusCode: 404,
@@ -113,7 +148,7 @@ describe('CheckinPhotoService', () => {
     });
 
     await expect(
-      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg'])
+      service.requestPhotoUploadUrls(checkinId, userId, ['image/jpeg'], [100])
     ).rejects.toMatchObject({
       message: 'Unauthorized to modify this check-in',
       statusCode: 403,
