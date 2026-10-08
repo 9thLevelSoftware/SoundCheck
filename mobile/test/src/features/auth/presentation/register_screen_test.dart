@@ -175,8 +175,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text(message), findsOneWidget);
-    expect(find.text('Check your email'), findsOneWidget);
-    expect(find.text('Then sign in with your password.'), findsOneWidget);
+    expect(find.text('You can sign in now'), findsOneWidget);
+    expect(
+      find.text(
+        'Use the password you just chose. If you already had an account, check your email.',
+      ),
+      findsOneWidget,
+    );
     expect(find.text('Back to sign in'), findsOneWidget);
     expect(
       find.text('An account with this email already exists'),

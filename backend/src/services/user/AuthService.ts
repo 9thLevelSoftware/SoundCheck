@@ -16,7 +16,7 @@ import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../../types
 import { AuthUtils, generateRefreshToken } from '../../utils/auth';
 import { mapDbUserToUser, sanitizeUserForClient } from '../../utils/dbMappers';
 import { clientStatusError, ServiceUnavailableError, UnauthorizedError } from '../../utils/errors';
-import { logError } from '../../utils/logger';
+import { logError, logWarn } from '../../utils/logger';
 
 export class AuthService {
   private db = Database.getInstance();
@@ -32,14 +32,19 @@ export class AuthService {
   /**
    * Create a new user when the email is unused.
    *
-   * An existing email is not an error. Both paths send mail and return without
-   * a session, so the HTTP result does not say which one happened. Signing the
-   * client in afterwards would reopen that oracle: login with the submitted
-   * password succeeds only when the account was just created.
+   * An existing email is not an error. Both paths return without a session, so
+   * the HTTP result does not say which one happened. Signing the client in
+   * afterwards would reopen that oracle: login with the submitted password
+   * succeeds only when the account was just created.
+   *
+   * When mail is not configured, the new account is still created and nothing
+   * is sent. A configured provider that fails to send still rolls the new
+   * account back and returns the same 503 on both paths.
    */
   async register(userData: CreateUserRequest): Promise<void> {
-    if (!this.emailService.isConfigured()) {
-      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+    const mailConfigured = this.emailService.isConfigured();
+    if (!mailConfigured) {
+      logWarn('signup mail disabled: RESEND not configured');
     }
 
     const { email: rawEmail, password, username, firstName, lastName } = userData;
@@ -49,7 +54,9 @@ export class AuthService {
     // Hash on both paths so an existing email is not a faster response.
     const passwordHash = await AuthUtils.hashPassword(password);
     if (emailExists) {
-      await this.sendExistingAccountNotice(emailExists.id, email);
+      if (mailConfigured) {
+        await this.sendExistingAccountNotice(emailExists.id, email);
+      }
       return;
     }
 
@@ -67,6 +74,10 @@ export class AuthService {
     const values = [email, passwordHash, username, firstName || null, lastName || null];
     const created = await this.db.query(query, values);
     const userId = created.rows[0].id as string;
+
+    if (!mailConfigured) {
+      return;
+    }
 
     try {
       await this.emailService.sendSignupWelcomeEmail(email);
