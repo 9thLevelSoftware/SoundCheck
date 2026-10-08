@@ -15,11 +15,18 @@ class NotificationSettings extends _$NotificationSettings {
   }
 
   Future<void> setPushNotifications(bool isEnabled) async {
+    final previous = state.asData?.value ?? true;
+    state = AsyncValue.data(isEnabled);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_pushNotificationsKey, isEnabled);
-    await ref
-        .read(pushNotificationServiceProvider)
-        .syncDeviceRegistration(isEnabled);
-    state = AsyncValue.data(isEnabled);
+    try {
+      await ref
+          .read(pushNotificationServiceProvider)
+          .syncDeviceRegistration(isEnabled);
+    } catch (error) {
+      await prefs.setBool(_pushNotificationsKey, previous);
+      state = AsyncValue.data(previous);
+      rethrow;
+    }
   }
 }

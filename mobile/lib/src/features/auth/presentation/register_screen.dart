@@ -472,7 +472,7 @@ class _SignupAcknowledgement extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacing16),
         Text(
-          'Check your email',
+          'You can sign in now',
           style: Theme.of(context).textTheme.displayMedium,
           textAlign: TextAlign.center,
         ),
@@ -486,7 +486,7 @@ class _SignupAcknowledgement extends StatelessWidget {
         ),
         const SizedBox(height: AppTheme.spacing8),
         Text(
-          'Then sign in with your password.',
+          'Use the password you just chose. If you already had an account, check your email.',
           style: Theme.of(
             context,
           ).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),

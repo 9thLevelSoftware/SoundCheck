@@ -16,7 +16,7 @@ import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../../types
 import { AuthUtils, generateRefreshToken } from '../../utils/auth';
 import { mapDbUserToUser, sanitizeUserForClient } from '../../utils/dbMappers';
 import { clientStatusError, ServiceUnavailableError, UnauthorizedError } from '../../utils/errors';
-import { logError } from '../../utils/logger';
+import { logError, logWarn } from '../../utils/logger';
 
 export class AuthService {
   private db = Database.getInstance();
@@ -32,14 +32,19 @@ export class AuthService {
   /**
    * Create a new user when the email is unused.
    *
-   * An existing email is not an error. Both paths send mail and return without
-   * a session, so the HTTP result does not say which one happened. Signing the
-   * client in afterwards would reopen that oracle: login with the submitted
-   * password succeeds only when the account was just created.
+   * An existing email is not an error. Both paths return without a session, so
+   * the HTTP result does not say which one happened. Signing the client in
+   * afterwards would reopen that oracle: login with the submitted password
+   * succeeds only when the account was just created.
+   *
+   * When mail is not configured, the new account is still created and nothing
+   * is sent. A configured provider that fails to send still rolls the new
+   * account back and returns the same 503 on both paths.
    */
   async register(userData: CreateUserRequest): Promise<void> {
-    if (!this.emailService.isConfigured()) {
-      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+    const mailConfigured = this.emailService.isConfigured();
+    if (!mailConfigured) {
+      logWarn('signup mail disabled: RESEND not configured');
     }
 
     const { email: rawEmail, password, username, firstName, lastName } = userData;
@@ -49,7 +54,9 @@ export class AuthService {
     // Hash on both paths so an existing email is not a faster response.
     const passwordHash = await AuthUtils.hashPassword(password);
     if (emailExists) {
-      await this.sendExistingAccountNotice(emailExists.id, email);
+      if (mailConfigured) {
+        await this.sendExistingAccountNotice(emailExists.id, email);
+      }
       return;
     }
 
@@ -68,6 +75,10 @@ export class AuthService {
     const created = await this.db.query(query, values);
     const userId = created.rows[0].id as string;
 
+    if (!mailConfigured) {
+      return;
+    }
+
     try {
       await this.emailService.sendSignupWelcomeEmail(email);
     } catch (error) {
@@ -82,12 +93,15 @@ export class AuthService {
 
   private async sendExistingAccountNotice(userId: string, email: string): Promise<void> {
     try {
-      const social = await this.db.query(
-        'SELECT 1 FROM user_social_accounts WHERE user_id = $1 LIMIT 1',
-        [userId]
-      );
-      const resetToken =
-        social.rows.length > 0 ? null : await this.passwordResetService.issueResetToken(userId);
+      const account = await this.db.query('SELECT password_hash FROM users WHERE id = $1', [
+        userId,
+      ]);
+      const passwordHash = account.rows[0]?.password_hash as string | null | undefined;
+      // A linked social account can still have a password. Only accounts with
+      // no password hash are social-only, and those must not receive a reset link.
+      const resetToken = passwordHash
+        ? await this.passwordResetService.issueResetToken(userId)
+        : null;
       await this.emailService.sendSignupExistingAccountEmail(email, resetToken);
     } catch (error) {
       logError('Signup existing-account email failed');

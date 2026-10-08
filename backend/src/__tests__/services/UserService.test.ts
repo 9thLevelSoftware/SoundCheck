@@ -2,6 +2,7 @@ import { UserService } from '../../services/UserService';
 import Database from '../../config/database';
 import { AuthUtils } from '../../utils/auth';
 import { SIGNUP_MAIL_UNAVAILABLE_MESSAGE } from '../../services/EmailService';
+import { logWarn } from '../../utils/logger';
 
 const mockIsConfigured = jest.fn(() => true);
 const mockSendWelcome = jest.fn().mockResolvedValue(undefined);
@@ -16,6 +17,11 @@ jest.mock('../../services/EmailService', () => ({
     sendSignupWelcomeEmail: mockSendWelcome,
     sendSignupExistingAccountEmail: mockSendExisting,
   })),
+}));
+jest.mock('../../utils/logger', () => ({
+  logWarn: jest.fn(),
+  logError: jest.fn(),
+  logInfo: jest.fn(),
 }));
 jest.mock('../../utils/auth', () => ({
   AuthUtils: {
@@ -105,7 +111,7 @@ describe('UserService', () => {
       (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
       mockDb.query
         .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] })
-        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ password_hash: 'hashedPassword123' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
@@ -124,27 +130,90 @@ describe('UserService', () => {
       );
     });
 
-    it('fails the same way for a new or existing email when mail is not configured', async () => {
-      mockIsConfigured.mockReturnValue(false);
+    it('sends a reset link when the existing account has a password and a social login', async () => {
       const userData = {
         email: 'test@example.com',
         password: 'TestPass123!',
         username: 'testuser',
       };
 
-      await expect(userService.createUser(userData)).rejects.toMatchObject({
-        statusCode: 503,
-        message: SIGNUP_MAIL_UNAVAILABLE_MESSAGE,
-      });
-      await expect(
-        userService.createUser({ ...userData, email: 'other@example.com' })
-      ).rejects.toMatchObject({
-        statusCode: 503,
-        message: SIGNUP_MAIL_UNAVAILABLE_MESSAGE,
-      });
-      expect(mockDb.query).not.toHaveBeenCalled();
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] })
+        .mockResolvedValueOnce({ rows: [{ password_hash: 'hashedPassword123' }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+      expect(mockSendExisting).toHaveBeenCalledWith(userData.email, expect.any(String));
+      const statements = mockDb.query.mock.calls.map((call) => String(call[0]));
+      expect(statements.some((sql) => sql.includes('user_social_accounts'))).toBe(false);
+    });
+
+    it('omits the reset link for a social-only account with no password', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+      };
+
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] })
+        .mockResolvedValueOnce({ rows: [{ password_hash: null }] });
+
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+      expect(mockSendExisting).toHaveBeenCalledWith(userData.email, null);
+      const statements = mockDb.query.mock.calls.map((call) => String(call[0]));
+      expect(statements.some((sql) => sql.includes('INSERT INTO password_reset_tokens'))).toBe(
+        false
+      );
+    });
+
+    it('creates a new account and sends nothing when mail is not configured', async () => {
+      mockIsConfigured.mockReturnValue(false);
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+      };
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 'user-123' }] });
+
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+
+      const statements = mockDb.query.mock.calls.map((call) => String(call[0]));
+      expect(statements.some((sql) => sql.includes('INSERT INTO users'))).toBe(true);
+      expect(statements.some((sql) => sql.includes('DELETE FROM users'))).toBe(false);
       expect(mockSendWelcome).not.toHaveBeenCalled();
       expect(mockSendExisting).not.toHaveBeenCalled();
+      expect(logWarn).toHaveBeenCalledTimes(1);
+      expect(logWarn).toHaveBeenCalledWith('signup mail disabled: RESEND not configured');
+      expect(JSON.stringify((logWarn as jest.Mock).mock.calls)).not.toContain(userData.email);
+    });
+
+    it('returns the same success for an existing email when mail is not configured', async () => {
+      mockIsConfigured.mockReturnValue(false);
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+      };
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query.mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] });
+
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+
+      const statements = mockDb.query.mock.calls.map((call) => String(call[0]));
+      expect(statements.some((sql) => sql.includes('INSERT INTO users'))).toBe(false);
+      expect(mockSendWelcome).not.toHaveBeenCalled();
+      expect(mockSendExisting).not.toHaveBeenCalled();
+      expect(logWarn).toHaveBeenCalledTimes(1);
+      expect(logWarn).toHaveBeenCalledWith('signup mail disabled: RESEND not configured');
+      expect(JSON.stringify((logWarn as jest.Mock).mock.calls)).not.toContain(userData.email);
     });
 
     it('rolls the new account back when the welcome email fails', async () => {

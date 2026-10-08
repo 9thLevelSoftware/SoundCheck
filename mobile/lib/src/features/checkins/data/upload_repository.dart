@@ -41,8 +41,13 @@ class PresignedUpload {
 /// 3. PATCH backend to confirm uploads and store URLs in check-in
 class UploadRepository {
   final DioClient _dioClient;
+  final Future<Uint8List?> Function(String sourcePath)? _compressPhoto;
 
-  UploadRepository({required DioClient dioClient}) : _dioClient = dioClient;
+  UploadRepository({
+    required DioClient dioClient,
+    Future<Uint8List?> Function(String sourcePath)? compressPhoto,
+  }) : _dioClient = dioClient,
+       _compressPhoto = compressPhoto;
 
   /// Helper method to map errors to Failures
   Failure _mapErrorToFailure(Object e) {
@@ -156,12 +161,14 @@ class UploadRepository {
       final prepared = <({Uint8List bytes, String contentType})>[];
       for (var i = 0; i < photos.length; i++) {
         onProgress?.call(i, 0.1);
-        final compressed = await FlutterImageCompress.compressWithFile(
-          photos[i].path,
-          quality: 85,
-          minWidth: 1920,
-          minHeight: 1080,
-        );
+        final compressed = _compressPhoto == null
+            ? await FlutterImageCompress.compressWithFile(
+                photos[i].path,
+                quality: 85,
+                minWidth: 1920,
+                minHeight: 1080,
+              )
+            : await _compressPhoto(photos[i].path);
         if (compressed != null) {
           prepared.add((
             bytes: Uint8List.fromList(compressed),

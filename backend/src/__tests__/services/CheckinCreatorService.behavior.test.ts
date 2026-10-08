@@ -157,7 +157,6 @@ describe('CheckinCreatorService critical behavior', () => {
       -71.0589,
       today,
       0,
-      'Great set',
     ]);
     expect(mockClientQuery).toHaveBeenCalledWith(expect.stringContaining('checkin_vibes'), [
       checkinId,
@@ -221,7 +220,6 @@ describe('CheckinCreatorService critical behavior', () => {
       null,
       today,
       4.5,
-      'Great set',
     ]);
   });
 
@@ -394,7 +392,6 @@ describe('CheckinCreatorService critical behavior', () => {
       venueId,
       bandId,
       true,
-      null,
       null,
       4,
       42.3601,

@@ -193,6 +193,43 @@ void main() {
         isFalse,
       );
     });
+
+    test('push toggle restores the previous value when sync fails', () async {
+      SharedPreferences.setMockInitialValues({
+        'settings_push_notifications': true,
+      });
+      final messaging = _FakePushMessagingClient(initialToken: 'token-a');
+      final repository = _FakeFeedRepository()
+        ..unregisterFailure = const ServerFailure('unregister failed');
+      final service = PushNotificationService(
+        feedRepository: repository,
+        messagingClient: messaging,
+        localNotificationsInitializer: () async {},
+      );
+      addTearDown(service.dispose);
+      await service.initialize();
+
+      final container = ProviderContainer(
+        overrides: [pushNotificationServiceProvider.overrideWithValue(service)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(notificationSettingsProvider.future);
+      await expectLater(
+        container
+            .read(notificationSettingsProvider.notifier)
+            .setPushNotifications(false),
+        throwsA(isA<Exception>()),
+      );
+
+      expect(container.read(notificationSettingsProvider).value, isTrue);
+      expect(
+        (await SharedPreferences.getInstance()).getBool(
+          'settings_push_notifications',
+        ),
+        isTrue,
+      );
+    });
   });
 }
 
@@ -238,6 +275,7 @@ class _FakeFeedRepository extends FeedRepository {
   final registeredTokens = <String>[];
   final unregisteredTokens = <String>[];
   final registrationResults = <Either<Failure, void>>[];
+  Failure? unregisterFailure;
   _DelayedRegistration? _delayedRegistration;
 
   _DelayedRegistration delayNextRegistration() {
@@ -267,6 +305,8 @@ class _FakeFeedRepository extends FeedRepository {
   @override
   Future<Either<Failure, void>> unregisterDeviceToken(String token) async {
     unregisteredTokens.add(token);
+    final failure = unregisterFailure;
+    if (failure != null) return Left(failure);
     return const Right(null);
   }
 }
