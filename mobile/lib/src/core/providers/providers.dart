@@ -645,7 +645,11 @@ class AuthState extends _$AuthState {
     }
   }
 
-  Future<void> register({
+  /// Starts signup and returns the server acknowledgement.
+  ///
+  /// Does not open a session. A new account and an existing email produce
+  /// the same message so the client cannot tell them apart.
+  Future<String?> register({
     required String email,
     required String password,
     required String username,
@@ -666,19 +670,18 @@ class AuthState extends _$AuthState {
         ),
       );
 
-      final authResponse = result.fold<AuthResponse>(
-        (failure) => throw Exception(failure.message),
+      final message = result.fold<String>(
+        (failure) => throw failure,
         (response) => response,
       );
-      if (!_isCurrentSession(generation)) return;
-      await _scheduleAuthenticatedSessionCommit(
-        authResponse,
-        generation: generation,
-      );
+      if (!_isCurrentSession(generation)) return null;
+      state = const AsyncValue.data(null);
+      return message;
     } catch (error, stackTrace) {
       if (_isCurrentSession(generation)) {
         state = AsyncValue.error(error, stackTrace);
       }
+      return null;
     }
   }
 

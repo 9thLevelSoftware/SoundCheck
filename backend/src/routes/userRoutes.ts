@@ -2,10 +2,9 @@ import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { UserController } from '../controllers/UserController';
 import { FollowController } from '../controllers/FollowController';
-import { authenticateToken, rateLimit, addJitter } from '../middleware/auth';
+import { authenticateToken, rateLimit, scopedRateLimit, addJitter } from '../middleware/auth';
 import { buildErrorResponse, validate } from '../middleware/validate';
 import { uploadProfileImage } from '../middleware/upload';
-import { enumerationLimiter } from '../utils/redisRateLimiter';
 import {
   createUserSchema,
   loginUserSchema,
@@ -49,8 +48,8 @@ const auditService = new AuditService();
 const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
 const generalRateLimit = rateLimit(15 * 60 * 1000, 30); // 30 requests per 15 minutes
 
-// Enumeration protection: 5 requests per 15 minutes + jitter for timing attack prevention
-const strictEnumerationLimiter = enumerationLimiter.middleware();
+// Signup username checks. Own bucket so they cannot lock out login.
+const usernameAvailabilityLimit = scopedRateLimit('username-availability', 15 * 60 * 1000, 5);
 
 const canonicalizeAuthErrors = (_req: Request, res: Response, next: NextFunction): void => {
   const originalJson = res.json.bind(res);
@@ -242,22 +241,21 @@ router.delete(
   }
 );
 
-// Username and email availability check - MUST come before /:username
-// SEC-007/CFR-015: Protected with strict enumeration rate limiting and jitter
+// Username availability stays for signup UX. Email check does not reveal
+// whether an address is registered. Both must be registered before /:username.
 router.get(
   '/check-username/:username',
-  strictEnumerationLimiter,
+  usernameAvailabilityLimit,
   addJitter(50, 150),
   validate(checkUsernameSchema),
   userController.checkUsername
 );
 router.get(
   '/check-email',
-  strictEnumerationLimiter,
-  addJitter(50, 150),
+  scopedRateLimit('signup-email-ack', 15 * 60 * 1000, 30),
   validate(checkEmailSchema),
   userController.checkEmail
-); // Changed to query param
+);
 
 // Followers/Following routes - use userId (UUID) for these
 // These are public routes since follower/following lists are typically public info

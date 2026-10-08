@@ -161,20 +161,7 @@ describe('Smoke Tests — Critical API Paths', () => {
 
   describe('2. User registration', () => {
     it('POST /api/users/register returns 201 on valid input', async () => {
-      mockUserService.createUser.mockResolvedValue({
-        user: {
-          id: 'user-1',
-          email: 'smoke@test.com',
-          username: 'smoketest',
-          firstName: 'Smoke',
-          lastName: 'Test',
-          isVerified: false,
-          isActive: true,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        token: 'jwt-smoke-token',
-      } as any);
+      mockUserService.createUser.mockResolvedValue(undefined);
 
       const res = await request(app).post('/api/users/register').send({
         email: 'smoke@test.com',
@@ -185,8 +172,10 @@ describe('Smoke Tests — Critical API Paths', () => {
       });
 
       expect(res.status).toBe(201);
-      expect(res.body.success).toBe(true);
-      expect(res.body.data).toHaveProperty('token');
+      expect(res.body).toEqual({
+        success: true,
+        message: 'Check your email to finish creating your account.',
+      });
     });
   });
 

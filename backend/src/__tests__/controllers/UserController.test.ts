@@ -1,6 +1,6 @@
 import request from 'supertest';
 import express from 'express';
-import { UserController } from '../../controllers/UserController';
+import { SIGNUP_ACKNOWLEDGEMENT_MESSAGE, UserController } from '../../controllers/UserController';
 import { UserService } from '../../services/UserService';
 import { validate } from '../../middleware/validate';
 import { createUserSchema, loginUserSchema } from '../../utils/validationSchemas';
@@ -60,26 +60,15 @@ describe('UserController', () => {
         lastName: 'User',
       };
 
-      const mockUser = {
-        id: 'user-123',
-        email: userData.email,
-        username: userData.username,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        isVerified: false,
-        isActive: true,
-        createdAt: '2024-01-01T00:00:00Z',
-        updatedAt: '2024-01-01T00:00:00Z',
-      };
-
-      mockUserService.createUser.mockResolvedValue(mockUser as any);
+      mockUserService.createUser.mockResolvedValue(undefined);
 
       const response = await request(app).post('/register').send(userData);
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toEqual(mockUser);
-      expect(response.body.message).toBe('User registered successfully');
+      expect(response.body).toEqual({
+        success: true,
+        message: SIGNUP_ACKNOWLEDGEMENT_MESSAGE,
+      });
       expect(mockUserService.createUser).toHaveBeenCalledWith(userData);
     });
 
@@ -95,7 +84,7 @@ describe('UserController', () => {
       expect(response.body.error).toBeDefined();
     });
 
-    it('should return error for duplicate email', async () => {
+    it('returns the same acknowledgement when the email is already registered', async () => {
       const userData = {
         email: 'test@example.com',
         password: 'TestPass123!',
@@ -103,12 +92,33 @@ describe('UserController', () => {
         firstName: 'Test',
       };
 
-      mockUserService.createUser.mockRejectedValue(new Error('Email already registered'));
+      mockUserService.createUser.mockResolvedValue(undefined);
 
       const response = await request(app).post('/register').send(userData);
 
-      expect(response.status).toBe(500);
-      expect(response.body.error).toBe('Email already registered');
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual({
+        success: true,
+        message: SIGNUP_ACKNOWLEDGEMENT_MESSAGE,
+      });
+      expect(JSON.stringify(response.body)).not.toContain('already');
+    });
+
+    it('returns 409 when the username is already taken', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+        firstName: 'Test',
+      };
+      const error = new Error('Username already taken') as Error & { statusCode: number };
+      error.statusCode = 409;
+      mockUserService.createUser.mockRejectedValue(error);
+
+      const response = await request(app).post('/register').send(userData);
+
+      expect(response.status).toBe(409);
+      expect(response.body.error).toBe('Username already taken');
     });
   });
 

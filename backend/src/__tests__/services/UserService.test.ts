@@ -70,35 +70,13 @@ describe('UserService', () => {
         .mockResolvedValueOnce({ rows: [] }) // findByUsername - no existing user
         .mockResolvedValueOnce({ rows: [mockUserResult] }); // create user
 
-      const result = await userService.createUser(userData);
-
-      expect(result).toEqual({
-        user: {
-          id: 'user-123',
-          email: userData.email,
-          username: userData.username,
-          firstName: userData.firstName,
-          lastName: userData.lastName,
-          bio: undefined,
-          profileImageUrl: undefined,
-          location: undefined,
-          dateOfBirth: undefined,
-          isVerified: false,
-          isActive: true,
-          // isAdmin and isPremium are stripped by sanitizeUserForClient (CFR-001)
-          createdAt: '2024-01-01T00:00:00Z',
-          updatedAt: '2024-01-01T00:00:00Z',
-        },
-        token: 'mock-jwt-token',
-        refreshToken: 'mock-refresh-token',
-      });
-
-      // Verify isAdmin/isPremium are NOT exposed in auth responses (CFR-001)
-      expect(result.user).not.toHaveProperty('isAdmin');
-      expect(result.user).not.toHaveProperty('isPremium');
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+      expect(mockDb.query).toHaveBeenCalledTimes(3);
+      expect(AuthUtils.generateToken).not.toHaveBeenCalled();
+      expect(AuthUtils.hashPassword).toHaveBeenCalledWith(userData.password);
     });
 
-    it('should throw error for existing email', async () => {
+    it('accepts an existing email without inserting or throwing', async () => {
       const userData = {
         email: 'test@example.com',
         password: 'TestPass123!',
@@ -106,14 +84,33 @@ describe('UserService', () => {
         firstName: 'Test',
       };
 
-      (AuthUtils.validateEmail as jest.Mock).mockReturnValue(true);
-      (AuthUtils.validateUsername as jest.Mock).mockReturnValue({ isValid: true, errors: [] });
-      (AuthUtils.validatePassword as jest.Mock).mockReturnValue({ isValid: true, errors: [] });
-
-      // Mock existing user found
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
       mockDb.query.mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] });
 
-      await expect(userService.createUser(userData)).rejects.toThrow('Email already registered');
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+      expect(mockDb.query).toHaveBeenCalledTimes(1);
+      expect(AuthUtils.hashPassword).toHaveBeenCalledWith(userData.password);
+      expect(AuthUtils.generateToken).not.toHaveBeenCalled();
+    });
+
+    it('rejects a taken username when the email is new', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+        firstName: 'Test',
+      };
+
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] });
+
+      await expect(userService.createUser(userData)).rejects.toMatchObject({
+        statusCode: 409,
+        message: 'Username already taken',
+      });
+      expect(mockDb.query).toHaveBeenCalledTimes(2);
     });
   });
 

@@ -13,34 +13,34 @@ import Database from '../../config/database';
 import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../../types';
 import { AuthUtils, generateRefreshToken } from '../../utils/auth';
 import { mapDbUserToUser, sanitizeUserForClient } from '../../utils/dbMappers';
-import { UnauthorizedError } from '../../utils/errors';
+import { clientStatusError, UnauthorizedError } from '../../utils/errors';
 
 export class AuthService {
   private db = Database.getInstance();
 
   /**
-   * Create a new user (registration)
+   * Create a new user when the email is unused.
+   *
+   * An existing email is not an error. Callers must respond the same way
+   * either way so registration cannot be used to learn which emails exist.
+   * No session is issued here; the client signs in afterwards.
    */
-  async register(userData: CreateUserRequest): Promise<AuthResponse> {
+  async register(userData: CreateUserRequest): Promise<void> {
     const { email: rawEmail, password, username, firstName, lastName } = userData;
     const email = rawEmail.toLowerCase();
 
-    // Check if email already exists
     const emailExists = await this.findByEmail(email);
+    // Hash on both paths so an existing email is not a faster response.
+    const passwordHash = await AuthUtils.hashPassword(password);
     if (emailExists) {
-      throw new Error('Email already registered');
+      return;
     }
 
-    // Check if username already exists
     const usernameExists = await this.findByUsername(username);
     if (usernameExists) {
-      throw new Error('Username already taken');
+      throw clientStatusError(409, 'Username already taken');
     }
 
-    // Hash password
-    const passwordHash = await AuthUtils.hashPassword(password);
-
-    // Insert user into database
     const query = `
       INSERT INTO users (email, password_hash, username, first_name, last_name)
       VALUES ($1, $2, $3, $4, $5)
@@ -50,24 +50,7 @@ export class AuthService {
     `;
 
     const values = [email, passwordHash, username, firstName || null, lastName || null];
-    const result = await this.db.query(query, values);
-
-    const user = mapDbUserToUser(result.rows[0]);
-
-    // Generate JWT token for new user
-    const token = AuthUtils.generateToken({
-      userId: user.id,
-      email: user.email,
-      username: user.username,
-    });
-
-    const refreshToken = await generateRefreshToken(user.id);
-
-    return {
-      user: sanitizeUserForClient(user) as User,
-      token,
-      refreshToken,
-    };
+    await this.db.query(query, values);
   }
 
   /**
