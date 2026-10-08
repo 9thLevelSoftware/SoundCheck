@@ -128,7 +128,8 @@ DB_PASSWORD=strong_password_here
 
 # JWT - Use strong generated secret
 JWT_SECRET=<your-64-char-hex-secret>
-JWT_EXPIRES_IN=7d
+# Access-token lifetime. Refresh tokens renew it. 30m matches the API default.
+JWT_EXPIRES_IN=30m
 
 # Server
 PORT=3000

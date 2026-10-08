@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:path_provider/path_provider.dart';
 
 import '../../../core/api/dio_client.dart';
 import '../../../core/api/api_config.dart';
@@ -38,6 +42,22 @@ class ProfileRepository {
       final response = await _dioClient.get(ApiConfig.concertCred(userId));
       final data = response.data['data'] as Map<String, dynamic>;
       return Right(ConcertCred.fromJson(data));
+    } catch (e) {
+      return Left(_mapErrorToFailure(e));
+    }
+  }
+
+  /// Download the authenticated account export from `GET /users/export`.
+  Future<Either<Failure, String>> downloadDataExport() async {
+    try {
+      final response = await _dioClient.get('${ApiConfig.auth}/export');
+      final directory = await getTemporaryDirectory();
+      final file = File('${directory.path}/soundcheck-data-export.json');
+      final payload = response.data;
+      await file.writeAsString(
+        payload is String ? payload : jsonEncode(payload),
+      );
+      return Right(file.path);
     } catch (e) {
       return Left(_mapErrorToFailure(e));
     }

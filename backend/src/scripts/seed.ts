@@ -466,8 +466,10 @@ async function seedDatabase() {
       const query = `
         INSERT INTO venues (name, description, address, city, state, country, postal_code,
                            latitude, longitude, website_url, phone, capacity, venue_type, image_url)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
-        ON CONFLICT DO NOTHING
+        SELECT $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
+        WHERE NOT EXISTS (
+          SELECT 1 FROM venues WHERE name = $1 AND city = $4 AND state = $5
+        )
         RETURNING id
       `;
       const values = [
@@ -490,6 +492,15 @@ async function seedDatabase() {
       if (result.rows[0]) {
         venueIds.push(result.rows[0].id);
         console.log(`  ✓ ${venue.name}`);
+      } else {
+        const existing = await db.query(
+          'SELECT id FROM venues WHERE name = $1 AND city = $2 AND state = $3 LIMIT 1',
+          [venue.name, venue.city, venue.state]
+        );
+        if (existing.rows[0]) {
+          venueIds.push(existing.rows[0].id);
+          console.log(`  • ${venue.name} already present`);
+        }
       }
     }
     console.log(`✅ Seeded ${venueIds.length} venues\n`);
@@ -500,8 +511,10 @@ async function seedDatabase() {
     for (const band of bands) {
       const query = `
         INSERT INTO bands (name, description, genre, formed_year, hometown, image_url)
-        VALUES ($1, $2, $3, $4, $5, $6)
-        ON CONFLICT DO NOTHING
+        SELECT $1, $2, $3, $4, $5, $6
+        WHERE NOT EXISTS (
+          SELECT 1 FROM bands WHERE name = $1
+        )
         RETURNING id
       `;
       const values = [
@@ -516,6 +529,14 @@ async function seedDatabase() {
       if (result.rows[0]) {
         bandIds.push(result.rows[0].id);
         console.log(`  ✓ ${band.name} (${band.genre})`);
+      } else {
+        const existing = await db.query('SELECT id FROM bands WHERE name = $1 LIMIT 1', [
+          band.name,
+        ]);
+        if (existing.rows[0]) {
+          bandIds.push(existing.rows[0].id);
+          console.log(`  • ${band.name} already present`);
+        }
       }
     }
     console.log(`✅ Seeded ${bandIds.length} bands\n`);

@@ -131,34 +131,28 @@ describe('Authentication Integration Tests', () => {
   });
 
   describe('POST /api/users/register', () => {
-    it('should register a new user successfully', async () => {
-      const mockAuthResponse = {
-        user: mockUserResponse,
-        token: 'jwt-token-123',
-        refreshToken: 'mock-refresh-token',
-      };
+    const acknowledgement = {
+      success: true,
+      message: 'Check your email to finish creating your account.',
+    };
 
-      mockUserService.createUser.mockResolvedValue(mockAuthResponse as any);
+    it('should register a new user successfully', async () => {
+      mockUserService.createUser.mockResolvedValue(undefined);
 
       const response = await request(app).post('/api/users/register').send(testUser);
 
       expect(response.status).toBe(201);
-      expect(response.body.success).toBe(true);
-      expect(response.body.data).toHaveProperty('user');
-      expect(response.body.data).toHaveProperty('token');
-      expect(response.body.data.user.email).toBe(testUser.email);
-      expect(response.body.message).toBe('User registered successfully');
+      expect(response.body).toEqual(acknowledgement);
       expect(mockUserService.createUser).toHaveBeenCalledWith(testUser);
     });
 
-    it('should reject duplicate email', async () => {
-      mockUserService.createUser.mockRejectedValue(new Error('Email already exists'));
+    it('returns the same acknowledgement when the email is already registered', async () => {
+      mockUserService.createUser.mockResolvedValue(undefined);
 
       const response = await request(app).post('/api/users/register').send(testUser);
 
-      expect(response.status).toBe(400);
-      expect(response.body.success).toBe(false);
-      expect(response.body.error).toContain('already exists');
+      expect(response.status).toBe(201);
+      expect(response.body).toEqual(acknowledgement);
     });
 
     it('should validate email format', async () => {

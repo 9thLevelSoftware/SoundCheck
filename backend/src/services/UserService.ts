@@ -25,10 +25,11 @@ export class UserService {
   }
 
   /**
-   * Create a new user
+   * Create a new user when the email is unused.
+   * An existing email resolves without an error or a session.
    * @deprecated Use AuthService.register() directly
    */
-  async createUser(userData: CreateUserRequest): Promise<AuthResponse> {
+  async createUser(userData: CreateUserRequest): Promise<void> {
     return this.authService.register(userData);
   }
 

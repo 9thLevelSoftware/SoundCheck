@@ -22,7 +22,9 @@ import '../../features/profile/presentation/blocked_users_screen.dart';
 import '../../features/notifications/presentation/notifications_screen.dart';
 import '../../features/notifications/presentation/notification_detail_screen.dart';
 import '../../features/venues/presentation/venue_detail_screen.dart';
+import '../../features/venues/presentation/venues_screen.dart';
 import '../../features/bands/presentation/band_detail_screen.dart';
+import '../../features/bands/presentation/bands_screen.dart';
 import '../../features/checkins/presentation/checkin_detail_screen.dart';
 import '../../features/badges/presentation/badge_collection_screen.dart';
 import '../../features/sharing/presentation/celebration_screen.dart';
@@ -520,6 +522,18 @@ GoRouter goRouter(Ref ref) {
                 },
           );
         },
+      ),
+
+      GoRoute(
+        path: '/bands',
+        name: 'bands',
+        builder: (context, state) => const BandsScreen(),
+      ),
+
+      GoRoute(
+        path: '/venues',
+        name: 'venues',
+        builder: (context, state) => const VenuesScreen(),
       ),
 
       // Band Detail Route

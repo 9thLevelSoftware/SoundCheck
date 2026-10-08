@@ -4,9 +4,11 @@ import { CheckinService } from '../services/CheckinService';
 import { AuditService } from '../services/AuditService';
 import { ApiResponse } from '../types';
 import { UnauthorizedError, BadRequestError } from '../utils/errors';
+import { isHalfStarRating } from '../utils/halfStarRating';
 import { asyncHandler } from '../utils/asyncHandler';
 import { broadcastToRoom, sendToUser, WebSocketEvents } from '../utils/websocket';
 import { realtimePublisher } from '../services/RealtimePublisher';
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../services/R2Service';
 
 export class CheckinController {
   private checkinService = new CheckinService();
@@ -50,6 +52,7 @@ export class CheckinController {
         locationLat: locationLat ?? checkinLatitude,
         locationLon: locationLon ?? checkinLongitude,
         comment,
+        rating,
         vibeTagIds,
       });
     } else if (bandId && venueId) {
@@ -444,7 +447,7 @@ export class CheckinController {
   /**
    * Request presigned upload URLs for photos
    * POST /api/checkins/:id/photos
-   * Body: { contentTypes: ['image/jpeg', 'image/png', ...] }
+   * Body: { contentTypes: ['image/jpeg'], contentLengths: [12345] }
    *
    * Returns presigned URLs for client to PUT directly to R2.
    * Photos never touch the Railway server filesystem.
@@ -457,7 +460,7 @@ export class CheckinController {
     }
 
     const { id } = routeParams(req);
-    const { contentTypes } = req.body;
+    const { contentTypes, contentLengths } = req.body;
 
     // Validate contentTypes
     if (!contentTypes || !Array.isArray(contentTypes) || contentTypes.length === 0) {
@@ -476,10 +479,26 @@ export class CheckinController {
       }
     }
 
+    if (
+      !Array.isArray(contentLengths) ||
+      contentLengths.length !== contentTypes.length ||
+      contentLengths.some(
+        (length: unknown) =>
+          !Number.isInteger(length) ||
+          (length as number) <= 0 ||
+          (length as number) > MAX_UPLOAD_FILE_SIZE_BYTES
+      )
+    ) {
+      throw new BadRequestError(
+        `contentLengths must match contentTypes and each photo must be between 1 byte and ${MAX_UPLOAD_FILE_SIZE_BYTES} bytes`
+      );
+    }
+
     const presignedUrls = await this.checkinService.requestPhotoUploadUrls(
       id,
       userId,
-      contentTypes
+      contentTypes,
+      contentLengths
     );
 
     const response: ApiResponse = {
@@ -562,7 +581,7 @@ export class CheckinController {
             'Each band rating must have bandId (string) and rating (number)'
           );
         }
-        if (br.rating < 0.5 || br.rating > 5.0 || br.rating % 0.5 !== 0) {
+        if (!isHalfStarRating(br.rating)) {
           throw new BadRequestError('Band ratings must be 0.5-5.0 in 0.5 increments');
         }
       }
@@ -570,12 +589,7 @@ export class CheckinController {
 
     // Validate venueRating format
     if (venueRating !== undefined) {
-      if (
-        typeof venueRating !== 'number' ||
-        venueRating < 0.5 ||
-        venueRating > 5.0 ||
-        venueRating % 0.5 !== 0
-      ) {
+      if (typeof venueRating !== 'number' || !isHalfStarRating(venueRating)) {
         throw new BadRequestError('Venue rating must be 0.5-5.0 in 0.5 increments');
       }
     }

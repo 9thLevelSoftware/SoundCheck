@@ -4,6 +4,7 @@ import { CheckinController } from '../controllers/CheckinController';
 import { authenticateToken } from '../middleware/auth';
 import { dailyCheckinRateLimit } from '../middleware/checkinRateLimit';
 import { validate } from '../middleware/validate';
+import { MAX_UPLOAD_FILE_SIZE_BYTES } from '../services/R2Service';
 
 const router = Router();
 const checkinController = new CheckinController();
@@ -54,14 +55,28 @@ const requestPhotoUploadSchema = z.object({
   params: z.object({
     id: z.string().uuid('Check-in ID must be a valid UUID'),
   }),
-  body: z.object({
-    contentTypes: z
-      .array(
-        z.enum(['image/jpeg', 'image/png', 'image/webp', 'image/heic'], 'Invalid content type')
-      )
-      .min(1, 'contentTypes must be a non-empty array')
-      .max(4, 'Maximum 4 photos per request'),
-  }),
+  body: z
+    .object({
+      contentTypes: z
+        .array(
+          z.enum(['image/jpeg', 'image/png', 'image/webp', 'image/heic'], 'Invalid content type')
+        )
+        .min(1, 'contentTypes must be a non-empty array')
+        .max(4, 'Maximum 4 photos per request'),
+      contentLengths: z
+        .array(
+          z
+            .number()
+            .int()
+            .positive()
+            .max(MAX_UPLOAD_FILE_SIZE_BYTES, 'Each photo must be 10MB or smaller')
+        )
+        .min(1, 'contentLengths must be a non-empty array')
+        .max(4, 'Maximum 4 photos per request'),
+    })
+    .refine((body) => body.contentTypes.length === body.contentLengths.length, {
+      message: 'contentLengths must have one entry per content type',
+    }),
 });
 
 /** Must match keys issued by R2Service: checkins/<checkin-uuid>/<32hex>.<ext> */

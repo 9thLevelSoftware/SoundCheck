@@ -89,15 +89,6 @@ class FeedRepository {
     }
   }
 
-  /// Discovery-style feed for the "Events" tab (backend has no `GET /feed/events`).
-  /// Uses global feed until a dedicated merged-events feed exists (audit H-MOB-1).
-  Future<Either<Failure, FeedPage>> getEventsFeed({
-    String? cursor,
-    int limit = 20,
-  }) async {
-    return getGlobalFeed(cursor: cursor, limit: limit);
-  }
-
   /// Get happening now groups (friends at events today)
   /// GET /feed/happening-now
   Future<Either<Failure, List<HappeningNowGroup>>> getHappeningNow() async {

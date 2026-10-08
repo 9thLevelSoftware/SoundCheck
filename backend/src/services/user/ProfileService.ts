@@ -12,6 +12,7 @@
 import Database from '../../config/database';
 import { User } from '../../types';
 import { mapDbUserToUser, camelToSnakeCase } from '../../utils/dbMappers';
+import { BadRequestError } from '../../utils/errors';
 
 export interface SearchUserResult {
   id: string;
@@ -36,7 +37,7 @@ export class ProfileService {
     const query = `
       SELECT id, email, username, first_name, last_name, bio, profile_image_url,
              location, date_of_birth, is_verified, is_active, is_admin, is_premium,
-             created_at, updated_at
+             created_at, updated_at, credentials_changed_at
       FROM users
       WHERE id = $1 AND is_active = true
     `;
@@ -97,7 +98,7 @@ export class ProfileService {
     }
 
     if (updates.length === 0) {
-      throw new Error('No valid fields to update');
+      throw new BadRequestError('No valid fields to update');
     }
 
     values.push(userId);

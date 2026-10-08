@@ -1,5 +1,9 @@
 # SoundCheck Code Quality & Issues Review
 
+This file describes older schema and API mismatches. It is not the current release decision. Store readiness is the October 2026 audit in GitHub PR #51 (`docs/reviews/2026-10-release-audit/` once that PR is merged).
+
+
+
 ## Executive Summary
 - Total issues found: 5
 - Critical bugs: 2

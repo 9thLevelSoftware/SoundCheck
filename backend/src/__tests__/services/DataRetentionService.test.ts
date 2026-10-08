@@ -424,6 +424,7 @@ describe('DataRetentionService', () => {
           call[0].includes('date_of_birth = NULL')
       );
       expect(anonymizeCall).toBeDefined();
+      expect(anonymizeCall?.[0]).toContain('credentials_changed_at = NOW()');
     });
 
     it('should anonymize check-in photos', async () => {
@@ -462,7 +463,7 @@ describe('DataRetentionService', () => {
 
       expect(result.anonymizedCheckinPhotos).toBe(7);
       expect(mockClient.query).toHaveBeenCalledWith(
-        expect.stringContaining('UPDATE checkins SET photo_url = NULL WHERE user_id = $1'),
+        'UPDATE checkins SET photo_url = NULL, comment = NULL, review_text = NULL WHERE user_id = $1',
         [userId]
       );
     });

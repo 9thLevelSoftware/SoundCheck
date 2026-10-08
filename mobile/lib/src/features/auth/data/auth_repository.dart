@@ -36,19 +36,22 @@ class AuthRepository {
     return ServerFailure('Unexpected error: $e');
   }
 
-  /// Register a new user
-  Future<Either<Failure, AuthResponse>> register(
-    RegisterRequest request,
-  ) async {
+  /// Register a new user.
+  ///
+  /// The API uses the same acknowledgement for a new address and one that
+  /// already has an account, and it does not return a session.
+  Future<Either<Failure, String>> register(RegisterRequest request) async {
     try {
       final response = await _dioClient.post(
         '${ApiConfig.auth}/register',
         data: request.toJson(),
       );
 
-      // Extract data from API wrapper: {success, data, message}
-      final data = response.data['data'] as Map<String, dynamic>;
-      return Right(AuthResponse.fromJson(data));
+      final body = response.data;
+      final message = body is Map && body['message'] is String
+          ? body['message'] as String
+          : 'Check your email to finish creating your account.';
+      return Right(message);
     } catch (e) {
       return Left(_mapErrorToFailure(e));
     }

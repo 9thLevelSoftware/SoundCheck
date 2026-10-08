@@ -7,6 +7,7 @@ import 'package:soundcheck_flutter/src/core/api/dio_client.dart';
 import 'package:soundcheck_flutter/src/core/error/failures.dart';
 import 'package:soundcheck_flutter/src/core/providers/providers.dart';
 import 'package:soundcheck_flutter/src/features/auth/data/auth_repository.dart';
+import 'package:soundcheck_flutter/src/features/auth/domain/user.dart';
 import 'package:soundcheck_flutter/src/features/auth/presentation/register_screen.dart';
 
 void main() {
@@ -122,23 +123,78 @@ void main() {
     );
 
     final usernameForm = find.widgetWithText(TextFormField, 'Username *');
+    await tester.enterText(usernameForm, 'tak');
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.enterText(usernameForm, 'taken_na');
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.enterText(usernameForm, 'taken_name');
+    expect(repository.requestedUsernames, isEmpty);
+
     await tester.pump(const Duration(milliseconds: 550));
     await tester.pump();
 
     expect(repository.requestedUsernames, ['taken_name']);
     expect(find.text('Username is already taken'), findsOneWidget);
   });
+
+  testWidgets('shows the same check-your-email confirmation after submit', (
+    tester,
+  ) async {
+    const message = 'Check your email to finish creating your account.';
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          authRepositoryProvider.overrideWithValue(
+            _UsernameRepository(isAvailable: true, registerMessage: message),
+          ),
+        ],
+        child: const MaterialApp(home: RegisterScreen()),
+      ),
+    );
+
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Email *'),
+      'fan@example.com',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Username *'),
+      'fan_name',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Password *'),
+      'StrongPass1!',
+    );
+    await tester.enterText(
+      find.widgetWithText(TextFormField, 'Confirm Password *'),
+      'StrongPass1!',
+    );
+
+    final createAccount = find.widgetWithText(ElevatedButton, 'Create Account');
+    await tester.ensureVisible(createAccount);
+    await tester.tap(createAccount);
+    await tester.pumpAndSettle();
+
+    expect(find.text(message), findsOneWidget);
+    expect(find.text('Check your email'), findsOneWidget);
+    expect(find.text('Then sign in with your password.'), findsOneWidget);
+    expect(find.text('Back to sign in'), findsOneWidget);
+    expect(
+      find.text('An account with this email already exists'),
+      findsNothing,
+    );
+    expect(find.text('Account created successfully!'), findsNothing);
+  });
 }
 
 class _UsernameRepository extends AuthRepository {
-  _UsernameRepository({required this.isAvailable})
+  _UsernameRepository({required this.isAvailable, this.registerMessage})
     : super(
         dioClient: DioClient(secureStorage: const FlutterSecureStorage()),
         secureStorage: const FlutterSecureStorage(),
       );
 
   final bool isAvailable;
+  final String? registerMessage;
   final requestedUsernames = <String>[];
 
   @override
@@ -147,5 +203,12 @@ class _UsernameRepository extends AuthRepository {
   ) async {
     requestedUsernames.add(username);
     return Right(isAvailable);
+  }
+
+  @override
+  Future<Either<Failure, String>> register(RegisterRequest request) async {
+    return Right(
+      registerMessage ?? 'Check your email to finish creating your account.',
+    );
   }
 }

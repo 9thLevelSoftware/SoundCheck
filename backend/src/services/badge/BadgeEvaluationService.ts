@@ -11,6 +11,7 @@
 import Database from '../../config/database';
 import { Badge } from '../../types';
 import { evaluatorRegistry, EvalResult } from '../BadgeEvaluators';
+import { assertEvaluationGroup, groupBadgesForEvaluation } from './badgeGroups';
 import logger from '../../utils/logger';
 
 export interface BadgeProgress {
@@ -90,33 +91,15 @@ export class BadgeEvaluationService {
   async evaluateMany(userId: string, badges: Badge[]): Promise<EvaluationResult[]> {
     if (badges.length === 0) return [];
 
-    // Group badges by criteria.type (genre_explorer grouped by genre)
-    const typeGroups = new Map<string, Badge[]>();
-    const badgesWithoutCriteria: Badge[] = [];
-
-    for (const badge of badges) {
-      const type = badge.criteria?.type;
-      if (!type) {
-        badgesWithoutCriteria.push(badge);
-        continue;
-      }
-
-      const groupKey =
-        type === 'genre_explorer'
-          ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
-          : type;
-
-      if (!typeGroups.has(groupKey)) {
-        typeGroups.set(groupKey, []);
-      }
-      typeGroups.get(groupKey)!.push(badge);
-    }
+    const { groups: typeGroups, withoutCriteria: badgesWithoutCriteria } =
+      groupBadgesForEvaluation(badges);
 
     const results: EvaluationResult[] = [];
 
-    // Run each evaluator once per type group
+    // One evaluator call per query-criteria group. Threshold stays per badge.
     for (const [groupKey, groupBadges] of typeGroups) {
-      const type = groupKey.includes(':') ? groupKey.split(':')[0] : groupKey;
+      const type = String(groupBadges[0].criteria?.type);
+      assertEvaluationGroup(groupKey, groupBadges);
       const evaluator = evaluatorRegistry.get(type);
 
       if (!evaluator) {
@@ -132,8 +115,7 @@ export class BadgeEvaluationService {
         continue;
       }
 
-      // Use criteria from the first badge in the group
-      const criteria = groupBadges[0].criteria || {};
+      const criteria = { ...(groupBadges[0].criteria || {}) };
 
       try {
         const evalResult: EvalResult = await evaluator(userId, criteria);
@@ -191,37 +173,19 @@ export class BadgeEvaluationService {
     allBadges: Badge[],
     earnedBadgeIds: Set<string>
   ): Promise<BadgeProgress[]> {
-    // Group badges by criteria.type (genre_explorer grouped by genre)
-    const typeGroups = new Map<string, Badge[]>();
-    const badgesWithoutCriteria: Badge[] = [];
+    const { groups: typeGroups, withoutCriteria: badgesWithoutCriteria } =
+      groupBadgesForEvaluation(allBadges);
 
-    for (const badge of allBadges) {
-      const type = badge.criteria?.type;
-      if (!type) {
-        badgesWithoutCriteria.push(badge);
-        continue;
-      }
-
-      const groupKey =
-        type === 'genre_explorer'
-          ? `genre_explorer:${(badge.criteria?.genre || '').toLowerCase()}`
-          : type;
-
-      if (!typeGroups.has(groupKey)) {
-        typeGroups.set(groupKey, []);
-      }
-      typeGroups.get(groupKey)!.push(badge);
-    }
-
-    // Run each evaluator once per type group
+    // Run each evaluator once per query-criteria group
     const evalCache = new Map<string, EvalResult>();
 
     for (const [groupKey, badges] of typeGroups) {
-      const type = groupKey.includes(':') ? groupKey.split(':')[0] : groupKey;
+      const type = String(badges[0].criteria?.type);
+      assertEvaluationGroup(groupKey, badges);
       const evaluator = evaluatorRegistry.get(type);
       if (!evaluator) continue;
 
-      const criteria = badges[0].criteria || {};
+      const criteria = { ...(badges[0].criteria || {}) };
 
       try {
         const result = await evaluator(userId, criteria);

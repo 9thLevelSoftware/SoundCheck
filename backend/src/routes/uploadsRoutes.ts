@@ -2,21 +2,20 @@ import { Router, Request, Response } from 'express';
 import { routeParam } from '../utils/requestParams';
 import path from 'path';
 import fs from 'fs';
-import { authenticateToken } from '../middleware/auth';
 import { ApiResponse } from '../types';
 
 const router = Router();
 
 /**
- * Serve uploaded profile images with authentication
+ * Serve uploaded profile images.
  *
- * Security: This route requires authentication to prevent unauthorized
- * enumeration or scraping of user profile images.
+ * Profile URLs are embedded on public profiles and the mobile image loader
+ * does not attach a JWT. Filenames are random (`profile-<16 hex>`), and
+ * path traversal is rejected below.
  *
  * @route GET /api/uploads/profiles/:filename
- * @security JWT
  */
-router.get('/profiles/:filename', authenticateToken, (req: Request, res: Response) => {
+router.get('/profiles/:filename', (req: Request, res: Response) => {
   const filename = routeParam(req, 'filename');
 
   // Sanitize filename to prevent directory traversal attacks
@@ -47,7 +46,7 @@ router.get('/profiles/:filename', authenticateToken, (req: Request, res: Respons
     return res.status(404).json(response);
   }
 
-  // Send the file
+  res.setHeader('Cache-Control', 'public, max-age=86400');
   res.sendFile(resolvedPath);
 });
 

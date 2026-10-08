@@ -3,12 +3,16 @@ import 'dart:async';
 import 'package:dartz/dartz.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:soundcheck_flutter/src/core/api/dio_client.dart';
 import 'package:soundcheck_flutter/src/core/error/failures.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:soundcheck_flutter/src/core/providers/providers.dart';
 import 'package:soundcheck_flutter/src/core/services/push_notification_service.dart';
 import 'package:soundcheck_flutter/src/features/feed/data/feed_repository.dart';
+import 'package:soundcheck_flutter/src/features/profile/presentation/settings_provider.dart';
 
 void main() {
   group('PushNotificationService deep-link parsing', () {
@@ -139,6 +143,56 @@ void main() {
         expect(repository.registeredTokens, ['token-a']);
       },
     );
+
+    test('does not register the device token when push is disabled', () async {
+      final messaging = _FakePushMessagingClient(initialToken: 'token-a');
+      final repository = _FakeFeedRepository();
+      final service = PushNotificationService(
+        feedRepository: repository,
+        messagingClient: messaging,
+        localNotificationsInitializer: () async {},
+        isPushEnabled: () async => false,
+      );
+      addTearDown(service.dispose);
+
+      await service.initialize();
+
+      expect(repository.registeredTokens, isEmpty);
+      expect(service.currentToken, 'token-a');
+    });
+
+    test('settings push toggle unregisters the current device token', () async {
+      SharedPreferences.setMockInitialValues({
+        'settings_push_notifications': true,
+      });
+      final messaging = _FakePushMessagingClient(initialToken: 'token-a');
+      final repository = _FakeFeedRepository();
+      final service = PushNotificationService(
+        feedRepository: repository,
+        messagingClient: messaging,
+        localNotificationsInitializer: () async {},
+      );
+      addTearDown(service.dispose);
+      await service.initialize();
+
+      final container = ProviderContainer(
+        overrides: [pushNotificationServiceProvider.overrideWithValue(service)],
+      );
+      addTearDown(container.dispose);
+
+      await container.read(notificationSettingsProvider.future);
+      await container
+          .read(notificationSettingsProvider.notifier)
+          .setPushNotifications(false);
+
+      expect(repository.unregisteredTokens, ['token-a']);
+      expect(
+        (await SharedPreferences.getInstance()).getBool(
+          'settings_push_notifications',
+        ),
+        isFalse,
+      );
+    });
   });
 }
 
@@ -182,6 +236,7 @@ class _FakeFeedRepository extends FeedRepository {
     : super(dioClient: DioClient(secureStorage: const FlutterSecureStorage()));
 
   final registeredTokens = <String>[];
+  final unregisteredTokens = <String>[];
   final registrationResults = <Either<Failure, void>>[];
   _DelayedRegistration? _delayedRegistration;
 
@@ -206,6 +261,12 @@ class _FakeFeedRepository extends FeedRepository {
     if (registrationResults.isNotEmpty) {
       return registrationResults.removeAt(0);
     }
+    return const Right(null);
+  }
+
+  @override
+  Future<Either<Failure, void>> unregisterDeviceToken(String token) async {
+    unregisteredTokens.add(token);
     return const Right(null);
   }
 }

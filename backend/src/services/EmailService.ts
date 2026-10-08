@@ -1,5 +1,10 @@
 import { Resend } from 'resend';
+import { ServiceUnavailableError } from '../utils/errors';
 import { logInfo, logWarn, logError } from '../utils/logger';
+
+/** Same failure for a new signup and an existing address when mail cannot be sent. */
+export const SIGNUP_MAIL_UNAVAILABLE_MESSAGE =
+  "We couldn't send the confirmation email. Try again later.";
 
 /**
  * EmailService - Resend wrapper for transactional email with graceful degradation.
@@ -118,6 +123,99 @@ export class EmailService {
     } catch (err) {
       logError('Error sending password reset email', { to, error: err });
       throw err;
+    }
+  }
+
+  /**
+   * Welcome mail for an address that just got an account.
+   * Does not log the address.
+   */
+  async sendSignupWelcomeEmail(to: string): Promise<void> {
+    await this.sendSignupEmail(
+      to,
+      'Your SoundCheck account is ready',
+      'Welcome to SoundCheck',
+      'Your account is ready. Sign in with the password you just chose.'
+    );
+  }
+
+  /**
+   * Notice for an address that already has an account.
+   * `resetToken` is null for social-only accounts, which cannot take a password reset.
+   * Does not log the address.
+   */
+  async sendSignupExistingAccountEmail(to: string, resetToken: string | null): Promise<void> {
+    const resetUrl = resetToken ? this.buildPasswordResetUrl(resetToken) : null;
+    const body = resetUrl
+      ? 'Someone tried to create an account with this email. If it was you, sign in or reset your password.'
+      : 'Someone tried to create an account with this email. If it was you, sign in with the account you already have.';
+    await this.sendSignupEmail(
+      to,
+      'Someone tried to create a SoundCheck account',
+      'Account already in use',
+      body,
+      resetUrl
+    );
+  }
+
+  private async sendSignupEmail(
+    to: string,
+    subject: string,
+    heading: string,
+    body: string,
+    actionHref: string | null = null
+  ): Promise<void> {
+    if (!this.configured || !this.resend) {
+      logWarn('EmailService not configured - signup email not sent');
+      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+    }
+
+    const action = actionHref
+      ? `<tr><td align="center" style="padding-bottom:24px;"><a href="${actionHref}" style="display:inline-block;padding:14px 32px;background-color:#CCFF00;color:#0D0F11;text-decoration:none;border-radius:8px;font-weight:bold;font-size:16px;">Reset password</a></td></tr>`
+      : '';
+
+    try {
+      const { error } = await this.resend.emails.send({
+        from: this.fromAddress,
+        to: [to],
+        subject,
+        html: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin:0;padding:0;background-color:#0D0F11;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0D0F11;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="480" cellpadding="0" cellspacing="0" style="background-color:#161B22;border-radius:12px;padding:40px;">
+          <tr><td align="center" style="padding-bottom:24px;"><h1 style="color:#CCFF00;margin:0;font-size:28px;">SoundCheck</h1></td></tr>
+          <tr><td style="padding-bottom:16px;"><h2 style="color:#F0F6FC;margin:0;font-size:20px;">${heading}</h2></td></tr>
+          <tr><td style="padding-bottom:24px;"><p style="color:#8B949E;margin:0;font-size:15px;line-height:1.5;">${body}</p></td></tr>
+          ${action}
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+        `.trim(),
+      });
+
+      if (error) {
+        logError('Signup email was rejected by the mail provider');
+        throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+      }
+
+      logInfo('Signup email sent');
+    } catch (err) {
+      if (err instanceof ServiceUnavailableError) {
+        throw err;
+      }
+      logError('Signup email failed to send');
+      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
     }
   }
 

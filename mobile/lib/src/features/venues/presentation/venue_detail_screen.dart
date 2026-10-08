@@ -559,7 +559,6 @@ class _UpcomingEventsSection extends StatelessWidget {
                   ),
                 ],
               ),
-              // TODO: Add "See All" button when venue shows list screen is implemented
             ],
           ),
           const SizedBox(height: 12),
@@ -640,110 +639,117 @@ class _UpcomingEventItem extends StatelessWidget {
         ? 'Starts ${event.startTime}'
         : '';
 
-    return GestureDetector(
-      onTap: () => context.push('/events/${event.id}'),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.all(12),
-        decoration: BoxDecoration(
-          color: Theme.of(context).colorScheme.surfaceContainerHigh,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Row(
-          children: [
-            // Date
-            Container(
-              width: 50,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              decoration: BoxDecoration(
-                color: AppTheme.voltLime.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Column(
-                children: [
-                  Text(
-                    monthStr,
-                    style: const TextStyle(
-                      color: AppTheme.voltLime,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                  Text(
-                    dayStr,
-                    style: const TextStyle(
-                      color: AppTheme.voltLime,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 18,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 12),
-            // Event info
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    bandName,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  if (timeInfo.isNotEmpty) ...[
-                    const SizedBox(height: 4),
+    return Semantics(
+      button: true,
+      label: 'Open show $bandName',
+      child: GestureDetector(
+        onTap: () => context.push('/events/${event.id}'),
+        child: Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.surfaceContainerHigh,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              // Date
+              Container(
+                width: 50,
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppTheme.voltLime.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Column(
+                  children: [
                     Text(
-                      timeInfo,
+                      monthStr,
                       style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
+                        color: AppTheme.voltLime,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                    ),
+                    Text(
+                      dayStr,
+                      style: const TextStyle(
+                        color: AppTheme.voltLime,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
                       ),
                     ),
                   ],
-                ],
+                ),
               ),
-            ),
-            // Tickets button if URL available
-            if (event.ticketUrl != null)
-              GestureDetector(
-                onTap: () async {
-                  final uri = Uri.parse(event.ticketUrl!);
-                  if (await canLaunchUrl(uri)) {
-                    await launchUrl(uri, mode: LaunchMode.externalApplication);
-                  }
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 8,
-                  ),
-                  decoration: BoxDecoration(
-                    color: AppTheme.voltLime,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Text(
-                    'Tickets',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
+              const SizedBox(width: 12),
+              // Event info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      bandName,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (timeInfo.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        timeInfo,
+                        style: const TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              // Tickets button if URL available
+              if (event.ticketUrl != null)
+                GestureDetector(
+                  onTap: () async {
+                    final uri = Uri.parse(event.ticketUrl!);
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(
+                        uri,
+                        mode: LaunchMode.externalApplication,
+                      );
+                    }
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: AppTheme.voltLime,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Text(
+                      'Tickets',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 12,
+                      ),
                     ),
                   ),
+                )
+              else
+                const Icon(
+                  Icons.chevron_right,
+                  color: AppTheme.textTertiary,
+                  size: 20,
                 ),
-              )
-            else
-              const Icon(
-                Icons.chevron_right,
-                color: AppTheme.textTertiary,
-                size: 20,
-              ),
-          ],
+            ],
+          ),
         ),
       ),
     );

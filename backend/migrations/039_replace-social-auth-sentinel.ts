@@ -1,6 +1,4 @@
 import type { MigrationBuilder } from 'node-pg-migrate';
-import bcrypt from 'bcryptjs';
-import crypto from 'crypto';
 
 /**
  * Migration 039: Replace Social Auth Plaintext Sentinel
@@ -13,20 +11,15 @@ import crypto from 'crypto';
  */
 
 export async function up(pgm: MigrationBuilder): Promise<void> {
-  // DI-014: Use a fixed sentinel hash instead of a random one.
-  // A random password generated at migration time makes the migration
-  // non-deterministic -- re-running it produces different hashes, and
-  // the random value is lost so the hash can never be reproduced.
-  // Instead, use a fixed bcrypt hash of a known-unguessable sentinel
-  // value. The hash below is bcrypt(10 rounds) of the string
-  // "SOCIAL_AUTH_SENTINEL_DO_NOT_USE_AS_PASSWORD_2026".
-  // This is safe because: (1) bcrypt prevents reverse lookup,
-  // (2) the sentinel string is not a real password, and
-  // (3) social auth accounts skip password verification entirely.
-  const fixedSentinelHash = await bcrypt.hash(
-    'SOCIAL_AUTH_SENTINEL_DO_NOT_USE_AS_PASSWORD_2026',
-    10
-  );
+  // DI-014: bcrypt.hash() draws a new salt on every run, so this file
+  // used to store a different hash each time it was applied. The constant
+  // below is one bcrypt (10 rounds) digest of
+  // "SOCIAL_AUTH_SENTINEL_DO_NOT_USE_AS_PASSWORD_2026". It looks like any
+  // other password hash, and social-auth accounts never verify it.
+  // Already-applied databases keep the hash they stored; node-pg-migrate
+  // records the migration name, not a file checksum, so this edit does
+  // not re-run 039.
+  const fixedSentinelHash = '$2b$10$sGTAwsSApiWQT9/nLGqGDOch56nNJY5WMDfLGKaZW.N.IsiMi25jK';
 
   // Replace all plaintext sentinel values with the deterministic bcrypt hash
   pgm.sql(`

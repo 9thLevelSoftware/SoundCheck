@@ -499,6 +499,47 @@ describe('BadgeEvaluationService qualification and progress', () => {
     ]);
   });
 
+  it('evaluates road-warrior city and state badges with their own field', async () => {
+    const fieldEvaluator = jest.fn().mockResolvedValue({ current: 6, target: 5, earned: true });
+    evaluatorRegistry.set('road_warrior', fieldEvaluator);
+    const city = makeBadge({
+      id: 'badge-city',
+      criteria: { type: 'road_warrior', field: 'city', threshold: 5 },
+    });
+    const state = makeBadge({
+      id: 'badge-state',
+      criteria: { type: 'road_warrior', field: 'state', threshold: 5 },
+    });
+
+    const results = await new BadgeEvaluationService().evaluateMany('user-1', [city, state]);
+
+    expect(fieldEvaluator).toHaveBeenCalledTimes(2);
+    expect(fieldEvaluator).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ field: 'city' })
+    );
+    expect(fieldEvaluator).toHaveBeenCalledWith(
+      'user-1',
+      expect.objectContaining({ field: 'state' })
+    );
+    expect(results.map((result) => result.badge.id).sort()).toEqual(['badge-city', 'badge-state']);
+    evaluatorRegistry.delete('road_warrior');
+  });
+
+  it('fails the job when a badge does not match its evaluation group', async () => {
+    const { assertEvaluationGroup } = await import('../../services/badge/badgeGroups');
+    expect(() =>
+      assertEvaluationGroup('type=road_warrior|field=city', [
+        makeBadge({
+          id: 'badge-state',
+          criteria: { type: 'road_warrior', field: 'state', threshold: 5 },
+        }),
+      ])
+    ).toThrow(
+      "Badge badge-state criteria do not match evaluation group 'type=road_warrior|field=city'"
+    );
+  });
+
   it('returns no evaluations for an empty badge list', async () => {
     await expect(new BadgeEvaluationService().evaluateMany('user-1', [])).resolves.toEqual([]);
     expect(counterEvaluator).not.toHaveBeenCalled();

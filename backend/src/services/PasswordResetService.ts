@@ -4,6 +4,7 @@ import { EmailService } from './EmailService';
 import { AuthUtils } from '../utils/auth';
 import { revokeAllUserTokens } from '../utils/auth';
 import { logInfo, logError } from '../utils/logger';
+import { clientStatusError } from '../utils/errors';
 
 /**
  * PasswordResetService handles the full forgot-password lifecycle:
@@ -95,18 +96,39 @@ export class PasswordResetService {
   }
 
   /**
+   * Store a one-hour reset token for a user and return the raw token.
+   * Does not look up or log an email address.
+   */
+  async issueResetToken(userId: string): Promise<string> {
+    await this.db.query(
+      'UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL',
+      [userId]
+    );
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.db.query(
+      'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [userId, tokenHash, expiresAt]
+    );
+
+    return token;
+  }
+
+  /**
    * Reset a user's password using a valid reset token.
    *
    * Validates the token, updates the password, marks the token as used,
+   * records credentials_changed_at so existing access tokens stop working,
    * and revokes all refresh tokens to force re-login on all devices.
    */
   async resetPassword(token: string, newPassword: string): Promise<void> {
     // Validate password meets requirements
     const validation = AuthUtils.validatePassword(newPassword);
     if (!validation.isValid) {
-      const error = new Error(validation.errors.join('. '));
-      (error as any).statusCode = 400;
-      throw error;
+      throw clientStatusError(400, validation.errors.join('. '));
     }
 
     // Hash the submitted token with SHA-256
@@ -122,9 +144,7 @@ export class PasswordResetService {
     );
 
     if (tokenResult.rows.length === 0) {
-      const error = new Error('Invalid or expired reset token');
-      (error as any).statusCode = 400;
-      throw error;
+      throw clientStatusError(400, 'Invalid or expired reset token');
     }
 
     const { id: tokenId, user_id: userId } = tokenResult.rows[0];
@@ -134,7 +154,7 @@ export class PasswordResetService {
 
     // Update user password
     await this.db.query(
-      'UPDATE users SET password_hash = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      'UPDATE users SET password_hash = $1, credentials_changed_at = CURRENT_TIMESTAMP, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
       [passwordHash, userId]
     );
 

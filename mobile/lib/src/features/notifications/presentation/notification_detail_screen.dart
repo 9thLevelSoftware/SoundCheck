@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/app_theme.dart';
@@ -457,7 +458,7 @@ class _RelatedUserCard extends StatelessWidget {
           CircleAvatar(
             radius: 28,
             backgroundImage: user.profileImageUrl != null
-                ? NetworkImage(user.profileImageUrl)
+                ? CachedNetworkImageProvider(user.profileImageUrl)
                 : null,
             child: user.profileImageUrl == null
                 ? Text(user.username[0].toUpperCase())

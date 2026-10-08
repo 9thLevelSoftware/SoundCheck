@@ -44,8 +44,8 @@ describe('SubscriptionController RevenueCat webhook contract', () => {
         event: { id: 'event-1', type: 'INITIAL_PURCHASE' },
       });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ message: 'Webhook not configured' });
+    expect(response.status).toBe(503);
+    expect(response.body).toEqual({ success: false, error: 'Webhook not configured' });
     expect(subscriptionService.processWebhookEvent).not.toHaveBeenCalled();
   });
 
@@ -55,8 +55,8 @@ describe('SubscriptionController RevenueCat webhook contract', () => {
       .set('Authorization', 'Bearer revenuecat-wrong-token')
       .send({ event: { id: 'event-2', type: 'INITIAL_PURCHASE' } });
 
-    expect(response.status).toBe(200);
-    expect(response.body).toEqual({ message: 'Unauthorized' });
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({ success: false, error: 'Unauthorized' });
     expect(subscriptionService.processWebhookEvent).not.toHaveBeenCalled();
   });
 

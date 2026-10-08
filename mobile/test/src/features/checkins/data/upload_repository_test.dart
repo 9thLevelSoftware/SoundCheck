@@ -33,15 +33,17 @@ void main() {
       );
       final repository = UploadRepository(dioClient: client);
 
-      final result = await repository.requestPresignedUrls('checkin-1', [
-        'image/jpeg',
-        'image/png',
-      ]);
+      final result = await repository.requestPresignedUrls(
+        'checkin-1',
+        ['image/jpeg', 'image/png'],
+        contentLengths: [1200, 3400],
+      );
 
       expect(client.method, 'POST');
       expect(client.path, '/checkins/checkin-1/photos');
       expect(client.data, {
         'contentTypes': ['image/jpeg', 'image/png'],
+        'contentLengths': [1200, 3400],
       });
       result.fold(
         (failure) => fail('Expected presigned URLs, got ${failure.message}'),
@@ -119,12 +121,16 @@ void main() {
       );
       final repository = UploadRepository(dioClient: client);
 
-      final offline = await repository.requestPresignedUrls('checkin-1', [
-        'image/jpeg',
-      ]);
-      final malformed = await repository.requestPresignedUrls('checkin-1', [
-        'image/jpeg',
-      ]);
+      final offline = await repository.requestPresignedUrls(
+        'checkin-1',
+        ['image/jpeg'],
+        contentLengths: [100],
+      );
+      final malformed = await repository.requestPresignedUrls(
+        'checkin-1',
+        ['image/jpeg'],
+        contentLengths: [100],
+      );
 
       expect(
         offline.fold((failure) => failure, (_) => fail('Expected failure')),

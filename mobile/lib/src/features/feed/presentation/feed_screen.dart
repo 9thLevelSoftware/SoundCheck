@@ -14,7 +14,7 @@ import 'widgets/happening_now_card.dart';
 import 'widgets/new_checkins_banner.dart';
 
 /// Social Activity Feed - The Home Screen
-/// Three tabs: Discover, Friends, Events (with Happening Now filter)
+/// Three tabs: Discover, Friends, and live event activity (Happening Now)
 /// Real-time updates via WebSocket with "N new check-ins" banner
 class FeedScreen extends ConsumerStatefulWidget {
   const FeedScreen({super.key});
@@ -67,20 +67,32 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
             lastSeenCheckinId: feedItems.first.id,
           );
     } else if (tabIndex == 2) {
-      // The merged tab opens on Events. Happening Now has an independent
-      // cursor and is marked only when that inner filter is actually opened.
-      final feedItems = ref.read(eventsFeedProvider).value;
-      if (feedItems == null || feedItems.isEmpty) return;
-      ref
-          .read(feedRepositoryProvider)
-          .markFeedRead(
-            'event',
-            feedItems.first.createdAt,
-            lastSeenCheckinId: feedItems.first.id,
-          );
+      unawaited(_markHappeningNowRead());
     }
-    // Refresh unseen counts
-    ref.invalidate(unseenCountsProvider);
+    // Refresh unseen counts. The live-events tab refreshes after its own read.
+    if (tabIndex != 2) {
+      ref.invalidate(unseenCountsProvider);
+    }
+  }
+
+  Future<void> _markHappeningNowRead() async {
+    try {
+      final groups = await ref.read(happeningNowProvider.future);
+      if (!mounted || groups.isEmpty) return;
+
+      final latestGroup = groups.reduce(
+        (latest, candidate) =>
+            candidate.lastCheckinAt.compareTo(latest.lastCheckinAt) > 0
+            ? candidate
+            : latest,
+      );
+      await ref
+          .read(feedRepositoryProvider)
+          .markFeedRead('happening_now', latestGroup.lastCheckinAt);
+      if (mounted) ref.invalidate(unseenCountsProvider);
+    } catch (_) {
+      // Leave the cursor unchanged when the live feed could not be loaded.
+    }
   }
 
   @override
@@ -141,9 +153,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
                   ),
                   _TabWithBadge(
                     label: 'Events',
-                    count:
-                        (unseenAsync.value?.event ?? 0) +
-                        (unseenAsync.value?.happeningNow ?? 0),
+                    count: unseenAsync.value?.happeningNow ?? 0,
                     showLiveDot: (unseenAsync.value?.happeningNow ?? 0) > 0,
                   ),
                 ],
@@ -157,8 +167,7 @@ class _FeedScreenState extends ConsumerState<FeedScreen>
               const _GlobalFeedTab(),
               // Friends tab
               _FriendsTab(newCheckinCount: newCheckinCount),
-              // Events + Happening Now merged tab
-              const _MergedEventsTab(),
+              const _HappeningNowTab(),
             ],
           ),
         ),
@@ -398,174 +407,12 @@ class _FriendsTabState extends ConsumerState<_FriendsTab> {
   }
 }
 
-/// Merged Events + Happening Now tab with ChoiceChip filter
-enum _EventsFilter { events, happeningNow }
-
-class _MergedEventsTab extends ConsumerStatefulWidget {
-  const _MergedEventsTab();
+/// Live check-ins at events happening now. There is no separate events feed.
+class _HappeningNowTab extends ConsumerWidget {
+  const _HappeningNowTab();
 
   @override
-  ConsumerState<_MergedEventsTab> createState() => _MergedEventsTabState();
-}
-
-class _MergedEventsTabState extends ConsumerState<_MergedEventsTab> {
-  _EventsFilter _filter = _EventsFilter.events;
-
-  void _selectFilter(_EventsFilter filter) {
-    if (_filter == filter) return;
-    setState(() => _filter = filter);
-    if (filter == _EventsFilter.happeningNow) {
-      unawaited(_markHappeningNowRead());
-    }
-  }
-
-  Future<void> _markHappeningNowRead() async {
-    try {
-      final groups = await ref.read(happeningNowProvider.future);
-      if (!mounted || _filter != _EventsFilter.happeningNow || groups.isEmpty) {
-        return;
-      }
-
-      final latestGroup = groups.reduce(
-        (latest, candidate) =>
-            candidate.lastCheckinAt.compareTo(latest.lastCheckinAt) > 0
-            ? candidate
-            : latest,
-      );
-      await ref
-          .read(feedRepositoryProvider)
-          .markFeedRead('happening_now', latestGroup.lastCheckinAt);
-      if (mounted && _filter == _EventsFilter.happeningNow) {
-        ref.invalidate(unseenCountsProvider);
-      }
-    } catch (_) {
-      // The visible provider error remains retryable; do not advance its read
-      // cursor when the live feed could not be loaded.
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        // Filter chips row
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          child: Row(
-            children: [
-              ChoiceChip(
-                label: const Text('Events'),
-                selected: _filter == _EventsFilter.events,
-                onSelected: (_) => _selectFilter(_EventsFilter.events),
-                selectedColor: AppTheme.voltLime,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
-                labelStyle: TextStyle(
-                  color: _filter == _EventsFilter.events
-                      ? Theme.of(context).scaffoldBackgroundColor
-                      : AppTheme.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-                side: BorderSide.none,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-              const SizedBox(width: 8),
-              ChoiceChip(
-                label: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_filter != _EventsFilter.happeningNow)
-                      Container(
-                        width: 6,
-                        height: 6,
-                        margin: const EdgeInsets.only(right: 6),
-                        decoration: const BoxDecoration(
-                          color: AppTheme.voltLime,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    const Text('Happening Now'),
-                  ],
-                ),
-                selected: _filter == _EventsFilter.happeningNow,
-                onSelected: (_) => _selectFilter(_EventsFilter.happeningNow),
-                selectedColor: AppTheme.voltLime,
-                backgroundColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
-                labelStyle: TextStyle(
-                  color: _filter == _EventsFilter.happeningNow
-                      ? Theme.of(context).scaffoldBackgroundColor
-                      : AppTheme.textSecondary,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-                side: BorderSide.none,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
-            ],
-          ),
-        ),
-        // Content
-        Expanded(
-          child: _filter == _EventsFilter.events
-              ? _buildEventsContent()
-              : _buildHappeningNowContent(),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildEventsContent() {
-    final feedAsync = ref.watch(eventsFeedProvider);
-
-    return RefreshIndicator(
-      color: AppTheme.voltLime,
-      backgroundColor: Theme.of(context).colorScheme.surfaceContainerHigh,
-      onRefresh: () async {
-        ref.invalidate(eventsFeedProvider);
-      },
-      child: feedAsync.when(
-        loading: () => const _FeedLoadingState(),
-        error: (error, stack) => _FeedErrorState(
-          error: error,
-          onRetry: () => ref.invalidate(eventsFeedProvider),
-        ),
-        data: (items) {
-          if (items.isEmpty) {
-            return ListView(
-              children: [
-                EmptyStateWidget(
-                  type: EmptyStateType.general,
-                  customTitle: 'No event activity yet',
-                  customMessage:
-                      'RSVP to upcoming events to see activity here!',
-                  actionLabel: 'Discover Events',
-                  onAction: () => context.go('/discover'),
-                ),
-              ],
-            );
-          }
-
-          return ListView.builder(
-            padding: const EdgeInsets.only(bottom: 100),
-            itemCount: items.length,
-            itemBuilder: (context, index) {
-              return FeedCard(item: items[index]);
-            },
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildHappeningNowContent() {
+  Widget build(BuildContext context, WidgetRef ref) {
     final groupsAsync = ref.watch(happeningNowProvider);
 
     return RefreshIndicator(

@@ -16,14 +16,11 @@ jest.mock('../../utils/auth', () => ({
 }));
 
 /**
- * Tests for authenticated uploads route
- *
- * Security requirement: Uploaded files should only be accessible to authenticated users.
- * This prevents unauthorized enumeration or scraping of user profile images.
+ * Profile images are public so profile pages can render them without a token.
+ * Filenames are unguessable; directory traversal stays rejected.
  */
 describe('Uploads Route', () => {
   let app: express.Express;
-  let mockUserService: jest.Mocked<UserService>;
   const mockAuthUtils = AuthUtils as jest.Mocked<typeof AuthUtils>;
 
   const testUploadDir = path.join(__dirname, '../../../uploads/profiles');
@@ -60,9 +57,6 @@ describe('Uploads Route', () => {
     // Import and use the uploads route
     const uploadsRoutes = (await import('../../routes/uploadsRoutes')).default;
     app.use('/api/uploads', uploadsRoutes);
-
-    // Setup mock user service
-    mockUserService = new UserService() as jest.Mocked<UserService>;
   });
 
   afterEach(() => {
@@ -73,16 +67,18 @@ describe('Uploads Route', () => {
   });
 
   describe('GET /api/uploads/profiles/:filename', () => {
-    it('should return 401 for unauthenticated access to uploads', async () => {
+    it('should return the file for unauthenticated profile-image reads', async () => {
       mockAuthUtils.extractTokenFromHeader.mockReturnValue(null);
 
       const response = await request(app).get(`/api/uploads/profiles/${testFilename}`);
 
-      expect(response.status).toBe(401);
-      expect(response.body.error).toBeDefined();
+      expect(response.status).toBe(200);
+      const content = response.text || response.body?.toString();
+      expect(content).toContain('test image content');
+      expect(response.headers['cache-control']).toContain('public');
     });
 
-    it('should return 401 for invalid token', async () => {
+    it('should ignore a presented token and still return the public file', async () => {
       mockAuthUtils.extractTokenFromHeader.mockReturnValue('invalid-token');
       mockAuthUtils.verifyToken.mockReturnValue(null);
 
@@ -90,8 +86,9 @@ describe('Uploads Route', () => {
         .get(`/api/uploads/profiles/${testFilename}`)
         .set('Authorization', 'Bearer invalid-token');
 
-      expect(response.status).toBe(401);
-      expect(response.body.error).toBeDefined();
+      expect(response.status).toBe(200);
+      const content = response.text || response.body?.toString();
+      expect(content).toContain('test image content');
     });
 
     it('should return file for authenticated users', async () => {
@@ -155,26 +152,11 @@ describe('Uploads Route', () => {
       expect(response.status).toBe(404);
     });
 
-    it('should return 401 for inactive user', async () => {
-      mockAuthUtils.extractTokenFromHeader.mockReturnValue('valid-token');
-      mockAuthUtils.verifyToken.mockReturnValue({
-        userId: 'user-123',
-        email: 'test@example.com',
-        username: 'testuser',
-      });
+    it('should return the file without consulting the account status', async () => {
+      const response = await request(app).get(`/api/uploads/profiles/${testFilename}`);
 
-      const userServiceMock = UserService as jest.MockedClass<typeof UserService>;
-      userServiceMock.prototype.findById.mockResolvedValue({
-        ...mockUser,
-        isActive: false,
-      } as any);
-
-      const response = await request(app)
-        .get(`/api/uploads/profiles/${testFilename}`)
-        .set('Authorization', 'Bearer valid-token');
-
-      expect(response.status).toBe(401);
-      expect(response.body.error).toBeDefined();
+      expect(response.status).toBe(200);
+      expect(UserService.prototype.findById).not.toHaveBeenCalled();
     });
   });
 });

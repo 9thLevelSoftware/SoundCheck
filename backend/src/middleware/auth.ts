@@ -11,6 +11,29 @@ export interface AuthenticatedRequest extends Request {
 }
 
 /**
+ * Access tokens stay valid through the second a password changes, so a
+ * same-second re-login is not rejected. Anything issued earlier is stale.
+ * A missing issued-at on a token is rejected once a change timestamp exists.
+ */
+export function accessTokenPredatesCredentialChange(
+  issuedAtSeconds: number | undefined,
+  credentialsChangedAt?: string
+): boolean {
+  if (!credentialsChangedAt) {
+    return false;
+  }
+  const changedMs = new Date(credentialsChangedAt).getTime();
+  if (
+    issuedAtSeconds === undefined ||
+    !Number.isFinite(issuedAtSeconds) ||
+    Number.isNaN(changedMs)
+  ) {
+    return true;
+  }
+  return issuedAtSeconds < Math.floor(changedMs / 1000);
+}
+
+/**
  * Middleware to authenticate JWT tokens
  */
 export const authenticateToken = async (
@@ -54,6 +77,15 @@ export const authenticateToken = async (
       return;
     }
 
+    if (accessTokenPredatesCredentialChange(payload.iat, user.credentialsChangedAt)) {
+      const response: ApiResponse = {
+        success: false,
+        error: 'Invalid or expired token',
+      };
+      res.status(401).json(response);
+      return;
+    }
+
     // Attach user info to request
     req.user = user;
     // Enrich Sentry error context with authenticated user
@@ -91,7 +123,11 @@ export const optionalAuth = async (
         const userService = new UserService();
         const user = await userService.findById(payload.userId);
 
-        if (user && user.isActive) {
+        if (
+          user &&
+          user.isActive &&
+          !accessTokenPredatesCredentialChange(payload.iat, user.credentialsChangedAt)
+        ) {
           req.user = user;
           sentrySetUser({ id: user.id, username: user.username });
         }
@@ -215,19 +251,19 @@ function requestPathForRateLimit(req: Request): string {
  * In-memory rate limit check (fallback when Redis unavailable)
  */
 function checkInMemoryRateLimit(
-  clientIP: string,
+  memoryKey: string,
   windowMs: number,
   maxRequests: number
 ): { allowed: boolean; remaining: number; resetAt: number } {
   const now = Date.now();
-  const clientData = inMemoryRateLimitStore.get(clientIP);
+  const clientData = inMemoryRateLimitStore.get(memoryKey);
 
   if (!clientData || now > clientData.resetTime) {
     const resetTime = now + windowMs;
     // Enforce max size before adding new entries
     if (
       inMemoryRateLimitStore.size >= MAX_RATE_LIMIT_ENTRIES &&
-      !inMemoryRateLimitStore.has(clientIP)
+      !inMemoryRateLimitStore.has(memoryKey)
     ) {
       // Purge expired entries first
       for (const [key, data] of inMemoryRateLimitStore.entries()) {
@@ -241,7 +277,7 @@ function checkInMemoryRateLimit(
         return { allowed: true, remaining: maxRequests - 1, resetAt: resetTime };
       }
     }
-    inMemoryRateLimitStore.set(clientIP, {
+    inMemoryRateLimitStore.set(memoryKey, {
       count: 1,
       resetTime,
     });
@@ -279,17 +315,24 @@ function sendRateLimitExceeded(res: Response): void {
   res.status(429).json(response);
 }
 
-export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) => {
+let nextRateLimitBucket = 0;
+
+const createRateLimiter = (windowMs: number, maxRequests: number, bucket?: string) => {
+  // Each unnamed limiter gets its own counter. A shared IP key let
+  // high-volume catalog reads exhaust the login limiter.
+  const resolvedBucket = bucket ?? `b${nextRateLimitBucket++}`;
+
   return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+    const memoryKey = `${resolvedBucket}:${clientIP}`;
+    const redisKey = `rate_limit:${resolvedBucket}:${clientIP}`;
     const requestPath = requestPathForRateLimit(req);
     const isCritical = isCriticalEndpoint(requestPath) || isCriticalEndpoint(req.path);
 
     try {
       // Try Redis first
       if (getRedis()) {
-        const key = `rate_limit:${clientIP}`;
-        const result = await checkRateLimit(key, maxRequests, windowMs);
+        const result = await checkRateLimit(redisKey, maxRequests, windowMs);
 
         setRateLimitHeaders(res, maxRequests, result.remaining, result.resetAt);
 
@@ -309,7 +352,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
         });
       }
 
-      const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
+      const result = checkInMemoryRateLimit(memoryKey, windowMs, maxRequests);
       setRateLimitHeaders(res, maxRequests, result.remaining, result.resetAt);
 
       if (!result.allowed) {
@@ -331,7 +374,7 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
         });
       }
 
-      const result = checkInMemoryRateLimit(clientIP, windowMs, maxRequests);
+      const result = checkInMemoryRateLimit(memoryKey, windowMs, maxRequests);
       setRateLimitHeaders(res, maxRequests, result.remaining, result.resetAt);
       if (!result.allowed) {
         sendRateLimitExceeded(res);
@@ -342,6 +385,50 @@ export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number
     }
   };
 };
+
+export const rateLimit = (windowMs: number = 15 * 60 * 1000, maxRequests: number = 100) => {
+  return createRateLimiter(windowMs, maxRequests);
+};
+
+/**
+ * Named rate-limit bucket, separate from the per-instance `bN` counters.
+ * Public catalog reads and exports use this so they cannot lock out login.
+ */
+export const scopedRateLimit = (
+  bucket: string,
+  windowMs: number = 15 * 60 * 1000,
+  maxRequests: number = 100
+) => {
+  return createRateLimiter(windowMs, maxRequests, bucket);
+};
+
+/**
+ * Count one hit against a named bucket and subject.
+ * The subject is an IP or a hash, never a raw email address.
+ * Redis keys stay `rate_limit:<bucket>:<subject>`. In-memory fallback
+ * uses the same pair so a missing Redis still enforces the cap.
+ */
+export async function consumeScopedLimit(
+  bucket: string,
+  subject: string,
+  windowMs: number,
+  maxRequests: number
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const memoryKey = `${bucket}:${subject}`;
+  const redisKey = `rate_limit:${bucket}:${subject}`;
+
+  if (getRedis()) {
+    try {
+      return await checkRateLimit(redisKey, maxRequests, windowMs);
+    } catch (error) {
+      logger.error('Rate limit error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return checkInMemoryRateLimit(memoryKey, windowMs, maxRequests);
+}
 
 /**
  * Clean up expired in-memory rate limit entries

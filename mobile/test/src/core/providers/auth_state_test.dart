@@ -28,20 +28,26 @@ void main() {
       harness.expectSingleBootstrapFor(_userA);
     });
 
-    test('registration runs every bootstrap step exactly once', () async {
-      final harness = await _AuthHarness.create();
-      addTearDown(harness.dispose);
-      harness.repository.registerResponses.add(_authResponse(_userA));
+    test(
+      'registration stays signed out and returns the acknowledgement',
+      () async {
+        final harness = await _AuthHarness.create();
+        addTearDown(harness.dispose);
+        harness.repository.registerResponses.add(
+          'Check your email to finish creating your account.',
+        );
 
-      await harness.notifier.register(
-        email: 'a@example.com',
-        password: 'Password1!',
-        username: 'user-a',
-      );
+        final message = await harness.notifier.register(
+          email: 'a@example.com',
+          password: 'Password1!',
+          username: 'user-a',
+        );
 
-      expect(harness.container.read(authStateProvider).value, _userA);
-      harness.expectSingleBootstrapFor(_userA);
-    });
+        expect(message, 'Check your email to finish creating your account.');
+        expect(harness.container.read(authStateProvider).value, isNull);
+        expect(harness.integrations.bootstrapCalls, isEmpty);
+      },
+    );
 
     for (final provider in SocialAuthenticationProvider.values) {
       test(
@@ -672,7 +678,7 @@ class _FakeAuthRepository extends AuthRepository {
 
   User? restoredUser;
   final loginResponses = <AuthResponse>[];
-  final registerResponses = <AuthResponse>[];
+  final registerResponses = <String>[];
   final meResponses = <User>[];
   int logoutCalls = 0;
 
@@ -685,9 +691,7 @@ class _FakeAuthRepository extends AuthRepository {
   }
 
   @override
-  Future<Either<Failure, AuthResponse>> register(
-    RegisterRequest request,
-  ) async {
+  Future<Either<Failure, String>> register(RegisterRequest request) async {
     return Right(registerResponses.removeAt(0));
   }
 

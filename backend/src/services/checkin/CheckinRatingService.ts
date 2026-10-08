@@ -11,6 +11,7 @@ import Database from '../../config/database';
 import { cache, CacheKeys } from '../../utils/cache';
 import { Checkin, AddRatingsRequest } from './types';
 import logger from '../../utils/logger';
+import { isHalfStarRating } from '../../utils/halfStarRating';
 
 export class CheckinRatingService {
   private db = Database.getInstance();
@@ -155,10 +156,10 @@ export class CheckinRatingService {
    * Validate a rating value: must be 0.5-5.0 in 0.5 steps.
    */
   private validateRating(rating: number): void {
-    if (rating < 0.5 || rating > 5.0) {
+    if (!Number.isFinite(rating) || rating < 0.5 || rating > 5.0) {
       throw new Error('Rating must be between 0.5 and 5.0');
     }
-    if (rating % 0.5 !== 0) {
+    if (!isHalfStarRating(rating)) {
       throw new Error('Rating must be in 0.5 increments');
     }
   }

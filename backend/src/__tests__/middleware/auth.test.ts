@@ -112,6 +112,56 @@ describe('Auth Middleware', () => {
       expect(mockNext).not.toHaveBeenCalled();
     });
 
+    it('rejects an access token issued before the password changed', async () => {
+      mockRequest.headers = { authorization: 'Bearer stale-token' };
+
+      MockedAuthUtils.extractTokenFromHeader.mockReturnValue('stale-token');
+      MockedAuthUtils.verifyToken.mockReturnValue({
+        userId: 'user-123',
+        email: 'test@example.com',
+        username: 'testuser',
+        iat: 1_700_000_000,
+      });
+
+      const mockFindById = jest.fn().mockResolvedValue({
+        ...mockUser,
+        credentialsChangedAt: new Date(1_700_000_100 * 1000).toISOString(),
+      });
+      MockedUserService.prototype.findById = mockFindById;
+
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockStatus).toHaveBeenCalledWith(401);
+      expect(mockJson).toHaveBeenCalledWith({
+        success: false,
+        error: 'Invalid or expired token',
+      });
+      expect(mockNext).not.toHaveBeenCalled();
+    });
+
+    it('accepts an access token issued in the same second as the password change', async () => {
+      mockRequest.headers = { authorization: 'Bearer fresh-token' };
+
+      MockedAuthUtils.extractTokenFromHeader.mockReturnValue('fresh-token');
+      MockedAuthUtils.verifyToken.mockReturnValue({
+        userId: 'user-123',
+        email: 'test@example.com',
+        username: 'testuser',
+        iat: 1_700_000_100,
+      });
+
+      const mockFindById = jest.fn().mockResolvedValue({
+        ...mockUser,
+        credentialsChangedAt: new Date(1_700_000_100 * 1000 + 400).toISOString(),
+      });
+      MockedUserService.prototype.findById = mockFindById;
+
+      await authenticateToken(mockRequest as Request, mockResponse as Response, mockNext);
+
+      expect(mockNext).toHaveBeenCalled();
+      expect(mockStatus).not.toHaveBeenCalled();
+    });
+
     it('should return 401 for inactive user', async () => {
       mockRequest.headers = { authorization: 'Bearer valid-token' };
 

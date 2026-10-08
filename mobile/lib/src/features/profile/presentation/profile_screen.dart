@@ -260,10 +260,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           loading: () => const Center(
             child: CircularProgressIndicator(color: AppTheme.voltLime),
           ),
-          error: (error, _) => Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
+          error: (error, _) => RefreshIndicator(
+            color: AppTheme.voltLime,
+            onRefresh: () async {
+              ref.invalidate(authStateProvider);
+              await ref.read(authStateProvider.future);
+            },
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(),
               children: [
+                SizedBox(height: MediaQuery.sizeOf(context).height * 0.25),
                 const Icon(
                   Icons.error_outline,
                   size: 48,
@@ -273,11 +279,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const Text(
                   'Error loading profile',
                   style: TextStyle(color: AppTheme.textSecondary),
+                  textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => ref.invalidate(authStateProvider),
-                  child: const Text('Retry'),
+                Center(
+                  child: ElevatedButton(
+                    onPressed: () => ref.invalidate(authStateProvider),
+                    child: const Text('Retry'),
+                  ),
                 ),
               ],
             ),
@@ -386,7 +395,7 @@ class _ProfileHeader extends ConsumerWidget {
                         context,
                       ).colorScheme.surfaceContainerHigh,
                       backgroundImage: user.profileImageUrl != null
-                          ? NetworkImage(user.profileImageUrl!)
+                          ? CachedNetworkImageProvider(user.profileImageUrl!)
                           : null,
                       child: user.profileImageUrl == null
                           ? Text(
@@ -402,21 +411,25 @@ class _ProfileHeader extends ConsumerWidget {
                   ),
                   const Spacer(),
                   // Edit button
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      HapticFeedbackUtil.selectionClick();
-                      context.push('/profile/edit');
-                    },
-                    icon: const Icon(Icons.edit, size: 16),
-                    label: const Text('Edit'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: AppTheme.textPrimary,
-                      side: BorderSide(
-                        color: AppTheme.textTertiary.withValues(alpha: 0.3),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                  Semantics(
+                    button: true,
+                    label: 'Edit profile',
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        HapticFeedbackUtil.selectionClick();
+                        context.push('/profile/edit');
+                      },
+                      icon: const Icon(Icons.edit, size: 16),
+                      label: const Text('Edit'),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: AppTheme.textPrimary,
+                        side: BorderSide(
+                          color: AppTheme.textTertiary.withValues(alpha: 0.3),
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                       ),
                     ),
                   ),

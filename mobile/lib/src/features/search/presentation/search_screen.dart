@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -439,7 +440,7 @@ class _UserSearchTile extends StatelessWidget {
           radius: 24,
           backgroundColor: AppTheme.voltLime.withValues(alpha: 0.2),
           backgroundImage: user.profileImageUrl != null
-              ? NetworkImage(user.profileImageUrl!)
+              ? CachedNetworkImageProvider(user.profileImageUrl!)
               : null,
           child: user.profileImageUrl == null
               ? const Icon(Icons.person, color: AppTheme.voltLime)

@@ -24,7 +24,7 @@ See `.env.example` for the full list with tiers and descriptions.
 | `NODE_ENV` | `production` | Must be `production` — controls CORS, error responses, logging |
 | `CORS_ORIGIN` | `https://soundcheck.app` | Never use `*` in production |
 | `SENTRY_DSN` | `https://xxx@o123.ingest.sentry.io/456` | See [Sentry Setup](#sentry-setup) |
-| `REDIS_URL` | (auto-provisioned) | Railway Redis plugin sets this |
+| `REDIS_URL` | (auto-provisioned) | Railway Redis plugin sets this. Also set an eviction policy; see [Redis eviction](#redis-eviction) |
 | `ENABLE_WEBSOCKET` | `true` | Required for real-time features |
 
 ## Deploy Procedure
@@ -153,6 +153,12 @@ Railway free tier: $5/month credit. Staging with Postgres will consume some of t
 | UptimeRobot | `/health` endpoint availability | Email/SMS | 5-minute check interval |
 | Railway | Build failures, deployment status | Railway dashboard + GitHub checks | Per-deploy |
 | GitHub Actions | CI pipeline (build, test, secrets) | GitHub notifications | Per-push |
+
+## Redis eviction
+
+Rate-limit and cache keys are written with TTLs. If the Railway Redis instance fills and its eviction policy is `noeviction` (the Redis default), writes fail and the API's rate limiter fails closed, which denies traffic.
+
+In the Railway Redis service, set `maxmemory-policy` to `volatile-lru` (evict expired-capable keys first) or `allkeys-lru`. The application does not set this itself; it has to be configured on the Redis service.
 
 ## Troubleshooting
 

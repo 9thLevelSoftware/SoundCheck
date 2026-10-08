@@ -7,9 +7,13 @@ import { CreateUserRequest, LoginRequest, ApiResponse } from '../types';
 import { sanitizeUserForClient } from '../utils/dbMappers';
 import { asyncHandler } from '../utils/asyncHandler';
 import { UnauthorizedError, NotFoundError, BadRequestError } from '../utils/errors';
+import { isValidUUID } from '../utils/validationSchemas';
 
 // UUID validation regex (supports UUID v1-5)
 const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Same copy for a new signup and an email that is already registered. */
+export const SIGNUP_ACKNOWLEDGEMENT_MESSAGE = 'Check your email to finish creating your account.';
 
 export class UserController {
   private userService: UserService;
@@ -29,12 +33,11 @@ export class UserController {
   register = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const userData: CreateUserRequest = req.body;
 
-    const authResponse = await this.userService.createUser(userData);
+    await this.userService.createUser(userData);
 
     const response: ApiResponse = {
       success: true,
-      data: authResponse,
-      message: 'User registered successfully',
+      message: SIGNUP_ACKNOWLEDGEMENT_MESSAGE,
     };
 
     res.status(201).json(response);
@@ -123,13 +126,15 @@ export class UserController {
   });
 
   /**
-   * Get user by username
+   * Get a public profile by username, or by user id when the param is a UUID.
    * GET /api/users/:username
    */
   getUserByUsername = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { username } = routeParams(req);
 
-    const user = await this.userService.findByUsername(username);
+    const user = isValidUUID(username)
+      ? await this.userService.findById(username)
+      : await this.userService.findByUsername(username);
 
     if (!user) {
       throw new NotFoundError('User not found');
@@ -183,14 +188,9 @@ export class UserController {
    * Check username availability
    * GET /api/users/check-username/:username
    *
-   * SEC-007/CFR-015: Protected against enumeration attacks via:
-   * - Strict rate limiting: 5 requests per 15 minutes per IP per endpoint
-   * - Timing attack mitigation: Random 50-150ms jitter added to all responses
-   * - CAPTCHA escalation: After 3 attempts, X-Requires-Captcha header is set
-   * - Isolated rate limit keys: Uses `enum-check:${ip}:${endpoint}` prefix
-   *
-   * The strict rate limiting and timing jitter prevent rapid enumeration
-   * while still allowing legitimate username availability checks.
+   * Signup needs this check. It uses the `username-availability` rate-limit
+   * bucket (30 requests / 15 minutes / IP) plus response jitter, separate from
+   * login. The Flutter form debounces keystrokes by 500ms.
    */
   checkUsername = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { username } = routeParams(req);
@@ -210,30 +210,15 @@ export class UserController {
   });
 
   /**
-   * Check email availability
-   * GET /api/users/check-email?email=test@example.com
+   * GET /api/users/check-email?email=...
    *
-   * SEC-007/CFR-015/API-062: Protected against enumeration attacks via:
-   * - Strict rate limiting: 5 requests per 15 minutes per IP per endpoint
-   * - Timing attack mitigation: Random 50-150ms jitter added to all responses
-   * - CAPTCHA escalation: After 3 attempts, X-Requires-Captcha header is set
-   * - Isolated rate limit keys: Uses `enum-check:${ip}:${endpoint}` prefix
-   *
-   * The strict rate limiting and timing jitter prevent rapid enumeration
-   * while still allowing legitimate email availability checks.
+   * Kept so older clients still have a route, but the body never says whether
+   * the address is registered.
    */
-  checkEmail = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-    const { email } = req.query;
-
-    const existingUser = await this.userService.findByEmail(email as string);
-    const isAvailable = !existingUser;
-
+  checkEmail = asyncHandler(async (_req: Request, res: Response): Promise<void> => {
     const response: ApiResponse = {
       success: true,
-      data: {
-        email,
-        available: isAvailable,
-      },
+      message: SIGNUP_ACKNOWLEDGEMENT_MESSAGE,
     };
 
     res.status(200).json(response);

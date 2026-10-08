@@ -119,6 +119,8 @@ export async function checkRateLimit(
     // PERF-012: Each request adds a scored member to the sorted set.
     // Members from expired windows are pruned by zremrangebyscore, and
     // pexpire guarantees the key is fully cleaned up after the window.
+    // Keys are rate_limit:<bucket>:<ip> (RA-001), so one route cannot
+    // grow another route's set. Growth inside a window stays on that key.
     // At beta scale (~2,000 users), key accumulation is negligible.
     // If scaling beyond ~50k concurrent users, consider switching to
     // a fixed-window counter (INCR + EXPIREAT) to reduce memory.

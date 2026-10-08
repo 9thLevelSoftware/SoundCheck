@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'settings_provider.dart';
 import 'providers/profile_providers.dart';
@@ -13,6 +14,24 @@ import '../../../shared/widgets/error_state_widget.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
+
+  Future<void> _exportData(BuildContext context, WidgetRef ref) async {
+    final messenger = ScaffoldMessenger.of(context);
+    try {
+      final result = await ref
+          .read(profileRepositoryProvider)
+          .downloadDataExport();
+      final path = result.fold(
+        (failure) => throw failure,
+        (filePath) => filePath,
+      );
+      await SharePlus.instance.share(ShareParams(files: [XFile(path)]));
+    } catch (error) {
+      messenger.showSnackBar(
+        const SnackBar(content: Text('Could not export your data')),
+      );
+    }
+  }
 
   Future<void> _launchUrl(String url) async {
     final uri = Uri.parse(url);
@@ -48,10 +67,7 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
-          data: (settings) {
-            final pushEnabled = settings.$1;
-            final emailEnabled = settings.$2;
-
+          data: (pushEnabled) {
             return ListView(
               children: [
                 // Appearance Section
@@ -71,7 +87,7 @@ class SettingsScreen extends ConsumerWidget {
                 const _SectionHeader(title: 'Notifications'),
                 _SettingsTile(
                   title: 'Push Notifications',
-                  subtitle: 'New check-ins, badges, and followers',
+                  subtitle: 'Alerts for check-ins, badges, and followers',
                   leading: const Icon(Icons.notifications_outlined),
                   trailing: Switch(
                     value: pushEnabled,
@@ -82,23 +98,17 @@ class SettingsScreen extends ConsumerWidget {
                     },
                   ),
                 ),
-                _SettingsTile(
-                  title: 'Email Notifications',
-                  subtitle: 'Receive occasional updates',
-                  leading: const Icon(Icons.email_outlined),
-                  trailing: Switch(
-                    value: emailEnabled,
-                    onChanged: (value) {
-                      ref
-                          .read(notificationSettingsProvider.notifier)
-                          .setEmailNotifications(value);
-                    },
-                  ),
-                ),
                 const Divider(),
 
                 // Privacy Section
                 const _SectionHeader(title: 'Privacy & Legal'),
+                _SettingsTile(
+                  title: 'Download my data',
+                  subtitle: 'Export a copy of your SoundCheck data',
+                  leading: const Icon(Icons.download_outlined),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: () => _exportData(context, ref),
+                ),
                 _SettingsTile(
                   title: 'Privacy Policy',
                   leading: const Icon(Icons.privacy_tip_outlined),

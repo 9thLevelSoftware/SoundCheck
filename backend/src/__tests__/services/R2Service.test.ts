@@ -12,7 +12,7 @@ jest.mock('@aws-sdk/client-s3', () => ({
 }));
 
 jest.mock('@aws-sdk/s3-request-presigner', () => ({
-  getSignedUrl: jest.fn(),
+  getSignedUrl: jest.fn<(...args: unknown[]) => Promise<string>>(),
 }));
 
 jest.mock('../../utils/logger', () => ({
@@ -23,7 +23,8 @@ jest.mock('../../utils/logger', () => ({
   },
 }));
 
-import { HeadObjectCommand } from '@aws-sdk/client-s3';
+import { HeadObjectCommand, PutObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { R2Service } from '../../services/R2Service';
 
 describe('R2Service', () => {
@@ -90,6 +91,33 @@ describe('R2Service', () => {
       message: 'Provider unavailable',
       statusCode: 503,
     });
+  });
+
+  it('refuses to sign an upload larger than 10MB', async () => {
+    const service = new R2Service();
+
+    await expect(
+      service.getPresignedUploadUrl('image/jpeg', 'checkins/checkin-1', 10 * 1024 * 1024 + 1)
+    ).rejects.toThrow(/10MB|10485760|content length/i);
+    expect(getSignedUrl).not.toHaveBeenCalled();
+  });
+
+  it('binds the signed PUT to the declared content length', async () => {
+    (
+      getSignedUrl as unknown as jest.MockedFunction<(...args: unknown[]) => Promise<string>>
+    ).mockResolvedValue('https://upload.example/signed');
+
+    const service = new R2Service();
+    const result = await service.getPresignedUploadUrl('image/jpeg', 'checkins/checkin-1', 4096);
+
+    expect(result.uploadUrl).toBe('https://upload.example/signed');
+    expect(PutObjectCommand).toHaveBeenCalledWith(
+      expect.objectContaining({
+        Bucket: 'photos-bucket',
+        ContentType: 'image/jpeg',
+        ContentLength: 4096,
+      })
+    );
   });
 
   it('objectExists returns the HEAD existence value', async () => {

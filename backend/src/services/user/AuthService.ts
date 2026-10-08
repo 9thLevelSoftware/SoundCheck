@@ -10,63 +10,92 @@
  */
 
 import Database from '../../config/database';
+import { EmailService, SIGNUP_MAIL_UNAVAILABLE_MESSAGE } from '../EmailService';
+import { PasswordResetService } from '../PasswordResetService';
 import { User, CreateUserRequest, LoginRequest, AuthResponse } from '../../types';
 import { AuthUtils, generateRefreshToken } from '../../utils/auth';
 import { mapDbUserToUser, sanitizeUserForClient } from '../../utils/dbMappers';
+import { clientStatusError, ServiceUnavailableError, UnauthorizedError } from '../../utils/errors';
+import { logError } from '../../utils/logger';
 
 export class AuthService {
   private db = Database.getInstance();
+  private emailService: EmailService;
+  private passwordResetService: PasswordResetService;
+
+  constructor(emailService?: EmailService, passwordResetService?: PasswordResetService) {
+    this.emailService = emailService ?? new EmailService();
+    this.passwordResetService =
+      passwordResetService ?? new PasswordResetService(this.db, this.emailService);
+  }
 
   /**
-   * Create a new user (registration)
+   * Create a new user when the email is unused.
+   *
+   * An existing email is not an error. Both paths send mail and return without
+   * a session, so the HTTP result does not say which one happened. Signing the
+   * client in afterwards would reopen that oracle: login with the submitted
+   * password succeeds only when the account was just created.
    */
-  async register(userData: CreateUserRequest): Promise<AuthResponse> {
+  async register(userData: CreateUserRequest): Promise<void> {
+    if (!this.emailService.isConfigured()) {
+      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+    }
+
     const { email: rawEmail, password, username, firstName, lastName } = userData;
     const email = rawEmail.toLowerCase();
 
-    // Check if email already exists
     const emailExists = await this.findByEmail(email);
+    // Hash on both paths so an existing email is not a faster response.
+    const passwordHash = await AuthUtils.hashPassword(password);
     if (emailExists) {
-      throw new Error('Email already registered');
+      await this.sendExistingAccountNotice(emailExists.id, email);
+      return;
     }
 
-    // Check if username already exists
     const usernameExists = await this.findByUsername(username);
     if (usernameExists) {
-      throw new Error('Username already taken');
+      throw clientStatusError(409, 'Username already taken');
     }
 
-    // Hash password
-    const passwordHash = await AuthUtils.hashPassword(password);
-
-    // Insert user into database
     const query = `
       INSERT INTO users (email, password_hash, username, first_name, last_name)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING id, email, username, first_name, last_name, bio, profile_image_url,
-                location, date_of_birth, is_verified, is_active, is_admin, is_premium,
-                created_at, updated_at
+      RETURNING id
     `;
 
     const values = [email, passwordHash, username, firstName || null, lastName || null];
-    const result = await this.db.query(query, values);
+    const created = await this.db.query(query, values);
+    const userId = created.rows[0].id as string;
 
-    const user = mapDbUserToUser(result.rows[0]);
+    try {
+      await this.emailService.sendSignupWelcomeEmail(email);
+    } catch (error) {
+      await this.db.query('DELETE FROM users WHERE id = $1', [userId]);
+      logError('Signup welcome email failed');
+      if (error instanceof ServiceUnavailableError) {
+        throw error;
+      }
+      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+    }
+  }
 
-    // Generate JWT token for new user
-    const token = AuthUtils.generateToken({
-      userId: user.id,
-      email: user.email,
-      username: user.username,
-    });
-
-    const refreshToken = await generateRefreshToken(user.id);
-
-    return {
-      user: sanitizeUserForClient(user) as User,
-      token,
-      refreshToken,
-    };
+  private async sendExistingAccountNotice(userId: string, email: string): Promise<void> {
+    try {
+      const social = await this.db.query(
+        'SELECT 1 FROM user_social_accounts WHERE user_id = $1 LIMIT 1',
+        [userId]
+      );
+      const resetToken =
+        social.rows.length > 0 ? null : await this.passwordResetService.issueResetToken(userId);
+      await this.emailService.sendSignupExistingAccountEmail(email, resetToken);
+    } catch (error) {
+      logError('Signup existing-account email failed');
+      if (error instanceof ServiceUnavailableError) {
+        throw error;
+      }
+      throw new ServiceUnavailableError(SIGNUP_MAIL_UNAVAILABLE_MESSAGE);
+    }
   }
 
   /**
@@ -79,7 +108,7 @@ export class AuthService {
     // Find user by email
     const user = await this.findByEmailWithPassword(email);
     if (!user) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedError('Invalid email or password');
     }
 
     if (!user.isActive) {
@@ -89,7 +118,7 @@ export class AuthService {
     // Verify password
     const isValidPassword = await AuthUtils.comparePassword(password, user.passwordHash);
     if (!isValidPassword) {
-      throw new Error('Invalid email or password');
+      throw new UnauthorizedError('Invalid email or password');
     }
 
     // Generate JWT token
@@ -135,7 +164,7 @@ export class AuthService {
     const query = `
       SELECT id, email, username, first_name, last_name, bio, profile_image_url,
              location, date_of_birth, is_verified, is_active, is_admin, is_premium,
-             created_at, updated_at
+             created_at, updated_at, credentials_changed_at
       FROM users
       WHERE id = $1 AND is_active = true
     `;

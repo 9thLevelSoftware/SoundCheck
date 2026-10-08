@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -328,7 +329,7 @@ class _WrappedDetailScreenState extends ConsumerState<WrappedDetailScreen> {
                     context,
                   ).colorScheme.surfaceContainerHighest,
                   backgroundImage: f.friendProfileImageUrl != null
-                      ? NetworkImage(f.friendProfileImageUrl!)
+                      ? CachedNetworkImageProvider(f.friendProfileImageUrl!)
                       : null,
                   child: f.friendProfileImageUrl == null
                       ? Text(

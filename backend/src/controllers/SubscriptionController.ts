@@ -32,7 +32,7 @@ export class SubscriptionController {
     const webhookAuth = process.env.REVENUECAT_WEBHOOK_AUTH;
     if (!webhookAuth) {
       logger.error('SubscriptionController: REVENUECAT_WEBHOOK_AUTH not configured');
-      res.status(200).json({ message: 'Webhook not configured' });
+      res.status(503).json({ success: false, error: 'Webhook not configured' });
       return;
     }
 
@@ -44,8 +44,7 @@ export class SubscriptionController {
     const expectedBuf = Buffer.from(webhookAuth);
     if (tokenBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(tokenBuf, expectedBuf)) {
       logger.warn('SubscriptionController: Invalid webhook authorization');
-      // Return 200 to prevent RevenueCat retry storms on auth failures
-      res.status(200).json({ message: 'Unauthorized' });
+      res.status(401).json({ success: false, error: 'Unauthorized' });
       return;
     }
 

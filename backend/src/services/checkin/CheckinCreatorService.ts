@@ -21,6 +21,7 @@ import { getRedis } from '../../utils/redisRateLimiter';
 import { notificationBatchService } from '../NotificationBatchService';
 import { Checkin, CreateEventCheckinRequest, CreateManualCheckinRequest } from './types';
 import logger from '../../utils/logger';
+import { clientStatusError } from '../../utils/errors';
 
 // Venue type radius mapping for location verification
 const VENUE_TYPE_RADIUS_KM: Record<string, number> = {
@@ -34,6 +35,20 @@ const VENUE_TYPE_RADIUS_KM: Record<string, number> = {
 };
 
 const DEFAULT_VENUE_RADIUS_KM = 1.0;
+
+function utcCalendarDay(ymd: string): number | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(ymd);
+  if (!match) return null;
+  return Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]));
+}
+
+/** Whole days from the event date to the local calendar date. */
+function calendarDayOffset(eventDateStr: string, todayStr: string): number {
+  const eventDay = utcCalendarDay(eventDateStr);
+  const today = utcCalendarDay(todayStr);
+  if (eventDay === null || today === null) return Number.NaN;
+  return Math.round((today - eventDay) / 86_400_000);
+}
 const FEED_INVALIDATION_CONCURRENCY = 10;
 
 async function runWithConcurrency<T>(
@@ -75,7 +90,7 @@ export class CheckinCreatorService {
    * Enforces one check-in per user per event via unique constraint.
    */
   async createEventCheckin(data: CreateEventCheckinRequest): Promise<Checkin> {
-    const { userId, eventId, locationLat, locationLon, comment, vibeTagIds } = data;
+    const { userId, eventId, locationLat, locationLon, comment, rating, vibeTagIds } = data;
     const client = await this.db.getClient();
 
     try {
@@ -92,9 +107,7 @@ export class CheckinCreatorService {
       );
 
       if (eventResult.rows.length === 0) {
-        const err = new Error('Event not found or cancelled');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Event not found or cancelled');
       }
 
       const event = eventResult.rows[0];
@@ -129,9 +142,9 @@ export class CheckinCreatorService {
         INSERT INTO checkins (
           user_id, event_id, venue_id, band_id,
           is_verified, review_text, checkin_latitude, checkin_longitude,
-          event_date, rating, comment
+          event_date, rating
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
         RETURNING *
       `;
 
@@ -147,15 +160,12 @@ export class CheckinCreatorService {
           locationLat || null,
           locationLon || null,
           event.event_date,
-          0, // rating starts at 0, set via PATCH /ratings
-          comment || null,
+          rating ?? 0,
         ]);
       } catch (error: any) {
         // Catch unique constraint violation for user+event
         if (error.code === '23505' && error.constraint && error.constraint.includes('user_event')) {
-          const dupErr = new Error('You have already checked in to this event');
-          (dupErr as any).statusCode = 409;
-          throw dupErr;
+          throw clientStatusError(409, 'You have already checked in to this event');
         }
         throw error;
       }
@@ -292,15 +302,11 @@ export class CheckinCreatorService {
       ]);
 
       if (bandResult.rows.length === 0) {
-        const err = new Error('Band not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Band not found');
       }
 
       if (venueResult.rows.length === 0) {
-        const err = new Error('Venue not found');
-        (err as any).statusCode = 404;
-        throw err;
+        throw clientStatusError(404, 'Venue not found');
       }
 
       const venue = venueResult.rows[0];
@@ -319,10 +325,10 @@ export class CheckinCreatorService {
       const insertQuery = `
         INSERT INTO checkins (
           user_id, venue_id, band_id,
-          is_verified, review_text, comment, rating,
+          is_verified, review_text, rating,
           checkin_latitude, checkin_longitude
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
         RETURNING *
       `;
 
@@ -334,16 +340,16 @@ export class CheckinCreatorService {
           bandId,
           isVerified,
           comment || null,
-          comment || null,
-          rating || 0,
+          rating ?? 0,
           locationLat || null,
           locationLon || null,
         ]);
       } catch (error: any) {
         if (error.code === '23505') {
-          const dupErr = new Error('You have already checked in to this band at this venue today');
-          (dupErr as any).statusCode = 409;
-          throw dupErr;
+          throw clientStatusError(
+            409,
+            'You have already checked in to this band at this venue today'
+          );
         }
         throw error;
       }
@@ -464,13 +470,9 @@ export class CheckinCreatorService {
         ]);
         await client.query('ROLLBACK');
         if (exists.rows.length === 0) {
-          const err = new Error('Check-in not found');
-          (err as any).statusCode = 404;
-          throw err;
+          throw clientStatusError(404, 'Check-in not found');
         }
-        const err = new Error('Unauthorized to delete this check-in');
-        (err as any).statusCode = 403;
-        throw err;
+        throw clientStatusError(403, 'Unauthorized to delete this check-in');
       }
 
       venueId = del.rows[0].venue_id ?? null;
@@ -574,10 +576,9 @@ export class CheckinCreatorService {
    *
    * Window logic:
    *   start: doors_time or (start_time - 2h) or 16:00 (default)
-   *   end: (end_time + 1h buffer) or (start_time + 6h) or 23:59
+   *   end: (end_time + 1h buffer) or (start_time + 6h), which may fall after midnight
    *
-   * If no timezone: allow all day on event_date (generous fallback).
-   * If no times at all: allow all day on event_date.
+   * If no times at all: allow all day on event_date only.
    */
   private isWithinTimeWindow(event: any): boolean {
     try {
@@ -613,28 +614,27 @@ export class CheckinCreatorService {
         todayStr = nowLocal.toISOString().substring(0, 10);
       }
 
-      // If today's date doesn't match event date, disallow
-      if (todayStr !== eventDateStr) return false;
-
-      // If no time information at all, allow all-day window
       const doorsTime = event.doors_time;
       const startTime = event.start_time;
       const endTime = event.end_time;
 
+      // No clock times: the event's calendar date is the whole window.
       if (!doorsTime && !startTime && !endTime) {
-        return true; // All-day window
+        return todayStr === eventDateStr;
       }
+
+      const dayOffset = calendarDayOffset(eventDateStr, todayStr);
+      if (dayOffset !== 0 && dayOffset !== 1) return false;
 
       // Parse time helper: converts "HH:MM:SS" or "HH:MM" to minutes since midnight
       const parseTimeToMinutes = (timeStr: string): number => {
         const parts = timeStr.split(':');
-        return parseInt(parts[0]) * 60 + parseInt(parts[1] || '0');
+        return parseInt(parts[0], 10) * 60 + parseInt(parts[1] || '0', 10);
       };
 
-      // Current time in minutes since midnight (in venue timezone)
-      const nowMinutes = nowLocal.getHours() * 60 + nowLocal.getMinutes();
+      // Minutes since the event-date midnight, so 01:00 the next morning is 1500.
+      const nowMinutes = nowLocal.getHours() * 60 + nowLocal.getMinutes() + dayOffset * 24 * 60;
 
-      // Calculate window start
       let windowStartMinutes: number;
       if (doorsTime) {
         windowStartMinutes = parseTimeToMinutes(doorsTime);
@@ -644,14 +644,18 @@ export class CheckinCreatorService {
         windowStartMinutes = 16 * 60; // 4:00 PM default
       }
 
-      // Calculate window end
       let windowEndMinutes: number;
       if (endTime) {
-        windowEndMinutes = Math.min(24 * 60 - 1, parseTimeToMinutes(endTime) + 60); // 1 hour after
+        windowEndMinutes = parseTimeToMinutes(endTime) + 60; // 1 hour after
       } else if (startTime) {
-        windowEndMinutes = Math.min(24 * 60 - 1, parseTimeToMinutes(startTime) + 360); // 6 hours after
+        windowEndMinutes = parseTimeToMinutes(startTime) + 360; // 6 hours after
       } else {
-        windowEndMinutes = 23 * 60 + 59; // 11:59 PM
+        windowEndMinutes = 23 * 60 + 59;
+      }
+
+      // An end clock at or before the start belongs to the next morning.
+      if (windowEndMinutes <= windowStartMinutes) {
+        windowEndMinutes += 24 * 60;
       }
 
       return nowMinutes >= windowStartMinutes && nowMinutes <= windowEndMinutes;

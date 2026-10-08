@@ -96,6 +96,7 @@ class PushNotificationService {
   StreamSubscription<RemoteMessage>? _onMessageSubscription;
   StreamSubscription<RemoteMessage>? _onMessageOpenedAppSubscription;
   final _notificationTapController = StreamController<String>.broadcast();
+  final Future<bool> Function() _isPushEnabled;
 
   /// Whether push notifications have been initialized
   bool get isInitialized => _initialized;
@@ -110,10 +111,12 @@ class PushNotificationService {
     FeedRepository? feedRepository,
     PushMessagingClient? messagingClient,
     Future<void> Function()? localNotificationsInitializer,
+    Future<bool> Function()? isPushEnabled,
   }) : _feedRepository = feedRepository,
        _messagingClient =
            messagingClient ?? const FirebasePushMessagingClient(),
-       _localNotificationsInitializer = localNotificationsInitializer;
+       _localNotificationsInitializer = localNotificationsInitializer,
+       _isPushEnabled = isPushEnabled ?? (() async => true);
 
   /// Initialize push notification service
   /// Requests permission, gets FCM token, sets up handlers
@@ -165,8 +168,10 @@ class PushNotificationService {
       final token = await _messagingClient.getToken();
       if (generation != _sessionGeneration) return;
       if (token != null) {
-        await _sendTokenToBackend(token);
-        if (generation != _sessionGeneration) return;
+        if (await _isPushEnabled()) {
+          await _sendTokenToBackend(token);
+          if (generation != _sessionGeneration) return;
+        }
         _currentToken = token;
         LogService.i('FCM token obtained: ${token.substring(0, 20)}...');
       }
@@ -179,8 +184,10 @@ class PushNotificationService {
       ) async {
         if (generation != _sessionGeneration) return;
         try {
-          await _sendTokenToBackend(newToken);
-          if (generation != _sessionGeneration) return;
+          if (await _isPushEnabled()) {
+            await _sendTokenToBackend(newToken);
+            if (generation != _sessionGeneration) return;
+          }
           _currentToken = newToken;
           LogService.i('FCM token refreshed');
         } catch (e, stack) {
@@ -425,6 +432,19 @@ class PushNotificationService {
   }
 
   /// Send FCM token to backend for push notification targeting
+  /// Register or remove this device's token so the push toggle matches the server.
+  Future<void> syncDeviceRegistration(bool enabled) async {
+    final token = _currentToken;
+    final repository = _feedRepository;
+    if (token == null || repository == null) return;
+    if (enabled) {
+      await _sendTokenToBackend(token);
+      return;
+    }
+    final result = await repository.unregisterDeviceToken(token);
+    result.fold((failure) => throw Exception(failure.message), (_) {});
+  }
+
   Future<void> _sendTokenToBackend(String token) async {
     final repository = _feedRepository;
     if (repository == null) return;

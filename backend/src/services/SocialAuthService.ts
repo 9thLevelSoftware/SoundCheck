@@ -8,6 +8,7 @@ import { mapDbUserToUser, sanitizeUserForClient } from '../utils/dbMappers';
 import { PoolClient } from 'pg';
 import crypto from 'crypto';
 import logger from '../utils/logger';
+import { clientStatusError } from '../utils/errors';
 import { getRedis } from '../utils/redisRateLimiter';
 
 /**
@@ -258,11 +259,10 @@ export class SocialAuthService {
           provider: profile.provider,
           existingUserId: existingUser.id,
         });
-        const err = new Error(
+        throw clientStatusError(
+          409,
           'An account with this email already exists. Please log in with your password and link your social account from settings.'
         );
-        (err as any).statusCode = 409;
-        throw err;
       }
 
       // User already has social auth — safe to link this additional provider

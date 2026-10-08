@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
@@ -1202,34 +1203,35 @@ class _CheckInScreenState extends ConsumerState<CheckInScreen> {
           );
         }
 
-        return Center(
-          child: Padding(
-            padding: const EdgeInsets.all(32),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 64,
-                  color: AppTheme.error.withValues(alpha: 0.7),
+        return RefreshIndicator(
+          color: AppTheme.voltLime,
+          onRefresh: () async {
+            ref.invalidate(searchBandsForCheckinProvider);
+          },
+          child: ListView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            children: [
+              const SizedBox(height: 80),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: AppTheme.error.withValues(alpha: 0.7),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Failed to search bands',
+                style: TextStyle(color: AppTheme.textTertiary, fontSize: 16),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () => ref.invalidate(searchBandsForCheckinProvider),
+                child: const Text(
+                  'Retry',
+                  style: TextStyle(color: AppTheme.voltLime),
                 ),
-                const SizedBox(height: 16),
-                const Text(
-                  'Failed to search bands',
-                  style: TextStyle(color: AppTheme.textTertiary, fontSize: 16),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 16),
-                TextButton(
-                  onPressed: () =>
-                      ref.invalidate(searchBandsForCheckinProvider),
-                  child: const Text(
-                    'Retry',
-                    style: TextStyle(color: AppTheme.voltLime),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         );
       },
@@ -1722,7 +1724,7 @@ class _BandSearchResult extends StatelessWidget {
           borderRadius: BorderRadius.circular(12),
           image: imageUrl != null
               ? DecorationImage(
-                  image: NetworkImage(imageUrl!),
+                  image: CachedNetworkImageProvider(imageUrl!),
                   fit: BoxFit.cover,
                 )
               : null,

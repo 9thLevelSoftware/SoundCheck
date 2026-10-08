@@ -83,7 +83,7 @@ PUT    /api/users/me                 # Update current user profile
 DELETE /api/users/me                 # Deactivate account
 GET    /api/users/:username          # Get public user profile
 GET    /api/users/check-username/:username  # Check username availability
-GET    /api/users/check-email/:email # Check email availability
+GET    /api/users/check-email?email=   # Non-revealing signup acknowledgement (does not say if the email exists)
 ```
 
 ### 🏛️ Venues

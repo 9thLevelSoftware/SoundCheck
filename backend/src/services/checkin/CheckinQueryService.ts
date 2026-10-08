@@ -22,6 +22,7 @@ import {
   mapDbCheckinToCheckin,
 } from './types';
 import logger from '../../utils/logger';
+import { NotFoundError } from '../../utils/errors';
 
 // ============================================
 // Cursor Types
@@ -141,7 +142,7 @@ export class CheckinQueryService {
       const result = await this.db.query(query, params);
 
       if (result.rows.length === 0) {
-        throw new Error('Check-in not found');
+        throw new NotFoundError('Check-in not found');
       }
 
       // Parse band_ratings from json_agg

@@ -140,44 +140,6 @@ class EventFeedNotifier extends _$EventFeedNotifier {
   }
 }
 
-/// Events feed overview -- shows shared experiences at events user has attended
-@riverpod
-class EventsFeedNotifier extends _$EventsFeedNotifier {
-  String? _nextCursor;
-  bool _hasMore = true;
-  List<FeedItem> _items = [];
-  bool _isLoadingMore = false;
-
-  @override
-  Future<List<FeedItem>> build() async {
-    _nextCursor = null;
-    _hasMore = true;
-    _items = [];
-    return _fetchPage();
-  }
-
-  Future<List<FeedItem>> _fetchPage() async {
-    final repo = ref.read(feedRepositoryProvider);
-    final result = await repo.getEventsFeed(cursor: _nextCursor);
-    return result.fold((failure) => throw _failureToError(failure), (page) {
-      _nextCursor = page.nextCursor;
-      _hasMore = page.hasMore;
-      _items = [..._items, ...page.items];
-      return _items;
-    });
-  }
-
-  Future<void> loadMore() async {
-    if (!_hasMore || _isLoadingMore) return;
-    _isLoadingMore = true;
-    try {
-      state = await AsyncValue.guard(() async => await _fetchPage());
-    } finally {
-      _isLoadingMore = false;
-    }
-  }
-}
-
 /// Happening Now -- friends grouped by event
 @riverpod
 Future<List<HappeningNowGroup>> happeningNow(Ref ref) async {

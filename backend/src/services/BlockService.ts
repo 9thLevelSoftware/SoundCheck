@@ -2,6 +2,7 @@ import Database from '../config/database';
 import { UserBlock } from '../types';
 import { mapDbRowToUserBlock } from '../utils/dbMappers';
 import logger from '../utils/logger';
+import { clientStatusError } from '../utils/errors';
 
 /**
  * BlockService: Manages user blocking with bilateral content filtering.
@@ -29,9 +30,7 @@ export class BlockService {
    */
   async blockUser(blockerId: string, blockedId: string): Promise<UserBlock> {
     if (blockerId === blockedId) {
-      const err = new Error('Cannot block yourself');
-      (err as any).statusCode = 400;
-      throw err;
+      throw clientStatusError(400, 'Cannot block yourself');
     }
 
     // Validate UUIDs before any DB operations
@@ -89,9 +88,7 @@ export class BlockService {
     );
 
     if (result.rowCount === 0) {
-      const err = new Error('Not blocked');
-      (err as any).statusCode = 404;
-      throw err;
+      throw clientStatusError(404, 'Not blocked');
     }
   }
 
@@ -162,9 +159,7 @@ export class BlockService {
   private validateUUID(value: string): void {
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(value)) {
-      const err = new Error('Invalid user ID format');
-      (err as any).statusCode = 400;
-      throw err;
+      throw clientStatusError(400, 'Invalid user ID format');
     }
   }
 
@@ -177,9 +172,7 @@ export class BlockService {
     // Allow patterns like: c.user_id, u.id, er.user_id, c2.user_id
     const columnRefRegex = /^[a-z][a-z0-9_]*\.[a-z][a-z0-9_]*$/i;
     if (!columnRefRegex.test(column)) {
-      const err = new Error('Invalid column reference format');
-      (err as any).statusCode = 400;
-      throw err;
+      throw clientStatusError(400, 'Invalid column reference format');
     }
   }
 }

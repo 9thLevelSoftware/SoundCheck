@@ -1397,23 +1397,28 @@ void main() {
       },
     );
 
-    test('successful registration uses the full default bootstrap', () async {
+    test('successful registration stays signed out', () async {
       final adapter = _RouteAdapter((options) {
         if (options.path == '${ApiConfig.auth}/register') {
-          return _authResponseBody(_userA, token: 'token-a');
+          return _jsonResponseBody({
+            'success': true,
+            'message': 'Check your email to finish creating your account.',
+          }, statusCode: 201);
         }
         return _defaultIntegrationResponse(options);
       });
       final harness = await _ProductionAuthHarness.create(adapter: adapter);
       addTearDown(harness.dispose);
 
-      await harness.notifier.register(
+      final message = await harness.notifier.register(
         email: _userA.email,
         password: 'Password1!',
         username: _userA.username,
       );
 
-      await _expectSuccessfulDefaultBootstrap(harness, _userA);
+      expect(message, 'Check your email to finish creating your account.');
+      expect(harness.container.read(authStateProvider).value, isNull);
+      expect(await harness.dioClient.authSessionStore.readSession(), isNull);
     });
 
     for (final provider in ['google', 'apple']) {

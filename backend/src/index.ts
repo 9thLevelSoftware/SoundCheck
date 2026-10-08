@@ -22,6 +22,7 @@ initRedis();
 
 import express from 'express';
 import { createServer } from 'http';
+import { closeHttpServer, shutdownWithBudget } from './utils/shutdown';
 import cors from 'cors';
 import helmet from 'helmet';
 import { corsOptions } from './config/cors';
@@ -57,6 +58,7 @@ import adminRoutes from './routes/adminRoutes';
 import Database from './config/database';
 import { ApiResponse } from './types';
 import { logHttp, logInfo, logError, logWarn } from './utils/logger';
+import { resolveOverallHealth, revenueCatWebhookHealth } from './utils/healthStatus';
 import { initWebSocket, websocket, getWebSocketStats } from './utils/websocket';
 import { startEventSyncWorker, stopEventSyncWorker } from './jobs/eventSyncWorker';
 import { startBadgeEvalWorker, stopBadgeEvalWorker } from './jobs/badgeWorker';
@@ -72,6 +74,7 @@ import { readFileSync } from 'fs';
 import { join } from 'path';
 import { authenticateToken, requireAdmin } from './middleware/auth';
 import { buildErrorResponseForStatus } from './middleware/validate';
+import { clientErrorMessage, clientErrorStack } from './utils/clientError';
 import { startRuntime } from './startup';
 
 // Read package version for health endpoint
@@ -282,14 +285,18 @@ app.get('/health', async (req, res) => {
       (feature) => feature.status === 'healthy' || feature.status === 'disabled'
     );
 
-    // B-INF-4: 503 only when Postgres is down; Redis down → 200 with degraded status
+    // B-INF-4: 503 only when Postgres is down; Redis down or webhook auth
+    // missing → 200 with degraded status so the process is not restart-looped.
     const isPoolExhausted = poolMetrics.waitingCount > 10;
-    const status = !dbHealth.healthy
-      ? 'unhealthy'
-      : !redisFeaturesHealthy || isPoolExhausted
-        ? 'degraded'
-        : 'healthy';
-    const statusCode = dbHealth.healthy ? 200 : 503;
+    const webhookAuth = revenueCatWebhookHealth();
+    const overallHealth = resolveOverallHealth({
+      databaseHealthy: dbHealth.healthy,
+      redisFeaturesHealthy,
+      poolExhausted: isPoolExhausted,
+      webhookConfigured: webhookAuth.configured,
+    });
+    const status = overallHealth.status;
+    const statusCode = overallHealth.httpStatus;
 
     const response: ApiResponse = {
       success: dbHealth.healthy,
@@ -307,8 +314,10 @@ app.get('/health', async (req, res) => {
           error: redisHealth.error,
         },
         redisBackedFeatures: redisFeatureHealth,
-        queues: queueMetrics,
         pushNotifications: pushNotificationHealth,
+        subscriptions: {
+          webhookAuth,
+        },
         websocket: {
           enabled: process.env.ENABLE_WEBSOCKET === 'true',
           ...wsStats,
@@ -326,8 +335,8 @@ app.get('/health', async (req, res) => {
   }
 });
 
-// Queue health/monitoring endpoint
-app.get('/health/queues', async (req, res) => {
+// Queue counts are admin-only. Liveness stays on unauthenticated GET /health.
+app.get('/health/queues', authenticateToken, requireAdmin(), async (req, res) => {
   const queueMetrics = await Promise.all([
     getQueueHealth(badgeEvalQueue, 'badge-eval'),
     getQueueHealth(notificationQueue, 'notification-batch'),
@@ -349,6 +358,10 @@ app.get('/health/queues', async (req, res) => {
 });
 
 // API routes
+// Export and consent paths must be registered before userRoutes. That router
+// ends with GET /:username, which would otherwise treat "export" and "consents" as usernames.
+app.use('/api/users', dataExportRoutes);
+app.use('/api/users/consents', consentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/venues', venueRoutes);
 app.use('/api/bands', bandRoutes);
@@ -361,8 +374,6 @@ app.use('/api/notifications', notificationRoutes);
 app.use('/api/follow', followRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/tokens', tokenRoutes);
-app.use('/api/users', dataExportRoutes);
-app.use('/api/users/consents', consentRoutes);
 app.use('/api/auth/social', socialAuthRoutes);
 app.use('/api/search', searchRoutes);
 app.use('/api/reports', reportRoutes);
@@ -441,18 +452,13 @@ app.use((error: any, req: express.Request, res: express.Response, _next: express
     });
   }
 
-  // Build response
-  const message =
-    process.env.NODE_ENV === 'development'
-      ? error.message
-      : statusCode >= 500
-        ? 'Internal server error'
-        : error.message || 'Request failed';
+  // Build response. Only AppError text is client-visible. Stacks need
+  // EXPOSE_STACK_TRACES=true and are not tied to NODE_ENV.
+  const message = clientErrorMessage(error, statusCode);
   const response: ApiResponse = buildErrorResponseForStatus(statusCode, message, error.details);
-
-  // Include stack trace only in development
-  if (process.env.NODE_ENV === 'development' && error.stack) {
-    (response as any).stack = error.stack;
+  const stack = clientErrorStack(error);
+  if (stack) {
+    (response as { stack?: string }).stack = stack;
   }
 
   res.status(statusCode).json(response);
@@ -531,54 +537,37 @@ const startServer = async () => {
   }
 };
 
-// Handle graceful shutdown
-process.on('SIGTERM', async () => {
-  logInfo('SIGTERM received, shutting down gracefully');
-
-  // 1. Stop accepting new connections FIRST
-  await new Promise<void>((resolve) => {
-    server.close(() => {
-      logInfo('HTTP server closed');
-      resolve();
-    });
-  });
-
-  // 2. Then stop workers and close other resources
+async function closeRuntimeResources(): Promise<void> {
   if (syncWorker) await stopEventSyncWorker(syncWorker);
   if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
   if (notifWorker) await stopNotificationWorker(notifWorker);
   if (modWorker) await stopModerationWorker(modWorker);
-  await closeSentry(2000); // Wait up to 2s for pending Sentry events
+  await closeSentry(2000);
   await closeRedis();
   websocket.close();
   const db = Database.getInstance();
   await db.close();
-  process.exit(0);
-});
+}
 
-process.on('SIGINT', async () => {
-  logInfo('SIGINT received, shutting down gracefully');
-
-  // 1. Stop accepting new connections FIRST
-  await new Promise<void>((resolve) => {
-    server.close(() => {
+function beginShutdown(signal: 'SIGTERM' | 'SIGINT'): void {
+  logInfo(`${signal} received, shutting down gracefully`);
+  void shutdownWithBudget(signal, {
+    closeServer: async () => {
+      await closeHttpServer(server);
       logInfo('HTTP server closed');
-      resolve();
-    });
+    },
+    closeResources: closeRuntimeResources,
+    exit: (code) => process.exit(code),
+    setTimer: (fn, ms) => setTimeout(fn, ms),
+    clearTimer: (timer) => {
+      clearTimeout(timer);
+    },
+    log: (message) => logInfo(message),
   });
+}
 
-  // 2. Then stop workers and close other resources
-  if (syncWorker) await stopEventSyncWorker(syncWorker);
-  if (badgeWorker) await stopBadgeEvalWorker(badgeWorker);
-  if (notifWorker) await stopNotificationWorker(notifWorker);
-  if (modWorker) await stopModerationWorker(modWorker);
-  await closeSentry(2000); // Wait up to 2s for pending Sentry events
-  await closeRedis();
-  websocket.close();
-  const db = Database.getInstance();
-  await db.close();
-  process.exit(0);
-});
+process.on('SIGTERM', () => beginShutdown('SIGTERM'));
+process.on('SIGINT', () => beginShutdown('SIGINT'));
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (error) => {
