@@ -91,10 +91,22 @@ class SettingsScreen extends ConsumerWidget {
                   leading: const Icon(Icons.notifications_outlined),
                   trailing: Switch(
                     value: pushEnabled,
-                    onChanged: (value) {
-                      ref
-                          .read(notificationSettingsProvider.notifier)
-                          .setPushNotifications(value);
+                    onChanged: (value) async {
+                      try {
+                        await ref
+                            .read(notificationSettingsProvider.notifier)
+                            .setPushNotifications(value);
+                      } catch (_) {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text(
+                                'Could not update push notifications',
+                              ),
+                            ),
+                          );
+                        }
+                      }
                     },
                   ),
                 ),

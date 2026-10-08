@@ -1,3 +1,6 @@
+import 'dart:typed_data';
+
+import 'package:image_picker/image_picker.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -90,6 +93,28 @@ void main() {
         ),
         ['https://cdn.example/one.jpg'],
       );
+    });
+
+    test('rejects a prepared photo larger than the 10MB presign cap', () async {
+      final client = _UploadDioClient(outcomes: const []);
+      final repository = UploadRepository(
+        dioClient: client,
+        compressPhoto: (_) async => Uint8List(maxUploadBytes + 1),
+      );
+
+      final result = await repository.uploadPhotos('checkin-1', [
+        XFile('/tmp/oversized.jpg'),
+      ]);
+
+      expect(
+        result.fold((failure) => failure, (_) => fail('Expected validation')),
+        isA<ValidationFailure>().having(
+          (failure) => failure.message,
+          'message',
+          'Each photo must be 10MB or smaller',
+        ),
+      );
+      expect(client.path, isNull);
     });
 
     test('empty photo selection is a no-op without API calls', () async {

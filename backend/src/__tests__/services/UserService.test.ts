@@ -105,7 +105,7 @@ describe('UserService', () => {
       (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
       mockDb.query
         .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] })
-        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [{ password_hash: 'hashedPassword123' }] })
         .mockResolvedValueOnce({ rows: [] })
         .mockResolvedValueOnce({ rows: [] });
 
@@ -121,6 +121,46 @@ describe('UserService', () => {
       expect(mockSendExisting).toHaveBeenCalledWith(
         userData.email,
         expect.stringMatching(/^[a-f0-9]{64}$/)
+      );
+    });
+
+    it('sends a reset link when the existing account has a password and a social login', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+      };
+
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] })
+        .mockResolvedValueOnce({ rows: [{ password_hash: 'hashedPassword123' }] })
+        .mockResolvedValueOnce({ rows: [] })
+        .mockResolvedValueOnce({ rows: [] });
+
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+      expect(mockSendExisting).toHaveBeenCalledWith(userData.email, expect.any(String));
+      const statements = mockDb.query.mock.calls.map((call) => String(call[0]));
+      expect(statements.some((sql) => sql.includes('user_social_accounts'))).toBe(false);
+    });
+
+    it('omits the reset link for a social-only account with no password', async () => {
+      const userData = {
+        email: 'test@example.com',
+        password: 'TestPass123!',
+        username: 'testuser',
+      };
+
+      (AuthUtils.hashPassword as jest.Mock).mockResolvedValue('hashedPassword123');
+      mockDb.query
+        .mockResolvedValueOnce({ rows: [{ id: 'existing-user' }] })
+        .mockResolvedValueOnce({ rows: [{ password_hash: null }] });
+
+      await expect(userService.createUser(userData)).resolves.toBeUndefined();
+      expect(mockSendExisting).toHaveBeenCalledWith(userData.email, null);
+      const statements = mockDb.query.mock.calls.map((call) => String(call[0]));
+      expect(statements.some((sql) => sql.includes('INSERT INTO password_reset_tokens'))).toBe(
+        false
       );
     });
 

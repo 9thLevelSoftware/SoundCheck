@@ -82,12 +82,15 @@ export class AuthService {
 
   private async sendExistingAccountNotice(userId: string, email: string): Promise<void> {
     try {
-      const social = await this.db.query(
-        'SELECT 1 FROM user_social_accounts WHERE user_id = $1 LIMIT 1',
-        [userId]
-      );
-      const resetToken =
-        social.rows.length > 0 ? null : await this.passwordResetService.issueResetToken(userId);
+      const account = await this.db.query('SELECT password_hash FROM users WHERE id = $1', [
+        userId,
+      ]);
+      const passwordHash = account.rows[0]?.password_hash as string | null | undefined;
+      // A linked social account can still have a password. Only accounts with
+      // no password hash are social-only, and those must not receive a reset link.
+      const resetToken = passwordHash
+        ? await this.passwordResetService.issueResetToken(userId)
+        : null;
       await this.emailService.sendSignupExistingAccountEmail(email, resetToken);
     } catch (error) {
       logError('Signup existing-account email failed');
