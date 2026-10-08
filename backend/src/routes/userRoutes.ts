@@ -1,8 +1,15 @@
+import crypto from 'crypto';
 import { Router, Request, Response, NextFunction } from 'express';
 import multer from 'multer';
 import { UserController } from '../controllers/UserController';
 import { FollowController } from '../controllers/FollowController';
-import { authenticateToken, rateLimit, scopedRateLimit, addJitter } from '../middleware/auth';
+import {
+  authenticateToken,
+  rateLimit,
+  scopedRateLimit,
+  consumeScopedLimit,
+  addJitter,
+} from '../middleware/auth';
 import { buildErrorResponse, validate } from '../middleware/validate';
 import { uploadProfileImage } from '../middleware/upload';
 import {
@@ -49,7 +56,41 @@ const authRateLimit = rateLimit(15 * 60 * 1000, 5); // 5 requests per 15 minutes
 const generalRateLimit = rateLimit(15 * 60 * 1000, 30); // 30 requests per 15 minutes
 
 // Signup username checks. Own bucket so they cannot lock out login.
-const usernameAvailabilityLimit = scopedRateLimit('username-availability', 15 * 60 * 1000, 5);
+// 30/15m covers a debounced typing burst without opening a high-volume oracle.
+const usernameAvailabilityLimit = scopedRateLimit('username-availability', 15 * 60 * 1000, 30);
+
+const SIGNUP_MAIL_WINDOW_MS = 15 * 60 * 1000;
+const SIGNUP_MAIL_PER_IP = 5;
+const SIGNUP_MAIL_PER_ADDRESS = 3;
+
+const limitSignupMail = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+  const clientIP = req.ip || req.socket.remoteAddress || 'unknown';
+  const email = typeof req.body?.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const addressHash = crypto.createHash('sha256').update(email).digest('hex');
+
+  const ipLimit = await consumeScopedLimit(
+    'signup-mail-ip',
+    clientIP,
+    SIGNUP_MAIL_WINDOW_MS,
+    SIGNUP_MAIL_PER_IP
+  );
+  const addressLimit = await consumeScopedLimit(
+    'signup-mail-address',
+    addressHash,
+    SIGNUP_MAIL_WINDOW_MS,
+    SIGNUP_MAIL_PER_ADDRESS
+  );
+
+  if (!ipLimit.allowed || !addressLimit.allowed) {
+    res.status(429).json({
+      success: false,
+      error: 'Too many requests, please try again later',
+    });
+    return;
+  }
+
+  next();
+};
 
 const canonicalizeAuthErrors = (_req: Request, res: Response, next: NextFunction): void => {
   const originalJson = res.json.bind(res);
@@ -76,7 +117,13 @@ const canonicalizeAuthErrors = (_req: Request, res: Response, next: NextFunction
 };
 
 // Public routes (no authentication required)
-router.post('/register', authRateLimit, validate(createUserSchema), userController.register);
+router.post(
+  '/register',
+  authRateLimit,
+  validate(createUserSchema),
+  limitSignupMail,
+  userController.register
+);
 router.post('/login', authRateLimit, validate(loginUserSchema), userController.login);
 
 // Protected routes (authentication required) - MUST come before /:username

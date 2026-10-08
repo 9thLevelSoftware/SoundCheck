@@ -96,6 +96,28 @@ export class PasswordResetService {
   }
 
   /**
+   * Store a one-hour reset token for a user and return the raw token.
+   * Does not look up or log an email address.
+   */
+  async issueResetToken(userId: string): Promise<string> {
+    await this.db.query(
+      'UPDATE password_reset_tokens SET used_at = CURRENT_TIMESTAMP WHERE user_id = $1 AND used_at IS NULL',
+      [userId]
+    );
+
+    const token = crypto.randomBytes(32).toString('hex');
+    const tokenHash = crypto.createHash('sha256').update(token).digest('hex');
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await this.db.query(
+      'INSERT INTO password_reset_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
+      [userId, tokenHash, expiresAt]
+    );
+
+    return token;
+  }
+
+  /**
    * Reset a user's password using a valid reset token.
    *
    * Validates the token, updates the password, marks the token as used,

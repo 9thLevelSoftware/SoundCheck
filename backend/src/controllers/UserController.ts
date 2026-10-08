@@ -189,8 +189,8 @@ export class UserController {
    * GET /api/users/check-username/:username
    *
    * Signup needs this check. It uses the `username-availability` rate-limit
-   * bucket (5 requests / 15 minutes / IP) plus response jitter, separate from
-   * login and from the old shared enumeration limiter.
+   * bucket (30 requests / 15 minutes / IP) plus response jitter, separate from
+   * login. The Flutter form debounces keystrokes by 500ms.
    */
   checkUsername = asyncHandler(async (req: Request, res: Response): Promise<void> => {
     const { username } = routeParams(req);

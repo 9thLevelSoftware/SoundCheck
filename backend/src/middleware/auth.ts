@@ -403,6 +403,34 @@ export const scopedRateLimit = (
 };
 
 /**
+ * Count one hit against a named bucket and subject.
+ * The subject is an IP or a hash, never a raw email address.
+ * Redis keys stay `rate_limit:<bucket>:<subject>`. In-memory fallback
+ * uses the same pair so a missing Redis still enforces the cap.
+ */
+export async function consumeScopedLimit(
+  bucket: string,
+  subject: string,
+  windowMs: number,
+  maxRequests: number
+): Promise<{ allowed: boolean; remaining: number; resetAt: number }> {
+  const memoryKey = `${bucket}:${subject}`;
+  const redisKey = `rate_limit:${bucket}:${subject}`;
+
+  if (getRedis()) {
+    try {
+      return await checkRateLimit(redisKey, maxRequests, windowMs);
+    } catch (error) {
+      logger.error('Rate limit error', {
+        error: error instanceof Error ? error.message : String(error),
+      });
+    }
+  }
+
+  return checkInMemoryRateLimit(memoryKey, windowMs, maxRequests);
+}
+
+/**
  * Clean up expired in-memory rate limit entries
  */
 export const cleanupRateLimit = (): void => {

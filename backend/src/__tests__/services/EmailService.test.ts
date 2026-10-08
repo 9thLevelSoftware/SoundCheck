@@ -19,6 +19,14 @@ jest.mock('resend', () => ({
   })),
 }));
 
+function signupLogText(): string {
+  return JSON.stringify([
+    (logInfo as jest.Mock).mock.calls,
+    (logWarn as jest.Mock).mock.calls,
+    (logError as jest.Mock).mock.calls,
+  ]);
+}
+
 describe('EmailService', () => {
   let emailService: EmailService;
   const originalEnv = process.env;
@@ -410,6 +418,74 @@ describe('EmailService', () => {
       }
 
       expect(caughtError).toBe(originalError);
+    });
+  });
+
+  describe('signup emails', () => {
+    const unavailable = "We couldn't send the confirmation email. Try again later.";
+
+    beforeEach(() => {
+      process.env.RESEND_API_KEY = 'test-api-key';
+      process.env.RESEND_FROM_ADDRESS = 'SoundCheck <noreply@example.com>';
+      process.env.PASSWORD_RESET_BASE_URL = 'https://soundcheck.app';
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { Resend } = require('resend');
+      Resend.mockImplementation(() => ({
+        emails: { send: mockResendSend },
+      }));
+
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { EmailService: FreshEmailService } = require('../../services/EmailService');
+      emailService = new FreshEmailService();
+    });
+
+    it('sends a short welcome email and does not log the address', async () => {
+      mockResendSend.mockResolvedValueOnce({ data: { id: 'email-1' } });
+
+      await emailService.sendSignupWelcomeEmail('new@example.com');
+
+      const payload = mockResendSend.mock.calls[0][0];
+      expect(payload.subject).toBe('Your SoundCheck account is ready');
+      expect(payload.html).toContain('Sign in with the password you just chose');
+      expect(payload.to).toEqual(['new@example.com']);
+      expect(signupLogText()).not.toContain('new@example.com');
+    });
+
+    it('sends the existing-account notice with a reset link and does not log the address', async () => {
+      mockResendSend.mockResolvedValueOnce({ data: { id: 'email-2' } });
+
+      await emailService.sendSignupExistingAccountEmail('taken@example.com', 'reset-token');
+
+      const payload = mockResendSend.mock.calls[0][0];
+      expect(payload.subject).toBe('Someone tried to create a SoundCheck account');
+      expect(payload.html).toContain(
+        'Someone tried to create an account with this email. If it was you, sign in or reset your password.'
+      );
+      expect(payload.html).toContain('https://soundcheck.app/reset-password?token=reset-token');
+      expect(signupLogText()).not.toContain('taken@example.com');
+    });
+
+    it('fails both signup emails the same way when mail is not configured', async () => {
+      delete process.env.RESEND_API_KEY;
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { EmailService: UnconfiguredEmailService } = require('../../services/EmailService');
+      const unconfigured = new UnconfiguredEmailService();
+
+      await expect(unconfigured.sendSignupWelcomeEmail('a@example.com')).rejects.toMatchObject({
+        statusCode: 503,
+        message: unavailable,
+      });
+      await expect(
+        unconfigured.sendSignupExistingAccountEmail('b@example.com', 'token')
+      ).rejects.toMatchObject({
+        statusCode: 503,
+        message: unavailable,
+      });
+      expect(mockResendSend).not.toHaveBeenCalled();
+      const logged = signupLogText();
+      expect(logged).not.toContain('a@example.com');
+      expect(logged).not.toContain('b@example.com');
     });
   });
 });

@@ -123,7 +123,13 @@ void main() {
     );
 
     final usernameForm = find.widgetWithText(TextFormField, 'Username *');
+    await tester.enterText(usernameForm, 'tak');
+    await tester.pump(const Duration(milliseconds: 200));
+    await tester.enterText(usernameForm, 'taken_na');
+    await tester.pump(const Duration(milliseconds: 200));
     await tester.enterText(usernameForm, 'taken_name');
+    expect(repository.requestedUsernames, isEmpty);
+
     await tester.pump(const Duration(milliseconds: 550));
     await tester.pump();
 
